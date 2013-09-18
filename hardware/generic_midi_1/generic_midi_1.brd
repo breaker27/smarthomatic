@@ -443,7 +443,7 @@
 <rectangle x1="27.158946875" y1="23.82393125" x2="27.621228125" y2="23.85695" layer="26"/>
 <rectangle x1="27.19196875" y1="23.85695" x2="27.5551875" y2="23.88996875" layer="26"/>
 <rectangle x1="27.291028125" y1="23.88996875" x2="27.456128125" y2="23.9229875" layer="26"/>
-<text x="0" y="-0.1651" size="0.066040625" layer="26" font="vector" rot="MR0">D:/Eigene Dateien/ohc/logo/logo_black 150x133.bmp</text>
+<text x="0" y="-0.1651" size="0.066040625" layer="26" font="vector" rot="MR0">D:/Eigene Dateien/smarthomatic/logo/logo_black 150x133.bmp</text>
 </plain>
 <libraries>
 <library name="hopeRF">
