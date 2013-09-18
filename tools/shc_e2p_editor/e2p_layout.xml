@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<E2P xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="e2p_metamodel.xsd">
+	<Block>
+		<Name>HardwareConfig</Name>
+		<Description>Values for hardware setup, which have no special meaning to SHC device concepts + the DeviceType, which decides about the existence of further blocks.</Description>
+		<EnumValue>
+			<ID>DeviceType</ID>
+			<Description>The device can check with this value if the EEPROM data is meant for the actual type of device. If not, the device goes into an error mode.</Description>
+			<Bits>8</Bits>
+			<Element>
+				<Value>0</Value>
+				<Name>Base Station</Name>
+			</Element>
+			<Element>
+				<Value>20</Value>
+				<Name>Temperature Sensor</Name>
+			</Element>
+			<Element>
+				<Value>40</Value>
+				<Name>Power Switch</Name>
+			</Element>
+			<Element>
+				<Value>60</Value>
+				<Name>Dimmer</Name>
+			</Element>
+		</EnumValue>
+		<UIntValue>
+			<ID>OsccalMode</ID>
+			<Description>This value is used to change the speed of the internal oscillator. 0 = don't use OSCCAL calibration (e.g. external crystal oszillator is used). FF = OSCCAL measure mode: the LED blinks every 60s, so the user can measure the original speed. 01..FE = The speed is adjusted. If the value is X, the speed is adjusted by (X - 128) promille. (Example: Setting the value to 138 adjusts the speed by (X - 128) promille = +1%.)</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>255</MaxVal>
+		</UIntValue>
+		<Reserved>
+			<Bits>48</Bits>
+		</Reserved>
+	</Block>
+	<Block>
+		<Name>GenericConfig</Name>
+		<Description>This block contains SHC configuration data which every device has.</Description>
+		<UIntValue>
+			<ID>DeviceID</ID>
+			<Description>The DeviceID identifies the specific unit in the SHC network. It is used to address the device and in messages the device sends. Every device has to have a different DeviceID.</Description>
+			<Bits>12</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>4095</MaxVal>
+		</UIntValue>
+		<Reserved>
+			<Bits>4</Bits>
+		</Reserved>
+		<UIntValue>
+			<ID>PacketCounter</ID>
+			<Description>The PacketCounter is counted up throughout the whole lifetime of the device and is used to make the encrypted packets differently from each other every time.</Description>
+			<Bits>24</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>16777215</MaxVal>
+		</UIntValue>
+		<Reserved>
+			<Bits>152</Bits>
+		</Reserved>
+		<ByteArray>
+			<ID>AesKey</ID>
+			<Description>This key is used to encrypt packets before sending and also used as primary key to decrypt packets. Special devices may have additional keys in their device specific block.</Description>
+			<Bytes>32</Bytes>
+		</ByteArray>
+	</Block>
+	<Block>
+		<Name>DimmerConfig</Name>
+		<Description>This block contains the specific configuration data that only Dimmer devices need.</Description>
+		<Restriction>
+			<RefID>DeviceType</RefID>
+			<Value>60</Value>
+		</Restriction>
+		<ByteArray>
+			<ID>BrightnessTranslationTable</ID>
+			<Description>These are the target values (one byte each) for the input brightness of 0, 1, ... 100% to adapt the specific brightness curve of your lamps.</Description>
+			<Bytes>101</Bytes>
+		</ByteArray>
+		<Reserved>
+			<Bits>6872</Bits>
+		</Reserved>
+	</Block>
+</E2P>

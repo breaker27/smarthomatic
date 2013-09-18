@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<xs:element name="E2P">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Block" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Name" type="xs:string"/>
+							<xs:element name="Description" type="xs:string"/>
+							<xs:element name="Restriction" minOccurs="0">
+								<xs:annotation>
+									<xs:documentation>Allow a block only if the given element has the right value. Make sure the element is contained in another block *before* this one.</xs:documentation>
+								</xs:annotation>
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="RefID" type="xs:string"/>
+										<xs:element name="Value" type="xs:string"/>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:choice maxOccurs="unbounded">
+								<xs:element name="UIntValue">
+									<xs:annotation>
+										<xs:documentation>An unsigned integer value with 1 to 32 bits in size.</xs:documentation>
+									</xs:annotation>
+									<xs:complexType>
+										<xs:sequence>
+											<xs:element name="ID" type="xs:string"/>
+											<xs:element name="Description"/>
+											<xs:element name="Bits">
+												<xs:simpleType>
+													<xs:restriction base="xs:unsignedInt">
+														<xs:minInclusive value="1"/>
+														<xs:maxInclusive value="32"/>
+													</xs:restriction>
+												</xs:simpleType>
+											</xs:element>
+											<xs:element name="MinVal" type="xs:unsignedInt"/>
+											<xs:element name="MaxVal" type="xs:unsignedInt"/>
+										</xs:sequence>
+									</xs:complexType>
+								</xs:element>
+								<xs:element name="EnumValue">
+									<xs:annotation>
+										<xs:documentation>An integer value in EEPROM with an additional name describing the meaning.</xs:documentation>
+									</xs:annotation>
+									<xs:complexType>
+										<xs:sequence>
+											<xs:element name="ID" type="xs:string"/>
+											<xs:element name="Description" type="xs:string"/>
+											<xs:element name="Bits" type="xs:unsignedInt"/>
+											<xs:element name="Element" maxOccurs="unbounded">
+												<xs:complexType>
+													<xs:sequence>
+														<xs:element name="Value" type="xs:unsignedInt"/>
+														<xs:element name="Name" type="xs:string"/>
+													</xs:sequence>
+												</xs:complexType>
+											</xs:element>
+										</xs:sequence>
+									</xs:complexType>
+								</xs:element>
+								<xs:element name="ByteArray">
+									<xs:annotation>
+										<xs:documentation>A series of bytes with a given length.</xs:documentation>
+									</xs:annotation>
+									<xs:complexType>
+										<xs:sequence>
+											<xs:element name="ID" type="xs:string"/>
+											<xs:element name="Description" type="xs:string"/>
+											<xs:element name="Bytes">
+												<xs:simpleType>
+													<xs:restriction base="xs:unsignedInt">
+														<xs:minInclusive value="1"/>
+													</xs:restriction>
+												</xs:simpleType>
+											</xs:element>
+										</xs:sequence>
+									</xs:complexType>
+								</xs:element>
+								<xs:element name="Reserved">
+									<xs:annotation>
+										<xs:documentation>A series of bits with a given length blocking space for later use.</xs:documentation>
+									</xs:annotation>
+									<xs:complexType>
+										<xs:sequence>
+											<xs:element name="Bits">
+												<xs:simpleType>
+													<xs:restriction base="xs:unsignedInt">
+														<xs:minInclusive value="1"/>
+													</xs:restriction>
+												</xs:simpleType>
+											</xs:element>
+										</xs:sequence>
+									</xs:complexType>
+								</xs:element>
+							</xs:choice>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

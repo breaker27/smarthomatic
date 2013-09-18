@@ -1,0 +1,5 @@
+# EEPROM binary files
+*.e2p
+
+# Build files
+target/*
