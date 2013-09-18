@@ -1,0 +1,47 @@
+#
+# This file is part of smarthomatic, http://www.smarthomatic.com.
+# Copyright (c) 2013 Uwe Freese
+#
+# smarthomatic is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
+#
+# smarthomatic is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
+#
+
+# Output format [srec|ihex|binary].
+FORMAT = ihex
+
+# Optimization level [0|1|2|3|s]. 
+OPT = s
+
+# Debugging format.
+DEBUG = dwarf-2
+
+#******************************************************************************
+# Compiler Options C
+#******************************************************************************
+CFLAGS = -fdata-sections -ffunction-sections
+CFLAGS += -fpack-struct
+CFLAGS += -fshort-enums
+CFLAGS += -Wall
+CFLAGS += -Wstrict-prototypes
+CFLAGS += -Wundef
+CFLAGS += -std=c99
+
+#******************************************************************************
+# Assembler Options
+#******************************************************************************
+ASFLAGS =  
+
+#******************************************************************************
+# Linker Options
+#******************************************************************************
+LDFLAGS = -Wl,--gc-sections
