@@ -1,0 +1,6 @@
+# If you want to download datasheets according to datasheets.txt, you can
+# place them in a subfolder datasheets, where they will not be considered
+# by git.
+*/datasheets/*
+*.s#?
+*.b#?
