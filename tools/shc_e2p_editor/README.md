@@ -1,22 +1,18 @@
-/*
-* This file is part of smarthomatic, http://www.smarthomatic.com.
-* Copyright (c) 2013 Uwe Freese
-*
-* smarthomatic is free software: you can redistribute it and/or modify it
-* under the terms of the GNU General Public License as published by the
-* Free Software Foundation, either version 3 of the License, or (at your
-* option) any later version.
-*
-* smarthomatic is distributed in the hope that it will be useful, but
-* WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
-* Public License for more details.
-*
-* You should have received a copy of the GNU General Public License along
-* with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
-*/
+smarthomatic EEPROM Editor
+==========================
 
-*** smarthomatic EEPROM Editor Design Principles
+This editor is used to create or modify configuration settings stored in
+the EEPROM of the smarthomatic devices. It needs a Java runtime 1.6+ to
+run.
+
+Usage
+-----
+
+Please read the documentation on the smarthomatic website at
+http://www.smarthomatic.com.
+
+Design Principles
+-----------------
 
 The editor GUI is created dynamically out of the e2p_layout.xml. Swing
 components for editing data must not be added statically. This is to allow
