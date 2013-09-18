@@ -1,0 +1,95 @@
+#
+# This file is part of smarthomatic, http://www.smarthomatic.com.
+# Copyright (c) 2013 Uwe Freese
+#
+# smarthomatic is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
+#
+# smarthomatic is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
+#
+
+# Define all object files.
+OBJ = $(CSRC:%.c=$(OBJDIR)/%.o) $(ASRC:%.S=$(OBJDIR)/%.o) 
+# Define all listing files.
+LST = $(CSRC:%.c=$(OBJDIR)/%.lst) $(ASRC:%.S=$(OBJDIR)/%.lst) 
+
+# Combine all necessary flags and optional flags.
+# Add target processor to flags.
+ALL_CFLAGS = -g$(DEBUG)
+ALL_CFLAGS += -DF_CPU=$(F_CPU)UL
+ALL_CFLAGS += -DUART_BAUD_RATE=$(UART_BAUD_RATE)UL
+ALL_CFLAGS += -DUART_RX=$(UART_RX)UL
+ALL_CFLAGS += -O$(OPT)
+ALL_CFLAGS += -mmcu=$(MCU) -I. 
+ALL_CFLAGS += $(CFLAGS) 
+ALL_CFLAGS += -Wa,-adhlns=$(<:%.c=$(OBJDIR)/%.lst)
+ALL_CFLAGS += -MD -MP -MF $(<:%.c=$(OBJDIR)/%.d)
+ALL_ASFLAGS = -mmcu=$(MCU) -I. -x assembler-with-cpp 
+ALL_ASFLAGS += $(ASFLAGS)
+ALL_ASFLAGS += -Wa,-adhlns=$(<:%.S=$(OBJDIR)/%.lst),-gstabs
+ALL_LDFLAGS = $(LDFLAGS)
+ALL_LDFLAGS += -Wl,-Map=$(OBJDIR)/$(TARGET).map,--cref
+
+# set (differently named) CPU type for avrdude
+ifeq ($(MCU),atmega328)
+	AVRDUDEMCU = m328p
+else
+	AVRDUDEMCU = m168
+endif
+
+# Create final output files (.hex, .eep) from ELF output file.
+$(BINDIR)/%.hex: $(OBJDIR)/%.elf
+	@mkdir -p $(dir $@)
+	$(OBJCOPY) -O $(FORMAT) -R .eeprom -R .fuse -R .lock -R .signature $< $@
+$(BINDIR)/%.eep: $(OBJDIR)/%.elf
+	@mkdir -p $(dir $@)
+	-$(OBJCOPY) -O $(FORMAT) -j .eeprom --set-section-flags=.eeprom="alloc,load" --change-section-lma .eeprom=0 $< $@
+
+# Create extended listing file from ELF output file.
+$(OBJDIR)/%.lss: $(OBJDIR)/%.elf
+	@mkdir -p $(dir $@)
+	$(OBJDUMP) -h -S $< > $@
+
+# Create a symbol table from ELF output file.
+$(OBJDIR)/%.sym: $(OBJDIR)/%.elf
+	@mkdir -p $(dir $@)
+	$(NM) -n $< > $@
+
+	
+# Link: create ELF output file from object files.
+.SECONDARY: $(OBJDIR)/$(TARGET).elf
+.PRECIOUS: $(OBJ)
+$(OBJDIR)/$(TARGET).elf: $(OBJ)
+	@mkdir -p $(dir $@)
+	$(CC) $(ALL_CFLAGS) $^ --output $@ $(ALL_LDFLAGS)
+
+
+# Compile: create object files from C source files.
+$(OBJDIR)/%.o : %.c
+	@mkdir -p $(dir $@)
+	$(CC) -c $(ALL_CFLAGS) $< -o $@
+
+# Compile: create assembler files from C source files.
+$(OBJDIR)/%.s : %.c
+	@mkdir -p $(dir $@)
+	$(CC) -S $(ALL_CFLAGS) $< -o $@
+
+
+# Assemble: create object files from assembler source files.
+$(OBJDIR)/%.o : %.S
+	@mkdir -p $(dir $@)
+	$(CC) -c $(ALL_ASFLAGS) $< -o $@
+
+
+# Create preprocessed source for use in sending a bug report.
+$(OBJDIR)/%.i : %.c
+	@mkdir -p $(dir $@)
+	$(CC) -E -mmcu=$(MCU) -I. $(CFLAGS) $< -o $@
