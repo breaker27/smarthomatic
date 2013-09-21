@@ -1,5 +1,8 @@
 # EEPROM binary files
 *.e2p
 
+# temp file for flash command (Windows)
+flash_tmp.cmd
+
 # Build files
 target/*

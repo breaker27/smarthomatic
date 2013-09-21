@@ -203,12 +203,12 @@ public class Util {
 		}
 		else
 		{
-			Util.writeFile("tmp.cmd",
+			Util.writeFile("flash_tmp.cmd",
 					"@echo off\r\n" + 
 					cmdLine + "\r\n" +
 					"pause\r\n" +
 					"exit\r\n");
-			p = Runtime.getRuntime().exec("cmd /c start tmp.cmd");
+			p = Runtime.getRuntime().exec("cmd /c start flash_tmp.cmd");
 		}
 	}
 
