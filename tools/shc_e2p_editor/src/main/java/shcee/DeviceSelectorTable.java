@@ -91,8 +91,12 @@ public class DeviceSelectorTable extends JTable
 	    updateTable();
 	    
         // sort table and select first row
-        sorter.toggleSortOrder(0);
-        this.setRowSelectionInterval(0, 0);
+	    sorter.toggleSortOrder(0);
+	    
+	    if (this.getRowCount() > 0)
+	    {
+	        this.setRowSelectionInterval(0, 0);
+	    }
 	}
 
 	/**
