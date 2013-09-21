@@ -149,7 +149,9 @@ public class SourceCodeGenerator
 							String value = Util.getChildNodeValue(enumElement, "Value");
 							String name = ID + "_" + Util.getChildNodeValue(enumElement, "Name").toUpperCase().replace(' ', '_');
 							
-							out.println("  " + name + " = " + value);
+							String suffix = ee == enumElements.getLength() - 1 ? "" : ","; 
+							
+							out.println("  " + name + " = " + value + suffix);
 						}
 
 						out.println("} " + ID1 + "Enum;");
