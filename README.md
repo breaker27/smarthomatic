@@ -13,7 +13,7 @@ interfaces or smartphone apps. Nonetheless this system is designed to be
 easily integrated in such systems.
 
 For more information, visit the website at
-http://www.smarthomatic.com.
+http://www.smarthomatic.org.
 
 License Information Hardware Files
 ----------------------------------
@@ -58,4 +58,4 @@ Uwe Freese.
 
 For more information on using the logo or logotype outside the hardware
 layouts, please read the legal info on the website
-http://www.smarthomatic.com.
+http://www.smarthomatic.org.

@@ -12130,7 +12130,7 @@ W = angled&lt;p&gt;
 <text x="40.64" y="-33.02" size="3.81" layer="97">smarthomatic Generic Midi 1</text>
 <text x="96.52" y="-38.1" size="2.1844" layer="97">Date: 09.05.2013</text>
 <text x="40.64" y="-38.1" size="2.1844" layer="97">Rev 1.0</text>
-<text x="40.64" y="-43.18" size="2.1844" layer="97">Copyright (c) Uwe Freese, www.smarthomatic.com</text>
+<text x="40.64" y="-43.18" size="2.1844" layer="97">Copyright (c) Uwe Freese, www.smarthomatic.org</text>
 </plain>
 <instances>
 <instance part="IC2" gate="G$1" x="93.98" y="50.8" rot="R90"/>

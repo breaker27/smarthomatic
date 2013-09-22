@@ -1,7 +1,7 @@
 smarthomatic EEPROM Editor
 ==========================
 
-This program is part of smarthomatic, http://www.smarthomatic.com.
+This program is part of smarthomatic, http://www.smarthomatic.org.
 Copyright (c) 2013 Uwe Freese
 
 This editor is used to create or modify configuration settings stored in
@@ -31,7 +31,7 @@ Usage
 -----
 
 Please read the documentation on the smarthomatic website at
-http://www.smarthomatic.com.
+http://www.smarthomatic.org.
 
 Design Principles
 -----------------

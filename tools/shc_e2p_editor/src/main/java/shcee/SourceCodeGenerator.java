@@ -1,5 +1,5 @@
 /*
-* This file is part of smarthomatic, http://www.smarthomatic.com.
+* This file is part of smarthomatic, http://www.smarthomatic.org.
 * Copyright (c) 2013 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
@@ -81,7 +81,7 @@ public class SourceCodeGenerator
 			PrintWriter out = new PrintWriter(new FileWriter("e2p_layout_" + filename + ".h"));
 
 			out.println("/*");
-			out.println("* This file is part of smarthomatic, http://www.smarthomatic.com.");
+			out.println("* This file is part of smarthomatic, http://www.smarthomatic.org.");
 			out.println("* Copyright (c) 2013 Uwe Freese");
 			out.println("*");
 			out.println("* smarthomatic is free software: you can redistribute it and/or modify it");

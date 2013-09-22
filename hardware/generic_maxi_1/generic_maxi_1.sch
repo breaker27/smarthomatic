@@ -16203,7 +16203,7 @@ Source: 008-0260-0_E.pdf</description>
 <text x="66.04" y="-40.64" size="3.81" layer="97">smarthomatic Generic Maxi 1</text>
 <text x="121.92" y="-45.72" size="2.1844" layer="97">Date: 02.12.2012</text>
 <text x="66.04" y="-45.72" size="2.1844" layer="97">Rev 1.0</text>
-<text x="66.04" y="-50.8" size="2.1844" layer="97">Copyright (c) Uwe Freese, www.smarthomatic.com</text>
+<text x="66.04" y="-50.8" size="2.1844" layer="97">Copyright (c) Uwe Freese, www.smarthomatic.org</text>
 </plain>
 <instances>
 <instance part="IC2" gate="G$1" x="93.98" y="50.8" rot="R90"/>

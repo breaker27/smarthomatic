@@ -1,5 +1,5 @@
 /*
-* This file is part of smarthomatic, http://www.smarthomatic.com.
+* This file is part of smarthomatic, http://www.smarthomatic.org.
 * Copyright (c) 2013 Uwe Freese
 *
 * Contributors:

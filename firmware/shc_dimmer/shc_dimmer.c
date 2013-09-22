@@ -1,5 +1,5 @@
 /*
-* This file is part of smarthomatic, http://www.smarthomatic.com.
+* This file is part of smarthomatic, http://www.smarthomatic.org.
 * Copyright (c) 2013 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
@@ -334,7 +334,7 @@ int main(void)
 #ifdef UART_DEBUG
 	uart_init(false);
 	UART_PUTS ("\r\n");
-	UART_PUTS ("smarthomatic Dimmer V1.0 (c) 2013 Uwe Freese, www.smarthomatic.com\r\n");
+	UART_PUTS ("smarthomatic Dimmer V1.0 (c) 2013 Uwe Freese, www.smarthomatic.org\r\n");
 	osccal_info();
 	UART_PUTF ("Device ID: %u\r\n", device_id);
 	UART_PUTF ("Packet counter: %lu\r\n", packetcounter);

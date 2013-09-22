@@ -1,5 +1,5 @@
 /*
-* This file is part of smarthomatic, http://www.smarthomatic.com.
+* This file is part of smarthomatic, http://www.smarthomatic.org.
 * Copyright (c) 2013 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
@@ -26,12 +26,12 @@
 
 #include "rfm12.h"
 
+#include "e2p_layout_base_station.h"
+
 #define UART_DEBUG   // Debug output over UART
 
 #include "uart.h"
 #include "aes256.h"
-
-#define DEVICE_TYPE_STATION 1 // TODO: Move device type definitions to extra file
 
 // How often should the packetcounter_base be increased and written to EEPROM?
 // This should be 2^32 (which is the maximum transmitted packet counter) /
@@ -39,8 +39,6 @@
 // Therefore 100 is a good value.
 #define PACKET_COUNTER_WRITE_CYCLE 100
 
-#define EEPROM_POS_PACKET_COUNTER 0
-#define EEPROM_POS_AES_KEY 32
 #define AES_KEY_EEPROM_COUNT 15 // 15 * 32 bytes in EEPROM, starting at position 32
 
 #define LED_PIN 7
@@ -221,7 +219,7 @@ void send_packet(uint8_t aes_key_nr, uint8_t data_len)
 		aes_key_nr = AES_KEY_EEPROM_COUNT - 1;
 	}
 	
-	eeprom_read_block (aes_key, (uint8_t *)(EEPROM_POS_AES_KEY + aes_key_nr * 32), 32);
+	eeprom_read_block (aes_key, (uint8_t *)(EEPROM_AESKEY_BYTE + aes_key_nr * 32), 32);
 	
 	// show info
 	decode_data(data_len + 6);
@@ -256,12 +254,12 @@ int main ( void )
 	request_queue_init();
 	
 	// read packetcounter, increase by cycle and write back
-	packetcounter = eeprom_read_dword((uint32_t*)EEPROM_POS_PACKET_COUNTER) + PACKET_COUNTER_WRITE_CYCLE;
+	packetcounter = eeprom_read_dword((uint32_t*)EEPROM_PACKETCOUNTER_BYTE) + PACKET_COUNTER_WRITE_CYCLE;
 	eeprom_write_dword((uint32_t*)0, packetcounter);
 
 	uart_init(true);
 	UART_PUTS ("\r\n");
-	UART_PUTS ("smarthomatic Base Station V1.0 (c) 2012 Uwe Freese, www.smarthomatic.com\r\n");
+	UART_PUTS ("smarthomatic Base Station V1.0 (c) 2012 Uwe Freese, www.smarthomatic.org\r\n");
 	UART_PUTF ("Packet counter: %lu\r\n", packetcounter);
 	UART_PUTS ("Waiting for incoming data. Press h for help.\r\n");
 
@@ -272,7 +270,7 @@ int main ( void )
 	/*
 	uint8_t testlen = 64;
 	
-	eeprom_read_block (aes_key, (uint8_t *)EEPROM_POS_AES_KEY, 32);
+	eeprom_read_block (aes_key, (uint8_t *)EEPROM_AESKEY_BYTE, 32);
 	UART_PUTS("Using AES key ");
 	printbytearray((uint8_t *)aes_key, 32);
 			
@@ -345,7 +343,7 @@ int main ( void )
 						printbytearray(bufx, len);
 					}*/
 				
-					eeprom_read_block (aes_key, (uint8_t *)(EEPROM_POS_AES_KEY + aes_key_nr * 32), 32);
+					eeprom_read_block (aes_key, (uint8_t *)(EEPROM_AESKEY_BYTE + aes_key_nr * 32), 32);
 					//UART_PUTS("Trying AES key ");
 					//printbytearray((uint8_t *)aes_key, 32);
 

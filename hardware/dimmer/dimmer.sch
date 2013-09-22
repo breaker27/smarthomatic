@@ -15338,7 +15338,7 @@ grid 15mm, 19649 Wickmann</description>
 <text x="12.7" y="-76.2" size="3.81" layer="97">smarthomatic Dimmer</text>
 <text x="63.5" y="-81.28" size="2.1844" layer="97">Date: 06.01.2013</text>
 <text x="12.7" y="-81.28" size="2.1844" layer="97">Rev 1.0</text>
-<text x="12.7" y="-86.36" size="2.1844" layer="97">Copyright (c) Uwe Freese, www.smarthomatic.com</text>
+<text x="12.7" y="-86.36" size="2.1844" layer="97">Copyright (c) Uwe Freese, www.smarthomatic.org</text>
 </plain>
 <instances>
 <instance part="IC2" gate="G$1" x="55.88" y="55.88" rot="R90"/>

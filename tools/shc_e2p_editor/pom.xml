@@ -8,7 +8,7 @@
   <packaging>jar</packaging>
 
   <name>shcee</name>
-  <url>http://www.smarthomatic.com</url>
+  <url>http://www.smarthomatic.org</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

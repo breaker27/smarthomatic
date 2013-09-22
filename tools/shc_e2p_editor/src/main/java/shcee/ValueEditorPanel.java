@@ -1,5 +1,5 @@
 /*
-* This file is part of smarthomatic, http://www.smarthomatic.com.
+* This file is part of smarthomatic, http://www.smarthomatic.org.
 * Copyright (c) 2013 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
@@ -138,7 +138,7 @@ public class ValueEditorPanel extends JPanel
 	{
 		JOptionPane.showMessageDialog(SHCEEMain.mySHCEEMain,
 				"<html><body><b>smarthomatic EEPROM Editor</b><br/>" +
-				"http://www.smarthomatic.com<br/>" +
+				"http://www.smarthomatic.org<br/>" +
 				"Copyright (c) 2013 Uwe Freese<br/>" +
 				"Licensed under GLP 3 or later.</body></html>", "About", JOptionPane.INFORMATION_MESSAGE);
 	}
