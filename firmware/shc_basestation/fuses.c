@@ -20,8 +20,8 @@
 
 FUSES = 
 { 
-	// value 0x62 - these should also be the default settings for ATMega328
-    .low = (FUSE_CKSEL0 & FUSE_CKSEL2 & FUSE_CKSEL3 & FUSE_SUT0 & FUSE_CKDIV8),
+	// value 0xF7 - settings for external crystal, slowly rising power
+	.low = (FUSE_CKSEL3),
 	// value 0xD1 - EESAVE is 0, others are default
     .high = (FUSE_SPIEN & FUSE_EESAVE & FUSE_BOOTSZ1 & FUSE_BOOTSZ0),
 	// value 0x07 - default at ATMega328
