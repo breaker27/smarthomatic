@@ -34,7 +34,7 @@
 #define BAUD_ERROR ((BAUD_REAL * 1000l) / UART_BAUD_RATE)                      // error in promille, 1000 = optimum
 
 #if ((BAUD_ERROR<990) || (BAUD_ERROR>1010))
-	#error Systematic UART baud rate it greater than 1% and therefore too high!
+	#error Systematic UART baud rate is greater than 1% and therefore too high!
 #endif 
 
 
