@@ -24,7 +24,7 @@ follows:
 avrdude -p m328p -U lfuse:w:lfuse.bin:r -U hfuse:w:hfuse.bin:r
    -U efuse:w:efuse.bin:r
 avrdude -p m328p -U flash:w:shc_basestation.hex
-avrdude -p m328p -U eeprom:w:shc_basestation.e2p
+avrdude -p m328p -U eeprom:w:shc_basestation.e2p:r
 
 Use device type "m328p" for the ATMega 328 and "m168" for the ATMega 168.
 Please read the wiki at http://www.smarthomatic.org/wiki about more
