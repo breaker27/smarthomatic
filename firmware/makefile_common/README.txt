@@ -13,3 +13,19 @@ Public License for more details.
 
 You should have received a copy of the GNU General Public License along
 with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
+
+
+Flash your ATMega
+=================
+
+You can flash your ATMega with the fuses, firmware and EEPROM file as
+follows:
+
+avrdude -p m328p -U lfuse:w:lfuse.bin:r -U hfuse:w:hfuse.bin:r
+   -U efuse:w:efuse.bin:r
+avrdude -p m328p -U flash:w:shc_basestation.hex
+avrdude -p m328p -U eeprom:w:shc_basestation.e2p
+
+Use device type "m328p" for the ATMega 328 and "m168" for the ATMega 168.
+Please read the wiki at http://www.smarthomatic.org/wiki about more
+information.
