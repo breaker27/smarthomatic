@@ -17,7 +17,7 @@
 #
 
 # Default target
-all: elf hex eep lss sym fuse size
+all: elf hex lss sym fuse size
 
 # Target files
 elf: $(OBJDIR)/$(TARGET).elf
@@ -49,12 +49,13 @@ fuse: $(OBJDIR)/$(TARGET).elf
 	@echo "  LFUSE = 0x$(LFUSE)"
 	@echo "  HFUSE = 0x$(HFUSE)"
 	@echo "  EFUSE = 0x$(EFUSE)"
-	@echo -n "0x$(LFUSE)">$(BINDIR)/lfuse.txt
-	@echo -n "0x$(HFUSE)">$(BINDIR)/hfuse.txt
-	@echo -n "0x$(EFUSE)">$(BINDIR)/efuse.txt
-
+	
+	@echo x | $(AWK) '{printf "\x$(LFUSE)"}' > $(BINDIR)/lfuse.bin
+	@echo x | $(AWK) '{printf "\x$(HFUSE)"}' > $(BINDIR)/hfuse.bin
+	@echo x | $(AWK) '{printf "\x$(EFUSE)"}' > $(BINDIR)/efuse.bin
+	
 # create fuses, possibility 2
-#fuse: $(OBJDIR)/$(TARGET).elf
+#fuse2: $(OBJDIR)/$(TARGET).elf
 #	$(OBJCOPY) -j .fuse -O ihex $(OBJDIR)/$(TARGET).elf $(OBJDIR)/fuses.hex --change-section-lma .fuse=0
 #	srec_cat $(OBJDIR)/fuses.hex -Intel -crop 0x00 0x01 -offset  0x00 -O $(BINDIR)/lfuse.hex -Intel
 #	srec_cat $(OBJDIR)/fuses.hex -Intel -crop 0x01 0x02 -offset -0x01 -O $(BINDIR)/hfuse.hex -Intel
@@ -65,7 +66,7 @@ program:
 	$(AVRDUDE) -p $(AVRDUDEMCU) -U flash:w:$(BINDIR)/$(TARGET).hex
 	
 program_fuses: fuse
-	$(AVRDUDE) -p m328p -U lfuse:w:0x$(LFUSE):m -U hfuse:w:0x$(HFUSE):m -U efuse:w:0x$(EFUSE):m
+	$(AVRDUDE) -p m328p -U lfuse:w:$(BINDIR)/lfuse.bin:r -U hfuse:w:$(BINDIR)/hfuse.bin:r -U efuse:w:$(BINDIR)/efuse.bin:r
 
 read_fuses:
 	$(AVRDUDE) -p m328p -U lfuse:r:-:b -U hfuse:r:-:b -U efuse:r:-:b
