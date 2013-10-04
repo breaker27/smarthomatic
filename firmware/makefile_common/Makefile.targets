@@ -49,13 +49,11 @@ fuse: $(OBJDIR)/$(TARGET).elf
 	@echo "  LFUSE = 0x$(LFUSE)"
 	@echo "  HFUSE = 0x$(HFUSE)"
 	@echo "  EFUSE = 0x$(EFUSE)"
-#	@echo -n "0x$(LFUSE)">$(BINDIR)/lfuse.txt
-#	@echo -n "0x$(HFUSE)">$(BINDIR)/hfuse.txt
-#	@echo -n "0x$(EFUSE)">$(BINDIR)/efuse.txt
-	@echo -e -n "\x$(LFUSE)" > $(BINDIR)/lfuse.bin
-	@echo -e -n "\x$(HFUSE)" > $(BINDIR)/hfuse.bin
-	@echo -e -n "\x$(EFUSE)" > $(BINDIR)/efuse.bin
-
+	
+	@echo x | $(AWK) '{printf "\x$(LFUSE)"}' > $(BINDIR)/lfuse.bin
+	@echo x | $(AWK) '{printf "\x$(HFUSE)"}' > $(BINDIR)/hfuse.bin
+	@echo x | $(AWK) '{printf "\x$(EFUSE)"}' > $(BINDIR)/efuse.bin
+	
 # create fuses, possibility 2
 #fuse2: $(OBJDIR)/$(TARGET).elf
 #	$(OBJCOPY) -j .fuse -O ihex $(OBJDIR)/$(TARGET).elf $(OBJDIR)/fuses.hex --change-section-lma .fuse=0
