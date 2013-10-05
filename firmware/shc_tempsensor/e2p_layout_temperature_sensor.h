@@ -76,5 +76,32 @@ typedef enum {
 #define EEPROM_AESKEY_BIT 0
 #define EEPROM_AESKEY_LENGTH_BYTES 32
 
-// overall length: 512 bits
+
+// ---------- TemperatureSensorConfig ----------
+
+// EnumValue TemperatureSensorType
+
+typedef enum {
+  TEMPERATURESENSORTYPE_NOSENSOR = 0,
+  TEMPERATURESENSORTYPE_SHT15 = 1
+} TemperatureSensorTypeEnum;
+
+#define EEPROM_TEMPERATURESENSORTYPE_BYTE 64
+#define EEPROM_TEMPERATURESENSORTYPE_BIT 0
+#define EEPROM_TEMPERATURESENSORTYPE_LENGTH_BITS 8
+
+// EnumValue BrightnessSensorType
+
+typedef enum {
+  BRIGHTNESSSENSORTYPE_NOSENSOR = 0,
+  BRIGHTNESSSENSORTYPE_PHOTOCELL = 1
+} BrightnessSensorTypeEnum;
+
+#define EEPROM_BRIGHTNESSSENSORTYPE_BYTE 65
+#define EEPROM_BRIGHTNESSSENSORTYPE_BIT 0
+#define EEPROM_BRIGHTNESSSENSORTYPE_LENGTH_BITS 8
+
+// Reserved area with 3568 bits
+
+// overall length: 4096 bits
 

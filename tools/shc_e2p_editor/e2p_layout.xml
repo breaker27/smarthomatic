@@ -65,6 +65,43 @@
 		</ByteArray>
 	</Block>
 	<Block>
+		<Name>TemperatureSensorConfig</Name>
+		<Description>This block contains the specific configuration data that only Temperature Sensor devices need.</Description>
+		<Restriction>
+			<RefID>DeviceType</RefID>
+			<Value>20</Value>
+		</Restriction>
+		<EnumValue>
+			<ID>TemperatureSensorType</ID>
+			<Description>You can choose one of the supported temperature / humidity sensors. If set to 0, no sensor is used, but the device sends out packets for testing purposes.</Description>
+			<Bits>8</Bits>
+			<Element>
+				<Value>0</Value>
+				<Name>NoSensor</Name>
+			</Element>
+			<Element>
+				<Value>1</Value>
+				<Name>SHT15</Name>
+			</Element>
+		</EnumValue>
+		<EnumValue>
+			<ID>BrightnessSensorType</ID>
+			<Description>You can choose one of the supported light sensors. If set to 0, no sensor is used, but the device sends out packets for testing purposes.</Description>
+			<Bits>8</Bits>
+			<Element>
+				<Value>0</Value>
+				<Name>NoSensor</Name>
+			</Element>
+			<Element>
+				<Value>1</Value>
+				<Name>Photocell</Name>
+			</Element>
+		</EnumValue>
+		<Reserved>
+			<Bits>3568</Bits>
+		</Reserved>
+	</Block>
+	<Block>
 		<Name>DimmerConfig</Name>
 		<Description>This block contains the specific configuration data that only Dimmer devices need.</Description>
 		<Restriction>

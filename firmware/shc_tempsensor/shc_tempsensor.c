@@ -26,6 +26,7 @@
 
 #include "rfm12.h"
 #include "uart.h"
+#include "e2p_layout_temperature_sensor.h"
 
 // switch on debugging by UART
 //#define UART_DEBUG
@@ -59,6 +60,8 @@
 #define PACKET_COUNTER_WRITE_CYCLE 100
 
 uint32_t packetcounter = 0;
+uint8_t temperature_sensor_type = 0;
+uint8_t brightness_sensor_type = 0;
 
 void printbytearray(uint8_t * b, uint8_t len)
 {
@@ -107,6 +110,10 @@ int main ( void )
 	packetcounter = eeprom_read_dword((uint32_t*)EEPROM_POS_PACKET_COUNTER) + PACKET_COUNTER_WRITE_CYCLE;
 	eeprom_write_dword((uint32_t*)0, packetcounter);
 
+	// read device specific config
+	temperature_sensor_type = eeprom_read_byte((uint8_t*)EEPROM_TEMPERATURESENSORTYPE_BYTE);	
+	brightness_sensor_type = eeprom_read_byte((uint8_t*)EEPROM_BRIGHTNESSSENSORTYPE_BYTE);	
+
 	// read device id and write to send buffer
 	device_id = eeprom_read_byte((uint8_t*)EEPROM_POS_DEVICE_ID);	
 	
@@ -118,6 +125,8 @@ int main ( void )
 	UART_PUTS ("smarthomatic Tempsensor V1.0 (c) 2013 Uwe Freese, www.smarthomatic.org\r\n");
 	UART_PUTF ("Device ID: %u\r\n", device_id);
 	UART_PUTF ("Packet counter: %u\r\n", packetcounter);
+	UART_PUTF ("Temperature Sensor Type: %u\r\n", temperature_sensor_type);
+	UART_PUTF ("Brightness Sensor Type: %u\r\n", brightness_sensor_type);
 #endif
 	
 	// init AES key
@@ -128,7 +137,10 @@ int main ( void )
 #endif
 
 #ifdef TEMP_SENS
-	sht11_init();
+	if (temperature_sensor_type == TEMPERATURESENSORTYPE_SHT15)
+	{
+	  sht11_init();
+	}
 #endif
 
 	rfm12_init();
@@ -160,12 +172,15 @@ int main ( void )
 #endif
 
 #ifdef TEMP_SENS
-		sht11_start_measure();
-		_delay_ms(500);
-		while (!sht11_measure_finish());
+		if (temperature_sensor_type == TEMPERATURESENSORTYPE_SHT15)
+		{
+			sht11_start_measure();
+			_delay_ms(500);
+			while (!sht11_measure_finish());
 		
-		temp += sht11_get_tmp();
-		hum += sht11_get_hum();
+			temp += sht11_get_tmp();
+			hum += sht11_get_hum();
+		}
 #endif
 
 		avg++;
@@ -204,7 +219,10 @@ int main ( void )
 
 			// update brightness
 #ifdef LIGHT_SENS
-			bufx[11] = 100 - (int)((long)vlight * 100 / 1024);
+			if (brightness_sensor_type == BRIGHTNESSSENSORTYPE_PHOTOCELL)
+			{
+				bufx[11] = 100 - (int)((long)vlight * 100 / 1024);
+			}
 #endif
 			uint32_t crc = crc32(bufx, 12);
 			UART_PUTF("CRC32 is %lx (added as last 4 bytes)\r\n", crc);
