@@ -12121,14 +12121,14 @@ W = angled&lt;p&gt;
 <part name="JP6" library="pinhead" deviceset="PINHD-1X1" device="" value="PB1"/>
 <part name="JP7" library="pinhead" deviceset="PINHD-1X1" device="" value="PB2"/>
 <part name="R6" library="rcl" deviceset="R-EU_" device="0207/7" value="10k"/>
-<part name="JP8" library="pinhead" deviceset="PINHD-1X1" device="" value="PD5"/>
+<part name="JP8" library="pinhead" deviceset="PINHD-1X1" device="" value="PD1/TX"/>
 </parts>
 <sheets>
 <sheet>
 <plain>
 <frame x1="-60.96" y1="-53.34" x2="132.08" y2="88.9" columns="8" rows="5" layer="97"/>
 <text x="40.64" y="-33.02" size="3.81" layer="97">smarthomatic Generic Midi 1</text>
-<text x="96.52" y="-38.1" size="2.1844" layer="97">Date: 09.05.2013</text>
+<text x="96.52" y="-38.1" size="2.1844" layer="97">Date: 05.10.2013</text>
 <text x="40.64" y="-38.1" size="2.1844" layer="97">Rev 1.0</text>
 <text x="40.64" y="-43.18" size="2.1844" layer="97">Copyright (c) Uwe Freese, www.smarthomatic.org</text>
 </plain>
