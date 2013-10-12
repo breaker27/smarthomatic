@@ -106,7 +106,7 @@ int main ( void )
 	//osccal_init();
 	
 #ifdef UART_DEBUG
-	uart_init();
+	uart_init(false);
 	UART_PUTS ("\r\n");
 	UART_PUTS ("smarthomatic Tempsensor V1.0 (c) 2013 Uwe Freese, www.smarthomatic.org\r\n");
 	UART_PUTF ("Device ID: %u\r\n", device_id);
@@ -202,7 +202,7 @@ int main ( void )
 			setBuf32(12, crc);
 
 #ifdef UART_DEBUG
-//			UART_PUTF3("Battery: %u%%, Temperature: %d deg.C, Humidity: %d%%\r\n", bat_percentage(vbat), temp / 100.0, hum / 100.0);
+			UART_PUTF3("Battery: %u%%, Temperature: %d deg.C, Humidity: %d%%\r\n", bat_percentage(vbat), temp / 100.0, hum / 100.0);
 #endif
 
 			rfm12_sendbuf();
