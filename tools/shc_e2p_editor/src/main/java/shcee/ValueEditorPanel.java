@@ -261,7 +261,7 @@ public class ValueEditorPanel extends JPanel
 				byte[] data = Util.readFileToByteArray(filename);
 				readFromEepromArray(data);
 			}
-			catch (IOException e)
+			catch (Exception e)
 			{
 				e.printStackTrace();
 				JOptionPane.showMessageDialog(null, "The file " + filename
@@ -290,6 +290,12 @@ public class ValueEditorPanel extends JPanel
 	{
 		int offset = 0;
 
+		// Switch all blocks of so no blocks are displayed that are not used for the device if anything goes wrong reading the bytes from the file (e.g. file too short).
+		for (Block b : blocks)
+		{
+			b.setVisible(false);
+		}
+		
 		for (Block b : blocks)
 		{
 			boolean match = true;
