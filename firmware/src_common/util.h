@@ -27,6 +27,8 @@
 #define sbi(ADDRESS,BIT) ((ADDRESS) |= (1<<(BIT)))
 #define cbi(ADDRESS,BIT) ((ADDRESS) &= ~(1<<(BIT)))
 
+#include "e2p_layout.h" // device specific (!) version of e2p layout in the device's directory
+
 // used as buffer for sending data to SHT
 extern uint8_t bufx[];
 unsigned int adc_data;

@@ -32,8 +32,6 @@
 #define UART_DEBUG   // Debug output over UART
 //#define UART_DEBUG_CALCULATIONS
 
-#define DEVICE_TYPE_DIMMER 20 // TODO: Move device type definitions to extra file
-
 #define EEPROM_POS_DEVICE_ID 8
 #define EEPROM_POS_PACKET_COUNTER 9
 #define EEPROM_POS_STATION_PACKET_COUNTER 13
@@ -306,7 +304,7 @@ int main(void)
 	_delay_ms(1000);
 
 	util_init();
-	check_eeprom_compatibility(DEVICE_TYPE_DIMMER);
+	check_eeprom_compatibility(DEVICETYPE_DIMMER);
 
 	osccal_init();
 	

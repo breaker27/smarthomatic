@@ -37,9 +37,6 @@
 
 uint8_t bufx[65];
 
-#define EEPROM_POS_DEVICE_TYPE 0
-#define EEPROM_POS_OSCCAL_MODE 1
-
 #define LED_PIN 7
 #define LED_PORT PORTD
 #define LED_DDR DDRD
@@ -257,7 +254,7 @@ void led_blink(uint16_t on, uint16_t off, uint8_t times)
 // If not, wait in endless loop and let LED blink.
 void check_eeprom_compatibility(uint8_t deviceType)
 {
-	uint8_t dt = eeprom_read_byte((uint8_t*)EEPROM_POS_DEVICE_TYPE);
+	uint8_t dt = eeprom_read_byte((uint8_t*)EEPROM_DEVICETYPE_BYTE);
 	
 	if (dt != deviceType)
 	{
@@ -271,7 +268,7 @@ void check_eeprom_compatibility(uint8_t deviceType)
 // print an info over UART about the OSCCAL adjustment that was made
 void osccal_info(void)
 {
-	uint8_t mode = eeprom_read_byte((uint8_t*)EEPROM_POS_OSCCAL_MODE);
+	uint8_t mode = eeprom_read_byte((uint8_t*)EEPROM_OSCCALMODE_BYTE);
 	
 	if ((mode > 0) && (mode < 255))
 	{
@@ -288,7 +285,7 @@ void osccal_info(void)
 //           Ex: Setting the value to 138 adjusts the speed by (X - 128) promille = +1%.
 void osccal_init(void)
 {
-	uint8_t mode = eeprom_read_byte((uint8_t*)EEPROM_POS_OSCCAL_MODE);
+	uint8_t mode = eeprom_read_byte((uint8_t*)EEPROM_OSCCALMODE_BYTE);
 	
 	if (mode == 255)
 	{

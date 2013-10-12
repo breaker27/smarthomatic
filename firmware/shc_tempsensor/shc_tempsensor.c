@@ -26,32 +26,16 @@
 
 #include "rfm12.h"
 #include "uart.h"
-#include "e2p_layout_temperature_sensor.h"
 
 // switch on debugging by UART
 //#define UART_DEBUG
 
-// switch on voltage check of battery on PC0 (ADC0)
-#define VBAT_SENSOR
-
-// switch on SHT15 temperature / humidity sensor on PC2 + PC3
-#define TEMP_SENS
-
-// switch on light sensor on PC1 (ADC1)
-#define LIGHT_SENS
-
-#ifdef TEMP_SENS
-	#include "sht11.h"
-#endif
+#include "sht11.h"
 
 #include "../src_common/aes256.h"
 #include "util.h"
 
 #define AVERAGE_COUNT 4 // Average over how many values before sending over RFM12?
-
-#define EEPROM_POS_DEVICE_ID 8
-#define EEPROM_POS_PACKET_COUNTER 9
-#define EEPROM_POS_AES_KEY 32
 
 // How often should the packetcounter_base be increased and written to EEPROM?
 // This should be 2^32 (which is the maximum transmitted packet counter) /
@@ -106,8 +90,10 @@ int main ( void )
 
 	util_init();
 
+	check_eeprom_compatibility(DEVICETYPE_TEMPERATURE_SENSOR);
+
 	// read packetcounter, increase by cycle and write back
-	packetcounter = eeprom_read_dword((uint32_t*)EEPROM_POS_PACKET_COUNTER) + PACKET_COUNTER_WRITE_CYCLE;
+	packetcounter = eeprom_read_dword((uint32_t*)EEPROM_PACKETCOUNTER_BYTE) + PACKET_COUNTER_WRITE_CYCLE;
 	eeprom_write_dword((uint32_t*)0, packetcounter);
 
 	// read device specific config
@@ -115,7 +101,7 @@ int main ( void )
 	brightness_sensor_type = eeprom_read_byte((uint8_t*)EEPROM_BRIGHTNESSSENSORTYPE_BYTE);	
 
 	// read device id and write to send buffer
-	device_id = eeprom_read_byte((uint8_t*)EEPROM_POS_DEVICE_ID);	
+	device_id = eeprom_read_byte((uint8_t*)EEPROM_DEVICEID_BYTE);	
 	
 	//osccal_init();
 	
@@ -130,18 +116,14 @@ int main ( void )
 #endif
 	
 	// init AES key
-	eeprom_read_block (aes_key, (uint8_t *)EEPROM_POS_AES_KEY, 32);
+	eeprom_read_block (aes_key, (uint8_t *)EEPROM_AESKEY_BYTE, 32);
 
-#ifdef VBAT_SENSOR
 	adc_init();
-#endif
 
-#ifdef TEMP_SENS
 	if (temperature_sensor_type == TEMPERATURESENSORTYPE_SHT15)
 	{
 	  sht11_init();
 	}
-#endif
 
 	rfm12_init();
 	//rfm12_set_wakeup_timer(0b11100110000);   // ~ 6s
@@ -155,23 +137,19 @@ int main ( void )
 
 	while (42)
 	{
-#if defined VBAT_SENSOR || defined LIGHT_SENS
+		// Measure using ADCs
 		adc_on(true);
-#endif
 
-#ifdef VBAT_SENSOR
 		vbat += (int)((long)read_adc(0) * 34375 / 10000 / 2); // 1.1 * 480 Ohm / 150 Ohm / 1,024
-#endif
 
-#ifdef LIGHT_SENS
-		vlight += read_adc(1);
-#endif
+		if (brightness_sensor_type == BRIGHTNESSSENSORTYPE_PHOTOCELL)
+		{
+			vlight += read_adc(1);
+		}
 
-#if defined VBAT_SENSOR || defined LIGHT_SENS
 		adc_on(false);
-#endif
 
-#ifdef TEMP_SENS
+		// Measure SHT15
 		if (temperature_sensor_type == TEMPERATURESENSORTYPE_SHT15)
 		{
 			sht11_start_measure();
@@ -181,7 +159,6 @@ int main ( void )
 			temp += sht11_get_tmp();
 			hum += sht11_get_hum();
 		}
-#endif
 
 		avg++;
 		
@@ -212,18 +189,14 @@ int main ( void )
 			bufx[6] = bat_percentage(vbat);
 
 			// update temperature and humidity
-#ifdef TEMP_SENS
 			setBuf16(7, (uint16_t)temp);
 			setBuf16(9, hum);
-#endif
 
 			// update brightness
-#ifdef LIGHT_SENS
 			if (brightness_sensor_type == BRIGHTNESSSENSORTYPE_PHOTOCELL)
 			{
 				bufx[11] = 100 - (int)((long)vlight * 100 / 1024);
 			}
-#endif
 			uint32_t crc = crc32(bufx, 12);
 			UART_PUTF("CRC32 is %lx (added as last 4 bytes)\r\n", crc);
 			setBuf32(12, crc);
