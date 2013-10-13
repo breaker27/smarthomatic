@@ -250,6 +250,15 @@ void led_blink(uint16_t on, uint16_t off, uint8_t times)
 	}
 }
 
+// Signal a serious error state and do nothing further except LED blinking.
+void signal_error_state()
+{
+	while (1)
+	{
+		led_blink(50, 200, 1);
+	}
+}
+
 // Check if the EEPROM is compatible to the device by checking against the device type byte in EEPROM.
 // If not, wait in endless loop and let LED blink.
 void check_eeprom_compatibility(uint8_t deviceType)
@@ -258,10 +267,7 @@ void check_eeprom_compatibility(uint8_t deviceType)
 	
 	if (dt != deviceType)
 	{
-		while (1)
-		{
-			led_blink(50, 200, 1);
-		}
+		signal_error_state();
 	}
 }
 
