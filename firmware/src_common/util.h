@@ -38,9 +38,6 @@ uint32_t linear_interpolate32(uint32_t in, uint32_t min_in, uint32_t max_in, uin
 float linear_interpolate_f(float in, float min_in, float max_in, float min_out, float max_out);
 int bat_percentage(int vbat);
 
-uint8_t eeprom_read_uint8(unsigned int addr_offset);
-unsigned int eeprom_read_int(unsigned int addr_offset);
-
 void adc_init(void);
 void adc_on(bool on);
 unsigned int read_adc(unsigned char adc_input);

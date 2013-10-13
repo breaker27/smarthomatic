@@ -20,6 +20,7 @@
 OBJDIR = build
 BINDIR = bin
 
+
 # Compiler command
 CC = gcc
 
@@ -28,6 +29,7 @@ LD = gcc
 
 # Flags to pass to the compiler - add "-g" to include debug information
 CFLAGS = -Wall
+CFLAGS += -DUNITTEST=1 # tell some header files that we are compiling for the unittest (and AVR functions are not available)
 
 # Flags to pass to the linker
 LDFLAGS = 
@@ -36,7 +38,7 @@ LDFLAGS =
 RM = rm
 
 # List your source files here
-CSRC = main.c
+CSRC = main.c ../src_common/e2p_access.c
 
 # List your object files here
 OBJ = $(CSRC:%.c=$(OBJDIR)/%.o)
