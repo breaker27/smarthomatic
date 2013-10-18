@@ -1,1 +1,1 @@
-<Project name="src_common"><File path="uart.c"></File><File path="uart.h"></File><File path="util.c"></File><File path="util.h"></File><File path="aes256.c"></File><File path="aes256.h"></File></Project>
+<Project name="src_common"><File path="uart.c"></File><File path="uart.h"></File><File path="util.c"></File><File path="util.h"></File><File path="aes256.c"></File><File path="aes256.h"></File><File path="e2p_access.c"></File><File path="e2p_access.h"></File></Project>
