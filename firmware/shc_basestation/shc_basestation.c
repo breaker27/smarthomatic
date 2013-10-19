@@ -484,8 +484,8 @@ int main ( void )
 				ow_temp_start_convert(NULL,0);	// send to all sensors, don't wait
 #ifdef ONEWIRE_DEBUG
 				UART_PUTS("ow_temp_start_convert\r\n");
-			}
 #endif
+			}
 			if (ow_timer==0){	
 				ow_timer=1;	// misused to distinguish 1st and consecutive ow rom searches
 				ow_device_found=1;
