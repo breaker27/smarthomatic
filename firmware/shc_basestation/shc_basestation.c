@@ -19,6 +19,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
+#include <util/crc16.h>
 #include <string.h>
 #include <avr/wdt.h>
 #include <avr/sleep.h>

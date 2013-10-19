@@ -30,6 +30,7 @@
 #include <stdio.h>
 #define __DELAY_BACKWARD_COMPATIBLE__
 #include <util/delay.h>
+#include <util/crc16.h>
 #include <avr/eeprom.h>
 
 #include "util.h"
