@@ -19,6 +19,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
+#include <util/crc16.h>
 #include <string.h>
 #include <avr/wdt.h>
 #include <avr/sleep.h>
@@ -27,6 +28,9 @@
 #include "rfm12.h"
 
 #define UART_DEBUG   // Debug output over UART
+
+#define ONEWIRE_SUPPORT
+#include "onewire.h"
 
 #include "uart.h"
 #include "aes256.h"
@@ -243,6 +247,12 @@ int main ( void )
 	
 	uint8_t data[22];
 
+	uint8_t ow_timer=3;
+	ow_temp_scratchpad_t ow_sp;
+	uint8_t ow_device_found;
+	uint8_t ret;
+	int16_t	temp;
+
 	sbi(LED_DDR, LED_PIN);
 
 	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
@@ -265,8 +275,10 @@ int main ( void )
 	UART_PUTS ("Waiting for incoming data. Press h for help.\r\n");
 
 	rfm12_init();
+	onewire_init();
+	UART_PUTS ("onewire_init\r\n");
 	sei();
-	
+
 	// ENCODE TEST
 	/*
 	uint8_t testlen = 64;
@@ -453,8 +465,39 @@ int main ( void )
 		if (loop == 50)
 		{
 			led_blink(10, 10, 1);
-			
 			loop = 0;
+
+			ow_timer--;
+			if (ow_timer==2){	// send command "convert" 2 secs earlier
+				ow_temp_start_convert(NULL,0);	// send to all sensors, don't wait
+				UART_PUTS("ow_temp_start_convert\r\n");
+			}
+			if (ow_timer==0){	
+				ow_timer=1;	// misused to distinguish 1st and consecutive ow rom searches
+				ow_device_found=1;
+				while (ow_device_found==1) {
+					ow_device_found=ow_search_rom(ONEWIRE_BUSMASK,ow_timer);	// search for next device
+					UART_PUTF2("ow_device_found %i said %i\r\n",ow_timer,ow_device_found);
+					ow_timer=0;
+					if (ow_device_found==1){
+						ret=ow_temp_read_scratchpad(&ow_global.current_rom,&ow_sp);	// read scratchpad
+						UART_PUTF("ow_temp_read_scratchpad said %i\r\n",ret);
+						temp=ow_temp_normalize(&ow_global.current_rom,&ow_sp);
+						UART_PUTF2("Sensor serial: %02x%02x",ow_global.current_rom.bytewise[0],ow_global.current_rom.bytewise[1]);
+						UART_PUTF2("%02x%02x",ow_global.current_rom.bytewise[2],ow_global.current_rom.bytewise[3]);
+						UART_PUTF2("%02x%02x",ow_global.current_rom.bytewise[4],ow_global.current_rom.bytewise[5]);
+						UART_PUTF2("%02x%02x ",ow_global.current_rom.bytewise[6],ow_global.current_rom.bytewise[7]);
+						int8_t sign = (int8_t) (temp < 0);
+						if (sign){
+							temp = -temp;
+						}
+						UART_PUTF2("Scratchpad says: %s%d",sign ? "-" : "", (int8_t) HI8(temp));
+						UART_PUTF(".%2d\r\n",HI8(((temp & 0x00ff) * 100) + 0x80));
+					}
+				}
+				ow_timer=10;
+				
+			}
 
 			if (set_repeat_request(packetcounter + 1)) // if request to repeat was found in queue
 			{

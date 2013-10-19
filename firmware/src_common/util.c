@@ -31,6 +31,7 @@
 #define __DELAY_BACKWARD_COMPATIBLE__
 #include <util/delay.h>
 #include <avr/eeprom.h>
+#include <util/crc16.h>
 
 #include "util.h"
 #include "uart.h"
@@ -142,6 +143,21 @@ unsigned int read_adc(unsigned char adc_input)
 	set_sleep_mode(SLEEP_MODE_ADC);
 	sleep_mode();
 	return adc_data;
+}
+
+uint8_t
+crc_checksum (void *data, uint8_t length)	// needed for Onewire
+{
+
+	uint8_t crc = 0;
+	uint8_t *p = (uint8_t *) data;
+
+	for (uint8_t i = 0; i < length; i++)
+		{
+			crc = _crc_ibutton_update (crc, *p);
+			p++;
+		}
+	return crc;
 }
 
 /*
