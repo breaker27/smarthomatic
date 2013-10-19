@@ -32,7 +32,6 @@
 #include <util/delay.h>
 #include <util/crc16.h>
 #include <avr/eeprom.h>
-#include <util/crc16.h>
 
 #include "util.h"
 #include "uart.h"
