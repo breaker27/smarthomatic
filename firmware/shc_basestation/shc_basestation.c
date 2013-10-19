@@ -243,8 +243,7 @@ int main ( void )
 	
 	uint8_t data[22];
 
-	// sbi(LED_DDR, LED_PIN); deprecated - this should be the same:
-	LED_DDR |= _BV (LED_PIN);
+	sbi(LED_DDR, LED_PIN);
 
 	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
 	_delay_ms(1000);
