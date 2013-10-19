@@ -254,7 +254,6 @@ int main ( void )
 	uint8_t ow_timer=3;
 	ow_temp_scratchpad_t ow_sp;
 	uint8_t ow_device_found;
-	uint8_t ret;
 	int16_t	temp;
 #endif
 
@@ -496,7 +495,7 @@ int main ( void )
 #endif                  
 					ow_timer=0;
 					if (ow_device_found==1){
-						ret=ow_temp_read_scratchpad(&ow_global.current_rom,&ow_sp);	// read scratchpad
+						uint8_t ret=ow_temp_read_scratchpad(&ow_global.current_rom,&ow_sp);	// read scratchpad
 #ifdef ONEWIRE_DEBUG                    
 						UART_PUTF("ow_temp_read_scratchpad said %i\r\n",ret);
 #endif                                  
