@@ -33,6 +33,7 @@
 #ifdef ONEWIRE_SUPPORT
 #include "onewire.h"
 #define ONEWIRE_DEBUG
+#define ONEWIRE_CYCLETIME 120	// check the onewire sensors every nn seconds
 #endif
 
 #include "uart.h"
@@ -512,7 +513,7 @@ int main ( void )
 						UART_PUTF(".%2d\r\n",HI8(((temp & 0x00ff) * 100) + 0x80));
 					}
 				}
-				ow_timer=10;
+				ow_timer=ONEWIRE_CYCLETIME;
 				
 			}
 #endif	//ONEWIRE_SUPPORT
