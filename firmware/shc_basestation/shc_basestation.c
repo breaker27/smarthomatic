@@ -25,17 +25,9 @@
 #include <avr/sleep.h>
 #include <avr/eeprom.h>
 
-#include "rfm12.h"
-
 #define UART_DEBUG   // Debug output over UART
-
-#define ONEWIRE_SUPPORT
-#ifdef ONEWIRE_SUPPORT
+#include "rfm12.h"
 #include "onewire.h"
-#define ONEWIRE_DEBUG
-#define ONEWIRE_CYCLETIME 120	// check the onewire sensors every nn seconds
-#endif
-
 #include "uart.h"
 #include "aes256.h"
 
@@ -252,7 +244,7 @@ int main ( void )
 	uint8_t data[22];
 
 #ifdef ONEWIRE_SUPPORT
-	uint8_t ow_timer=3;
+extern	uint8_t ow_timer;
 	ow_temp_scratchpad_t ow_sp;
 	uint8_t ow_device_found;
 	int16_t	temp;
@@ -501,7 +493,7 @@ int main ( void )
 						UART_PUTF("ow_temp_read_scratchpad said %i\r\n",ret);
 #endif                                  
 						temp=ow_temp_normalize(&ow_global.current_rom,&ow_sp);
-						UART_PUTF2("OW temperature sensor %02x%02x",ow_global.current_rom.bytewise[0],ow_global.current_rom.bytewise[1]);
+						UART_PUTS("OW temperature sensor ");
 						for (uint8_t i=0; i<8; i++){
 							UART_PUTF("%02x",ow_global.current_rom.bytewise[i]);
 						}

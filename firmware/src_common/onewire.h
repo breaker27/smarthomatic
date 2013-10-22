@@ -27,6 +27,10 @@
 
 #ifndef ONEWIRE_H
 #define ONEWIRE_H
+#define ONEWIRE_SUPPORT
+#ifdef ONEWIRE_SUPPORT
+#define ONEWIRE_DEBUG
+#define ONEWIRE_CYCLETIME 120	// check the onewire sensors every nn seconds
 
 //#include "config.h"
 
@@ -53,8 +57,6 @@
 #define ONEWIRE_DETECT_SUPPORT
 
 #include <stdint.h>
-
-#ifdef ONEWIRE_SUPPORT
 
 #ifdef DEBUG_ECMD_OW_ROM
 #include "core/debug.h"

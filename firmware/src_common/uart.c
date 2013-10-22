@@ -21,13 +21,17 @@
 #include <stdlib.h>
 #include <avr/eeprom.h>
 #include <string.h>
-
+#include "onewire.h"
 #include "uart.h"
 #include "util.h"
 
 bool enable_write_eeprom = false;
 uint8_t bytes_to_read = 0;
 uint8_t bytes_pos = 0;
+
+#ifdef ONEWIRE_SUPPORT
+uint8_t ow_timer=3;
+#endif
 
 // This buffer is used for sending strings over UART using UART_PUT... functions.
 char uartbuf[65]; 
@@ -189,6 +193,7 @@ void process_rxbuf(void)
 			UART_PUTS("z.........disable writing to EEPROM\r\n");
 			UART_PUTS("sKKCCXX...Use AES key KK to send a packet with command ID CC and data XX (0..22 bytes).\r\n");
 			UART_PUTS("          End data with ENTER. Packet number and CRC are automatically added.\r\n");
+			UART_PUTS("o.........start onewire thermal sensor conversion\r\n");
 		}
 		else if (input == 'x')
 		{
@@ -199,6 +204,9 @@ void process_rxbuf(void)
 		{
 			enable_write_eeprom = false;
 			UART_PUTS("*** Writing to EEPROM is now DISABLED. ***\r\n");
+		}
+		else if (input == 'o'){
+			ow_timer=3;
 		}
 		else if (input == 'r')
 		{
