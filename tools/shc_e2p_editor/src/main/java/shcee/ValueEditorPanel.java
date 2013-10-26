@@ -145,19 +145,19 @@ public class ValueEditorPanel extends JPanel
 
 	protected void onButtonFlash()
 	{
-		String oldCmd = "d:\\Befehle\\avrdude\\avrdude.exe -P com7 -cstk500v2 -p #DEVICE# -U eeprom:w:#FILENAME#:r";
+		String oldCmd = "avrdude.exe -p #DEVICE# -U eeprom:w:#FILENAME#:r";
 		
 		Object cmdLine = JOptionPane.showInputDialog(SHCEEMain.mySHCEEMain,
 				"<html><body><b>Enter command for flashing e2p file</b><br/><br/>" +
 				"#DEVICE# will be replaced by m328p or m168 according to e2p size<br/>" +
 				"#FILENAME# will be replaced by the e2p filename<br/><br/>" +
-				"Default is: avrdude.exe -P com7 -cstk500v2 -p #DEVICE# -U eeprom:w:#FILENAME#:r</body></html>", "Flash e2p file to device", JOptionPane.PLAIN_MESSAGE, null, null, oldCmd);
+				"Default is: avrdude.exe -p #DEVICE# -U eeprom:w:#FILENAME#:r</body></html>", "Flash e2p file to device", JOptionPane.PLAIN_MESSAGE, null, null, oldCmd);
 		
 		if (null != cmdLine)
 		{
 			String cmdLineS = (String)cmdLine;
 			
-			if (length > 512)
+			if (length > 4096)
 			{			
 				cmdLineS = cmdLineS.replace("#DEVICE#", "m328p");
 			}
