@@ -274,7 +274,7 @@ int main ( void )
 	uart_init(true);
 	UART_PUTS ("\r\n");
 	UART_PUTS ("smarthomatic Base Station V1.0 (c) 2012 Uwe Freese, www.smarthomatic.org\r\n");
-	UART_PUTF ("Device ID: %lu\r\n", deviceID);
+	UART_PUTF ("Device ID: %u\r\n", deviceID);
 	UART_PUTF ("Packet counter: %lu\r\n", packetcounter);
 	UART_PUTF ("AES key count: %u\r\n", aes_key_count);
 	UART_PUTS ("Waiting for incoming data. Press h for help.\r\n");
