@@ -32,8 +32,13 @@
 
 #include "sht11.h"
 
-#include "../src_common/aes256.h"
+#include "aes256.h"
 #include "util.h"
+
+// check some assumptions at precompile time about flash layout
+#if (EEPROM_AESKEY_BIT != 0)
+	#error AES key does not start at a byte border. Not supported (maybe fix E2P layout?).
+#endif
 
 #define AVERAGE_COUNT 4 // Average over how many values before sending over RFM12?
 
@@ -93,17 +98,23 @@ int main ( void )
 	check_eeprom_compatibility(DEVICETYPE_TEMPERATURE_SENSOR);
 
 	// read packetcounter, increase by cycle and write back
-	packetcounter = eeprom_read_dword((uint32_t*)EEPROM_PACKETCOUNTER_BYTE) + PACKET_COUNTER_WRITE_CYCLE;
-	eeprom_write_dword((uint32_t*)0, packetcounter);
+	packetcounter = eeprom_read_UIntValue32(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT,
+		EEPROM_PACKETCOUNTER_LENGTH_BITS, EEPROM_PACKETCOUNTER_MINVAL, EEPROM_PACKETCOUNTER_MAXVAL) + PACKET_COUNTER_WRITE_CYCLE;
+
+	eeprom_write_UIntValue((uint16_t)EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
 
 	// read device specific config
-	temperature_sensor_type = eeprom_read_byte((uint8_t*)EEPROM_TEMPERATURESENSORTYPE_BYTE);	
-	brightness_sensor_type = eeprom_read_byte((uint8_t*)EEPROM_BRIGHTNESSSENSORTYPE_BYTE);	
+	temperature_sensor_type = eeprom_read_UIntValue8(EEPROM_TEMPERATURESENSORTYPE_BYTE,
+		EEPROM_TEMPERATURESENSORTYPE_BIT, EEPROM_TEMPERATURESENSORTYPE_LENGTH_BITS, 0, 255);
+
+	brightness_sensor_type = eeprom_read_UIntValue8(EEPROM_BRIGHTNESSSENSORTYPE_BYTE,
+		EEPROM_BRIGHTNESSSENSORTYPE_BIT, EEPROM_BRIGHTNESSSENSORTYPE_LENGTH_BITS, 0, 255);
 
 	// read device id and write to send buffer
-	device_id = eeprom_read_byte((uint8_t*)EEPROM_DEVICEID_BYTE);	
+	device_id = eeprom_read_UIntValue16(EEPROM_DEVICEID_BYTE, EEPROM_DEVICEID_BIT,
+		EEPROM_DEVICEID_LENGTH_BITS, EEPROM_DEVICEID_MINVAL, EEPROM_DEVICEID_MAXVAL);
 	
-	//osccal_init();
+	osccal_init();
 	
 #ifdef UART_DEBUG
 	uart_init(false);
@@ -126,10 +137,10 @@ int main ( void )
 	}
 
 	rfm12_init();
-	//rfm12_set_wakeup_timer(0b11100110000);   // ~ 6s
+	rfm12_set_wakeup_timer(0b11100110000);   // ~ 6s
 	//rfm12_set_wakeup_timer(0b11111000000);   // ~ 24576ms
 	//rfm12_set_wakeup_timer(0b0100101110101); // ~ 59904ms
-	rfm12_set_wakeup_timer(0b101001100111); // ~ 105472ms  CORRECT VALUE!!!
+	//rfm12_set_wakeup_timer(0b101001100111); // ~ 105472ms  CORRECT VALUE!!!
 
 	led_blink(100, 150, 20);
 
