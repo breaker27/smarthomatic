@@ -20,7 +20,6 @@
 OBJDIR = build
 BINDIR = bin
 
-
 # Compiler command
 CC = gcc
 
