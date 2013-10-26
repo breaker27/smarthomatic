@@ -137,10 +137,10 @@ int main ( void )
 	}
 
 	rfm12_init();
-	rfm12_set_wakeup_timer(0b11100110000);   // ~ 6s
+	//rfm12_set_wakeup_timer(0b11100110000);   // ~ 6s
 	//rfm12_set_wakeup_timer(0b11111000000);   // ~ 24576ms
 	//rfm12_set_wakeup_timer(0b0100101110101); // ~ 59904ms
-	//rfm12_set_wakeup_timer(0b101001100111); // ~ 105472ms  CORRECT VALUE!!!
+	rfm12_set_wakeup_timer(0b101001100111); // ~ 105472ms  CORRECT VALUE!!!
 
 	led_blink(100, 150, 20);
 
