@@ -1,5 +1,8 @@
 #include <stdint.h>
 
+#ifndef E2P_ACCESS_H
+#define E2P_ACCESS_H
+
 #ifdef UNITTEST
 
 uint8_t eeprom_read_byte (const uint8_t *_p);
@@ -58,3 +61,5 @@ static inline void array_write_UIntValue(uint16_t byte, uint8_t bit, uint16_t le
 {
 	_eeprom_write_UIntValue(byte, bit, length_bits, val, array);
 }
+
+#endif // E2P_ACCESS
