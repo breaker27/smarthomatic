@@ -293,7 +293,8 @@ void osccal_info(void)
 //           Ex: Setting the value to 138 adjusts the speed by (X - 128) promille = +1%.
 void osccal_init(void)
 {
-	uint8_t mode = eeprom_read_byte((uint8_t*)EEPROM_OSCCALMODE_BYTE);
+	uint8_t mode = eeprom_read_UIntValue8(EEPROM_OSCCALMODE_BYTE, EEPROM_OSCCALMODE_BIT,
+		EEPROM_OSCCALMODE_LENGTH_BITS, EEPROM_OSCCALMODE_MINVAL, EEPROM_OSCCALMODE_MAXVAL);
 	
 	if (mode == 255)
 	{
