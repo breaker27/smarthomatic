@@ -101,7 +101,7 @@ int main ( void )
 	packetcounter = eeprom_read_UIntValue32(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT,
 		EEPROM_PACKETCOUNTER_LENGTH_BITS, EEPROM_PACKETCOUNTER_MINVAL, EEPROM_PACKETCOUNTER_MAXVAL) + PACKET_COUNTER_WRITE_CYCLE;
 
-	eeprom_write_UIntValue((uint16_t)EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
+	eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
 
 	// read device specific config
 	temperature_sensor_type = eeprom_read_UIntValue8(EEPROM_TEMPERATURESENSORTYPE_BYTE,
@@ -127,7 +127,7 @@ int main ( void )
 #endif
 	
 	// init AES key
-	eeprom_read_block (aes_key, (uint8_t *)EEPROM_AESKEY_BYTE, 32);
+	eeprom_read_block(aes_key, (uint8_t *)EEPROM_AESKEY_BYTE, 32);
 
 	adc_init();
 
@@ -209,7 +209,9 @@ int main ( void )
 				bufx[11] = 100 - (int)((long)vlight * 100 / 1024);
 			}
 			uint32_t crc = crc32(bufx, 12);
+#ifdef UART_DEBUG
 			UART_PUTF("CRC32 is %lx (added as last 4 bytes)\r\n", crc);
+#endif
 			setBuf32(12, crc);
 
 #ifdef UART_DEBUG
