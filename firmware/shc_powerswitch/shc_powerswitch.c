@@ -32,27 +32,21 @@
 #define UART_DEBUG   // Debug output over UART
 // #define UART_RX      // Also allow receiving characters over UART (RX). Usually only necessary for the base station.
 
-#define EEPROM_POS_DEVICE_ID 8
-#define EEPROM_POS_PACKET_COUNTER 9
-#define EEPROM_POS_STATION_PACKET_COUNTER 13
-#define EEPROM_POS_SWITCH_STATE 17 // 2 Byte * 3
-#define EEPROM_POS_AES_KEY 32
-
-#define LED_DDR DDRD
-
-// TODO: Support more than one relais!
-#define RELAIS_PORT PORTC
-#define RELAIS_PIN_START 1
-
 // How often should the packetcounter_base be increased and written to EEPROM?
 // This should be 2^32 (which is the maximum transmitted packet counter) /
 // 100.000 (which is the maximum amount of possible EEPROM write cycles) or more.
 // Therefore 100 is a good value.
 #define PACKET_COUNTER_WRITE_CYCLE 100
 
-#define SWITCH_COUNT 1 // don't change this, because other switch count like 8 needs other status message
+// Don't change this, because other switch count like 8 needs other status message.
+// If support implemented, use EEPROM_SUPPORTEDSWITCHES_* E2P addresses.
+#define SWITCH_COUNT 1
 
-#define SEND_STATUS_EVERY_SEC 60 // how often should a status be sent
+// TODO: Support more than one relais!
+#define RELAIS_PORT PORTC
+#define RELAIS_PIN_START 1
+
+#define SEND_STATUS_EVERY_SEC 600 // how often should a status be sent?
 
 uint8_t device_id;
 uint32_t packetcounter;
@@ -173,7 +167,6 @@ int main ( void )
 	uint8_t loop = 0;
 	uint8_t i;
 
-	
 	for (i = 0; i < SWITCH_COUNT; i++)
 	{
 		sbi(DDRC, RELAIS_PIN_START + i);
@@ -183,22 +176,29 @@ int main ( void )
 	_delay_ms(1000);
 
 	// read packetcounter, increase by cycle and write back
-	packetcounter = eeprom_read_dword((uint32_t*)EEPROM_POS_PACKET_COUNTER) + PACKET_COUNTER_WRITE_CYCLE;
-	eeprom_write_dword((uint32_t*)EEPROM_POS_PACKET_COUNTER, packetcounter);
+	packetcounter = eeprom_read_UIntValue32(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT,
+		EEPROM_PACKETCOUNTER_LENGTH_BITS, EEPROM_PACKETCOUNTER_MINVAL, EEPROM_PACKETCOUNTER_MAXVAL) + PACKET_COUNTER_WRITE_CYCLE;
 
-	// read device id and write to send buffer
-	device_id = eeprom_read_byte((uint8_t*)EEPROM_POS_DEVICE_ID);	
+	eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
+
+	// read device specific config
 	
 	// read (saved) switch state from before the eventual powerloss
 	for (i = 0; i < SWITCH_COUNT; i++)
 	{
-		uint16_t u16 = eeprom_read_word((uint16_t*)EEPROM_POS_SWITCH_STATE + i * 2);
+		uint16_t u16 = eeprom_read_UIntValue16(EEPROM_SWITCHSTATE_BYTE + i * 2, EEPROM_SWITCHSTATE_BIT,
+			16, 0, 255);
 		switch_state[i] = (uint8_t)(u16 & 0b1);
 		switch_timeout[i] = u16 >> 1;
 	}
 
 	// read last received station packetcounter
-	station_packetcounter = eeprom_read_dword((uint32_t*)EEPROM_POS_STATION_PACKET_COUNTER);
+	station_packetcounter = eeprom_read_UIntValue32(EEPROM_BASESTATIONPACKETCOUNTER_BYTE, EEPROM_BASESTATIONPACKETCOUNTER_BIT,
+		EEPROM_BASESTATIONPACKETCOUNTER_LENGTH_BITS, EEPROM_BASESTATIONPACKETCOUNTER_MINVAL, EEPROM_BASESTATIONPACKETCOUNTER_MAXVAL);
+	
+	// read device id and write to send buffer
+	device_id = eeprom_read_UIntValue16(EEPROM_DEVICEID_BYTE, EEPROM_DEVICEID_BIT,
+		EEPROM_DEVICEID_LENGTH_BITS, EEPROM_DEVICEID_MINVAL, EEPROM_DEVICEID_MAXVAL);
 
 #ifdef UART_DEBUG
 	uart_init(false);
@@ -211,7 +211,7 @@ int main ( void )
 #endif
 	
 	// init AES key
-	eeprom_read_block (aes_key, (uint8_t *)EEPROM_POS_AES_KEY, 32);
+	eeprom_read_block(aes_key, (uint8_t *)EEPROM_AESKEY_BYTE, 32);
 
 	rfm12_init();
 
@@ -288,7 +288,9 @@ int main ( void )
 						{
 							// write received counter
 							station_packetcounter = packcnt;
-							eeprom_write_dword((uint32_t*)EEPROM_POS_STATION_PACKET_COUNTER, station_packetcounter);
+							
+							eeprom_write_UIntValue(EEPROM_BASESTATIONPACKETCOUNTER_BYTE, EEPROM_BASESTATIONPACKETCOUNTER_BIT,
+								EEPROM_BASESTATIONPACKETCOUNTER_LENGTH_BITS, station_packetcounter);
 							
 							// check command ID
 							uint8_t cmd = bufx[5];
@@ -337,7 +339,8 @@ int main ( void )
 											switch_state[i] = req_state;
 											switch_timeout[i] = req_timeout;
 											
-											eeprom_write_word((uint16_t*)EEPROM_POS_SWITCH_STATE + i * 2, u16);
+											eeprom_write_UIntValue(EEPROM_SWITCHSTATE_BYTE + i * 2, EEPROM_BASESTATIONPACKETCOUNTER_BIT,
+												EEPROM_BASESTATIONPACKETCOUNTER_LENGTH_BITS, u16);
 										}
 									}
 									
