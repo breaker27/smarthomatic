@@ -519,7 +519,7 @@ extern	uint8_t ow_timer;
 							UART_PUTF("ow_temp_read_scratchpad said %i\r\n",ret);
 #endif
 							
-						} while (ret!=1);
+						} while (ret!=1 && ow_errorcount<11);
 						if (ret==1){
 							temp=ow_temp_normalize(&ow_global.current_rom,&ow_sp);
 							UART_PUTS("OW temperature sensor ");

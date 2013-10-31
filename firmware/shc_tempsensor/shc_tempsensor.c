@@ -27,6 +27,12 @@
 #include "rfm12.h"
 #include "uart.h"
 
+#define ONEWIRE_SUPPORT
+//#define ONEWIRE_DEBUG
+#ifdef ONEWIRE_SUPPORT
+#include "onewire.h"
+#endif
+
 // switch on debugging by UART
 //#define UART_DEBUG
 
@@ -90,6 +96,11 @@ int main ( void )
 	uint8_t device_id = 0;
 	uint8_t avg = 0;
 
+#ifdef ONEWIRE_SUPPORT
+	ow_temp_scratchpad_t ow_sp;
+	uint8_t ow_device_found;
+#endif
+
 	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
 	_delay_ms(1000);
 
@@ -141,6 +152,13 @@ int main ( void )
 	//rfm12_set_wakeup_timer(0b11111000000);   // ~ 24576ms
 	//rfm12_set_wakeup_timer(0b0100101110101); // ~ 59904ms
 	rfm12_set_wakeup_timer(0b101001100111); // ~ 105472ms  CORRECT VALUE!!!
+
+#ifdef ONEWIRE_SUPPORT
+	onewire_init();
+#ifdef ONEWIRE_DEBUG
+	UART_PUTS ("onewire_init\r\n");
+#endif
+#endif
 
 	led_blink(100, 150, 20);
 
@@ -221,6 +239,84 @@ int main ( void )
 			rfm12_sendbuf();
 			
 			rfm12_tick(); // send packet, and then WAIT SOME TIME BEFORE GOING TO SLEEP (otherwise packet would not be sent)
+
+#ifdef ONEWIRE_SUPPORT
+			ow_temp_start_convert(NULL,0);	// send to all sensors, don't wait
+			uint8_t ow_firstsearch=1;	// for the first OW search this must be =1, then 0
+			ow_device_found=1;
+			while (ow_device_found==1) {
+				ow_device_found=ow_search_rom(ONEWIRE_BUSMASK,ow_firstsearch);	// search for next device
+				if (ow_device_found==1){
+					uint8_t ret;
+					uint8_t ow_errorcount=0;
+					ow_firstsearch=0;
+					do {
+						ret=ow_temp_read_scratchpad(&ow_global.current_rom,&ow_sp);	// read scratchpad
+						ow_errorcount++;
+					} while (ret!=1 && ow_errorcount<11);
+					if (ret==1){
+						temp=ow_temp_normalize(&ow_global.current_rom,&ow_sp);
+						UART_PUTS("OW temperature sensor ");
+						for (uint8_t i=0; i<8; i++){
+							UART_PUTF("%02x",ow_global.current_rom.bytewise[i]);
+						}
+						int8_t sign = (int8_t) (temp < 0);
+						if (sign){
+							temp = -temp;
+						}
+						UART_PUTF2(" %s%d",sign ? "-" : "", (int8_t) HI8(temp));
+						UART_PUTF(".%2d\r\n",HI8(((temp & 0x00ff) * 100) + 0x80));
+						temp=100*(int8_t) HI8(temp)+HI8(((temp & 0x00ff) * 100) + 0x80);
+						if (sign){
+							temp = -temp;
+						}
+						// set device ID
+						bufx[0] = device_id;
+			
+						// update packet counter
+						packetcounter++;
+			
+						if (packetcounter % PACKET_COUNTER_WRITE_CYCLE == 0)
+						{
+							eeprom_write_dword((uint32_t*)0, packetcounter);
+						}
+
+						setBuf32(1, packetcounter);
+
+						// set command ID 10 (Temperature Sensor Status)
+						bufx[5] = 10;
+
+						// update battery percentage
+						bufx[6] = bat_percentage(vbat);
+
+						// update temperature and humidity
+						setBuf16(7, (uint16_t)temp);
+						setBuf16(9, hum);
+
+						// update brightness
+						if (brightness_sensor_type == BRIGHTNESSSENSORTYPE_PHOTOCELL)
+						{
+							bufx[11] = 100 - (int)((long)vlight * 100 / 1024);
+						}
+						uint32_t crc = crc32(bufx, 12);
+#ifdef UART_DEBUG
+						UART_PUTF("CRC32 is %lx (added as last 4 bytes)\r\n", crc);
+#endif
+						setBuf32(12, crc);
+
+#ifdef UART_DEBUG
+						UART_PUTF3("Battery: %u%%, Temperature: %d deg.C, Humidity: %d%%\r\n", bat_percentage(vbat), temp / 100.0, hum / 100.0);
+#endif
+
+						rfm12_sendbuf();
+			
+						rfm12_tick(); // send packet
+					}else{
+						UART_PUTS("Onewire read error, retried 10 times, sorry.\r\n");
+					}
+				}
+			}
+#endif	//ONEWIRE_SUPPORT
 
 			switch_led(1);
 			_delay_ms(200);
