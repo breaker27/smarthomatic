@@ -27,7 +27,13 @@
 
 #define UART_DEBUG   // Debug output over UART
 #include "rfm12.h"
+
+#define ONEWIRE_SUPPORT
+//#define ONEWIRE_DEBUG
+#ifdef ONEWIRE_SUPPORT
 #include "onewire.h"
+#endif
+
 #include "uart.h"
 #include "aes256.h"
 
@@ -251,6 +257,7 @@ int main ( void )
 
 #ifdef ONEWIRE_SUPPORT
 extern	uint8_t ow_timer;
+	ow_timer=3;	// do onewire measure at startup+1s
 	ow_temp_scratchpad_t ow_sp;
 	uint8_t ow_device_found;
 	int16_t	temp;

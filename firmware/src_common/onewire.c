@@ -24,8 +24,11 @@
  * http://www.gnu.org/copyleft/gpl.html
  */
 
-//#include "config.h"
 #define ONEWIRE_SUPPORT
+#define ONEWIRE_DEBUG
+#ifdef ONEWIRE_SUPPORT
+
+//#include "config.h"
 #include "onewire.h"
 #include "util.h"
 #include <util/crc16.h>
@@ -922,3 +925,5 @@ ow_names_save(void)
   init(onewire_init)
   ifdef(`conf_ONEWIRE_POLLING',`timer(50, ow_periodic())')
 */
+
+#endif

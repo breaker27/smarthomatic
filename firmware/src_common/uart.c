@@ -29,8 +29,9 @@ bool enable_write_eeprom = false;
 uint8_t bytes_to_read = 0;
 uint8_t bytes_pos = 0;
 
+#define ONEWIRE_SUPPORT
 #ifdef ONEWIRE_SUPPORT
-uint8_t ow_timer=3;
+uint8_t ow_timer;
 #endif
 
 // This buffer is used for sending strings over UART using UART_PUT... functions.
@@ -193,7 +194,9 @@ void process_rxbuf(void)
 			UART_PUTS("z.........disable writing to EEPROM\r\n");
 			UART_PUTS("sKKCCXX...Use AES key KK to send a packet with command ID CC and data XX (0..22 bytes).\r\n");
 			UART_PUTS("          End data with ENTER. Packet number and CRC are automatically added.\r\n");
+#ifdef ONEWIRE_SUPPORT
 			UART_PUTS("o.........start onewire thermal sensor conversion\r\n");
+#endif
 		}
 		else if (input == 'x')
 		{
