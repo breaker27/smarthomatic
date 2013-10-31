@@ -241,7 +241,7 @@ int main ( void )
 			rfm12_tick(); // send packet, and then WAIT SOME TIME BEFORE GOING TO SLEEP (otherwise packet would not be sent)
 
 #ifdef ONEWIRE_SUPPORT
-			ow_temp_start_convert(NULL,0);	// send to all sensors, don't wait
+			ow_temp_start_convert(NULL,1);	// send to all sensors, wait for them
 			uint8_t ow_firstsearch=1;	// for the first OW search this must be =1, then 0
 			ow_device_found=1;
 			while (ow_device_found==1) {
