@@ -205,9 +205,11 @@ void process_rxbuf(void)
 			enable_write_eeprom = false;
 			UART_PUTS("*** Writing to EEPROM is now DISABLED. ***\r\n");
 		}
+#ifdef ONEWIRE_SUPPORT
 		else if (input == 'o'){
 			ow_timer=3;
 		}
+#endif
 		else if (input == 'r')
 		{
 			UART_PUTS("*** Read from EEPROM. Enter address (2 characters). ***\r\n");

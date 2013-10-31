@@ -17,3 +17,4 @@
 */
 
 #include "../src_common/util.c"
+#include "../src_common/e2p_access.c"

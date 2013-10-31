@@ -36,6 +36,8 @@
 #include "util.h"
 #include "uart.h"
 
+#include "e2p_access.h"
+
 uint8_t bufx[65];
 
 #define LED_PIN 7
@@ -267,7 +269,7 @@ void led_blink(uint16_t on, uint16_t off, uint8_t times)
 }
 
 // Signal a serious error state and do nothing further except LED blinking.
-void signal_error_state()
+void signal_error_state(void)
 {
 	while (1)
 	{
@@ -277,11 +279,10 @@ void signal_error_state()
 
 // Check if the EEPROM is compatible to the device by checking against the device type byte in EEPROM.
 // If not, wait in endless loop and let LED blink.
-void check_eeprom_compatibility(uint8_t deviceType)
+void check_eeprom_compatibility(uint8_t expectedDeviceType)
 {
-	uint8_t dt = eeprom_read_byte((uint8_t*)EEPROM_DEVICETYPE_BYTE);
-	
-	if (dt != deviceType)
+	if (expectedDeviceType != eeprom_read_UIntValue8(EEPROM_DEVICETYPE_BYTE, EEPROM_DEVICETYPE_BIT,
+		EEPROM_DEVICETYPE_LENGTH_BITS, 0, (1 << EEPROM_DEVICETYPE_LENGTH_BITS) - 1))
 	{
 		signal_error_state();
 	}
@@ -290,7 +291,8 @@ void check_eeprom_compatibility(uint8_t deviceType)
 // print an info over UART about the OSCCAL adjustment that was made
 void osccal_info(void)
 {
-	uint8_t mode = eeprom_read_byte((uint8_t*)EEPROM_OSCCALMODE_BYTE);
+	uint8_t mode = eeprom_read_UIntValue8(EEPROM_OSCCALMODE_BYTE, EEPROM_OSCCALMODE_BIT,
+		EEPROM_OSCCALMODE_LENGTH_BITS, EEPROM_OSCCALMODE_MINVAL, EEPROM_OSCCALMODE_MAXVAL);
 	
 	if ((mode > 0) && (mode < 255))
 	{
@@ -307,7 +309,8 @@ void osccal_info(void)
 //           Ex: Setting the value to 138 adjusts the speed by (X - 128) promille = +1%.
 void osccal_init(void)
 {
-	uint8_t mode = eeprom_read_byte((uint8_t*)EEPROM_OSCCALMODE_BYTE);
+	uint8_t mode = eeprom_read_UIntValue8(EEPROM_OSCCALMODE_BYTE, EEPROM_OSCCALMODE_BIT,
+		EEPROM_OSCCALMODE_LENGTH_BITS, EEPROM_OSCCALMODE_MINVAL, EEPROM_OSCCALMODE_MAXVAL);
 	
 	if (mode == 255)
 	{
