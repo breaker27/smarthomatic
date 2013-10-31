@@ -44,7 +44,13 @@
 #include "util.h"
 #include "request_buffer.h"
 
+// check some assumptions at precompile time about flash layout
+#if (EEPROM_AESKEYS_BIT != 0)
+	#error AES keys do not start at a byte border. Not supported by base station (maybe fix E2P layout?).
+#endif
+
 uint32_t packetcounter;
+uint16_t deviceID;
 uint8_t aes_key_count;
 
 void printbytearray(uint8_t * b, uint8_t len)
@@ -194,7 +200,7 @@ void decode_data(uint8_t len)
 void send_packet(uint8_t aes_key_nr, uint8_t data_len)
 {
 	// set device ID (base station has ID 0 by definition)
-	bufx[0] = 0;
+	bufx[0] = deviceID;
 
 	// update packet counter
 	packetcounter++;
@@ -255,18 +261,27 @@ extern	uint8_t ow_timer;
 	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
 	_delay_ms(1000);
 
+	check_eeprom_compatibility(DEVICETYPE_BASE_STATION);
+
 	request_queue_init();
-	
+
 	// read packetcounter, increase by cycle and write back
-	packetcounter = eeprom_read_dword((uint32_t*)EEPROM_PACKETCOUNTER_BYTE) + PACKET_COUNTER_WRITE_CYCLE;
-	eeprom_write_dword((uint32_t*)0, packetcounter);
+	packetcounter = eeprom_read_UIntValue32(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT,
+		EEPROM_PACKETCOUNTER_LENGTH_BITS, EEPROM_PACKETCOUNTER_MINVAL, EEPROM_PACKETCOUNTER_MAXVAL) + PACKET_COUNTER_WRITE_CYCLE;
+
+	eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
 
 	// read device specific config
-	aes_key_count = eeprom_read_byte((uint8_t*)EEPROM_AESKEYCOUNT_BYTE);	
+	aes_key_count = eeprom_read_UIntValue8(EEPROM_AESKEYCOUNT_BYTE, EEPROM_AESKEYCOUNT_BIT,
+		EEPROM_AESKEYCOUNT_LENGTH_BITS, EEPROM_AESKEYCOUNT_MINVAL, EEPROM_AESKEYCOUNT_MAXVAL);
+
+	deviceID = eeprom_read_UIntValue16(EEPROM_DEVICEID_BYTE, EEPROM_DEVICEID_BIT,
+		EEPROM_DEVICEID_LENGTH_BITS, EEPROM_DEVICEID_MINVAL, EEPROM_DEVICEID_MAXVAL);
 
 	uart_init(true);
 	UART_PUTS ("\r\n");
 	UART_PUTS ("smarthomatic Base Station V1.0 (c) 2012 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTF ("Device ID: %u\r\n", deviceID);
 	UART_PUTF ("Packet counter: %lu\r\n", packetcounter);
 	UART_PUTF ("AES key count: %u\r\n", aes_key_count);
 	UART_PUTS ("Waiting for incoming data. Press h for help.\r\n");

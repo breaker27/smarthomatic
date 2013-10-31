@@ -125,6 +125,36 @@
 		</Reserved>
 	</Block>
 	<Block>
+		<Name>PowerSwitchConfig</Name>
+		<Description>This block contains the specific configuration data that only Power Switch devices need.</Description>
+		<Restriction>
+			<RefID>DeviceType</RefID>
+			<Value>40</Value>
+		</Restriction>
+		<UIntValue>
+			<ID>SupportedSwitches</ID>
+			<Description>This is a bit field about the connected switches. (Currently, only one switch is supported and the value has to be 0b00000001, but the value is for future usage.)</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>1</MaxVal>
+		</UIntValue>
+		<ByteArray>
+			<ID>SwitchState</ID>
+			<Description>This field stores the last known switch state(s) to allow restoring the same state after power loss.</Description>
+			<Bytes>16</Bytes>
+		</ByteArray>
+		<UIntValue>
+			<ID>BaseStationPacketCounter</ID>
+			<Description>This is the last remembered packet counter of a command from the base station. Packets with the same or lower number are ignored.</Description>
+			<Bits>24</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>16777215</MaxVal>
+		</UIntValue>
+		<Reserved>
+			<Bits>3424</Bits>
+		</Reserved>
+	</Block>
+	<Block>
 		<Name>DimmerConfig</Name>
 		<Description>This block contains the specific configuration data that only Dimmer devices need.</Description>
 		<Restriction>
