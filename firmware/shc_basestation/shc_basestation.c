@@ -488,21 +488,31 @@ extern	uint8_t ow_timer;
 #endif                  
 					ow_timer=0;
 					if (ow_device_found==1){
-						uint8_t ret=ow_temp_read_scratchpad(&ow_global.current_rom,&ow_sp);	// read scratchpad
-#ifdef ONEWIRE_DEBUG                    
-						UART_PUTF("ow_temp_read_scratchpad said %i\r\n",ret);
-#endif                                  
-						temp=ow_temp_normalize(&ow_global.current_rom,&ow_sp);
-						UART_PUTS("OW temperature sensor ");
-						for (uint8_t i=0; i<8; i++){
-							UART_PUTF("%02x",ow_global.current_rom.bytewise[i]);
+						uint8_t ret;
+						uint8_t ow_errorcount=0;
+						do {
+							ret=ow_temp_read_scratchpad(&ow_global.current_rom,&ow_sp);	// read scratchpad
+							ow_errorcount++;
+#ifdef ONEWIRE_DEBUG
+							UART_PUTF("ow_temp_read_scratchpad said %i\r\n",ret);
+#endif
+							
+						} while (ret!=1);
+						if (ret==1){
+							temp=ow_temp_normalize(&ow_global.current_rom,&ow_sp);
+							UART_PUTS("OW temperature sensor ");
+							for (uint8_t i=0; i<8; i++){
+								UART_PUTF("%02x",ow_global.current_rom.bytewise[i]);
+							}
+							int8_t sign = (int8_t) (temp < 0);
+							if (sign){
+								temp = -temp;
+							}
+							UART_PUTF2(" %s%d",sign ? "-" : "", (int8_t) HI8(temp));
+							UART_PUTF(".%2d\r\n",HI8(((temp & 0x00ff) * 100) + 0x80));
+						}else{
+							UART_PUTS("Onewire read error, retried 10 times, sorry.\r\n");
 						}
-						int8_t sign = (int8_t) (temp < 0);
-						if (sign){
-							temp = -temp;
-						}
-						UART_PUTF2(" %s%d",sign ? "-" : "", (int8_t) HI8(temp));
-						UART_PUTF(".%2d\r\n",HI8(((temp & 0x00ff) * 100) + 0x80));
 					}
 				}
 				ow_timer=ONEWIRE_CYCLETIME;

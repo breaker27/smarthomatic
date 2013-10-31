@@ -231,7 +231,7 @@ void process_rxbuf(void)
 		}
 		else
 		{
-			UART_PUTS("*** Character ignored. Press h for help. ***\r\n");
+			UART_PUTF("*** Character %c ignored. Press h for help. ***\r\n",input);
 		}
 		
 		// enable user timeout if waiting for further input
