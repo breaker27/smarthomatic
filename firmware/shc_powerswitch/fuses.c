@@ -22,8 +22,9 @@ FUSES =
 { 
 	// value 0x62 - these should also be the default settings for ATMega168
     .low = (FUSE_CKSEL0 & FUSE_CKSEL2 & FUSE_CKSEL3 & FUSE_SUT0 & FUSE_CKDIV8),
-	// value 0xD7 - EESAVE is 0, others are default
-    .high = (FUSE_EESAVE & FUSE_SPIEN),
+	// value 0xD6 - set EESAVE, set BOD to 1.8V to prevent accidentially
+	// FLASH garbage, others are default
+	.high = (FUSE_EESAVE & FUSE_SPIEN & FUSE_BODLEVEL0),
 	// should be value F9 at ATMega168
     .extended = EFUSE_DEFAULT, 
 };
