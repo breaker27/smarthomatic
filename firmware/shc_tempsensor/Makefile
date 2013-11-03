@@ -18,7 +18,7 @@
 
 # CPU config
 MCU		       = atmega168
-F_CPU	       = 1000000
+F_CPU	       = 8000000
 UART_BAUD_RATE = 4800
 
 # Target file name (without extension).
@@ -27,7 +27,7 @@ TARGET = shc_tempsensor
 # Source files (C dependencies are automatically generated).
 #   C			*.c
 #   Assembler	*.S
-CSRC = $(TARGET).c rfm12.c util.c uart.c aes256.c sht11.c fuses.c
+CSRC = $(TARGET).c rfm12.c util.c uart.c aes256.c sht11.c fuses.c onewire.c
 ASRC =
 FUSES = -U hfuse:w:hfuse.hex:i -U lfuse:w:lfuse.hex:i -U efuse:w:efuse.hex:i -u
 

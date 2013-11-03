@@ -16,16 +16,4 @@
 * with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <avr/io.h> 
-
-FUSES = 
-{ 
-	// value 0x62 - these should also be the default settings for ATMega168
-	// removed CKDIV8 for onewire bitbanging timing
-    .low = (FUSE_CKSEL0 & FUSE_CKSEL2 & FUSE_CKSEL3 & FUSE_SUT0),
-	// value 0xD7 - EESAVE is 0, others are default
-	// set BOD to 1.8V to prevent accidentially FLASH garbage
-    .high = (FUSE_EESAVE & FUSE_SPIEN & FUSE_BODLEVEL0),
-	// should be value F9 at ATMega168
-    .extended = EFUSE_DEFAULT, 
-};
+#include "../src_common/onewire.c"

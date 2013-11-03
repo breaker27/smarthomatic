@@ -19,14 +19,20 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
+#include <util/crc16.h>
 #include <string.h>
 #include <avr/wdt.h>
 #include <avr/sleep.h>
 #include <avr/eeprom.h>
 
+#define UART_DEBUG   // Debug output over UART
 #include "rfm12.h"
 
-#define UART_DEBUG   // Debug output over UART
+#define ONEWIRE_SUPPORT
+//#define ONEWIRE_DEBUG
+#ifdef ONEWIRE_SUPPORT
+#include "onewire.h"
+#endif
 
 #include "uart.h"
 #include "aes256.h"
@@ -249,6 +255,14 @@ int main ( void )
 	
 	uint8_t data[22];
 
+#ifdef ONEWIRE_SUPPORT
+extern	uint8_t ow_timer;
+	ow_timer=3;	// do onewire measure at startup+1s
+	ow_temp_scratchpad_t ow_sp;
+	uint8_t ow_device_found;
+	int16_t	temp;
+#endif
+
 	sbi(LED_DDR, LED_PIN);
 
 	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
@@ -280,8 +294,16 @@ int main ( void )
 	UART_PUTS ("Waiting for incoming data. Press h for help.\r\n");
 
 	rfm12_init();
+
+#ifdef ONEWIRE_SUPPORT
+	onewire_init();
+#ifdef ONEWIRE_DEBUG
+	UART_PUTS ("onewire_init\r\n");
+#endif
+#endif
+
 	sei();
-	
+
 	// ENCODE TEST
 	/*
 	uint8_t testlen = 64;
@@ -468,8 +490,57 @@ int main ( void )
 		if (loop == 50)
 		{
 			led_blink(10, 10, 1);
-			
 			loop = 0;
+
+#ifdef ONEWIRE_SUPPORT
+			ow_timer--;
+			if (ow_timer==2){	// send command "convert" 2 secs earlier
+				ow_temp_start_convert(NULL,0);	// send to all sensors, don't wait
+#ifdef ONEWIRE_DEBUG
+				UART_PUTS("ow_temp_start_convert\r\n");
+#endif
+			}
+			if (ow_timer==0){	
+				ow_timer=1;	// misused to distinguish 1st and consecutive ow rom searches
+				ow_device_found=1;
+				while (ow_device_found==1) {
+					ow_device_found=ow_search_rom(ONEWIRE_BUSMASK,ow_timer);	// search for next device
+#ifdef ONEWIRE_DEBUG
+					UART_PUTF2("ow_device_found %i said %i\r\n",ow_timer,ow_device_found);
+#endif                  
+					ow_timer=0;
+					if (ow_device_found==1){
+						uint8_t ret;
+						uint8_t ow_errorcount=0;
+						do {
+							ret=ow_temp_read_scratchpad(&ow_global.current_rom,&ow_sp);	// read scratchpad
+							ow_errorcount++;
+#ifdef ONEWIRE_DEBUG
+							UART_PUTF("ow_temp_read_scratchpad said %i\r\n",ret);
+#endif
+							
+						} while (ret!=1 && ow_errorcount<11);
+						if (ret==1){
+							temp=ow_temp_normalize(&ow_global.current_rom,&ow_sp);
+							UART_PUTS("OW temperature sensor ");
+							for (uint8_t i=0; i<8; i++){
+								UART_PUTF("%02x",ow_global.current_rom.bytewise[i]);
+							}
+							int8_t sign = (int8_t) (temp < 0);
+							if (sign){
+								temp = -temp;
+							}
+							UART_PUTF2(" %s%d",sign ? "-" : "", (int8_t) HI8(temp));
+							UART_PUTF(".%2d\r\n",HI8(((temp & 0x00ff) * 100) + 0x80));
+						}else{
+							UART_PUTS("Onewire read error, retried 10 times, sorry.\r\n");
+						}
+					}
+				}
+				ow_timer=ONEWIRE_CYCLETIME;
+				
+			}
+#endif	//ONEWIRE_SUPPORT
 
 			if (set_repeat_request(packetcounter + 1)) // if request to repeat was found in queue
 			{

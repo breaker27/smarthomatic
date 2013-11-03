@@ -27,6 +27,9 @@
 #define sbi(ADDRESS,BIT) ((ADDRESS) |= (1<<(BIT)))
 #define cbi(ADDRESS,BIT) ((ADDRESS) &= ~(1<<(BIT)))
 
+#define LO8(x) ((int)(x)&0xff)
+#define HI8(x) ((int)(x)>>8)
+
 #include "e2p_layout.h" // device specific (!) version of e2p layout in the device's directory
 
 // used as buffer for sending data to SHT
@@ -43,6 +46,7 @@ void adc_on(bool on);
 unsigned int read_adc(unsigned char adc_input);
 
 unsigned long crc32(unsigned char *data, int len);
+uint8_t crc_checksum (void *data, uint8_t length);
 
 // read/write 16 bit / 32 bit values to the byte buffer in PC byte order
 uint32_t getBuf16(uint8_t offset);
