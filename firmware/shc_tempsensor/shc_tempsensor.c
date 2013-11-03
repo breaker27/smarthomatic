@@ -110,7 +110,7 @@ int main ( void )
 	brightness_sensor_type = eeprom_read_UIntValue8(EEPROM_BRIGHTNESSSENSORTYPE_BYTE,
 		EEPROM_BRIGHTNESSSENSORTYPE_BIT, EEPROM_BRIGHTNESSSENSORTYPE_LENGTH_BITS, 0, 255);
 
-	// read device id and write to send buffer
+	// read device id
 	device_id = eeprom_read_UIntValue16(EEPROM_DEVICEID_BYTE, EEPROM_DEVICEID_BIT,
 		EEPROM_DEVICEID_LENGTH_BITS, EEPROM_DEVICEID_MINVAL, EEPROM_DEVICEID_MAXVAL);
 	
