@@ -161,13 +161,20 @@
 			<RefID>DeviceType</RefID>
 			<Value>60</Value>
 		</Restriction>
+		<UIntValue>
+			<ID>BaseStationPacketCounter</ID>
+			<Description>This is the last remembered packet counter of a command from the base station. Packets with the same or lower number are ignored.</Description>
+			<Bits>24</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>16777215</MaxVal>
+		</UIntValue>
 		<ByteArray>
 			<ID>BrightnessTranslationTable</ID>
-			<Description>These are the target values (one byte each) for the input brightness of 0, 1, ... 100% to adapt the specific brightness curve of your lamps.</Description>
+			<Description>These are the target values (one byte each) for the input brightness of 0, 1, ... 100% to adapt the specific brightness curve of your lamps. Set first byte to FF to not use it.</Description>
 			<Bytes>101</Bytes>
 		</ByteArray>
 		<Reserved>
-			<Bits>6872</Bits>
+			<Bits>6848</Bits>
 		</Reserved>
 	</Block>
 </E2P>

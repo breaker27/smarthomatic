@@ -32,14 +32,6 @@
 #define UART_DEBUG   // Debug output over UART
 //#define UART_DEBUG_CALCULATIONS
 
-#define EEPROM_POS_DEVICE_ID 8
-#define EEPROM_POS_PACKET_COUNTER 9
-#define EEPROM_POS_STATION_PACKET_COUNTER 13
-#define EEPROM_POS_DIMMER_STATE 17 // 2 Byte
-#define EEPROM_POS_USE_PWM_TRANSLATION 19
-#define EEPROM_POS_AES_KEY 32
-#define EEPROM_POS_DIM_CORRECTION 64 // 101 values for 0..100%
-
 // How often should the packetcounter_base be increased and written to EEPROM?
 // This should be 2^32 (which is the maximum transmitted packet counter) /
 // 100.000 (which is the maximum amount of possible EEPROM write cycles) or more.
@@ -249,8 +241,11 @@ void setPWMDutyCycle(float percent)
 		index2 = index >= 100 ? 100 : index + 1;
 		modulo = percent - index; // decimal places only, e.g. 0.12 when percent is 73.12
 		
-		uint8_t t1 = eeprom_read_byte((uint8_t*)(EEPROM_POS_DIM_CORRECTION + index));
-		uint8_t t2 = eeprom_read_byte((uint8_t*)(EEPROM_POS_DIM_CORRECTION + index2));
+		uint8_t t1 = eeprom_read_UIntValue8(EEPROM_BRIGHTNESSTRANSLATIONTABLE_BYTE + index,
+			EEPROM_BRIGHTNESSTRANSLATIONTABLE_BIT, 8, 0, 0xFF);
+		uint8_t t2 = eeprom_read_UIntValue8(EEPROM_BRIGHTNESSTRANSLATIONTABLE_BYTE + index2,
+			EEPROM_BRIGHTNESSTRANSLATIONTABLE_BIT, 8, 0, 0xFF);
+		
 		percent = linear_interpolate_f(modulo, 0.0, 1.0, t1, t2) * 100 / 255;
 		
 #ifdef UART_DEBUG_CALCULATIONS	
@@ -305,16 +300,20 @@ int main(void)
 
 	util_init();
 	check_eeprom_compatibility(DEVICETYPE_DIMMER);
-
-	osccal_init();
 	
 	// read packetcounter, increase by cycle and write back
-	packetcounter = eeprom_read_dword((uint32_t*)EEPROM_POS_PACKET_COUNTER) + PACKET_COUNTER_WRITE_CYCLE;
-	eeprom_write_dword((uint32_t*)EEPROM_POS_PACKET_COUNTER, packetcounter);
+	packetcounter = eeprom_read_UIntValue32(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT,
+		EEPROM_PACKETCOUNTER_LENGTH_BITS, EEPROM_PACKETCOUNTER_MINVAL, EEPROM_PACKETCOUNTER_MAXVAL) + PACKET_COUNTER_WRITE_CYCLE;
 
-	// read device id and write to send buffer
-	device_id = eeprom_read_byte((uint8_t*)EEPROM_POS_DEVICE_ID);	
-	use_pwm_translation = 1; //eeprom_read_byte((uint8_t*)EEPROM_POS_USE_PWM_TRANSLATION);	
+	eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
+
+	// read device id
+	device_id = eeprom_read_UIntValue16(EEPROM_DEVICEID_BYTE, EEPROM_DEVICEID_BIT,
+		EEPROM_DEVICEID_LENGTH_BITS, EEPROM_DEVICEID_MINVAL, EEPROM_DEVICEID_MAXVAL);
+
+	// pwm translation table is not used if first byte is 0xFF
+	use_pwm_translation = (0xFF != eeprom_read_UIntValue8(EEPROM_BRIGHTNESSTRANSLATIONTABLE_BYTE,
+		EEPROM_BRIGHTNESSTRANSLATIONTABLE_BIT, 8, 0, 0xFF));
 	
 	// TODO: read (saved) dimmer state from before the eventual powerloss
 	/*for (i = 0; i < SWITCH_COUNT; i++)
@@ -325,9 +324,12 @@ int main(void)
 	}*/
 	
 	// read last received station packetcounter
-	station_packetcounter = eeprom_read_dword((uint32_t*)EEPROM_POS_STATION_PACKET_COUNTER);
-
+	station_packetcounter = eeprom_read_UIntValue32(EEPROM_BASESTATIONPACKETCOUNTER_BYTE, EEPROM_BASESTATIONPACKETCOUNTER_BIT,
+		EEPROM_BASESTATIONPACKETCOUNTER_LENGTH_BITS, EEPROM_BASESTATIONPACKETCOUNTER_MINVAL, EEPROM_BASESTATIONPACKETCOUNTER_MAXVAL);
+	
 	led_blink(200, 200, 5);
+
+	osccal_init();
 
 #ifdef UART_DEBUG
 	uart_init(false);
@@ -341,7 +343,7 @@ int main(void)
 #endif
 
 	// init AES key
-	eeprom_read_block (aes_key, (uint8_t *)EEPROM_POS_AES_KEY, 32);
+	eeprom_read_block (aes_key, (uint8_t *)EEPROM_AESKEY_BYTE, 32);
 
 	rfm12_init();
 	PWM_init();
@@ -458,7 +460,9 @@ int main(void)
 						{
 							// write received counter
 							station_packetcounter = packcnt;
-							eeprom_write_dword((uint32_t*)EEPROM_POS_STATION_PACKET_COUNTER, station_packetcounter);
+							
+							eeprom_write_UIntValue(EEPROM_BASESTATIONPACKETCOUNTER_BYTE, EEPROM_BASESTATIONPACKETCOUNTER_BIT,
+								EEPROM_BASESTATIONPACKETCOUNTER_LENGTH_BITS, station_packetcounter);
 							
 							// check command ID
 							uint8_t cmd = bufx[5];
