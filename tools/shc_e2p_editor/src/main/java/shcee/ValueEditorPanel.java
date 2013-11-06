@@ -280,6 +280,34 @@ public class ValueEditorPanel extends JPanel
 	}
 
 	/**
+	 * Update visibility of blocks according to the currently selected restriction (DeviceType)
+	 * without changing the content of the editors.
+	 */
+	public void updateBlockVisibility()
+	{
+		// Switch all blocks of so no blocks are displayed that are not used for the device if anything goes wrong reading the bytes from the file (e.g. file too short).
+		for (Block b : blocks)
+		{
+			b.setVisible(false);
+		}
+		
+		for (Block b : blocks)
+		{
+			boolean match = true;
+			
+			// If a block has a condition set, check it and override
+			// using this block if it is not matched.
+			if (b.restrictionRefID != null)
+			{
+				String val = findValue(b.restrictionRefID, false);
+				match = val.equals(b.restrictionValue);
+			}
+
+			b.setVisible(match);
+		}
+	}
+	
+	/**
 	 * Feed the bytes from the EEPROM file to the editor blocks one after another
 	 * with an updated bit offset.
 	 * The block objects are responsible for further feeding the bits and bytes
@@ -305,7 +333,6 @@ public class ValueEditorPanel extends JPanel
 			if (b.restrictionRefID != null)
 			{
 				String val = findValue(b.restrictionRefID, false);
-
 				match = val.equals(b.restrictionValue);
 			}
 
