@@ -36,6 +36,7 @@
                             <addClasspath>true</addClasspath>
                         </manifest>
                     </archive>
+					<finalName>shc_e2p_editor</finalName>
                 </configuration>
             </plugin>
 			<plugin>
