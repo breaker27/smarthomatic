@@ -101,20 +101,6 @@ void print_switch_state(uint8_t max)
 	}
 }
 
-// printf for floating point numbers takes ~1500 bytes program size.
-// Therefore, we use a smaller special function instead
-// as long it is used so rarely.
-void printSigned(int16_t i)
-{
-	if (i < 0)
-	{
-		UART_PUTS("-");
-		i = -i;
-	}
-	
-	UART_PUTF2("%d.%02d;", i / 100, i % 100);
-}
-
 // Show info about the received packets.
 // This is only for debugging. The definition of all packets must be known at the PC program
 // that's processing the data.
