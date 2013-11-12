@@ -135,7 +135,7 @@ public class DeviceSelectorPanel extends JPanel
 			
 			try
 			{
-				Util.createBinaryFile(filename, 512);
+				Util.createBinaryFile(filename, 1024);
 			} catch (IOException e)
 			{
 				JOptionPane.showMessageDialog(SHCEEMain.mySHCEEMain, "Could not create file " + filename + ".", "Error", JOptionPane.ERROR_MESSAGE);
