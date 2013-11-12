@@ -188,7 +188,7 @@ int main ( void )
 			
 			if (packetcounter % PACKET_COUNTER_WRITE_CYCLE == 0)
 			{
-				eeprom_write_dword((uint32_t*)0, packetcounter);
+				eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
 			}
 
 			setBuf32(1, packetcounter);
