@@ -43,6 +43,20 @@ uint8_t bufx[65];
 #define LED_PORT PORTD
 #define LED_DDR DDRD
 
+// printf for floating point numbers takes ~1500 bytes program size.
+// Therefore, we use a smaller special function instead
+// as long it is used so rarely.
+void printSigned(int16_t i)
+{
+	if (i < 0)
+	{
+		UART_PUTS("-");
+		i = -i;
+	}
+	
+	UART_PUTF2("%d.%02d;", i / 100, i % 100);
+}
+
 // reference battery voltage (alkaline) for 100%, 90%,... 0% with end voltage 0,9V
 //static short vbat_alkaline[] = {1600, 1400, 1320, 1280, 1240, 1210, 1180, 1160, 1100, 1030, 900};
 
