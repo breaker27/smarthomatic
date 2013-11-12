@@ -215,7 +215,11 @@ int main ( void )
 			setBuf32(12, crc);
 
 #ifdef UART_DEBUG
-			UART_PUTF3("Battery: %u%%, Temperature: %d deg.C, Humidity: %d%%\r\n", bat_percentage(vbat), temp / 100.0, hum / 100.0);
+			UART_PUTF("Battery: %u%%, Temperature: ", bat_percentage(vbat));
+			printSigned(temp);
+			UART_PUTS(" deg.C, Humidity: ");
+			printSigned(hum);
+			UART_PUTS("%\r\n");
 #endif
 
 			rfm12_sendbuf();
