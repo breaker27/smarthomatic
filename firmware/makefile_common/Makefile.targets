@@ -66,10 +66,10 @@ program:
 	$(AVRDUDE) -p $(AVRDUDEMCU) -U flash:w:$(BINDIR)/$(TARGET).hex
 	
 program_fuses: fuse
-	$(AVRDUDE) -p m328p -U lfuse:w:$(BINDIR)/lfuse.bin:r -U hfuse:w:$(BINDIR)/hfuse.bin:r -U efuse:w:$(BINDIR)/efuse.bin:r
+	$(AVRDUDE) -p $(AVRDUDEMCU) -U lfuse:w:$(BINDIR)/lfuse.bin:r -U hfuse:w:$(BINDIR)/hfuse.bin:r -U efuse:w:$(BINDIR)/efuse.bin:r
 
 read_fuses:
-	$(AVRDUDE) -p m328p -U lfuse:r:-:b -U hfuse:r:-:b -U efuse:r:-:b
+	$(AVRDUDE) -p $(AVRDUDEMCU) -U lfuse:r:-:b -U hfuse:r:-:b -U efuse:r:-:b
 
 # Listing of phony targets.
 .PHONY : all elf hex eep lss sym clean distclean
