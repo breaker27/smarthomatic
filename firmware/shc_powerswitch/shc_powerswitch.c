@@ -44,7 +44,7 @@
 
 // TODO: Support more than one relais!
 #define RELAIS_PORT PORTC
-#define RELAIS_PIN_START 1
+#define RELAIS_PIN_START 0
 
 #define SEND_STATUS_EVERY_SEC 600 // how often should a status be sent?
 
@@ -202,6 +202,7 @@ int main ( void )
 
 #ifdef UART_DEBUG
 	uart_init(false);
+	util_init();
 	UART_PUTS ("\r\n");
 	UART_PUTS ("smarthomatic Power Switch V1.0 (c) 2013 Uwe Freese, www.smarthomatic.org\r\n");
 	UART_PUTF ("Device ID: %u\r\n", device_id);
