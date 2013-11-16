@@ -18,7 +18,7 @@
 
 # CPU config
 MCU		       = atmega168
-F_CPU	       = 1000000
+F_CPU	       = 8000000
 UART_BAUD_RATE = 4800
 
 # Target file name (without extension).
