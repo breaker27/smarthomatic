@@ -1,1 +1,1 @@
-<Project name="shc_tempsensor"><File path="Makefile"></File><File path="shc_tempsensor.c"></File><File path="rfm12_config.h"></File><File path="sht11.c"></File><File path="sht11.h"></File><File path="config.h"></File><File path="fuses.c"></File></Project>
+<Project name="shc_tempsensor"><File path="Makefile"></File><File path="shc_tempsensor.c"></File><File path="rfm12_config.h"></File><File path="sht11.c"></File><File path="sht11.h"></File><File path="config.h"></File><File path="fuses.c"></File><File path="e2p_layout.h"></File></Project>

@@ -23,7 +23,7 @@ FUSES =
 	// value 0xF7 - settings for external crystal, slowly rising power
 	.low = (FUSE_CKSEL3),
 	// value 0xD1 - EESAVE is 0, others are default
-    .high = (FUSE_SPIEN & FUSE_EESAVE & FUSE_BOOTSZ1 & FUSE_BOOTSZ0),
-	// value 0x07 - default at ATMega328
-    .extended = 0x07, 
+	.high = (FUSE_SPIEN & FUSE_EESAVE & FUSE_BOOTSZ1 & FUSE_BOOTSZ0),
+	// value 0xFC - set BOD to 4.3V to prevent accidentially FLASH garbage
+	.extended = (FUSE_BODLEVEL1 & FUSE_BODLEVEL0),
 };

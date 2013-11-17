@@ -28,6 +28,7 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
+import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
 
 import shcee.LabelArea;
@@ -44,6 +45,8 @@ public class Block extends JPanel
 	public String restrictionRefID = null;
 	public String restrictionValue = null;
 	
+	private static Font titledBorderFont;
+	
 	public Block(Color bgColor, Node root)
 	{
 		super();
@@ -57,11 +60,9 @@ public class Block extends JPanel
 		setLayout(layout);
 		
 		// set border with title
-
 		String blockName = Util.getChildNodeValue(root, "Name");
 		TitledBorder border = BorderFactory.createTitledBorder(blockName);
-		
-		border.setTitleFont(border.getTitleFont().deriveFont(Font.BOLD));
+		border.setTitleFont(getTitledBorderFont());
 		setBorder(border);
 
 		// add description
@@ -88,6 +89,20 @@ public class Block extends JPanel
 				addElem(new ReservedBits(n));
 		}
 	}	
+	
+	/**
+	 * (Create and) return a font for use at titled borders in editor elements.
+	 * Use this static function to only create one of these objects. 
+	 */
+	public static Font getTitledBorderFont()
+	{
+		if (titledBorderFont == null)
+		{
+			titledBorderFont = UIManager.getDefaults().getFont("TitledBorder.font").deriveFont(Font.BOLD);
+		}
+		
+		return titledBorderFont;
+	}
 	
 	/**
 	 * Read the restriction RefID and Value from the subnodes

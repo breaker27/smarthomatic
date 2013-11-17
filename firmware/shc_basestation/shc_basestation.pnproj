@@ -1,1 +1,1 @@
-<Project name="shc_basestation"><File path="Makefile"></File><File path="shc_basestation.c"></File><File path="rfm12_config.h"></File><File path="request_buffer.c"></File><File path="request_buffer.h"></File><File path="fuses.c"></File></Project>
+<Project name="shc_basestation"><File path="Makefile"></File><File path="shc_basestation.c"></File><File path="rfm12_config.h"></File><File path="request_buffer.c"></File><File path="request_buffer.h"></File><File path="fuses.c"></File><File path="e2p_layout.h"></File></Project>

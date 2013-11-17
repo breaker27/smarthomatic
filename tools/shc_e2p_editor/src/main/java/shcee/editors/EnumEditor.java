@@ -18,12 +18,15 @@
 
 package shcee.editors;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 import javax.swing.JComboBox;
 
 import shcee.LabelArea;
+import shcee.SHCEEMain;
 import shcee.Util;
 
 import org.w3c.dom.Node;
@@ -53,6 +56,21 @@ public class EnumEditor extends AbstractEditor
 		String blockDescription = Util.getChildNodeValue(root, "Description");
 		LabelArea descriptionLabel = new LabelArea(blockDescription);
 		add(descriptionLabel);
+		
+		// add listener for reacting on changed DeviceType (in case this editor is the one)
+		input.addActionListener (new ActionListener () {
+		    public void actionPerformed(ActionEvent e) {
+		        onChangeValue();
+		    }
+		});
+	}
+
+	protected void onChangeValue()
+	{
+		if (id.equals("DeviceType"))
+		{
+			SHCEEMain.mySHCEEMain.valueEditor.updateBlockVisibility();
+		}
 	}
 
 	@Override

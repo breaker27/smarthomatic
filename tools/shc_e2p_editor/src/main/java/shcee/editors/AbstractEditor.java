@@ -76,7 +76,7 @@ public abstract class AbstractEditor extends JPanel
 		
 		// set border with title
 		TitledBorder border = BorderFactory.createTitledBorder(id);
-		border.setTitleFont(border.getTitleFont().deriveFont(Font.BOLD));
+		border.setTitleFont(Block.getTitledBorderFont());
 		setBorder(border);
 
 		ComponentListener resizeListener = new ComponentAdapter(){

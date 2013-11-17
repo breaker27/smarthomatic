@@ -30,27 +30,17 @@
 // switch on debugging by UART
 //#define UART_DEBUG
 
-// switch on voltage check of battery on PC0 (ADC0)
-#define VBAT_SENSOR
+#include "sht11.h"
 
-// switch on SHT15 temperature / humidity sensor on PC2 + PC3
-#define TEMP_SENS
-
-// switch on light sensor on PC1 (ADC1)
-#define LIGHT_SENS
-
-#ifdef TEMP_SENS
-	#include "sht11.h"
-#endif
-
-#include "../src_common/aes256.h"
+#include "aes256.h"
 #include "util.h"
 
-#define AVERAGE_COUNT 4 // Average over how many values before sending over RFM12?
+// check some assumptions at precompile time about flash layout
+#if (EEPROM_AESKEY_BIT != 0)
+	#error AES key does not start at a byte border. Not supported (maybe fix E2P layout?).
+#endif
 
-#define EEPROM_POS_DEVICE_ID 8
-#define EEPROM_POS_PACKET_COUNTER 9
-#define EEPROM_POS_AES_KEY 32
+#define AVERAGE_COUNT 4 // Average over how many values before sending over RFM12?
 
 // How often should the packetcounter_base be increased and written to EEPROM?
 // This should be 2^32 (which is the maximum transmitted packet counter) /
@@ -59,6 +49,8 @@
 #define PACKET_COUNTER_WRITE_CYCLE 100
 
 uint32_t packetcounter = 0;
+uint8_t temperature_sensor_type = 0;
+uint8_t brightness_sensor_type = 0;
 
 void printbytearray(uint8_t * b, uint8_t len)
 {
@@ -103,33 +95,46 @@ int main ( void )
 
 	util_init();
 
-	// read packetcounter, increase by cycle and write back
-	packetcounter = eeprom_read_dword((uint32_t*)EEPROM_POS_PACKET_COUNTER) + PACKET_COUNTER_WRITE_CYCLE;
-	eeprom_write_dword((uint32_t*)0, packetcounter);
+	check_eeprom_compatibility(DEVICETYPE_TEMPERATURE_SENSOR);
 
-	// read device id and write to send buffer
-	device_id = eeprom_read_byte((uint8_t*)EEPROM_POS_DEVICE_ID);	
+	// read packetcounter, increase by cycle and write back
+	packetcounter = eeprom_read_UIntValue32(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT,
+		EEPROM_PACKETCOUNTER_LENGTH_BITS, EEPROM_PACKETCOUNTER_MINVAL, EEPROM_PACKETCOUNTER_MAXVAL) + PACKET_COUNTER_WRITE_CYCLE;
+
+	eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
+
+	// read device specific config
+	temperature_sensor_type = eeprom_read_UIntValue8(EEPROM_TEMPERATURESENSORTYPE_BYTE,
+		EEPROM_TEMPERATURESENSORTYPE_BIT, EEPROM_TEMPERATURESENSORTYPE_LENGTH_BITS, 0, 255);
+
+	brightness_sensor_type = eeprom_read_UIntValue8(EEPROM_BRIGHTNESSSENSORTYPE_BYTE,
+		EEPROM_BRIGHTNESSSENSORTYPE_BIT, EEPROM_BRIGHTNESSSENSORTYPE_LENGTH_BITS, 0, 255);
+
+	// read device id
+	device_id = eeprom_read_UIntValue16(EEPROM_DEVICEID_BYTE, EEPROM_DEVICEID_BIT,
+		EEPROM_DEVICEID_LENGTH_BITS, EEPROM_DEVICEID_MINVAL, EEPROM_DEVICEID_MAXVAL);
 	
-	//osccal_init();
+	osccal_init();
 	
 #ifdef UART_DEBUG
-	uart_init();
+	uart_init(false);
 	UART_PUTS ("\r\n");
 	UART_PUTS ("smarthomatic Tempsensor V1.0 (c) 2013 Uwe Freese, www.smarthomatic.org\r\n");
 	UART_PUTF ("Device ID: %u\r\n", device_id);
 	UART_PUTF ("Packet counter: %u\r\n", packetcounter);
+	UART_PUTF ("Temperature Sensor Type: %u\r\n", temperature_sensor_type);
+	UART_PUTF ("Brightness Sensor Type: %u\r\n", brightness_sensor_type);
 #endif
 	
 	// init AES key
-	eeprom_read_block (aes_key, (uint8_t *)EEPROM_POS_AES_KEY, 32);
+	eeprom_read_block(aes_key, (uint8_t *)EEPROM_AESKEY_BYTE, 32);
 
-#ifdef VBAT_SENSOR
 	adc_init();
-#endif
 
-#ifdef TEMP_SENS
-	sht11_init();
-#endif
+	if (temperature_sensor_type == TEMPERATURESENSORTYPE_SHT15)
+	{
+	  sht11_init();
+	}
 
 	rfm12_init();
 	//rfm12_set_wakeup_timer(0b11100110000);   // ~ 6s
@@ -143,30 +148,28 @@ int main ( void )
 
 	while (42)
 	{
-#if defined VBAT_SENSOR || defined LIGHT_SENS
+		// Measure using ADCs
 		adc_on(true);
-#endif
 
-#ifdef VBAT_SENSOR
 		vbat += (int)((long)read_adc(0) * 34375 / 10000 / 2); // 1.1 * 480 Ohm / 150 Ohm / 1,024
-#endif
 
-#ifdef LIGHT_SENS
-		vlight += read_adc(1);
-#endif
+		if (brightness_sensor_type == BRIGHTNESSSENSORTYPE_PHOTOCELL)
+		{
+			vlight += read_adc(1);
+		}
 
-#if defined VBAT_SENSOR || defined LIGHT_SENS
 		adc_on(false);
-#endif
 
-#ifdef TEMP_SENS
-		sht11_start_measure();
-		_delay_ms(500);
-		while (!sht11_measure_finish());
+		// Measure SHT15
+		if (temperature_sensor_type == TEMPERATURESENSORTYPE_SHT15)
+		{
+			sht11_start_measure();
+			_delay_ms(500);
+			while (!sht11_measure_finish());
 		
-		temp += sht11_get_tmp();
-		hum += sht11_get_hum();
-#endif
+			temp += sht11_get_tmp();
+			hum += sht11_get_hum();
+		}
 
 		avg++;
 		
@@ -185,7 +188,7 @@ int main ( void )
 			
 			if (packetcounter % PACKET_COUNTER_WRITE_CYCLE == 0)
 			{
-				eeprom_write_dword((uint32_t*)0, packetcounter);
+				eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
 			}
 
 			setBuf32(1, packetcounter);
@@ -197,21 +200,22 @@ int main ( void )
 			bufx[6] = bat_percentage(vbat);
 
 			// update temperature and humidity
-#ifdef TEMP_SENS
 			setBuf16(7, (uint16_t)temp);
 			setBuf16(9, hum);
-#endif
 
 			// update brightness
-#ifdef LIGHT_SENS
-			bufx[11] = 100 - (int)((long)vlight * 100 / 1024);
-#endif
+			if (brightness_sensor_type == BRIGHTNESSSENSORTYPE_PHOTOCELL)
+			{
+				bufx[11] = 100 - (int)((long)vlight * 100 / 1024);
+			}
 			uint32_t crc = crc32(bufx, 12);
+#ifdef UART_DEBUG
 			UART_PUTF("CRC32 is %lx (added as last 4 bytes)\r\n", crc);
+#endif
 			setBuf32(12, crc);
 
 #ifdef UART_DEBUG
-//			UART_PUTF3("Battery: %u%%, Temperature: %d deg.C, Humidity: %d%%\r\n", bat_percentage(vbat), temp / 100.0, hum / 100.0);
+			UART_PUTF3("Battery: %u%%, Temperature: %d deg.C, Humidity: %d%%\r\n", bat_percentage(vbat), temp / 100.0, hum / 100.0);
 #endif
 
 			rfm12_sendbuf();

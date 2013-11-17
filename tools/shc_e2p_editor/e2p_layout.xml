@@ -65,19 +65,116 @@
 		</ByteArray>
 	</Block>
 	<Block>
+		<Name>BaseStationConfig</Name>
+		<Description>This block contains the specific configuration data that only Base Station devices need.</Description>
+		<Restriction>
+			<RefID>DeviceType</RefID>
+			<Value>0</Value>
+		</Restriction>
+		<UIntValue>
+			<ID>AesKeyCount</ID>
+			<Description>This is the number of AES keys to use from the AesKeys block. Limit the number to the needed amount to avoid that the base station tries decoding with every one.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>16</MaxVal>
+		</UIntValue>
+		<ByteArray>
+			<ID>AesKeys</ID>
+			<Description>These are all AES keys which can be used to encrypt or decrypt packages at the base station.</Description>
+			<Bytes>512</Bytes>
+		</ByteArray>
+		<Reserved>
+			<Bits>3576</Bits>
+		</Reserved>
+	</Block>
+	<Block>
+		<Name>TemperatureSensorConfig</Name>
+		<Description>This block contains the specific configuration data that only Temperature Sensor devices need.</Description>
+		<Restriction>
+			<RefID>DeviceType</RefID>
+			<Value>20</Value>
+		</Restriction>
+		<EnumValue>
+			<ID>TemperatureSensorType</ID>
+			<Description>You can choose one of the supported temperature / humidity sensors. If set to 0, no sensor is used, but the device sends out packets for testing purposes.</Description>
+			<Bits>8</Bits>
+			<Element>
+				<Value>0</Value>
+				<Name>NoSensor</Name>
+			</Element>
+			<Element>
+				<Value>1</Value>
+				<Name>SHT15</Name>
+			</Element>
+		</EnumValue>
+		<EnumValue>
+			<ID>BrightnessSensorType</ID>
+			<Description>You can choose one of the supported light sensors. If set to 0, no sensor is used, but the device sends out packets for testing purposes.</Description>
+			<Bits>8</Bits>
+			<Element>
+				<Value>0</Value>
+				<Name>NoSensor</Name>
+			</Element>
+			<Element>
+				<Value>1</Value>
+				<Name>Photocell</Name>
+			</Element>
+		</EnumValue>
+		<Reserved>
+			<Bits>3568</Bits>
+		</Reserved>
+	</Block>
+	<Block>
+		<Name>PowerSwitchConfig</Name>
+		<Description>This block contains the specific configuration data that only Power Switch devices need.</Description>
+		<Restriction>
+			<RefID>DeviceType</RefID>
+			<Value>40</Value>
+		</Restriction>
+		<UIntValue>
+			<ID>SupportedSwitches</ID>
+			<Description>This is a bit field about the connected switches. (Currently, only one switch is supported and the value has to be 0b00000001, but the value is for future usage.)</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>1</MaxVal>
+		</UIntValue>
+		<ByteArray>
+			<ID>SwitchState</ID>
+			<Description>This field stores the last known switch state(s) to allow restoring the same state after power loss.</Description>
+			<Bytes>16</Bytes>
+		</ByteArray>
+		<UIntValue>
+			<ID>BaseStationPacketCounter</ID>
+			<Description>This is the last remembered packet counter of a command from the base station. Packets with the same or lower number are ignored.</Description>
+			<Bits>24</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>16777215</MaxVal>
+		</UIntValue>
+		<Reserved>
+			<Bits>3424</Bits>
+		</Reserved>
+	</Block>
+	<Block>
 		<Name>DimmerConfig</Name>
 		<Description>This block contains the specific configuration data that only Dimmer devices need.</Description>
 		<Restriction>
 			<RefID>DeviceType</RefID>
 			<Value>60</Value>
 		</Restriction>
+		<UIntValue>
+			<ID>BaseStationPacketCounter</ID>
+			<Description>This is the last remembered packet counter of a command from the base station. Packets with the same or lower number are ignored.</Description>
+			<Bits>24</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>16777215</MaxVal>
+		</UIntValue>
 		<ByteArray>
 			<ID>BrightnessTranslationTable</ID>
-			<Description>These are the target values (one byte each) for the input brightness of 0, 1, ... 100% to adapt the specific brightness curve of your lamps.</Description>
+			<Description>These are the target values (one byte each) for the input brightness of 0, 1, ... 100% to adapt the specific brightness curve of your lamps. Set first byte to FF to not use it.</Description>
 			<Bytes>101</Bytes>
 		</ByteArray>
 		<Reserved>
-			<Bits>6872</Bits>
+			<Bits>6848</Bits>
 		</Reserved>
 	</Block>
 </E2P>

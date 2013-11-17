@@ -26,8 +26,6 @@
 
 #include "rfm12.h"
 
-#include "e2p_layout_base_station.h"
-
 #define UART_DEBUG   // Debug output over UART
 
 #include "uart.h"
@@ -39,8 +37,6 @@
 // Therefore 100 is a good value.
 #define PACKET_COUNTER_WRITE_CYCLE 100
 
-#define AES_KEY_EEPROM_COUNT 15 // 15 * 32 bytes in EEPROM, starting at position 32
-
 #define LED_PIN 7
 #define LED_PORT PORTD
 #define LED_DDR DDRD
@@ -48,7 +44,14 @@
 #include "util.h"
 #include "request_buffer.h"
 
+// check some assumptions at precompile time about flash layout
+#if (EEPROM_AESKEYS_BIT != 0)
+	#error AES keys do not start at a byte border. Not supported by base station (maybe fix E2P layout?).
+#endif
+
 uint32_t packetcounter;
+uint16_t deviceID;
+uint8_t aes_key_count;
 
 void printbytearray(uint8_t * b, uint8_t len)
 {
@@ -197,14 +200,14 @@ void decode_data(uint8_t len)
 void send_packet(uint8_t aes_key_nr, uint8_t data_len)
 {
 	// set device ID (base station has ID 0 by definition)
-	bufx[0] = 0;
+	bufx[0] = deviceID;
 
 	// update packet counter
 	packetcounter++;
 	
 	if (packetcounter % PACKET_COUNTER_WRITE_CYCLE == 0)
 	{
-		eeprom_write_dword((uint32_t*)0, packetcounter);
+		eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
 	}
 
 	setBuf32(1, packetcounter);
@@ -214,12 +217,12 @@ void send_packet(uint8_t aes_key_nr, uint8_t data_len)
 	setBuf32(data_len + 6, crc);
 
 	// load AES key (0 is first AES key)
-	if (aes_key_nr >= AES_KEY_EEPROM_COUNT)
+	if (aes_key_nr >= aes_key_count)
 	{
-		aes_key_nr = AES_KEY_EEPROM_COUNT - 1;
+		aes_key_nr = aes_key_count - 1;
 	}
 	
-	eeprom_read_block (aes_key, (uint8_t *)(EEPROM_AESKEY_BYTE + aes_key_nr * 32), 32);
+	eeprom_read_block (aes_key, (uint8_t *)(EEPROM_AESKEYS_BYTE + aes_key_nr * 32), 32);
 	
 	// show info
 	decode_data(data_len + 6);
@@ -251,16 +254,29 @@ int main ( void )
 	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
 	_delay_ms(1000);
 
+	check_eeprom_compatibility(DEVICETYPE_BASE_STATION);
+
 	request_queue_init();
-	
+
 	// read packetcounter, increase by cycle and write back
-	packetcounter = eeprom_read_dword((uint32_t*)EEPROM_PACKETCOUNTER_BYTE) + PACKET_COUNTER_WRITE_CYCLE;
-	eeprom_write_dword((uint32_t*)0, packetcounter);
+	packetcounter = eeprom_read_UIntValue32(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT,
+		EEPROM_PACKETCOUNTER_LENGTH_BITS, EEPROM_PACKETCOUNTER_MINVAL, EEPROM_PACKETCOUNTER_MAXVAL) + PACKET_COUNTER_WRITE_CYCLE;
+
+	eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
+
+	// read device specific config
+	aes_key_count = eeprom_read_UIntValue8(EEPROM_AESKEYCOUNT_BYTE, EEPROM_AESKEYCOUNT_BIT,
+		EEPROM_AESKEYCOUNT_LENGTH_BITS, EEPROM_AESKEYCOUNT_MINVAL, EEPROM_AESKEYCOUNT_MAXVAL);
+
+	deviceID = eeprom_read_UIntValue16(EEPROM_DEVICEID_BYTE, EEPROM_DEVICEID_BIT,
+		EEPROM_DEVICEID_LENGTH_BITS, EEPROM_DEVICEID_MINVAL, EEPROM_DEVICEID_MAXVAL);
 
 	uart_init(true);
 	UART_PUTS ("\r\n");
 	UART_PUTS ("smarthomatic Base Station V1.0 (c) 2012 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTF ("Device ID: %u\r\n", deviceID);
 	UART_PUTF ("Packet counter: %lu\r\n", packetcounter);
+	UART_PUTF ("AES key count: %u\r\n", aes_key_count);
 	UART_PUTS ("Waiting for incoming data. Press h for help.\r\n");
 
 	rfm12_init();
@@ -270,7 +286,7 @@ int main ( void )
 	/*
 	uint8_t testlen = 64;
 	
-	eeprom_read_block (aes_key, (uint8_t *)EEPROM_AESKEY_BYTE, 32);
+	eeprom_read_block (aes_key, (uint8_t *)EEPROM_AESKEYS_BYTE, 32);
 	UART_PUTS("Using AES key ");
 	printbytearray((uint8_t *)aes_key, 32);
 			
@@ -329,10 +345,10 @@ int main ( void )
 			}
 			else // try to decrypt with all keys stored in EEPROM
 			{
-				uint32_t assumed_crc;
-				uint32_t actual_crc;
+				uint32_t assumed_crc = 0;
+				uint32_t actual_crc = 1;
 
-				for(aes_key_nr = 0; aes_key_nr < AES_KEY_EEPROM_COUNT ; aes_key_nr++)
+				for(aes_key_nr = 0; aes_key_nr < aes_key_count ; aes_key_nr++)
 				{
 					//strncpy((char *)bufx, (char *)rfm12_rx_buffer(), len);
 					memcpy(bufx, rfm12_rx_buffer(), len);
@@ -343,7 +359,7 @@ int main ( void )
 						printbytearray(bufx, len);
 					}*/
 				
-					eeprom_read_block (aes_key, (uint8_t *)(EEPROM_AESKEY_BYTE + aes_key_nr * 32), 32);
+					eeprom_read_block (aes_key, (uint8_t *)(EEPROM_AESKEYS_BYTE + aes_key_nr * 32), 32);
 					//UART_PUTS("Trying AES key ");
 					//printbytearray((uint8_t *)aes_key, 32);
 

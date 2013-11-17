@@ -76,5 +76,24 @@ typedef enum {
 #define EEPROM_AESKEY_BIT 0
 #define EEPROM_AESKEY_LENGTH_BYTES 32
 
-// overall length: 512 bits
+
+// ---------- BaseStationConfig ----------
+
+// UIntValue AesKeyCount
+
+#define EEPROM_AESKEYCOUNT_BYTE 64
+#define EEPROM_AESKEYCOUNT_BIT 0
+#define EEPROM_AESKEYCOUNT_LENGTH_BITS 8
+#define EEPROM_AESKEYCOUNT_MINVAL 1
+#define EEPROM_AESKEYCOUNT_MAXVAL 16
+
+// ByteArray AesKeys
+
+#define EEPROM_AESKEYS_BYTE 65
+#define EEPROM_AESKEYS_BIT 0
+#define EEPROM_AESKEYS_LENGTH_BYTES 512
+
+// Reserved area with 3576 bits
+
+// overall length: 8192 bits
 

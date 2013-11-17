@@ -145,19 +145,19 @@ public class ValueEditorPanel extends JPanel
 
 	protected void onButtonFlash()
 	{
-		String oldCmd = "d:\\Befehle\\avrdude\\avrdude.exe -P com7 -cstk500v2 -p #DEVICE# -U eeprom:w:#FILENAME#:r";
+		String oldCmd = "avrdude.exe -p #DEVICE# -U eeprom:w:#FILENAME#:r";
 		
 		Object cmdLine = JOptionPane.showInputDialog(SHCEEMain.mySHCEEMain,
 				"<html><body><b>Enter command for flashing e2p file</b><br/><br/>" +
 				"#DEVICE# will be replaced by m328p or m168 according to e2p size<br/>" +
 				"#FILENAME# will be replaced by the e2p filename<br/><br/>" +
-				"Default is: avrdude.exe -P com7 -cstk500v2 -p #DEVICE# -U eeprom:w:#FILENAME#:r</body></html>", "Flash e2p file to device", JOptionPane.PLAIN_MESSAGE, null, null, oldCmd);
+				"Default is: avrdude.exe -p #DEVICE# -U eeprom:w:#FILENAME#:r</body></html>", "Flash e2p file to device", JOptionPane.PLAIN_MESSAGE, null, null, oldCmd);
 		
 		if (null != cmdLine)
 		{
 			String cmdLineS = (String)cmdLine;
 			
-			if (length > 512)
+			if (length > 4096)
 			{			
 				cmdLineS = cmdLineS.replace("#DEVICE#", "m328p");
 			}
@@ -261,7 +261,7 @@ public class ValueEditorPanel extends JPanel
 				byte[] data = Util.readFileToByteArray(filename);
 				readFromEepromArray(data);
 			}
-			catch (IOException e)
+			catch (Exception e)
 			{
 				e.printStackTrace();
 				JOptionPane.showMessageDialog(null, "The file " + filename
@@ -280,6 +280,34 @@ public class ValueEditorPanel extends JPanel
 	}
 
 	/**
+	 * Update visibility of blocks according to the currently selected restriction (DeviceType)
+	 * without changing the content of the editors.
+	 */
+	public void updateBlockVisibility()
+	{
+		// Switch all blocks of so no blocks are displayed that are not used for the device if anything goes wrong reading the bytes from the file (e.g. file too short).
+		for (Block b : blocks)
+		{
+			b.setVisible(false);
+		}
+		
+		for (Block b : blocks)
+		{
+			boolean match = true;
+			
+			// If a block has a condition set, check it and override
+			// using this block if it is not matched.
+			if (b.restrictionRefID != null)
+			{
+				String val = findValue(b.restrictionRefID, false);
+				match = val.equals(b.restrictionValue);
+			}
+
+			b.setVisible(match);
+		}
+	}
+	
+	/**
 	 * Feed the bytes from the EEPROM file to the editor blocks one after another
 	 * with an updated bit offset.
 	 * The block objects are responsible for further feeding the bits and bytes
@@ -290,6 +318,12 @@ public class ValueEditorPanel extends JPanel
 	{
 		int offset = 0;
 
+		// Switch all blocks of so no blocks are displayed that are not used for the device if anything goes wrong reading the bytes from the file (e.g. file too short).
+		for (Block b : blocks)
+		{
+			b.setVisible(false);
+		}
+		
 		for (Block b : blocks)
 		{
 			boolean match = true;
@@ -299,7 +333,6 @@ public class ValueEditorPanel extends JPanel
 			if (b.restrictionRefID != null)
 			{
 				String val = findValue(b.restrictionRefID, false);
-
 				match = val.equals(b.restrictionValue);
 			}
 

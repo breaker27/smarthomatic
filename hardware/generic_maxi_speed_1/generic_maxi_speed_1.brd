@@ -18,8 +18,8 @@
 <layer number="22" name="bPlace" color="7" fill="1" visible="no" active="yes"/>
 <layer number="23" name="tOrigins" color="15" fill="1" visible="no" active="yes"/>
 <layer number="24" name="bOrigins" color="15" fill="1" visible="no" active="yes"/>
-<layer number="25" name="tNames" color="7" fill="1" visible="no" active="yes"/>
-<layer number="26" name="bNames" color="7" fill="1" visible="no" active="yes"/>
+<layer number="25" name="tNames" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="26" name="bNames" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="27" name="tValues" color="7" fill="1" visible="no" active="yes"/>
 <layer number="28" name="bValues" color="7" fill="1" visible="no" active="yes"/>
 <layer number="29" name="tStop" color="7" fill="3" visible="no" active="yes"/>
@@ -62,7 +62,7 @@
 <wire x1="50" y1="0" x2="50" y2="50" width="0" layer="20"/>
 <wire x1="50" y1="50" x2="0" y2="50" width="0" layer="20"/>
 <wire x1="0" y1="50" x2="0" y2="0" width="0" layer="20"/>
-<text x="3.175" y="13.6525" size="1.143" layer="26" font="vector" rot="MR270">smarthomatic</text>
+<text x="3.175" y="20.0025" size="1.778" layer="26" font="vector" rot="MR270">smarthomatic</text>
 <text x="4.445" y="48.5775" size="1.27" layer="26" font="vector" rot="MR270">Gen. Maxi</text>
 <text x="2.2225" y="47.625" size="1.27" layer="26" font="vector" rot="MR270">Speed 1</text>
 <text x="48.26" y="48.5775" size="1.27" layer="26" font="vector" rot="MR270">Rev 1.0</text>

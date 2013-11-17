@@ -37,7 +37,6 @@
 	#error Systematic UART baud rate is greater than 1% and therefore too high!
 #endif 
 
-
 #define UART_PUTS(X)	             uart_putstr_P(PSTR((X)));
 #define UART_PUTF(X, A)              {sprintf_P(uartbuf, PSTR((X)), (A)); uart_putstr(uartbuf);}
 #define UART_PUTF2(X, A, B)          {sprintf_P(uartbuf, PSTR((X)), (A), (B)); uart_putstr(uartbuf);}
