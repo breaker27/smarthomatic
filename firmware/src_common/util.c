@@ -54,7 +54,7 @@ void printSigned(int16_t i)
 		i = -i;
 	}
 	
-	UART_PUTF2("%d.%02d;", i / 100, i % 100);
+	UART_PUTF2("%d.%02d", i / 100, i % 100);
 }
 
 // reference battery voltage (alkaline) for 100%, 90%,... 0% with end voltage 0,9V
