@@ -40,6 +40,12 @@ static inline void eeprom_write_UIntValue(uint16_t byte, uint8_t bit, uint16_t l
 	_eeprom_write_UIntValue(byte, bit, length_bits, val, NULL);
 }
 
+static inline void eeprom_write_IntValue(uint16_t byte, uint8_t bit, uint16_t length_bits, int32_t val)
+{
+	_eeprom_write_UIntValue(byte, bit, length_bits,
+		(uint32_t)(((((uint32_t)val) >> 31) << (length_bits - 1)) | (val & ((1 << length_bits) - 1))),
+		NULL);
+}
 
 // function wrappers for ARRAY access
 static inline uint8_t array_read_UIntValue8(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t minval, uint32_t maxval, uint8_t * array)
@@ -60,6 +66,13 @@ static inline uint32_t array_read_UIntValue32(uint16_t byte, uint8_t bit, uint16
 static inline void array_write_UIntValue(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t val, uint8_t * array)
 {
 	_eeprom_write_UIntValue(byte, bit, length_bits, val, array);
+}
+
+static inline void array_write_IntValue(uint16_t byte, uint8_t bit, uint16_t length_bits, int32_t val, uint8_t * array)
+{
+	_eeprom_write_UIntValue(byte, bit, length_bits,
+		(uint32_t)(((((uint32_t)val) >> 31) << (length_bits - 1)) | (val & ((1 << length_bits) - 1))),
+		array);
 }
 
 #endif // E2P_ACCESS

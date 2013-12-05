@@ -27,6 +27,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
@@ -175,7 +176,12 @@ public class Util {
 		NodeList nl = root.getChildNodes();
 		for (int i = 0; i < nl.getLength(); i++) {
 			if (nl.item(i).getNodeName().equals(childName)) {
-				return nl.item(i).getFirstChild().getNodeValue();
+				Node textNode = nl.item(i).getFirstChild();
+				
+				if (textNode == null)
+					return "";
+				else
+					return textNode.getNodeValue();
 			}
 		}
 		System.err.println("Childnode " + childName + " not found!");
@@ -366,5 +372,26 @@ public class Util {
 	public static byte hexToByte(Character cHigh, Character cLow)
 	{
 		return (byte)((Character.digit(cHigh, 16) << 4) + Character.digit(cLow, 16));
+	}
+	
+	public static String arrayListToString(ArrayList<String> al, String delimiter)
+	{
+		StringBuilder out = new StringBuilder();
+		boolean first = true;
+		
+		for (Object o : al)
+		{
+			if (first)
+			{
+				first = false;
+			}
+			else
+			{
+				  out.append(delimiter);
+			}
+			out.append(o.toString());
+		}
+		
+		return out.toString();
 	}
 }

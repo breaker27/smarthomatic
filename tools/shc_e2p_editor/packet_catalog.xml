@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Packet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="packet_metamodel.xsd">
+	<Header>
+		<UIntValue>
+			<ID>CRC32</ID>
+			<Description>CRC32 value of byte 4..n</Description>
+			<Bits>32</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>4294967295</MaxVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>SenderID</ID>
+			<Description>The SenderID is the DeviceID of the sending device. It's only allowed to send packets with the own DeviceID. 0 = base station, others are arbitrary.</Description>
+			<Bits>12</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>4095</MaxVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>PacketCounter</ID>
+			<Description>The PacketCounter is counted up throughout the whole lifetime of the device and is used to make the encrypted packets differently from each other every time. Packets received with the same or lower number must be ignored per SenderID.</Description>
+			<Bits>24</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>16777215</MaxVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>MessageGroupID</ID>
+			<Description/>
+			<Bits>4</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>15</MaxVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>MessageID</ID>
+			<Description>0 = Generic, 1..9 = Reserved, others are arbitrary</Description>
+			<Bits>7</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>127</MaxVal>
+		</UIntValue>
+		<EnumValue>
+			<ID>MessageType</ID>
+			<Description>The message type influences the behaviour with sending the packet. E.g. requests are acknowledged.</Description>
+			<Bits>1</Bits>
+			<Element>
+				<Value>0</Value>
+				<Name>Status</Name>
+			</Element>
+			<Element>
+				<Value>1</Value>
+				<Name>Request</Name>
+			</Element>
+		</EnumValue>
+	</Header>
+	<MessageGroup>
+		<Name>Generic</Name>
+		<Description>This group contains messages useful for different devices.</Description>
+		<MessageGroupID>0</MessageGroupID>
+		<Message>
+			<Name>GenericAck</Name>
+			<Description>Acknowledge about receiving a request from another device.</Description>
+			<MessageID>0</MessageID>
+			<MessageType>0</MessageType>
+			<Validity>test</Validity>
+			<UIntValue>
+				<ID>SenderID</ID>
+				<Description>The SenderID is the DeviceID of the sending device. It's only allowed to send packets with the own DeviceID. 0 = base station, others are arbitrary.</Description>
+				<Bits>12</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>4095</MaxVal>
+			</UIntValue>
+			<UIntValue>
+				<ID>PacketCounter</ID>
+				<Description>The PacketCounter is counted up throughout the whole lifetime of the device and is used to make the encrypted packets differently from each other every time. Packets received with the same or lower number must be ignored per SenderID.</Description>
+				<Bits>24</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>16777215</MaxVal>
+			</UIntValue>
+		</Message>
+		<Message>
+			<Name>BatteryStatus</Name>
+			<Description>Tells the current battery status in percent.</Description>
+			<MessageID>5</MessageID>
+			<MessageType>0</MessageType>
+			<Validity>test</Validity>
+			<UIntValue>
+				<ID>Percentage</ID>
+				<Description>The remaining capacity of the battery from 0 (empty) to 100 (full).</Description>
+				<Bits>7</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>100</MaxVal>
+			</UIntValue>
+		</Message>
+	</MessageGroup>
+	<MessageGroup>
+		<Name>TempSensor</Name>
+		<Description/>
+		<MessageGroupID>10</MessageGroupID>
+		<Message>
+			<Name>TempStatus</Name>
+			<Description/>
+			<MessageID>1</MessageID>
+			<MessageType>0</MessageType>
+			<Validity>test</Validity>
+			<IntValue>
+				<ID>Temperature</ID>
+				<Description>temperature [1/100 degree celsius], -50°C = -5000, 50°C = 5000</Description>
+				<Bits>16</Bits>
+				<MinVal>-32768</MinVal>
+				<MaxVal>32767</MaxVal>
+			</IntValue>
+			<UIntValue>
+				<ID>Humidity</ID>
+				<Description>relative humidity permill, 0..1000 (other values not defined)</Description>
+				<Bits>10</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>1000</MaxVal>
+			</UIntValue>
+			<UIntValue>
+				<ID>Brightness</ID>
+				<Description>brightness in percent</Description>
+				<Bits>7</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>100</MaxVal>
+			</UIntValue>
+		</Message>
+	</MessageGroup>
+</Packet>

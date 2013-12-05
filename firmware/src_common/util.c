@@ -37,8 +37,6 @@
 
 #include "e2p_access.h"
 
-uint8_t bufx[65];
-
 #define LED_PIN 7
 #define LED_PORT PORTD
 #define LED_DDR DDRD

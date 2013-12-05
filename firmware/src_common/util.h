@@ -30,7 +30,7 @@
 #include "e2p_layout.h" // device specific (!) version of e2p layout in the device's directory
 
 // used as buffer for sending data to SHT
-extern uint8_t bufx[];
+uint8_t bufx[65];
 unsigned int adc_data;
 
 void printSigned(int16_t i);
