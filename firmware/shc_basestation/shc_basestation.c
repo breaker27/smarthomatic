@@ -354,8 +354,8 @@ int main ( void )
 					//UART_PUTS("Decrypted bytes: ");
 					//printbytearray(bufx, len);
 
-					assumed_crc = getBuf32(len - 4);
-					actual_crc = crc32(bufx, len - 4);
+					assumed_crc = getBuf32(0);
+					actual_crc = crc32(bufx + 4, len - 4);
 					
 					//UART_PUTF("Received CRC32 would be %lx\r\n", assumed_crc);
 					//UART_PUTF("Re-calculated CRC32 is  %lx\r\n", actual_crc);
