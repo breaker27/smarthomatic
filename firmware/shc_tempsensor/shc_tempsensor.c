@@ -27,6 +27,9 @@
 #include "rfm12.h"
 #include "uart.h"
 
+#include "../src_common/msggrp_generic.h"
+#include "../src_common/msggrp_tempsensor.h"
+
 // switch on debugging by UART
 //#define UART_DEBUG
 
@@ -41,6 +44,7 @@
 #endif
 
 #define AVERAGE_COUNT 4 // Average over how many values before sending over RFM12?
+#define SEND_BATT_STATUS_CYCLE 30 // send battery status x times less than temp status
 
 // How often should the packetcounter_base be increased and written to EEPROM?
 // This should be 2^32 (which is the maximum transmitted packet counter) /
@@ -51,6 +55,7 @@
 uint32_t packetcounter = 0;
 uint8_t temperature_sensor_type = 0;
 uint8_t brightness_sensor_type = 0;
+uint8_t batt_status_cycle = SEND_BATT_STATUS_CYCLE - 1; // send promptly after startup
 
 void printbytearray(uint8_t * b, uint8_t len)
 {
@@ -85,10 +90,11 @@ int main ( void )
 {
 	uint16_t vbat = 0;
 	uint16_t vlight = 0;
-	int16_t temp = 0;
+	int32_t temp = 0;
 	uint16_t hum = 0;
 	uint8_t device_id = 0;
 	uint8_t avg = 0;
+	uint8_t bat_p_val = 0;
 
 	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
 	_delay_ms(1000);
@@ -121,7 +127,7 @@ int main ( void )
 	UART_PUTS ("\r\n");
 	UART_PUTS ("smarthomatic Tempsensor V1.0 (c) 2013 Uwe Freese, www.smarthomatic.org\r\n");
 	UART_PUTF ("Device ID: %u\r\n", device_id);
-	UART_PUTF ("Packet counter: %u\r\n", packetcounter);
+	UART_PUTF ("Packet counter: %lu\r\n", packetcounter);
 	UART_PUTF ("Temperature Sensor Type: %u\r\n", temperature_sensor_type);
 	UART_PUTF ("Brightness Sensor Type: %u\r\n", brightness_sensor_type);
 #endif
@@ -180,9 +186,6 @@ int main ( void )
 			temp /= AVERAGE_COUNT;
 			hum /= AVERAGE_COUNT;
 
-			// set device ID
-			bufx[0] = device_id;
-			
 			// update packet counter
 			packetcounter++;
 			
@@ -191,31 +194,28 @@ int main ( void )
 				eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
 			}
 
-			setBuf32(1, packetcounter);
+			// TODO: Send battery status from time to time.
 
-			// set command ID 10 (Temperature Sensor Status)
-			bufx[5] = 10;
+			// Set packet content
+			temp = -5000;
+			pkg_header_init_tempsensor_tempstatus();
+			pkg_header_set_senderid(device_id);
+			pkg_header_set_packetcounter(packetcounter);
+			msg_tempsensor_tempstatus_set_temperature(temp);
+			msg_tempsensor_tempstatus_set_humidity(hum);
 
-			// update battery percentage
-			bufx[6] = bat_percentage(vbat);
-
-			// update temperature and humidity
-			setBuf16(7, (uint16_t)temp);
-			setBuf16(9, hum);
-
-			// update brightness
 			if (brightness_sensor_type == BRIGHTNESSSENSORTYPE_PHOTOCELL)
 			{
-				bufx[11] = 100 - (int)((long)vlight * 100 / 1024);
+				msg_tempsensor_tempstatus_set_brightness(100 - (int)((long)vlight * 100 / 1024));
 			}
-			uint32_t crc = crc32(bufx, 12);
+			
+			pkg_header_crc32_tempsensor_tempstatus();
+			
+			bat_p_val = bat_percentage(vbat);
+			
 #ifdef UART_DEBUG
-			UART_PUTF("CRC32 is %lx (added as last 4 bytes)\r\n", crc);
-#endif
-			setBuf32(12, crc);
-
-#ifdef UART_DEBUG
-			UART_PUTF("Battery: %u%%, Temperature: ", bat_percentage(vbat));
+			UART_PUTF("CRC32 is %lx (added as first 4 bytes)\r\n", getBuf32(0));
+			UART_PUTF("Battery: %u%%, Temperature: ", bat_p_val);
 			printSigned(temp);
 			UART_PUTS(" deg.C, Humidity: ");
 			printSigned(hum);
@@ -223,7 +223,6 @@ int main ( void )
 #endif
 
 			rfm12_sendbuf();
-			
 			rfm12_tick(); // send packet, and then WAIT SOME TIME BEFORE GOING TO SLEEP (otherwise packet would not be sent)
 
 			switch_led(1);
@@ -231,6 +230,31 @@ int main ( void )
 			switch_led(0);
 
 			vbat = temp = hum = vlight = avg = 0;
+			batt_status_cycle++;
+		}
+		else
+		{
+			if (batt_status_cycle >= SEND_BATT_STATUS_CYCLE)
+			{
+				batt_status_cycle = 0;
+				
+				// Set packet content
+				pkg_header_init_generic_batterystatus();
+				pkg_header_set_senderid(device_id);
+				pkg_header_set_packetcounter(packetcounter);
+				msg_generic_batterystatus_set_percentage(bat_p_val);
+				pkg_header_crc32_generic_batterystatus();
+				
+#ifdef UART_DEBUG
+				UART_PUTF("Battery: %u%%\r\n", bat_p_val);
+#endif
+				rfm12_sendbuf();
+				rfm12_tick(); // send packet, and then WAIT SOME TIME BEFORE GOING TO SLEEP (otherwise packet would not be sent)
+
+				switch_led(1);
+				_delay_ms(200);
+				switch_led(0);
+			}
 		}
 		
 		// go to sleep. Wakeup by RFM12 wakeup-interrupt
@@ -238,3 +262,6 @@ int main ( void )
         sleep_mode();
 	}
 }
+
+// Ursprünglich 10260 Bytes ("text")
+

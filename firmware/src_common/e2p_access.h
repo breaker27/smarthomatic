@@ -43,7 +43,7 @@ static inline void eeprom_write_UIntValue(uint16_t byte, uint8_t bit, uint16_t l
 static inline void eeprom_write_IntValue(uint16_t byte, uint8_t bit, uint16_t length_bits, int32_t val)
 {
 	_eeprom_write_UIntValue(byte, bit, length_bits,
-		(uint32_t)(((((uint32_t)val) >> 31) << (length_bits - 1)) | (val & ((1 << length_bits) - 1))),
+		(uint32_t)(((((uint32_t)val) >> 31) << (length_bits - 1)) | ((uint32_t)val & (uint32_t)((1 << (length_bits - 1)) - 1))),
 		NULL);
 }
 
@@ -70,8 +70,15 @@ static inline void array_write_UIntValue(uint16_t byte, uint8_t bit, uint16_t le
 
 static inline void array_write_IntValue(uint16_t byte, uint8_t bit, uint16_t length_bits, int32_t val, uint8_t * array)
 {
+	//UART_PUTF ("IntVal: %d\r\n", val);
+	//UART_PUTF ("as UIntVal: %lu\r\n", (uint32_t)val);
+	//UART_PUTF ("Shifted: %u\r\n", ((uint32_t)val) >> 31);
+	//UART_PUTF ("Shifted2: %u\r\n", ((((uint32_t)val) >> 31) << (length_bits - 1)));
+	//UART_PUTF ("MASK: %u\r\n", ((1 << (length_bits - 1)) - 1));
+	//UART_PUTF ("OR: %lu\r\n", ((uint32_t)val & (uint32_t)((1 << (length_bits - 1)) - 1)));
+
 	_eeprom_write_UIntValue(byte, bit, length_bits,
-		(uint32_t)(((((uint32_t)val) >> 31) << (length_bits - 1)) | (val & ((1 << length_bits) - 1))),
+		(uint32_t)(((((uint32_t)val) >> 31) << (length_bits - 1)) | ((uint32_t)val & (uint32_t)((1 << (length_bits - 1)) - 1))),
 		array);
 }
 
