@@ -8,10 +8,34 @@
 						<xs:choice maxOccurs="unbounded">
 							<xs:element ref="UIntValue"/>
 							<xs:element ref="IntValue"/>
+							<xs:element ref="BoolValue"/>
 							<xs:element ref="EnumValue"/>
 							<xs:element ref="ByteArray"/>
 							<xs:element ref="Reserved"/>
 						</xs:choice>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="HeaderExtension" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="MessageType" maxOccurs="unbounded">
+								<xs:annotation>
+									<xs:documentation>All MessageTypes this HeaderExtension is valid for. Make sure only one HeaderExtension is valid for one MessageType!</xs:documentation>
+								</xs:annotation>
+								<xs:simpleType>
+									<xs:restriction base="xs:int"/>
+								</xs:simpleType>
+							</xs:element>
+							<xs:choice maxOccurs="unbounded">
+								<xs:element ref="UIntValue"/>
+								<xs:element ref="IntValue"/>
+								<xs:element ref="BoolValue"/>
+								<xs:element ref="EnumValue"/>
+								<xs:element ref="ByteArray"/>
+								<xs:element ref="Reserved"/>
+							</xs:choice>
+							<xs:element name="ContainsMessageData" type="xs:boolean"/>
+						</xs:sequence>
 					</xs:complexType>
 				</xs:element>
 				<xs:element name="MessageGroup" maxOccurs="unbounded">
@@ -40,12 +64,12 @@
 												</xs:restriction>
 											</xs:simpleType>
 										</xs:element>
-										<xs:element name="MessageType">
+										<xs:element name="MessageType" maxOccurs="unbounded">
+											<xs:annotation>
+												<xs:documentation>All MessageTypes this Message is valid for.</xs:documentation>
+											</xs:annotation>
 											<xs:simpleType>
-												<xs:restriction base="xs:int">
-													<xs:minInclusive value="0"/>
-													<xs:maxInclusive value="1"/>
-												</xs:restriction>
+												<xs:restriction base="xs:int"/>
 											</xs:simpleType>
 										</xs:element>
 										<xs:element name="Validity">
@@ -61,6 +85,7 @@
 										<xs:choice maxOccurs="unbounded">
 											<xs:element ref="UIntValue"/>
 											<xs:element ref="IntValue"/>
+											<xs:element ref="BoolValue"/>
 											<xs:element ref="EnumValue"/>
 											<xs:element ref="ByteArray"/>
 											<xs:element ref="Reserved"/>
@@ -113,6 +138,17 @@
 				</xs:element>
 				<xs:element name="MinVal" type="xs:int"/>
 				<xs:element name="MaxVal" type="xs:int"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="BoolValue">
+		<xs:annotation>
+			<xs:documentation>A boolean value, stored as one bit being 0 (false) or 1 (true).</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="ID" type="xs:string"/>
+				<xs:element name="Description"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
