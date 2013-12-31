@@ -20,6 +20,8 @@
 MCU		       = atmega328
 F_CPU	       = 8000000
 UART_BAUD_RATE = 4800
+#UART_DEBUG     = 1
+#UART_RX        = 1
 
 # Target file name (without extension).
 TARGET = shc_dimmer

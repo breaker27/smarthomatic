@@ -30,9 +30,6 @@
 #include "../src_common/msggrp_generic.h"
 #include "../src_common/msggrp_tempsensor.h"
 
-// switch on debugging by UART
-// #define UART_DEBUG
-
 #include "sht11.h"
 
 #include "aes256.h"
@@ -71,17 +68,13 @@ void printbytearray(uint8_t * b, uint8_t len)
 
 void rfm12_sendbuf(void)
 {
-	#ifdef UART_DEBUG
 	UART_PUTS("Before encryption: ");
 	printbytearray(bufx, __PACKETSIZEBYTES);
-	#endif
 
 	uint8_t aes_byte_count = aes256_encrypt_cbc(bufx, __PACKETSIZEBYTES);
 
-	#ifdef UART_DEBUG
 	UART_PUTS("After encryption:  ");
 	printbytearray(bufx, aes_byte_count);
-	#endif
 
 	rfm12_tx(aes_byte_count, 0, (uint8_t *) bufx);
 }
@@ -122,15 +115,13 @@ int main ( void )
 	
 	osccal_init();
 	
-#ifdef UART_DEBUG
-	uart_init(false);
+	uart_init();
 	UART_PUTS ("\r\n");
 	UART_PUTS ("smarthomatic Tempsensor V1.0 (c) 2013 Uwe Freese, www.smarthomatic.org\r\n");
 	UART_PUTF ("Device ID: %u\r\n", device_id);
 	UART_PUTF ("Packet counter: %lu\r\n", packetcounter);
 	UART_PUTF ("Temperature Sensor Type: %u\r\n", temperature_sensor_type);
 	UART_PUTF ("Brightness Sensor Type: %u\r\n", brightness_sensor_type);
-#endif
 	
 	// init AES key
 	eeprom_read_block(aes_key, (uint8_t *)EEPROM_AESKEY_BYTE, 32);
@@ -211,14 +202,12 @@ int main ( void )
 			
 			bat_p_val = bat_percentage(vbat);
 			
-#ifdef UART_DEBUG
 			UART_PUTF("CRC32 is %lx (added as first 4 bytes)\r\n", getBuf32(0));
 			UART_PUTF("Battery: %u%%, Temperature: ", bat_p_val);
 			printSigned(temp);
 			UART_PUTS(" deg.C, Humidity: ");
 			printSigned(hum);
 			UART_PUTS("%\r\n");
-#endif
 
 			rfm12_sendbuf();
 			rfm12_tick(); // send packet, and then WAIT SOME TIME BEFORE GOING TO SLEEP (otherwise packet would not be sent)
@@ -243,9 +232,8 @@ int main ( void )
 				msg_generic_batterystatus_set_percentage(bat_p_val);
 				pkg_header_calc_crc32();
 				
-#ifdef UART_DEBUG
 				UART_PUTF("Battery: %u%%\r\n", bat_p_val);
-#endif
+
 				rfm12_sendbuf();
 				rfm12_tick(); // send packet, and then WAIT SOME TIME BEFORE GOING TO SLEEP (otherwise packet would not be sent)
 

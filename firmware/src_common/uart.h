@@ -37,21 +37,29 @@
 	#error Systematic UART baud rate is greater than 1% and therefore too high!
 #endif 
 
-#define UART_PUTS(X)	             uart_putstr_P(PSTR((X)));
-#define UART_PUTF(X, A)              {sprintf_P(uartbuf, PSTR((X)), (A)); uart_putstr(uartbuf);}
-#define UART_PUTF2(X, A, B)          {sprintf_P(uartbuf, PSTR((X)), (A), (B)); uart_putstr(uartbuf);}
-#define UART_PUTF3(X, A, B, C)       {sprintf_P(uartbuf, PSTR((X)), (A), (B), (C)); uart_putstr(uartbuf);}
-#define UART_PUTF4(X, A, B, C, D)    {sprintf_P(uartbuf, PSTR((X)), (A), (B), (C), (D)); uart_putstr(uartbuf);}
+#ifdef UART_DEBUG
+	#define UART_PUTS(X)	             uart_putstr_P(PSTR((X)));
+	#define UART_PUTF(X, A)              {sprintf_P(uartbuf, PSTR((X)), (A)); uart_putstr(uartbuf);}
+	#define UART_PUTF2(X, A, B)          {sprintf_P(uartbuf, PSTR((X)), (A), (B)); uart_putstr(uartbuf);}
+	#define UART_PUTF3(X, A, B, C)       {sprintf_P(uartbuf, PSTR((X)), (A), (B), (C)); uart_putstr(uartbuf);}
+	#define UART_PUTF4(X, A, B, C, D)    {sprintf_P(uartbuf, PSTR((X)), (A), (B), (C), (D)); uart_putstr(uartbuf);}
+#else
+	#define UART_PUTS(X)	             /* noop */
+	#define UART_PUTF(X, A)              /* noop */
+	#define UART_PUTF2(X, A, B)          /* noop */
+	#define UART_PUTF3(X, A, B, C)       /* noop */
+	#define UART_PUTF4(X, A, B, C, D)    /* noop */
+#endif
 
 extern char uartbuf[];
 extern char sendbuf[];
 extern bool send_data_avail;
 extern uint8_t uart_timeout;
 
-void uart_init(bool enable_RX);
-void uart_putc(char c);
+void uart_init(void);
 void uart_putstr(char * str);
 void uart_putstr_P(PGM_P str);
+
 uint16_t hex_to_uint8(uint8_t * buf, uint8_t offset);
 
 #ifdef UART_RX

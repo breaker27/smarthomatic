@@ -287,6 +287,7 @@ void check_eeprom_compatibility(uint8_t expectedDeviceType)
 // print an info over UART about the OSCCAL adjustment that was made
 void osccal_info(void)
 {
+#ifdef UART_DEBUG
 	uint8_t mode = eeprom_read_UIntValue8(EEPROM_OSCCALMODE_BYTE, EEPROM_OSCCALMODE_BIT,
 		EEPROM_OSCCALMODE_LENGTH_BITS, EEPROM_OSCCALMODE_MINVAL, EEPROM_OSCCALMODE_MAXVAL);
 	
@@ -295,6 +296,7 @@ void osccal_info(void)
 		int16_t adjustment = (int16_t)mode - 128;
 		UART_PUTF("The CPU speed was adjusted by +%d/1000 as set in OSCCAL_MODE byte.\r\n", adjustment);
 	}
+#endif // UART_DEBUG
 }
 
 // Initialize the OSCCAL register, used to adjust the internal clock.

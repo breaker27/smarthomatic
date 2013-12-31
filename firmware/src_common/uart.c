@@ -32,7 +32,7 @@ uint8_t bytes_pos = 0;
 // This buffer is used for sending strings over UART using UART_PUT... functions.
 char uartbuf[65]; 
 
-#ifdef UART_RX
+#ifdef UART_RX	
 	// All received bytes from UART are stored in this buffer by the interrupt routine. This is a ringbuffer.
 	#define RXBUF_LENGTH 50
 	char rxbuf[RXBUF_LENGTH];
@@ -232,7 +232,9 @@ void process_rxbuf(void)
 }
 #endif
 
-void uart_init(bool enable_RX) {
+void uart_init(void)
+{
+#ifdef UART_DEBUG
 	PORTD |= 0x01;				            // Pullup an RXD an
 
  	UCSR0B |= (1 << TXEN0);			        // UART TX einschalten
@@ -242,44 +244,43 @@ void uart_init(bool enable_RX) {
  	UBRR0H = (uint8_t)((UBRR_VAL) >> 8);
  	UBRR0L = (uint8_t)((UBRR_VAL) & 0xFF);
 
-	// UF: Baudraten-Berechnung stimmt irgendwie nicht, obwohl F_CPU auf 4 MHz angepasst wurde. Daher manuell eingetragene Werte nehmen.
-	// 1 MHz
-	//UBRR0L = 0x03;
-	//UBRR0H = 0x00;
-	
-	// 4 MHz
-	//UBRR0L = 0x0c;
-	//UBRR0H = 0x00;
-	
-	// 12 MHz
-	//UBRR0L = 0x26;
-	//UBRR0H = 0x00;
+#ifdef UART_RX
+	// activate rx IRQ
+	UCSR0B |= (1 << RXCIE0);
+#endif // UART_RX
 
-	if (enable_RX)
-	{
-		// activate rx IRQ
-		UCSR0B |= (1 << RXCIE0);
-	}
+#endif // UART_DEBUG
 }
 
-void uart_putc(char c) {
-	// UF: UDRE0 statt UDRE, UDR0 statt UDR
+#ifdef UART_DEBUG
+void uart_putc(char c)
+{
 	while (!(UCSR0A & (1<<UDRE0))); /* warten bis Senden moeglich                   */
 	UDR0 = c;                       /* schreibt das Zeichen x auf die Schnittstelle */
 }
+#endif // UART_DEBUG
 
-void uart_putstr(char *str) {
-	while(*str) {
+void uart_putstr(char *str)
+{
+#ifdef UART_DEBUG
+	while (*str)
+	{
 		uart_putc(*str++);
 	}
+#endif // UART_DEBUG
 }
 
-void uart_putstr_P(PGM_P str) {
+void uart_putstr_P(PGM_P str)
+{
+#ifdef UART_DEBUG
 	char tmp;
-	while((tmp = pgm_read_byte(str))) {
+
+	while ((tmp = pgm_read_byte(str)))
+	{
 		uart_putc(tmp);
 		str++;
 	}
+#endif // UART_DEBUG
 }
 
 uint16_t hex_to_uint8(uint8_t * buf, uint8_t offset)
