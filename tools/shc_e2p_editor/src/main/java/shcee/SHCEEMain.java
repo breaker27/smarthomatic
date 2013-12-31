@@ -43,7 +43,7 @@ public class SHCEEMain extends JFrame {
 	public static final String EEPROM_LAYOUT_XML = "e2p_layout.xml";
 
 	public static final String PACKET_METAMODEL_XSD = "packet_metamodel.xsd";
-	public static final String PACKET_CATALOG_XML = "packet_catalog.xml";
+	public static final String PACKET_CATALOG_XML = "packet_layout.xml";
 
 	// Default width and height is used at least until the size is save to a config file.
 	public static int defaultWidth = 900;
@@ -110,7 +110,7 @@ public class SHCEEMain extends JFrame {
 		{	
 			try
 			{
-				new SourceCodeGenerator();
+				new SourceCodeGeneratorE2P();
 			} catch (TransformerException e1)
 			{
 				e1.printStackTrace();
