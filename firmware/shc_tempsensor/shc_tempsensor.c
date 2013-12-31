@@ -31,7 +31,7 @@
 #include "../src_common/msggrp_tempsensor.h"
 
 // switch on debugging by UART
-//#define UART_DEBUG
+// #define UART_DEBUG
 
 #include "sht11.h"
 
@@ -73,10 +73,10 @@ void rfm12_sendbuf(void)
 {
 	#ifdef UART_DEBUG
 	UART_PUTS("Before encryption: ");
-	printbytearray(bufx, 16);
+	printbytearray(bufx, __PACKETSIZEBYTES);
 	#endif
 
-	uint8_t aes_byte_count = aes256_encrypt_cbc(bufx, 16);
+	uint8_t aes_byte_count = aes256_encrypt_cbc(bufx, __PACKETSIZEBYTES);
 
 	#ifdef UART_DEBUG
 	UART_PUTS("After encryption:  ");
@@ -146,7 +146,7 @@ int main ( void )
 	//rfm12_set_wakeup_timer(0b11100110000);   // ~ 6s
 	//rfm12_set_wakeup_timer(0b11111000000);   // ~ 24576ms
 	//rfm12_set_wakeup_timer(0b0100101110101); // ~ 59904ms
-	rfm12_set_wakeup_timer(0b101001100111); // ~ 105472ms  CORRECT VALUE!!!
+	rfm12_set_wakeup_timer(0b101001100111); // ~ 105472ms  DEFAULT VALUE!!!
 
 	led_blink(100, 150, 20);
 
@@ -194,22 +194,20 @@ int main ( void )
 				eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
 			}
 
-			// TODO: Send battery status from time to time.
-
 			// Set packet content
 			temp = -5000;
-			pkg_header_init_tempsensor_tempstatus();
+			pkg_header_init_tempsensor_temphumbristatus_status();
 			pkg_header_set_senderid(device_id);
 			pkg_header_set_packetcounter(packetcounter);
-			msg_tempsensor_tempstatus_set_temperature(temp);
-			msg_tempsensor_tempstatus_set_humidity(hum);
+			msg_tempsensor_temphumbristatus_set_temperature(temp);
+			msg_tempsensor_temphumbristatus_set_humidity(hum);
 
 			if (brightness_sensor_type == BRIGHTNESSSENSORTYPE_PHOTOCELL)
 			{
-				msg_tempsensor_tempstatus_set_brightness(100 - (int)((long)vlight * 100 / 1024));
+				msg_tempsensor_temphumbristatus_set_brightness(100 - (int)((long)vlight * 100 / 1024));
 			}
 			
-			pkg_header_crc32_tempsensor_tempstatus();
+			pkg_header_calc_crc32();
 			
 			bat_p_val = bat_percentage(vbat);
 			
@@ -239,11 +237,11 @@ int main ( void )
 				batt_status_cycle = 0;
 				
 				// Set packet content
-				pkg_header_init_generic_batterystatus();
+				pkg_header_init_generic_batterystatus_status();
 				pkg_header_set_senderid(device_id);
 				pkg_header_set_packetcounter(packetcounter);
 				msg_generic_batterystatus_set_percentage(bat_p_val);
-				pkg_header_crc32_generic_batterystatus();
+				pkg_header_calc_crc32();
 				
 #ifdef UART_DEBUG
 				UART_PUTF("Battery: %u%%\r\n", bat_p_val);
@@ -262,6 +260,3 @@ int main ( void )
         sleep_mode();
 	}
 }
-
-// Ursprünglich 10260 Bytes ("text")
-

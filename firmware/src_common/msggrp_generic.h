@@ -22,6 +22,12 @@
 */
 
 #include "packet_header.h"
+#include "packet_headerext_ackstatus.h"
+#include "packet_headerext_ack.h"
+#include "packet_headerext_status.h"
+#include "packet_headerext_setget.h"
+#include "packet_headerext_set.h"
+#include "packet_headerext_get.h"
 #include "e2p_access.h"
 
 // Message Group "generic"
@@ -30,71 +36,53 @@
 // Description: This group contains messages useful for different devices.
 
 
-// Message "generic_genericack"
-// ----------------------------
-// MessageGroupID: 0
-// MessageID: 0
-// MessageType: 0
-// Data fields: SenderID, PacketCounter
-// length: 116 bits (needs 15 bytes)
-
-// Function to initialize header for the message.
-static inline void pkg_header_init_generic_genericack(void)
-{
-  memset(&bufx[0], 0, sizeof(bufx));
-  pkg_header_set_messagegroupid(0);
-  pkg_header_set_messageid(0);
-  pkg_header_set_messagetype(0);
-}
-
-// Function to set CRC value after all data fields are set.
-static inline void pkg_header_crc32_generic_genericack(void)
-{
-  pkg_header_set_crc32(crc32(bufx + 4, 12));
-}
-
-// Set SenderID (UIntValue)
-// byte 10, bit 0, length bits 12, min val 0, max val 4095
-static inline void msg_generic_genericack_set_senderid(uint32_t val)
-{
-  array_write_UIntValue(10, 0, 12, val, bufx);
-}
-
-// Set PacketCounter (UIntValue)
-// byte 11, bit 4, length bits 24, min val 0, max val 16777215
-static inline void msg_generic_genericack_set_packetcounter(uint32_t val)
-{
-  array_write_UIntValue(11, 4, 24, val, bufx);
-}
-
-
 // Message "generic_batterystatus"
 // -------------------------------
 // MessageGroupID: 0
 // MessageID: 5
-// MessageType: 0
+// Possible MessageTypes: Get, Status, AckStatus
+// Validity: test
+// Length w/o Header + HeaderExtension: 7 bits
 // Data fields: Percentage
-// length: 87 bits (needs 11 bytes)
+// Description: Tells the current battery status in percent. Please note that the "Get" may not be answered because a device does not listen to requests.
 
-// Function to initialize header for the message.
-static inline void pkg_header_init_generic_batterystatus(void)
+// Function to initialize header for the MessageType "Get".
+static inline void pkg_header_init_generic_batterystatus_get(void)
 {
   memset(&bufx[0], 0, sizeof(bufx));
-  pkg_header_set_messagegroupid(0);
-  pkg_header_set_messageid(5);
   pkg_header_set_messagetype(0);
+  pkg_headerext_get_set_messagegroupid(0);
+  pkg_headerext_get_set_messageid(5);
+  __HEADEROFFSETBITS = 95;
+  __PACKETSIZEBYTES = 16;
 }
 
-// Function to set CRC value after all data fields are set.
-static inline void pkg_header_crc32_generic_batterystatus(void)
+// Function to initialize header for the MessageType "Status".
+static inline void pkg_header_init_generic_batterystatus_status(void)
 {
-  pkg_header_set_crc32(crc32(bufx + 4, 12));
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(8);
+  pkg_headerext_status_set_messagegroupid(0);
+  pkg_headerext_status_set_messageid(5);
+  __HEADEROFFSETBITS = 83;
+  __PACKETSIZEBYTES = 16;
+}
+
+// Function to initialize header for the MessageType "AckStatus".
+static inline void pkg_header_init_generic_batterystatus_ackstatus(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(10);
+  pkg_headerext_ackstatus_set_messagegroupid(0);
+  pkg_headerext_ackstatus_set_messageid(5);
+  __HEADEROFFSETBITS = 120;
+  __PACKETSIZEBYTES = 16;
 }
 
 // Set Percentage (UIntValue)
-// byte 10, bit 0, length bits 7, min val 0, max val 100
+// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 7, min val 0, max val 100
 static inline void msg_generic_batterystatus_set_percentage(uint32_t val)
 {
-  array_write_UIntValue(10, 0, 7, val, bufx);
+  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 7, val, bufx);
 }
 

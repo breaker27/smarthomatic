@@ -22,54 +22,81 @@
 */
 
 #include "packet_header.h"
+#include "packet_headerext_ackstatus.h"
+#include "packet_headerext_ack.h"
+#include "packet_headerext_status.h"
+#include "packet_headerext_setget.h"
+#include "packet_headerext_set.h"
+#include "packet_headerext_get.h"
 #include "e2p_access.h"
 
 // Message Group "tempsensor"
 // ==========================
 // MessageGroupID: 10
+// Description: This message group contains messages for a device that can measure temperature and humidity as well as a brightness value.
 
 
-// Message "tempsensor_tempstatus"
-// -------------------------------
+// Message "tempsensor_temphumbristatus"
+// -------------------------------------
 // MessageGroupID: 10
 // MessageID: 1
-// MessageType: 0
+// Possible MessageTypes: Get, Status, AckStatus
+// Validity: test
+// Length w/o Header + HeaderExtension: 33 bits
 // Data fields: Temperature, Humidity, Brightness
-// length: 113 bits (needs 15 bytes)
+// Description: This is a message containing temperature, humidity and brightness.
 
-// Function to initialize header for the message.
-static inline void pkg_header_init_tempsensor_tempstatus(void)
+// Function to initialize header for the MessageType "Get".
+static inline void pkg_header_init_tempsensor_temphumbristatus_get(void)
 {
   memset(&bufx[0], 0, sizeof(bufx));
-  pkg_header_set_messagegroupid(10);
-  pkg_header_set_messageid(1);
   pkg_header_set_messagetype(0);
+  pkg_headerext_get_set_messagegroupid(10);
+  pkg_headerext_get_set_messageid(1);
+  __HEADEROFFSETBITS = 95;
+  __PACKETSIZEBYTES = 16;
 }
 
-// Function to set CRC value after all data fields are set.
-static inline void pkg_header_crc32_tempsensor_tempstatus(void)
+// Function to initialize header for the MessageType "Status".
+static inline void pkg_header_init_tempsensor_temphumbristatus_status(void)
 {
-  pkg_header_set_crc32(crc32(bufx + 4, 12));
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(8);
+  pkg_headerext_status_set_messagegroupid(10);
+  pkg_headerext_status_set_messageid(1);
+  __HEADEROFFSETBITS = 83;
+  __PACKETSIZEBYTES = 16;
+}
+
+// Function to initialize header for the MessageType "AckStatus".
+static inline void pkg_header_init_tempsensor_temphumbristatus_ackstatus(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(10);
+  pkg_headerext_ackstatus_set_messagegroupid(10);
+  pkg_headerext_ackstatus_set_messageid(1);
+  __HEADEROFFSETBITS = 120;
+  __PACKETSIZEBYTES = 32;
 }
 
 // Set Temperature (IntValue)
-// byte 10, bit 0, length bits 16, min val -32768, max val 32767
-static inline void msg_tempsensor_tempstatus_set_temperature(int32_t val)
+// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 16, min val -32768, max val 32767
+static inline void msg_tempsensor_temphumbristatus_set_temperature(int32_t val)
 {
-  array_write_IntValue(10, 0, 16, val, bufx);
+  array_write_IntValue(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 16, val, bufx);
 }
 
 // Set Humidity (UIntValue)
-// byte 12, bit 0, length bits 10, min val 0, max val 1000
-static inline void msg_tempsensor_tempstatus_set_humidity(uint32_t val)
+// Offset: ((uint16_t)__HEADEROFFSETBITS + 16) / 8, ((uint16_t)__HEADEROFFSETBITS + 16) % 8, length bits 10, min val 0, max val 1000
+static inline void msg_tempsensor_temphumbristatus_set_humidity(uint32_t val)
 {
-  array_write_UIntValue(12, 0, 10, val, bufx);
+  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 16) / 8, ((uint16_t)__HEADEROFFSETBITS + 16) % 8, 10, val, bufx);
 }
 
 // Set Brightness (UIntValue)
-// byte 13, bit 2, length bits 7, min val 0, max val 100
-static inline void msg_tempsensor_tempstatus_set_brightness(uint32_t val)
+// Offset: ((uint16_t)__HEADEROFFSETBITS + 26) / 8, ((uint16_t)__HEADEROFFSETBITS + 26) % 8, length bits 7, min val 0, max val 100
+static inline void msg_tempsensor_temphumbristatus_set_brightness(uint32_t val)
 {
-  array_write_UIntValue(13, 2, 7, val, bufx);
+  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 26) / 8, ((uint16_t)__HEADEROFFSETBITS + 26) % 8, 7, val, bufx);
 }
 

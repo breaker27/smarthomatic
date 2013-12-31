@@ -27,54 +27,59 @@
 #include "util.h"
 #include "e2p_access.h"
 
+// Header size in bits (incl. header extension), set depending on used
+// MessageType and used for calculating message data offsets.
+uint8_t __HEADEROFFSETBITS;
+
+// Packet size in bytes including padding, set depending on MessageType,
+// MessageGroupID and MessageID and used for CRC32 calculation.
+uint8_t __PACKETSIZEBYTES;
+
 // Set CRC32 (UIntValue)
-// byte 0, bit 0, length bits 32, min val 0, max val 4294967295
+// Offset: 0, 0, length bits 32, min val 0, max val 4294967295
 static inline void pkg_header_set_crc32(uint32_t val)
 {
   array_write_UIntValue(0, 0, 32, val, bufx);
 }
 
 // Set SenderID (UIntValue)
-// byte 4, bit 0, length bits 12, min val 0, max val 4095
+// Offset: 4, 0, length bits 12, min val 0, max val 4095
 static inline void pkg_header_set_senderid(uint32_t val)
 {
   array_write_UIntValue(4, 0, 12, val, bufx);
 }
 
 // Set PacketCounter (UIntValue)
-// byte 5, bit 4, length bits 24, min val 0, max val 16777215
+// Offset: 5, 4, length bits 24, min val 0, max val 16777215
 static inline void pkg_header_set_packetcounter(uint32_t val)
 {
   array_write_UIntValue(5, 4, 24, val, bufx);
 }
 
-// Set MessageGroupID (UIntValue)
-// byte 8, bit 4, length bits 4, min val 0, max val 15
-static inline void pkg_header_set_messagegroupid(uint32_t val)
+// ENUM MessageType
+typedef enum {
+  MESSAGETYPE_GET = 0,
+  MESSAGETYPE_SET = 1,
+  MESSAGETYPE_SETGET = 2,
+  MESSAGETYPE_STATUS = 8,
+  MESSAGETYPE_ACK = 9,
+  MESSAGETYPE_ACKSTATUS = 10
+} MessageTypeEnum;
+
+// Set MessageType (EnumValue)
+// Offset: 8, 4, length bits 4
+static inline void pkg_header_set_messagetype(MessageTypeEnum val)
 {
   array_write_UIntValue(8, 4, 4, val, bufx);
 }
 
-// Set MessageID (UIntValue)
-// byte 9, bit 0, length bits 7, min val 0, max val 127
-static inline void pkg_header_set_messageid(uint32_t val)
+
+// overall length: 72 bits
+
+// Function to set CRC value after all data fields are set.
+static inline void pkg_header_calc_crc32(void)
 {
-  array_write_UIntValue(9, 0, 7, val, bufx);
+  pkg_header_set_crc32(crc32(bufx + 4, __PACKETSIZEBYTES - 4));
 }
-
-// Set MessageType (EnumValue)
-// byte 9, bit 7, length bits 1
-
-typedef enum {
-  MESSAGETYPE_STATUS = 0,
-  MESSAGETYPE_REQUEST = 1
-} MessageTypeEnum;
-static inline void pkg_header_set_messagetype(MessageTypeEnum val)
-{
-  array_write_UIntValue(9, 7, 1, val, bufx);
-}
-
-
-// overall length: 80 bits
 
 #endif /* _PACKET_HEADER_H */
