@@ -135,6 +135,29 @@ public class SourceCodeGeneratorPacket
 		outHeader.println("uint8_t __MESSAGETYPE;");
 		outHeader.println("");
 
+		// MessageGroupID enum
+		
+		NodeList messageGroupNodes = XPathAPI.selectNodeList(xmlRoot, "/Packet/MessageGroup");
+		
+		outHeader.println("// ENUM MessageGroupID");
+		outHeader.println("typedef enum {");
+		
+		for (int d = 0; d < messageGroupNodes.getLength(); d++)
+		{
+			Node msgGroupNode = messageGroupNodes.item(d);	
+			int messageGroupID = Integer.parseInt(Util.getChildNodeValue(msgGroupNode, "MessageGroupID"));
+			String name = Util.getChildNodeValue(msgGroupNode, "Name").toUpperCase();
+
+			String suffix = d == messageGroupNodes.getLength() - 1 ? "" : ","; 
+
+			outHeader.println("  MESSAGEGROUP_" + name + " = " + messageGroupID + suffix);
+		}
+
+		outHeader.println("} MessageGroupIDEnum;");
+		outHeader.println("");
+
+		// header fields
+		
 		StringBuilder funcDefsH = new StringBuilder();
 		ArrayList<String> dataFieldsH = new ArrayList<String>();
 	
@@ -144,6 +167,8 @@ public class SourceCodeGeneratorPacket
 		outHeader.println("// overall length: " + offsetHeader + " bits");
 		outHeader.println("");
 
+		// additional helper functions
+		
 		outHeader.println("// Function to set CRC value after all data fields are set.");
 		outHeader.println("static inline void pkg_header_calc_crc32(void)");
 		outHeader.println("{");
@@ -219,15 +244,47 @@ public class SourceCodeGeneratorPacket
 		outHeader.println("}");
 		outHeader.println("");
 		
-		// common access function for all header extensions
+		// common access function for header extension fields
 		
 		for (String name : headerExtFieldOccurrences.keySet())
 		{
 			String shcType = headerExtensionFieldType(xmlRoot, name);
 			String cType = fieldTypeToCType(shcType);
 			
+			// SET
+			
+			outHeader.println("// Set " + name + " (" + shcType + ")");
+			outHeader.println("// Same function for all MessageTypes!");
+			outHeader.println("static void pkg_headerext_common_set_" + name.toLowerCase() + "(" + cType + " val) __attribute__ ((unused));");
+			outHeader.println("static void pkg_headerext_common_set_" + name.toLowerCase() + "(" + cType + " val)");
+			outHeader.println("{");
+			outHeader.println("  switch (__MESSAGETYPE)");
+			outHeader.println("  {");
+			
+			for (Integer messageTypeID : messageTypes.keySet())
+			{
+				String messageTypeName = messageTypes.get(messageTypeID);
+				
+				if (headerExtensionContainsField(xmlRoot, messageTypeID, name))
+				{
+					outHeader.println("    case MESSAGETYPE_" + messageTypeName.toUpperCase() + ":");
+					outHeader.println("      pkg_headerext_" + messageTypeName.toLowerCase() + "_set_" + name.toLowerCase() + "(val);");
+					outHeader.println("      break;");
+				}
+			}
+			
+			outHeader.println("    default:");
+			outHeader.println("      break;");
+
+			outHeader.println("  }");
+			outHeader.println("}");
+			outHeader.println("");
+			
+			// GET
+			
 			outHeader.println("// Get " + name + " (" + shcType + ")");
 			outHeader.println("// Same function for all MessageTypes!");
+			outHeader.println("static " + cType + " pkg_headerext_common_get_" + name.toLowerCase() + "(void) __attribute__ ((unused));");
 			outHeader.println("static " + cType + " pkg_headerext_common_get_" + name.toLowerCase() + "(void)");
 			outHeader.println("{");
 			outHeader.println("  switch (__MESSAGETYPE)");
@@ -251,8 +308,7 @@ public class SourceCodeGeneratorPacket
 
 			outHeader.println("  }");
 			outHeader.println("}");
-			outHeader.println("");
-			
+			outHeader.println("");			
 		}
 		
 		outHeader.println("#endif /* _PACKET_HEADEREXT_COMMON_H */");
@@ -383,7 +439,29 @@ public class SourceCodeGeneratorPacket
 
 			out.println("");
 			
-			// for all blocks
+			// MessageID enum
+			
+			NodeList messageNodes = XPathAPI.selectNodeList(msgGroupNode, "Message");
+			
+			out.println("// ENUM for MessageIDs of this MessageGroup");
+			out.println("typedef enum {");
+			
+			for (int n = 0; n < messageNodes.getLength(); n++)
+			{
+				Node messageNode = messageNodes.item(n);	
+				int messageID = Integer.parseInt(Util.getChildNodeValue(messageNode, "MessageID"));
+				String name = Util.getChildNodeValue(messageNode, "Name").toUpperCase();
+
+				String suffix = n == messageNodes.getLength() - 1 ? "" : ","; 
+
+				out.println("  MESSAGEID_" + messageGroupName.toUpperCase() + "_" + name + " = " + messageGroupID + suffix);
+			}
+
+			out.println("} " + messageGroupName.toUpperCase() + "_MessageIDEnum;");
+			out.println("");
+			
+			// for all messages
+			
 			NodeList msg = XPathAPI.selectNodeList(msgGroupNode, "Message");
 
 			for (int b = 0; b < msg.getLength(); b++)
