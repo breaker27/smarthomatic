@@ -26,11 +26,11 @@
 
 #include "rfm12.h"
 #include "uart.h"
+
+#include "../src_common/msggrp_powerswitch.h"
+
 #include "aes256.h"
 #include "util.h"
-
-#define UART_DEBUG   // Debug output over UART
-// #define UART_RX      // Also allow receiving characters over UART (RX). Usually only necessary for the base station.
 
 // How often should the packetcounter_base be increased and written to EEPROM?
 // This should be 2^32 (which is the maximum transmitted packet counter) /
@@ -50,6 +50,7 @@
 
 uint8_t device_id;
 uint32_t packetcounter;
+uint32_t station_packetcounter;
 uint8_t switch_state[SWITCH_COUNT];
 uint16_t switch_timeout[SWITCH_COUNT];
 
@@ -57,7 +58,6 @@ uint16_t send_status_timeout = 5;
 
 void printbytearray(uint8_t * b, uint8_t len)
 {
-#ifdef UART_DEBUG
 	uint8_t i;
 	
 	for (i = 0; i < len; i++)
@@ -66,13 +66,29 @@ void printbytearray(uint8_t * b, uint8_t len)
 	}
 	
 	UART_PUTS ("\r\n");
-#endif
 }
 
 void rfm12_sendbuf(void)
 {
-	uint8_t aes_byte_count = aes256_encrypt_cbc(bufx, 16);
+	UART_PUTS("Before encryption: ");
+	printbytearray(bufx, __PACKETSIZEBYTES);
+
+	uint8_t aes_byte_count = aes256_encrypt_cbc(bufx, __PACKETSIZEBYTES);
+
+	UART_PUTS("After encryption:  ");
+	printbytearray(bufx, aes_byte_count);
+
 	rfm12_tx(aes_byte_count, 0, (uint8_t *) bufx);
+}
+
+void inc_packetcounter(void)
+{
+	packetcounter++;
+	
+	if (packetcounter % PACKET_COUNTER_WRITE_CYCLE == 0)
+	{
+		eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
+	}
 }
 
 void print_switch_state(void)
@@ -102,49 +118,22 @@ void print_switch_state(void)
 }
 
 void send_power_switch_status(void)
-{
-	uint8_t i;
-	
+{	
 	UART_PUTS("Sending Power Switch Status:\r\n");
 
 	print_switch_state();
 
-	// set device ID (base station has ID 0 by definition)
-	bufx[0] = device_id;
-	
-	// update packet counter
-	packetcounter++;
-	
-	if (packetcounter % PACKET_COUNTER_WRITE_CYCLE == 0)
-	{
-		eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
-	}
+	inc_packetcounter();
 
-	setBuf32(1, packetcounter);
-
-	// set command ID "Power Switch Status"
-	bufx[5] = 20;
-
-	// set current switch state
-	for (i = 0; i < SWITCH_COUNT; i++)
-	{
-		setBuf16(6 + 2 * i, (switch_timeout[i] << 1) | ((uint16_t)switch_state[i] & 0b1));
-	}
-	
-	// set CRC32
-	uint32_t crc = crc32(bufx, 12);
-	setBuf32(12, crc);
-
-	// show info
-	UART_PUTF("CRC32: %lx\r\n", crc);
-	uart_putstr("Unencrypted: ");
-	printbytearray(bufx, 16);
+	// Set packet content
+	pkg_header_init_powerswitch_switchstate_status();
+	pkg_header_set_senderid(device_id);
+	pkg_header_set_packetcounter(packetcounter);
+	msg_powerswitch_switchstate_set_on(switch_state[0] & 1); // TODO: Support > 1 switch
+	msg_powerswitch_switchstate_set_timeoutsec(switch_timeout[0]); // TODO: Support > 1 switch
+	pkg_header_calc_crc32();
 
 	rfm12_sendbuf();
-	
-	UART_PUTS("Send encrypted: ");
-	printbytearray(bufx, 16);
-	UART_PUTS("\r\n");
 }
 
 void switchRelais(int8_t num, uint8_t on)
@@ -161,9 +150,160 @@ void switchRelais(int8_t num, uint8_t on)
 	}
 }
 
+
+// React accordingly on the MessageType, MessageGroup and MessageID.
+void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint32_t messageid)
+{
+	if (messagegroupid != MESSAGEGROUP_POWERSWITCH)
+	{
+		UART_PUTF("ERR: Unsupported MessageGroupID %u.\r\n", messagegroupid);
+		return;
+	}
+	
+	if (messageid != MESSAGEID_POWERSWITCH_SWITCHSTATE)
+	{
+		UART_PUTF("ERR: Unsupported MessageID %u.\r\n", messageid);
+		return;
+	}
+
+	// "Set" or "SetGet" -> modify switch state
+	if ((messagetype == MESSAGETYPE_SET) || (messagetype == MESSAGETYPE_SETGET))
+	{
+		uint8_t i;
+		bool req_on = msg_powerswitch_switchstate_get_on();
+		uint16_t req_timeout = msg_powerswitch_switchstate_get_timeoutsec();
+
+		UART_PUTF("Req' State: %u\r\n", req_on);
+		UART_PUTF("Req' Timeout: %u\r\n", req_timeout);
+		
+		// store the one bit in a bitmask, which can be used later for support of more than one switch
+		uint8_t switch_bitmask = req_on ? 1 : 0;
+		
+		// react on changed state (version for more than one switch...)
+		for (i = 0; i < SWITCH_COUNT; i++)
+		{
+			if (switch_bitmask & (1 << i)) // this switch is to be switched
+			{
+				UART_PUTF4("Switching relais %u from %u to %u with timeout %us.\r\n", i + 1, switch_state[i], req_on, req_timeout);
+
+				// switch relais
+				switchRelais(i, req_on);
+				
+				// write back switch state to EEPROM
+				switch_state[i] = req_on;
+				switch_timeout[i] = req_timeout;
+				
+				// FIXME - Not supported yet!
+				/*
+				eeprom_write_UIntValue(EEPROM_SWITCHSTATE_BYTE + i * 2, EEPROM_SWITCHSTATE_BYTE,
+					EEPROM_SWITCHSTATE_BYTE, u16);
+				*/
+			}
+		}
+	}
+
+	// remember some values before the packet buffer is destroyed
+	uint32_t acksenderid = pkg_header_get_senderid();
+	uint32_t ackpacketcounter = pkg_header_get_packetcounter();
+
+	inc_packetcounter();
+
+	// "Get" or "SetGet" -> send "AckStatus"
+	if ((messagetype == MESSAGETYPE_GET) && (messagetype != MESSAGETYPE_SETGET))
+	{
+		pkg_header_init_powerswitch_switchstate_ackstatus();
+		
+		// set message data
+		msg_powerswitch_switchstate_set_on(switch_state[0] & 1); // TODO: Support > 1 switch
+		msg_powerswitch_switchstate_set_timeoutsec(switch_timeout[0]); // TODO: Support > 1 switch
+
+		UART_PUTS("Sending AckStatus\r\n");
+	}
+	// "Set" -> send "Ack"
+	else
+	{
+		pkg_header_init_powerswitch_switchstate_ack();
+
+		UART_PUTS("Sending Ack\r\n");
+	}
+
+	// set common fields
+	pkg_header_set_senderid(device_id);
+	pkg_header_set_packetcounter(packetcounter);
+	
+	pkg_headerext_common_set_acksenderid(acksenderid);
+	pkg_headerext_common_set_ackpacketcounter(ackpacketcounter);
+	pkg_headerext_common_set_error(false); // FIXME: Move code for the Ack to a function and also return an Ack when errors occur before!
+	
+	pkg_header_calc_crc32();
+	
+	rfm12_sendbuf();
+	send_status_timeout = 5;
+}
+
+void process_packet(uint8_t len)
+{
+	pkg_header_adjust_offset();
+
+	UART_PUTS("Received: ");
+	printbytearray(bufx, len);
+	
+	// check SenderID
+	uint32_t sender = pkg_header_get_senderid();
+	UART_PUTF("Sender: %u\r\n", sender);
+	
+	if (sender != 0)
+	{
+		UART_PUTF("ERR: Illegal Sender ID: %u).\r\n", sender);
+		return;
+	}
+
+	// check PacketCounter
+	// TODO: Reject if packet counter lower than remembered!!
+	uint32_t packcnt = pkg_header_get_packetcounter();
+	UART_PUTF("Packet Counter: %lu\r\n", packcnt);
+
+	if (0) // packcnt <= station_packetcounter ??
+	{
+		UART_PUTF2("ERR: Received packet counter %lu < %lu.\r\n", packcnt, station_packetcounter);
+		return;
+	}
+	
+	// write received counter
+	station_packetcounter = packcnt;
+	
+	eeprom_write_UIntValue(EEPROM_BASESTATIONPACKETCOUNTER_BYTE, EEPROM_BASESTATIONPACKETCOUNTER_BIT,
+		EEPROM_BASESTATIONPACKETCOUNTER_LENGTH_BITS, station_packetcounter);
+	
+	// check MessageType
+	MessageTypeEnum messagetype = pkg_header_get_messagetype();
+	
+	if ((messagetype != MESSAGETYPE_GET) && (messagetype != MESSAGETYPE_SET) && (messagetype != MESSAGETYPE_SETGET))
+	{
+		UART_PUTF("ERR: Unsupported MessageType %u.\r\n", messagetype);
+		return;
+	}
+	
+	// check device id
+	uint8_t rcv_id = pkg_headerext_common_get_receiverid();
+
+	UART_PUTF("      Receiver ID: %u\r\n", rcv_id);
+	
+	if (rcv_id != device_id)
+	{
+		UART_PUTF("WRN: DeviceID %u does not match.\r\n", rcv_id);
+		return;
+	}
+	
+	// check MessageGroup + MessageID
+	uint32_t messagegroupid = pkg_headerext_common_get_messagegroupid();
+	uint32_t messageid = pkg_headerext_common_get_messageid();
+	
+	process_message(messagetype, messagegroupid, messageid);
+}
+
 int main ( void )
 {
-	uint32_t station_packetcounter;
 	uint8_t loop = 0;
 	uint8_t i;
 
@@ -200,8 +340,7 @@ int main ( void )
 	device_id = eeprom_read_UIntValue16(EEPROM_DEVICEID_BYTE, EEPROM_DEVICEID_BIT,
 		EEPROM_DEVICEID_LENGTH_BITS, EEPROM_DEVICEID_MINVAL, EEPROM_DEVICEID_MAXVAL);
 
-#ifdef UART_DEBUG
-	uart_init(false);
+	uart_init();
 	util_init();
 	UART_PUTS ("\r\n");
 	UART_PUTS ("smarthomatic Power Switch V1.0 (c) 2013 Uwe Freese, www.smarthomatic.org\r\n");
@@ -209,7 +348,6 @@ int main ( void )
 	UART_PUTF ("Packet counter: %lu\r\n", packetcounter);
 	print_switch_state();
 	UART_PUTF ("Last received station packet counter: %u\r\n\r\n", station_packetcounter);
-#endif
 	
 	// init AES key
 	eeprom_read_block(aes_key, (uint8_t *)EEPROM_AESKEY_BYTE, 32);
@@ -241,164 +379,32 @@ int main ( void )
 			{
 				memcpy(bufx, rfm12_rx_buffer(), len);
 				
-				//UART_PUTS("Before decryption: ");
-				//printbytearray(bufx, len);
+				UART_PUTS("Before decryption: ");
+				printbytearray(bufx, len);
 					
 				aes256_decrypt_cbc(bufx, len);
 
-				//UART_PUTS("Decrypted bytes: ");
-				//printbytearray(bufx, len);
+				UART_PUTS("Decrypted bytes: ");
+				printbytearray(bufx, len);
 
-				uint32_t assumed_crc = getBuf32(len - 4);
-				uint32_t actual_crc = crc32(bufx, len - 4);
+				/*
+				uint32_t assumed_crc = getBuf32(0);
+				uint32_t actual_crc = crc32(bufx + 4, len - 4);
 				
-				//UART_PUTF("Received CRC32 would be %lx\r\n", assumed_crc);
-				//UART_PUTF("Re-calculated CRC32 is  %lx\r\n", actual_crc);
-				
+				UART_PUTF("Received CRC32 would be %lx\r\n", assumed_crc);
+				UART_PUTF("Re-calculated CRC32 is  %lx\r\n", actual_crc);
+
 				if (assumed_crc != actual_crc)
+				*/
+				
+				if (!pkg_header_check_crc32(len))
 				{
 					UART_PUTS("Received garbage (CRC wrong after decryption).\r\n");
 				}
 				else
 				{
-					//UART_PUTS("CRC correct, AES key found!\r\n");
-					UART_PUTS("         Received: ");
-					printbytearray(bufx, len - 4);
-					
-					// decode command and react
-					uint8_t sender = bufx[0];
-					
-					UART_PUTF("           Sender: %u\r\n", sender);
-					
-					if (sender != 0)
-					{
-						UART_PUTF("Packet not from base station. Ignoring (Sender ID was: %u).\r\n", sender);
-					}
-					else
-					{
-						uint32_t packcnt = getBuf32(1);
-
-						UART_PUTF("   Packet Counter: %lu\r\n", packcnt);
-
-						// check received counter
-						if (0) //packcnt <= station_packetcounter)
-						{
-							UART_PUTF2("Received packet counter %lu is lower than last received counter %lu. Ignoring packet.\r\n", packcnt, station_packetcounter);
-						}
-						else
-						{
-							// write received counter
-							station_packetcounter = packcnt;
-							
-							eeprom_write_UIntValue(EEPROM_BASESTATIONPACKETCOUNTER_BYTE, EEPROM_BASESTATIONPACKETCOUNTER_BIT,
-								EEPROM_BASESTATIONPACKETCOUNTER_LENGTH_BITS, station_packetcounter);
-							
-							// check command ID
-							uint8_t cmd = bufx[5];
-
-							UART_PUTF("       Command ID: %u\r\n", cmd);
-							
-							if (cmd != 140) // ID 140 == Power Switch Request
-							{
-								UART_PUTF("Received unknown command ID %u. Ignoring packet.\r\n", cmd);
-							}
-							else
-							{
-								// check device id
-								uint8_t rcv_id = bufx[6];
-
-								UART_PUTF("      Receiver ID: %u\r\n", rcv_id);
-								
-								if (rcv_id != device_id)
-								{
-									UART_PUTF("Device ID %u does not match. Ignoring packet.\r\n", rcv_id);
-								}
-								else
-								{
-									// read new switch state
-									uint8_t switch_bitmask = bufx[7];
-									
-									uint16_t u16 = getBuf16(8);
-									uint8_t req_state = u16 & 0b1;
-									uint16_t req_timeout = u16 >> 1;
-
-									UART_PUTF("   Switch Bitmask: %u\r\n", switch_bitmask); // TODO: Set binary mode like 00010110
-									UART_PUTF("  Requested State: %u\r\n", req_state);
-									UART_PUTF("          Timeout: %u\r\n", req_timeout);
-									
-									// react on changed state
-									for (i = 0; i < SWITCH_COUNT; i++)
-									{
-										if (switch_bitmask & (1 << i)) // this switch is to be switched
-										{
-											UART_PUTF4("Switching relais %u from %u to %u with timeout %us.\r\n", i + 1, switch_state[i], req_state, req_timeout);
-
-											// switch relais
-											switchRelais(i, req_state);
-											
-											// write back switch state to EEPROM
-											switch_state[i] = req_state;
-											switch_timeout[i] = req_timeout;
-											
-											eeprom_write_UIntValue(EEPROM_SWITCHSTATE_BYTE + i * 2, EEPROM_BASESTATIONPACKETCOUNTER_BIT,
-												EEPROM_BASESTATIONPACKETCOUNTER_LENGTH_BITS, u16);
-										}
-									}
-									
-									// send acknowledge
-									UART_PUTS("Sending ACK:\r\n");
-
-									// set device ID (base station has ID 0 by definition)
-									bufx[0] = device_id;
-									
-									// update packet counter
-									packetcounter++;
-									
-									if (packetcounter % PACKET_COUNTER_WRITE_CYCLE == 0)
-									{
-										eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
-									}
-
-									setBuf32(1, packetcounter);
-
-									// set command ID "Generic Acknowledge"
-									bufx[5] = 1;
-									
-									// set sender ID of request
-									bufx[6] = sender;
-									
-									// set Packet counter of request
-									setBuf32(7, station_packetcounter);
-
-									// zero unused bytes
-									bufx[11] = 0;
-									
-									// set CRC32
-									uint32_t crc = crc32(bufx, 12);
-									setBuf32(12, crc);
-
-									// show info
-									UART_PUTF("            CRC32: %lx\r\n", crc);
-									uart_putstr("      Unencrypted: ");
-									printbytearray(bufx, 16);
-
-									rfm12_sendbuf();
-									
-									UART_PUTS("   Send encrypted: ");
-									printbytearray(bufx, 16);
-									UART_PUTS("\r\n");
-								
-									rfm12_tick();
-								
-									led_blink(200, 0, 1);
-									
-									send_status_timeout = 5;
-								}
-							}
-						}
-					}
-				}
-				
+					process_packet(len);
+				}				
 			}
 
 			// tell the implementation that the buffer can be reused for the next data.
@@ -444,8 +450,6 @@ int main ( void )
 				send_status_timeout = SEND_STATUS_EVERY_SEC;
 				send_power_switch_status();
 				
-				rfm12_tick();
-
 				sbi(PORTD, 3);
 				_delay_ms(200);
 				cbi(PORTD, 3);
@@ -464,3 +468,7 @@ int main ( void )
 	// never called
 	// aes256_done(&aes_ctx);
 }
+
+//Image size:
+//   text	   data	    bss	    dec	    hex	filename
+//  14162	    305	    514	  14981	   3a85	build/shc_powerswitch.elf

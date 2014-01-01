@@ -40,6 +40,13 @@ uint8_t __PACKETSIZEBYTES;
 // in common header extension access functions.
 uint8_t __MESSAGETYPE;
 
+// ENUM MessageGroupID
+typedef enum {
+  MESSAGEGROUP_GENERIC = 0,
+  MESSAGEGROUP_TEMPSENSOR = 10,
+  MESSAGEGROUP_POWERSWITCH = 20
+} MessageGroupIDEnum;
+
 // Set CRC32 (UIntValue)
 // Offset: 0, 0, length bits 32, min val 0, max val 4294967295
 static inline void pkg_header_set_crc32(uint32_t val)

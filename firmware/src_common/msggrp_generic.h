@@ -36,6 +36,11 @@
 // MessageGroupID: 0
 // Description: This group contains messages useful for different devices.
 
+// ENUM for MessageIDs of this MessageGroup
+typedef enum {
+  MESSAGEID_GENERIC_BATTERYSTATUS = 0
+} GENERIC_MessageIDEnum;
+
 
 // Message "generic_batterystatus"
 // -------------------------------

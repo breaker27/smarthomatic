@@ -36,6 +36,11 @@
 // MessageGroupID: 10
 // Description: This message group contains messages for a device that can measure temperature and humidity as well as a brightness value.
 
+// ENUM for MessageIDs of this MessageGroup
+typedef enum {
+  MESSAGEID_TEMPSENSOR_TEMPHUMBRISTATUS = 10
+} TEMPSENSOR_MessageIDEnum;
+
 
 // Message "tempsensor_temphumbristatus"
 // -------------------------------------

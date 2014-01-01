@@ -70,8 +70,27 @@ static void pkg_header_adjust_offset(void)
   }
 }
 
+// Set AckPacketCounter (UIntValue)
+// Same function for all MessageTypes!
+static void pkg_headerext_common_set_ackpacketcounter(uint32_t val) __attribute__ ((unused));
+static void pkg_headerext_common_set_ackpacketcounter(uint32_t val)
+{
+  switch (__MESSAGETYPE)
+  {
+    case MESSAGETYPE_ACKSTATUS:
+      pkg_headerext_ackstatus_set_ackpacketcounter(val);
+      break;
+    case MESSAGETYPE_ACK:
+      pkg_headerext_ack_set_ackpacketcounter(val);
+      break;
+    default:
+      break;
+  }
+}
+
 // Get AckPacketCounter (UIntValue)
 // Same function for all MessageTypes!
+static uint32_t pkg_headerext_common_get_ackpacketcounter(void) __attribute__ ((unused));
 static uint32_t pkg_headerext_common_get_ackpacketcounter(void)
 {
   switch (__MESSAGETYPE)
@@ -88,8 +107,36 @@ static uint32_t pkg_headerext_common_get_ackpacketcounter(void)
   }
 }
 
+// Set MessageID (UIntValue)
+// Same function for all MessageTypes!
+static void pkg_headerext_common_set_messageid(uint32_t val) __attribute__ ((unused));
+static void pkg_headerext_common_set_messageid(uint32_t val)
+{
+  switch (__MESSAGETYPE)
+  {
+    case MESSAGETYPE_ACKSTATUS:
+      pkg_headerext_ackstatus_set_messageid(val);
+      break;
+    case MESSAGETYPE_STATUS:
+      pkg_headerext_status_set_messageid(val);
+      break;
+    case MESSAGETYPE_SETGET:
+      pkg_headerext_setget_set_messageid(val);
+      break;
+    case MESSAGETYPE_SET:
+      pkg_headerext_set_set_messageid(val);
+      break;
+    case MESSAGETYPE_GET:
+      pkg_headerext_get_set_messageid(val);
+      break;
+    default:
+      break;
+  }
+}
+
 // Get MessageID (UIntValue)
 // Same function for all MessageTypes!
+static uint32_t pkg_headerext_common_get_messageid(void) __attribute__ ((unused));
 static uint32_t pkg_headerext_common_get_messageid(void)
 {
   switch (__MESSAGETYPE)
@@ -115,8 +162,27 @@ static uint32_t pkg_headerext_common_get_messageid(void)
   }
 }
 
+// Set AckSenderID (UIntValue)
+// Same function for all MessageTypes!
+static void pkg_headerext_common_set_acksenderid(uint32_t val) __attribute__ ((unused));
+static void pkg_headerext_common_set_acksenderid(uint32_t val)
+{
+  switch (__MESSAGETYPE)
+  {
+    case MESSAGETYPE_ACKSTATUS:
+      pkg_headerext_ackstatus_set_acksenderid(val);
+      break;
+    case MESSAGETYPE_ACK:
+      pkg_headerext_ack_set_acksenderid(val);
+      break;
+    default:
+      break;
+  }
+}
+
 // Get AckSenderID (UIntValue)
 // Same function for all MessageTypes!
+static uint32_t pkg_headerext_common_get_acksenderid(void) __attribute__ ((unused));
 static uint32_t pkg_headerext_common_get_acksenderid(void)
 {
   switch (__MESSAGETYPE)
@@ -133,8 +199,30 @@ static uint32_t pkg_headerext_common_get_acksenderid(void)
   }
 }
 
+// Set ReceiverID (UIntValue)
+// Same function for all MessageTypes!
+static void pkg_headerext_common_set_receiverid(uint32_t val) __attribute__ ((unused));
+static void pkg_headerext_common_set_receiverid(uint32_t val)
+{
+  switch (__MESSAGETYPE)
+  {
+    case MESSAGETYPE_SETGET:
+      pkg_headerext_setget_set_receiverid(val);
+      break;
+    case MESSAGETYPE_SET:
+      pkg_headerext_set_set_receiverid(val);
+      break;
+    case MESSAGETYPE_GET:
+      pkg_headerext_get_set_receiverid(val);
+      break;
+    default:
+      break;
+  }
+}
+
 // Get ReceiverID (UIntValue)
 // Same function for all MessageTypes!
+static uint32_t pkg_headerext_common_get_receiverid(void) __attribute__ ((unused));
 static uint32_t pkg_headerext_common_get_receiverid(void)
 {
   switch (__MESSAGETYPE)
@@ -154,8 +242,36 @@ static uint32_t pkg_headerext_common_get_receiverid(void)
   }
 }
 
+// Set MessageGroupID (UIntValue)
+// Same function for all MessageTypes!
+static void pkg_headerext_common_set_messagegroupid(uint32_t val) __attribute__ ((unused));
+static void pkg_headerext_common_set_messagegroupid(uint32_t val)
+{
+  switch (__MESSAGETYPE)
+  {
+    case MESSAGETYPE_ACKSTATUS:
+      pkg_headerext_ackstatus_set_messagegroupid(val);
+      break;
+    case MESSAGETYPE_STATUS:
+      pkg_headerext_status_set_messagegroupid(val);
+      break;
+    case MESSAGETYPE_SETGET:
+      pkg_headerext_setget_set_messagegroupid(val);
+      break;
+    case MESSAGETYPE_SET:
+      pkg_headerext_set_set_messagegroupid(val);
+      break;
+    case MESSAGETYPE_GET:
+      pkg_headerext_get_set_messagegroupid(val);
+      break;
+    default:
+      break;
+  }
+}
+
 // Get MessageGroupID (UIntValue)
 // Same function for all MessageTypes!
+static uint32_t pkg_headerext_common_get_messagegroupid(void) __attribute__ ((unused));
 static uint32_t pkg_headerext_common_get_messagegroupid(void)
 {
   switch (__MESSAGETYPE)
@@ -181,8 +297,27 @@ static uint32_t pkg_headerext_common_get_messagegroupid(void)
   }
 }
 
+// Set Error (BoolValue)
+// Same function for all MessageTypes!
+static void pkg_headerext_common_set_error(bool val) __attribute__ ((unused));
+static void pkg_headerext_common_set_error(bool val)
+{
+  switch (__MESSAGETYPE)
+  {
+    case MESSAGETYPE_ACKSTATUS:
+      pkg_headerext_ackstatus_set_error(val);
+      break;
+    case MESSAGETYPE_ACK:
+      pkg_headerext_ack_set_error(val);
+      break;
+    default:
+      break;
+  }
+}
+
 // Get Error (BoolValue)
 // Same function for all MessageTypes!
+static bool pkg_headerext_common_get_error(void) __attribute__ ((unused));
 static bool pkg_headerext_common_get_error(void)
 {
   switch (__MESSAGETYPE)

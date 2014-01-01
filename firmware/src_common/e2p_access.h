@@ -42,6 +42,7 @@ static inline void eeprom_write_UIntValue(uint16_t byte, uint8_t bit, uint16_t l
 
 static inline void eeprom_write_IntValue(uint16_t byte, uint8_t bit, uint16_t length_bits, int32_t val)
 {
+	// move the sign bit of the standard int type to the sign bit position of our variable-sized int type
 	_eeprom_write_UIntValue(byte, bit, length_bits,
 		(((val >> 31) & 1) << (length_bits - 1)) | (val & (((uint32_t)1 << (length_bits - 1)) - 1)),
 		NULL);
@@ -63,6 +64,14 @@ static inline uint32_t array_read_UIntValue32(uint16_t byte, uint8_t bit, uint16
 	return _eeprom_read_UIntValue32(byte, bit, length_bits, minval, maxval, 32, array);
 }
 
+static inline int32_t array_read_IntValue32(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t minval, uint32_t maxval, uint8_t * array)
+{
+	uint32_t x = _eeprom_read_UIntValue32(byte, bit, length_bits, minval, maxval, 32, array);
+
+	// move the sign bit of our variable-sized int type to bit 31
+	return (((x >> (length_bits - 1)) & 1) << 31) | (x & (((uint32_t)1 << (length_bits - 1)) - 1));
+}
+
 static inline void array_write_UIntValue(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t val, uint8_t * array)
 {
 	_eeprom_write_UIntValue(byte, bit, length_bits, val, array);
@@ -70,6 +79,7 @@ static inline void array_write_UIntValue(uint16_t byte, uint8_t bit, uint16_t le
 
 static inline void array_write_IntValue(uint16_t byte, uint8_t bit, uint16_t length_bits, int32_t val, uint8_t * array)
 {
+	// move the sign bit of the standard int type to the sign bit position of our variable-sized int type
 	_eeprom_write_UIntValue(byte, bit, length_bits,
 		(((val >> 31) & 1) << (length_bits - 1)) | (val & (((uint32_t)1 << (length_bits - 1)) - 1)),
 		array);

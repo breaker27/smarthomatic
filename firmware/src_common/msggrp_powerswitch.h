@@ -35,6 +35,11 @@
 // ===========================
 // MessageGroupID: 20
 
+// ENUM for MessageIDs of this MessageGroup
+typedef enum {
+  MESSAGEID_POWERSWITCH_SWITCHSTATE = 20
+} POWERSWITCH_MessageIDEnum;
+
 
 // Message "powerswitch_switchstate"
 // ---------------------------------
