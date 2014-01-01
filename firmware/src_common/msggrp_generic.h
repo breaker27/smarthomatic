@@ -38,7 +38,7 @@
 
 // ENUM for MessageIDs of this MessageGroup
 typedef enum {
-  MESSAGEID_GENERIC_BATTERYSTATUS = 0
+  MESSAGEID_GENERIC_BATTERYSTATUS = 5
 } GENERIC_MessageIDEnum;
 
 

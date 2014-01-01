@@ -37,7 +37,7 @@
 
 // ENUM for MessageIDs of this MessageGroup
 typedef enum {
-  MESSAGEID_POWERSWITCH_SWITCHSTATE = 20
+  MESSAGEID_POWERSWITCH_SWITCHSTATE = 1
 } POWERSWITCH_MessageIDEnum;
 
 

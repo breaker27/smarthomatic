@@ -38,7 +38,7 @@
 
 // ENUM for MessageIDs of this MessageGroup
 typedef enum {
-  MESSAGEID_TEMPSENSOR_TEMPHUMBRISTATUS = 10
+  MESSAGEID_TEMPSENSOR_TEMPHUMBRISTATUS = 1
 } TEMPSENSOR_MessageIDEnum;
 
 
