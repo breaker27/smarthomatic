@@ -34,14 +34,15 @@ uint32_t _eeprom_read_UIntValue32(uint16_t byte, uint8_t bit, uint16_t length_bi
 		signal_error_state();
 	}
 
-	uint8_t x = 0;
+	uint8_t byres_read = 0;
 	uint32_t val = 0;
 	int8_t shift;
 	
-	while (length_bits + bit > x * 8)
+	// read the bytes one after another, shift them to the correct position and add them
+	while (length_bits + bit > byres_read * 8)
 	{
-		shift = length_bits + bit - x * 8 - 8;
-		uint32_t zz = (NULL == array) ? eeprom_read_byte((uint8_t*)(byte + x)) : array[byte + x];
+		shift = length_bits + bit - byres_read * 8 - 8;
+		uint32_t zz = (NULL == array) ? eeprom_read_byte((uint8_t*)(byte + byres_read)) : array[byte + byres_read];
 
 		if (shift >= 0)
 		{
@@ -52,12 +53,13 @@ uint32_t _eeprom_read_UIntValue32(uint16_t byte, uint8_t bit, uint16_t length_bi
 			val += zz >> - shift;
 		}
 
-		x++;
+		byres_read++;
 	}
 
+	// filter out only the wanted bits and clear unwanted upper bits
 	if (length_bits < 32)
 	{
-		val = val & ((1 << length_bits) - 1); // filter out only the wanted bits
+		val = val & (((uint32_t)1 << length_bits) - 1);
 	}
 
 	if (val < minval)
