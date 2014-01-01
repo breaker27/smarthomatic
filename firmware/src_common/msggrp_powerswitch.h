@@ -22,6 +22,7 @@
 */
 
 #include "packet_header.h"
+#include "packet_headerext_common.h"
 #include "packet_headerext_ackstatus.h"
 #include "packet_headerext_ack.h"
 #include "packet_headerext_status.h"
@@ -110,10 +111,17 @@ static inline void pkg_header_init_powerswitch_switchstate_ackstatus(void)
 }
 
 // Set On (BoolValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bytes 1
-static inline void msg_powerswitch_switchstate_set_on(uint8_t val)
+// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 1
+static inline void msg_powerswitch_switchstate_set_on(bool val)
 {
-  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 1, val, bufx);
+  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 1, val ? 1 : 0, bufx);
+}
+
+// Get On (BoolValue)
+// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 1
+static inline bool msg_powerswitch_switchstate_get_on(void)
+{
+  return array_read_IntValue32(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 1, 0, 1, bufx) == 1;
 }
 
 // Set TimeoutSec (UIntValue)
@@ -121,5 +129,12 @@ static inline void msg_powerswitch_switchstate_set_on(uint8_t val)
 static inline void msg_powerswitch_switchstate_set_timeoutsec(uint32_t val)
 {
   array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 1) / 8, ((uint16_t)__HEADEROFFSETBITS + 1) % 8, 16, val, bufx);
+}
+
+// Get TimeoutSec (UIntValue)
+// Offset: ((uint16_t)__HEADEROFFSETBITS + 1) / 8, ((uint16_t)__HEADEROFFSETBITS + 1) % 8, length bits 16, min val 0, max val 65535
+static inline uint32_t msg_powerswitch_switchstate_get_timeoutsec(void)
+{
+  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 1) / 8, ((uint16_t)__HEADEROFFSETBITS + 1) % 8, 16, 0, 65535, bufx);
 }
 

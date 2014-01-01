@@ -33,6 +33,13 @@ static inline void pkg_headerext_ackstatus_set_acksenderid(uint32_t val)
   array_write_UIntValue(9, 0, 12, val, bufx);
 }
 
+// Get AckSenderID (UIntValue)
+// Offset: 9, 0, length bits 12, min val 0, max val 4095
+static inline uint32_t pkg_headerext_ackstatus_get_acksenderid(void)
+{
+  return array_read_UIntValue32(9, 0, 12, 0, 4095, bufx);
+}
+
 // Set AckPacketCounter (UIntValue)
 // Offset: 10, 4, length bits 24, min val 0, max val 16777215
 static inline void pkg_headerext_ackstatus_set_ackpacketcounter(uint32_t val)
@@ -40,11 +47,25 @@ static inline void pkg_headerext_ackstatus_set_ackpacketcounter(uint32_t val)
   array_write_UIntValue(10, 4, 24, val, bufx);
 }
 
-// Set Error (BoolValue)
-// Offset: 13, 4, length bytes 1
-static inline void pkg_headerext_ackstatus_set_error(uint8_t val)
+// Get AckPacketCounter (UIntValue)
+// Offset: 10, 4, length bits 24, min val 0, max val 16777215
+static inline uint32_t pkg_headerext_ackstatus_get_ackpacketcounter(void)
 {
-  array_write_UIntValue(13, 4, 1, val, bufx);
+  return array_read_UIntValue32(10, 4, 24, 0, 16777215, bufx);
+}
+
+// Set Error (BoolValue)
+// Offset: 13, 4, length bits 1
+static inline void pkg_headerext_ackstatus_set_error(bool val)
+{
+  array_write_UIntValue(13, 4, 1, val ? 1 : 0, bufx);
+}
+
+// Get Error (BoolValue)
+// Offset: 13, 4, length bits 1
+static inline bool pkg_headerext_ackstatus_get_error(void)
+{
+  return array_read_IntValue32(13, 4, 1, 0, 1, bufx) == 1;
 }
 
 // Set MessageGroupID (UIntValue)
@@ -54,11 +75,25 @@ static inline void pkg_headerext_ackstatus_set_messagegroupid(uint32_t val)
   array_write_UIntValue(13, 5, 7, val, bufx);
 }
 
+// Get MessageGroupID (UIntValue)
+// Offset: 13, 5, length bits 7, min val 0, max val 127
+static inline uint32_t pkg_headerext_ackstatus_get_messagegroupid(void)
+{
+  return array_read_UIntValue32(13, 5, 7, 0, 127, bufx);
+}
+
 // Set MessageID (UIntValue)
 // Offset: 14, 4, length bits 4, min val 0, max val 15
 static inline void pkg_headerext_ackstatus_set_messageid(uint32_t val)
 {
   array_write_UIntValue(14, 4, 4, val, bufx);
+}
+
+// Get MessageID (UIntValue)
+// Offset: 14, 4, length bits 4, min val 0, max val 15
+static inline uint32_t pkg_headerext_ackstatus_get_messageid(void)
+{
+  return array_read_UIntValue32(14, 4, 4, 0, 15, bufx);
 }
 
 

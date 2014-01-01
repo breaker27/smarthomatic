@@ -33,11 +33,25 @@ static inline void pkg_headerext_status_set_messagegroupid(uint32_t val)
   array_write_UIntValue(9, 0, 7, val, bufx);
 }
 
+// Get MessageGroupID (UIntValue)
+// Offset: 9, 0, length bits 7, min val 0, max val 127
+static inline uint32_t pkg_headerext_status_get_messagegroupid(void)
+{
+  return array_read_UIntValue32(9, 0, 7, 0, 127, bufx);
+}
+
 // Set MessageID (UIntValue)
 // Offset: 9, 7, length bits 4, min val 0, max val 15
 static inline void pkg_headerext_status_set_messageid(uint32_t val)
 {
   array_write_UIntValue(9, 7, 4, val, bufx);
+}
+
+// Get MessageID (UIntValue)
+// Offset: 9, 7, length bits 4, min val 0, max val 15
+static inline uint32_t pkg_headerext_status_get_messageid(void)
+{
+  return array_read_UIntValue32(9, 7, 4, 0, 15, bufx);
 }
 
 

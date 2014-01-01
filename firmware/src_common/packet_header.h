@@ -24,6 +24,7 @@
 #ifndef _PACKET_HEADER_H
 #define _PACKET_HEADER_H
 
+#include <stdbool.h>
 #include "util.h"
 #include "e2p_access.h"
 
@@ -35,11 +36,22 @@ uint8_t __HEADEROFFSETBITS;
 // MessageGroupID and MessageID and used for CRC32 calculation.
 uint8_t __PACKETSIZEBYTES;
 
+// Remember the MessageType after receiving a packet to reduce code size
+// in common header extension access functions.
+uint8_t __MESSAGETYPE;
+
 // Set CRC32 (UIntValue)
 // Offset: 0, 0, length bits 32, min val 0, max val 4294967295
 static inline void pkg_header_set_crc32(uint32_t val)
 {
   array_write_UIntValue(0, 0, 32, val, bufx);
+}
+
+// Get CRC32 (UIntValue)
+// Offset: 0, 0, length bits 32, min val 0, max val 4294967295
+static inline uint32_t pkg_header_get_crc32(void)
+{
+  return array_read_UIntValue32(0, 0, 32, 0, 4294967295, bufx);
 }
 
 // Set SenderID (UIntValue)
@@ -49,11 +61,25 @@ static inline void pkg_header_set_senderid(uint32_t val)
   array_write_UIntValue(4, 0, 12, val, bufx);
 }
 
+// Get SenderID (UIntValue)
+// Offset: 4, 0, length bits 12, min val 0, max val 4095
+static inline uint32_t pkg_header_get_senderid(void)
+{
+  return array_read_UIntValue32(4, 0, 12, 0, 4095, bufx);
+}
+
 // Set PacketCounter (UIntValue)
 // Offset: 5, 4, length bits 24, min val 0, max val 16777215
 static inline void pkg_header_set_packetcounter(uint32_t val)
 {
   array_write_UIntValue(5, 4, 24, val, bufx);
+}
+
+// Get PacketCounter (UIntValue)
+// Offset: 5, 4, length bits 24, min val 0, max val 16777215
+static inline uint32_t pkg_header_get_packetcounter(void)
+{
+  return array_read_UIntValue32(5, 4, 24, 0, 16777215, bufx);
 }
 
 // ENUM MessageType
@@ -73,6 +99,13 @@ static inline void pkg_header_set_messagetype(MessageTypeEnum val)
   array_write_UIntValue(8, 4, 4, val, bufx);
 }
 
+// Get MessageType (EnumValue)
+// Offset: 8, 4, length bits 4
+static inline MessageTypeEnum pkg_header_get_messagetype(void)
+{
+  return array_read_UIntValue32(8, 4, 4, 0, 15, bufx);
+}
+
 
 // overall length: 72 bits
 
@@ -80,6 +113,12 @@ static inline void pkg_header_set_messagetype(MessageTypeEnum val)
 static inline void pkg_header_calc_crc32(void)
 {
   pkg_header_set_crc32(crc32(bufx + 4, __PACKETSIZEBYTES - 4));
+}
+
+// Function to check CRC value against calculated one (after reception).
+static inline bool pkg_header_check_crc32(uint8_t packet_size_bytes)
+{
+  return getBuf32(0) == crc32(bufx + 4, packet_size_bytes - 4);
 }
 
 #endif /* _PACKET_HEADER_H */

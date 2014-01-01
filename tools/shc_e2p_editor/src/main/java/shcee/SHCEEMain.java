@@ -124,10 +124,7 @@ public class SHCEEMain extends JFrame {
 			try
 			{
 				new SourceCodeGeneratorPacket();
-			} catch (TransformerException e1)
-			{
-				e1.printStackTrace();
-			} catch (IOException e1)
+			} catch (Exception e1)
 			{
 				e1.printStackTrace();
 			}

@@ -46,8 +46,9 @@ public class SourceCodeGeneratorPacket
 {
 	private static String newline = System.getProperty("line.separator");
 	private Hashtable<String, Integer> headerExtOffset = new Hashtable<String, Integer>();
+	private Hashtable<String, Integer> headerExtFieldOccurrences = new Hashtable<String, Integer>();
 	
-	public SourceCodeGeneratorPacket() throws TransformerException, IOException
+	public SourceCodeGeneratorPacket() throws Exception
 	{
 		String errMsg = Util.conformsToSchema(SHCEEMain.PACKET_CATALOG_XML, SHCEEMain.PACKET_METAMODEL_XSD);
 		
@@ -80,6 +81,8 @@ public class SourceCodeGeneratorPacket
 		generateHeaderExtFiles(xmlRoot, offsetHeader, messageTypes);
 
 		generateMessageGroupFiles(xmlRoot, messageTypes);
+		
+		generateHeaderExtensionCommonFile(xmlRoot, messageTypes);
 	}
 
 	/**
@@ -115,6 +118,7 @@ public class SourceCodeGeneratorPacket
 		outHeader.println("#ifndef _PACKET_HEADER_H");
 		outHeader.println("#define _PACKET_HEADER_H");
 		outHeader.println("");
+		outHeader.println("#include <stdbool.h>");
 		outHeader.println("#include \"util.h\"");
 		outHeader.println("#include \"e2p_access.h\"");
 		outHeader.println("");
@@ -125,6 +129,10 @@ public class SourceCodeGeneratorPacket
 		outHeader.println("// Packet size in bytes including padding, set depending on MessageType,");
 		outHeader.println("// MessageGroupID and MessageID and used for CRC32 calculation.");
 		outHeader.println("uint8_t __PACKETSIZEBYTES;");
+		outHeader.println("");
+		outHeader.println("// Remember the MessageType after receiving a packet to reduce code size");
+		outHeader.println("// in common header extension access functions.");
+		outHeader.println("uint8_t __MESSAGETYPE;");
 		outHeader.println("");
 
 		StringBuilder funcDefsH = new StringBuilder();
@@ -143,10 +151,113 @@ public class SourceCodeGeneratorPacket
 		outHeader.println("}");
 		outHeader.println("");
 
+		outHeader.println("// Function to check CRC value against calculated one (after reception).");
+		outHeader.println("static inline bool pkg_header_check_crc32(uint8_t packet_size_bytes)");
+		outHeader.println("{");
+		outHeader.println("  return getBuf32(0) == crc32(bufx + 4, packet_size_bytes - 4);");
+		outHeader.println("}");
+		outHeader.println("");		
+		
 		outHeader.println("#endif /* _PACKET_HEADER_H */");
 		
 		outHeader.close();
 		return offsetHeader;
+	}
+	
+	/**
+	 * Generate the source code (.h) file for the packet header, part 2:
+	 * Append additional functions used to interpret packets after reception.
+	 * @param xmlRoot
+	 * @throws Exception 
+	 */
+	private void generateHeaderExtensionCommonFile(Node xmlRoot, Hashtable<Integer, String> messageTypes) throws Exception {
+		PrintWriter outHeader = new PrintWriter(new FileWriter("../../firmware/src_common/packet_headerext_common.h"));
+
+		outHeader.println(genCopyrightNotice());
+		outHeader.println("#ifndef _PACKET_HEADEREXT_COMMON_H");
+		outHeader.println("#define _PACKET_HEADEREXT_COMMON_H");
+		outHeader.println("");
+		outHeader.println("#include <stdbool.h>");
+		outHeader.println("#include \"util.h\"");
+		outHeader.println("#include \"e2p_access.h\"");
+		outHeader.println("");
+
+		for (Integer i : messageTypes.keySet())
+		{
+			outHeader.println("#include \"packet_headerext_" + messageTypes.get(i).toLowerCase() + ".h\"");
+		}
+		
+		outHeader.println("");
+		outHeader.println("// This file contains functions to access fields common to several message");
+		outHeader.println("// types. It allows the user to access the fields without explicitly");
+		outHeader.println("// specifying the message type in the function call.");
+		outHeader.println("// WARNING: If you access a field not contained in the received MessageType,");
+		outHeader.println("// you get a wrong value 0!");
+		outHeader.println("");
+
+		// "adjust offset" function
+		
+		outHeader.println("// Initialize the header offset variable, used to correctly interpret");
+		outHeader.println("// contents of the header extension and the message data after reception.");
+		outHeader.println("static void pkg_header_adjust_offset(void)");
+		outHeader.println("{");
+		outHeader.println("  __MESSAGETYPE = pkg_header_get_messagetype();");
+		outHeader.println("");
+		outHeader.println("  switch (__MESSAGETYPE)");
+		outHeader.println("  {");
+
+		for (Integer messageTypeID : messageTypes.keySet())
+		{
+			String messageTypeName = messageTypes.get(messageTypeID);
+			
+			outHeader.println("    case MESSAGETYPE_" + messageTypeName.toUpperCase() + ":");
+			outHeader.println("      __HEADEROFFSETBITS = " + headerExtOffset.get(messageTypeName) + ";");
+			outHeader.println("      break;");
+		}
+		
+		outHeader.println("  }");
+		outHeader.println("}");
+		outHeader.println("");
+		
+		// common access function for all header extensions
+		
+		for (String name : headerExtFieldOccurrences.keySet())
+		{
+			String shcType = headerExtensionFieldType(xmlRoot, name);
+			String cType = fieldTypeToCType(shcType);
+			
+			outHeader.println("// Get " + name + " (" + shcType + ")");
+			outHeader.println("// Same function for all MessageTypes!");
+			outHeader.println("static " + cType + " pkg_headerext_common_get_" + name.toLowerCase() + "(void)");
+			outHeader.println("{");
+			outHeader.println("  switch (__MESSAGETYPE)");
+			outHeader.println("  {");
+			
+			for (Integer messageTypeID : messageTypes.keySet())
+			{
+				String messageTypeName = messageTypes.get(messageTypeID);
+				
+				if (headerExtensionContainsField(xmlRoot, messageTypeID, name))
+				{
+					outHeader.println("    case MESSAGETYPE_" + messageTypeName.toUpperCase() + ":");
+					outHeader.println("      return pkg_headerext_" + messageTypeName.toLowerCase() + "_get_" + name.toLowerCase() + "();");
+					outHeader.println("      break;");
+				}
+			}
+			
+			outHeader.println("    default:");
+			outHeader.println("      return 0;"); // FIXME: Better return MAXVAL - 1
+			outHeader.println("      break;");
+
+			outHeader.println("  }");
+			outHeader.println("}");
+			outHeader.println("");
+			
+		}
+		
+		outHeader.println("#endif /* _PACKET_HEADEREXT_COMMON_H */");
+		
+		outHeader.close();
 	}
 	
 	/**
@@ -201,6 +312,19 @@ public class SourceCodeGeneratorPacket
 				// remember size of header + header extension
 				headerExtOffset.put(messageTypeName, offsetHeaderExt);
 				
+				// count fields in the header extension
+				for (String name : dataFieldsHE)
+				{
+					if (headerExtFieldOccurrences.containsKey(name))
+					{
+						headerExtFieldOccurrences.put(name, headerExtFieldOccurrences.get(name) + 1);
+					}
+					else
+					{
+						headerExtFieldOccurrences.put(name, 1);
+					}
+				}
+				
 				out.close();
 			}
 		}			
@@ -236,7 +360,8 @@ public class SourceCodeGeneratorPacket
 			out.println(genCopyrightNotice());
 
 			out.println("#include \"packet_header.h\"");
-
+			out.println("#include \"packet_headerext_common.h\"");
+			
 			for (Integer i : messageTypes.keySet())
 			{
 				out.println("#include \"packet_headerext_" + messageTypes.get(i).toLowerCase() + ".h\"");
@@ -308,7 +433,7 @@ public class SourceCodeGeneratorPacket
 					out.println("  memset(&bufx[0], 0, sizeof(bufx));");
 					out.println("  pkg_header_set_messagetype(" + messageTypeID + ");");
 					
-					if (containsMessageID(xmlRoot, messageTypeID))
+					if (headerExtensionContainsField(xmlRoot, messageTypeID, "MessageID"))
 					{
 						out.println("  pkg_headerext_" + messageTypeName.toLowerCase() + "_set_messagegroupid(" + messageGroupID + ");");
 						out.println("  pkg_headerext_" + messageTypeName.toLowerCase() + "_set_messageid(" + messageID + ");");
@@ -376,29 +501,45 @@ public class SourceCodeGeneratorPacket
 	}
 	
 	/**
-	 * Check if the MessageType with the given ID contains message data according to the definition in the XML file.
-	 * @param root
-	 * @param messageTypeID
-	 * @return
-	 * @throws TransformerException 
-	 */
-	private boolean containsMessageData(Node xmlRoot, int messageTypeID) throws TransformerException
-	{
-		Node hext = XPathAPI.selectSingleNode(xmlRoot, "HeaderExtension[MessageType=" + messageTypeID + "]");
-		return Util.getChildNodeValue(hext, "ContainsMessageData").equals("true");		
-	}
-	
-	/**
 	 * Check if the header extension of the given MessageType contains (MessageGroupID and) MessageID.
 	 * @param root
 	 * @param messageTypeID
 	 * @return
 	 * @throws TransformerException 
 	 */
-	private boolean containsMessageID(Node xmlRoot, int messageTypeID) throws TransformerException
+	private boolean headerExtensionContainsField(Node xmlRoot, int messageTypeID, String fieldName) throws TransformerException
 	{
-		Node hext = XPathAPI.selectSingleNode(xmlRoot, "HeaderExtension[MessageType=" + messageTypeID + "]/UIntValue[ID=\"MessageID\"]");
-		return hext != null;
+		Node field = XPathAPI.selectSingleNode(xmlRoot, "HeaderExtension[MessageType=" + messageTypeID + "]/*[ID=\"" + fieldName + "\"]");
+		return field != null;
+	}
+	
+	/**
+	 * Convert the (SHC) field type (like "UIntValue") to a C type (like "uint32_t"). 
+	 * @param type
+	 * @return
+	 * @throws TransformerException
+	 */
+	private String fieldTypeToCType(String shcType) throws Exception
+	{
+		if (shcType.equals("UIntValue"))
+			return "uint32_t";
+		else if (shcType.equals("BoolValue"))
+			return "bool";
+		else
+			throw new Exception("Unsupported common header extension field encountered.");
+	}
+	
+	/**
+	 * Get the (SHC) type of the given header extension field.
+	 * @param xmlRoot
+	 * @param name
+	 * @return
+	 * @throws TransformerException
+	 */
+	private String headerExtensionFieldType(Node xmlRoot, String name) throws TransformerException
+	{
+		Node field = XPathAPI.selectSingleNode(xmlRoot, "HeaderExtension/*[ID=\"" + name + "\"]");
+		return field.getNodeName();
 	}
 	
 	/**
@@ -418,7 +559,8 @@ public class SourceCodeGeneratorPacket
 			if (element.getNodeName().equals("EnumValue"))
 			{
 				String ID1 = Util.getChildNodeValue(element, "ID");
-				String bits = Util.getChildNodeValue(element, "Bits");
+				dataFields.add(ID1);
+				int bits = Integer.parseInt(Util.getChildNodeValue(element, "Bits"));
 
 				// enum
 				NodeList enumElements = XPathAPI.selectNodeList(element, "Element");
@@ -439,8 +581,8 @@ public class SourceCodeGeneratorPacket
 	
 				sb.append("} " + ID1 + "Enum;" + newline + newline);
 				
-				// access function
-				dataFields.add(ID1);
+				// SET
+				
 				sb.append("// Set " + ID1 + " (EnumValue)" + newline);
 				String offsetStr = generateOffsetString(useHeaderOffset, offset);
 				sb.append("// Offset: " + offsetStr + ", length bits " + bits + newline);			
@@ -451,7 +593,18 @@ public class SourceCodeGeneratorPacket
 				sb.append("}" + newline);
 				sb.append(newline);
 				
-				offset += Integer.parseInt(bits);
+				// GET
+				
+				sb.append("// Get " + ID1 + " (EnumValue)" + newline);
+				sb.append("// Offset: " + offsetStr + ", length bits " + bits + newline);			
+				
+				sb.append("static inline " + ID1 + "Enum " + functionPrefix + "_get_" + ID1.toLowerCase() + "(void)" + newline);
+				sb.append("{" + newline);
+				sb.append("  return array_read_UIntValue32(" + offsetStr + ", " + bits + ", 0, " + ((1 << bits) - 1) + ", bufx);" + newline);
+				sb.append("}" + newline);
+				sb.append(newline);
+				
+				offset += bits;
 			}
 			else if (element.getNodeName().equals("UIntValue"))
 			{
@@ -462,6 +615,8 @@ public class SourceCodeGeneratorPacket
 				String minVal = Util.getChildNodeValue(element, "MinVal");
 				String maxVal = Util.getChildNodeValue(element, "MaxVal");
 				
+				// SET
+				
 				sb.append("// Set " + ID + " (UIntValue)" + newline);
 				String offsetStr = generateOffsetString(useHeaderOffset, offset);
 				sb.append("// Offset: " + offsetStr + ", length bits " + bits + ", min val " + minVal + ", max val " + maxVal + newline);
@@ -469,6 +624,18 @@ public class SourceCodeGeneratorPacket
 				sb.append("static inline void " + functionPrefix + "_set_" + ID.toLowerCase() + "(uint32_t val)" + newline);
 				sb.append("{" + newline);
 				sb.append("  array_write_UIntValue(" + offsetStr + ", " + bits + ", val, bufx);" + newline);
+				sb.append("}" + newline);
+				sb.append(newline);
+				
+				// GET
+				
+				sb.append("// Get " + ID + " (UIntValue)" + newline);
+				sb.append("// Offset: " + offsetStr + ", length bits " + bits + ", min val " + minVal + ", max val " + maxVal + newline);
+				
+				// TODO: Return minimal type uint8_t, ...
+				sb.append("static inline uint32_t " + functionPrefix + "_get_" + ID.toLowerCase() + "(void)" + newline);
+				sb.append("{" + newline);
+				sb.append("  return array_read_UIntValue32(" + offsetStr + ", " + bits + ", " + minVal + ", " + maxVal + ", bufx);" + newline);
 				sb.append("}" + newline);
 				sb.append(newline);
 				
@@ -483,6 +650,8 @@ public class SourceCodeGeneratorPacket
 				String minVal = Util.getChildNodeValue(element, "MinVal");
 				String maxVal = Util.getChildNodeValue(element, "MaxVal");
 				
+				// SET
+				
 				sb.append("// Set " + ID + " (IntValue)" + newline);
 				String offsetStr = generateOffsetString(useHeaderOffset, offset);
 				sb.append("// Offset: " + offsetStr + ", length bits " + bits + ", min val " + minVal + ", max val " + maxVal + newline);
@@ -490,6 +659,18 @@ public class SourceCodeGeneratorPacket
 				sb.append("static inline void " + functionPrefix + "_set_" + ID.toLowerCase() + "(int32_t val)" + newline);
 				sb.append("{" + newline);
 				sb.append("  array_write_IntValue(" + offsetStr + ", " + bits + ", val, bufx);" + newline);
+				sb.append("}" + newline);
+				sb.append(newline);
+				
+				// GET
+				
+				sb.append("// Get " + ID + " (IntValue)" + newline);
+				sb.append("// Offset: " + offsetStr + ", length bits " + bits + ", min val " + minVal + ", max val " + maxVal + newline);
+				
+				// TODO: Return minimal type uint8_t, ...
+				sb.append("static inline int32_t " + functionPrefix + "_get_" + ID.toLowerCase() + "(void)" + newline);
+				sb.append("{" + newline);
+				sb.append("  return array_read_IntValue32(" + offsetStr + ", " + bits + ", " + minVal + ", " + maxVal + ", bufx);" + newline);
 				sb.append("}" + newline);
 				sb.append(newline);
 				
@@ -525,13 +706,27 @@ public class SourceCodeGeneratorPacket
 				String ID = Util.getChildNodeValue(element, "ID");
 				dataFields.add(ID);
 				
+				// SET
+				
 				sb.append("// Set " + ID + " (BoolValue)" + newline);
 				String offsetStr = generateOffsetString(useHeaderOffset, offset);
-				sb.append("// Offset: " + offsetStr + ", length bytes 1" + newline);
+				sb.append("// Offset: " + offsetStr + ", length bits 1" + newline);
 				
-				sb.append("static inline void " + functionPrefix + "_set_" + ID.toLowerCase() + "(uint8_t val)" + newline);
+				sb.append("static inline void " + functionPrefix + "_set_" + ID.toLowerCase() + "(bool val)" + newline);
 				sb.append("{" + newline);
-				sb.append("  array_write_UIntValue(" + offsetStr + ", " + 1 + ", val, bufx);" + newline);
+				sb.append("  array_write_UIntValue(" + offsetStr + ", " + 1 + ", val ? 1 : 0, bufx);" + newline);
+				sb.append("}" + newline);
+				sb.append(newline);
+				
+				// GET
+				
+				sb.append("// Get " + ID + " (BoolValue)" + newline);
+				sb.append("// Offset: " + offsetStr + ", length bits 1" + newline);
+				
+				// TODO: Return minimal type uint8_t, ...
+				sb.append("static inline bool " + functionPrefix + "_get_" + ID.toLowerCase() + "(void)" + newline);
+				sb.append("{" + newline);
+				sb.append("  return array_read_IntValue32(" + offsetStr + ", 1, 0, 1, bufx) == 1;" + newline);
 				sb.append("}" + newline);
 				sb.append(newline);
 				

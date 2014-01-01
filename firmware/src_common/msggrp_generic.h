@@ -22,6 +22,7 @@
 */
 
 #include "packet_header.h"
+#include "packet_headerext_common.h"
 #include "packet_headerext_ackstatus.h"
 #include "packet_headerext_ack.h"
 #include "packet_headerext_status.h"
@@ -84,5 +85,12 @@ static inline void pkg_header_init_generic_batterystatus_ackstatus(void)
 static inline void msg_generic_batterystatus_set_percentage(uint32_t val)
 {
   array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 7, val, bufx);
+}
+
+// Get Percentage (UIntValue)
+// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 7, min val 0, max val 100
+static inline uint32_t msg_generic_batterystatus_get_percentage(void)
+{
+  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 7, 0, 100, bufx);
 }
 
