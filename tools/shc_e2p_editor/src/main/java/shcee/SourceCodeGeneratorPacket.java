@@ -454,7 +454,7 @@ public class SourceCodeGeneratorPacket
 
 				String suffix = n == messageNodes.getLength() - 1 ? "" : ","; 
 
-				out.println("  MESSAGEID_" + messageGroupName.toUpperCase() + "_" + name + " = " + messageGroupID + suffix);
+				out.println("  MESSAGEID_" + messageGroupName.toUpperCase() + "_" + name + " = " + messageID + suffix);
 			}
 
 			out.println("} " + messageGroupName.toUpperCase() + "_MessageIDEnum;");
