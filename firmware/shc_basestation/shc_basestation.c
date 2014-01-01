@@ -25,11 +25,15 @@
 #include <avr/eeprom.h>
 
 #include "rfm12.h"
-
-#define UART_DEBUG   // Debug output over UART
-
 #include "uart.h"
+
+#include "../src_common/msggrp_generic.h"
+#include "../src_common/msggrp_tempsensor.h"
+#include "../src_common/msggrp_powerswitch.h"
+
 #include "aes256.h"
+#include "util.h"
+#include "request_buffer.h"
 
 // How often should the packetcounter_base be increased and written to EEPROM?
 // This should be 2^32 (which is the maximum transmitted packet counter) /
@@ -40,9 +44,6 @@
 #define LED_PIN 7
 #define LED_PORT PORTD
 #define LED_DDR DDRD
-
-#include "util.h"
-#include "request_buffer.h"
 
 // check some assumptions at precompile time about flash layout
 #if (EEPROM_AESKEYS_BIT != 0)
@@ -72,115 +73,129 @@ uint8_t rfm12_sendbuf(uint8_t len)
 	return aes_byte_count;
 }
 
-void print_switch_state(uint8_t max)
-{
-	uint8_t i;
-	uint16_t u16;
-
-	for (i = 1; i <= max; i++)
-	{
-		u16 = getBuf16(4 + i * 2);
-		
-		UART_PUTF(";Switch %u=", i);
-		
-		if (u16 & 0b1)
-		{
-			UART_PUTS("ON");
-		}
-		else
-		{
-			UART_PUTS("OFF");
-		}
-		
-		u16 = u16 >> 1;
-		
-		if (u16)
-		{		
-			UART_PUTF2(";Timeout %u=%us", i, u16);
-		}
-	}
-}
-
 // Show info about the received packets.
-// This is only for debugging. The definition of all packets must be known at the PC program
-// that's processing the data.
+// This is only for debugging and only few messages are supported. The definition
+// of all packets must be known at the PC program that's processing the data.
 void decode_data(uint8_t len)
 {
+	uint32_t messagegroupid, messageid;
 	uint16_t u16;
-	int16_t s16;
-	uint32_t u32;	
+	
+	pkg_header_adjust_offset();
 
-	UART_PUTF("Sender ID=%u;", bufx[0]);
-	UART_PUTF("Packet Counter=%lu;", getBuf32(1));
-	uint8_t cmd = bufx[5];
-	UART_PUTF("Command ID=%u;", cmd);
+	uint16_t senderid = pkg_header_get_senderid();
+	uint32_t packetcounter = pkg_header_get_packetcounter();
+	MessageTypeEnum messagetype = pkg_header_get_messagetype();
 
-	switch (cmd)
+	UART_PUTF("Packet Data: SenderID=%u;", senderid);
+	UART_PUTF("PacketCounter=%lu;", packetcounter);
+	UART_PUTF("MessageType=%u;", messagetype);
+
+	// show ReceiverID for all requests
+	if ((messagetype == MESSAGETYPE_GET) || (messagetype == MESSAGETYPE_SET) || (messagetype == MESSAGETYPE_SETGET))
 	{
-		case 1: // Generic Acknowledge
-			u32 = getBuf32(7);
-			UART_PUTS("Command Name=Generic Acknowledge;");
-			UART_PUTF("Request Sender ID=%u;", bufx[6]);
-			UART_PUTF("Request Packet Counter=%lu\r\n", u32);
-			remove_request(bufx[0], bufx[6], u32);
-			break;
+		uint16_t receiverid = pkg_headerext_common_get_receiverid();
+		UART_PUTF("ReceiverID=%u;", receiverid);
+	}
+	
+	// show AckSenderID, AckPacketCounter and Error for "Ack" and "AckStatus"
+	if ((messagetype == MESSAGETYPE_ACK) || (messagetype == MESSAGETYPE_ACKSTATUS))
+	{
+		uint16_t acksenderid = pkg_headerext_common_get_acksenderid();
+		uint32_t ackpacketcounter = pkg_headerext_common_get_ackpacketcounter();
+		uint8_t error = pkg_headerext_common_get_error();
+		UART_PUTF("AckSenderID=%u;", acksenderid);
+		UART_PUTF("AckPacketCounter=%lu;", ackpacketcounter);
+		UART_PUTF("Error=%u;", error);
+	}
 
-		case 10: // Temperature Sensor Status
-			UART_PUTS("Command Name=Temperature Sensor Status;");
-			s16 = (int16_t)getBuf16(7);
-			UART_PUTF("Battery=%u;", bufx[6]);
-			UART_PUTS("Temperature=");
-			printSigned(s16);
-			u16 = getBuf16(9);
-			UART_PUTF2("Humidity=%u.%02u;", u16 / 100, u16 % 100);
-			UART_PUTF("Brightness=%u", bufx[11]);
-			break;
-			
-		case 20: // Power Switch Status
-			UART_PUTS("Command Name=Power Switch Status");
-			print_switch_state(3);
-			break;
-
-		case 21: // Power Switch Status Extended
-			UART_PUTS("Command Name=Power Switch Status Extended");
-			print_switch_state(8);
-			break;
-
-		case 30: // DateTime Status
-			UART_PUTS("Command Name=DateTime Status;");
-			UART_PUTF3("Date=%u-%02u-%02u;", bufx[6] + 2000, bufx[7], bufx[8]);
-			UART_PUTF3("Time=%02u:%02u:%02u", bufx[9], bufx[10], bufx[11]);
-			break;
+	// show MessageGroupID and MessageID for all MessageTypes except "Ack"
+	if (messagetype != MESSAGETYPE_ACK)
+	{
+		messagegroupid = pkg_headerext_common_get_messagegroupid();
+		messageid = pkg_headerext_common_get_messageid();
+		UART_PUTF("MessageGroupID=%u;", messagegroupid);
+		UART_PUTF("MessageID=%u;", messageid);
+	}
+	
+	// show raw message data for all MessageTypes except "Get" and "Ack"
+	if ((messagetype != MESSAGETYPE_GET) && (messagetype != MESSAGETYPE_ACK))
+	{
+		uint8_t i;
+		uint8_t start = __HEADEROFFSETBITS / 8;
+		uint8_t shift = __HEADEROFFSETBITS % 8;
+		uint16_t count = (((uint16_t)len * 8) - __HEADEROFFSETBITS + 7) / 8;
+	
+		//UART_PUTF4("\r\n\r\nLEN=%u, START=%u, SHIFT=%u, COUNT=%u\r\n\r\n", len, start, shift, count);
+	
+		UART_PUTS("MessageData=");
+	
+		for (i = start; i < start + count; i++)
+		{
+			UART_PUTF("%02x", (((bufx[i] << 8) + bufx[i + 1]) << shift) >> 8);
+		}
 		
-		case 140: // Power Switch Request
-			UART_PUTS("Command Name=Power Switch Request;");
-			uint16_t u16 = getBuf16(8);
-			UART_PUTF("Receiver ID=%u;", bufx[6]);
-			UART_PUTF("Switch Bitmask=%u;", bufx[7]); // TODO: Set binary mode like 00010110
-			UART_PUTF("Requested State=%u;", u16 & 0b1);
-			UART_PUTF("Timeout=%u", u16 >> 1);
-			break;
+		UART_PUTS(";");
+
+		// additionally decode the message data for a small number of messages
+		switch (messagegroupid)
+		{
+			case MESSAGEGROUP_GENERIC:
+
+				switch (messageid)
+				{
+					case MESSAGEID_GENERIC_BATTERYSTATUS:
+						UART_PUTF("Percentage=%u;", msg_generic_batterystatus_get_percentage);
+						break;
+						
+					/*DateTime Status:
+					UART_PUTS("Command Name=DateTime Status;");
+					UART_PUTF3("Date=%u-%02u-%02u;", bufx[6] + 2000, bufx[7], bufx[8]);
+					UART_PUTF3("Time=%02u:%02u:%02u", bufx[9], bufx[10], bufx[11]);*/
+				
+					default:
+						break;
+				}
+				
+				break;
+
+			case MESSAGEGROUP_TEMPSENSOR:
+				
+				switch (messageid)
+				{
+					case MESSAGEID_TEMPSENSOR_TEMPHUMBRISTATUS:
+						UART_PUTS("Temperature=");
+						printSigned(msg_tempsensor_temphumbristatus_get_temperature());
+						u16 = msg_tempsensor_temphumbristatus_get_humidity();
+						UART_PUTF2(";Humidity=%u.%02u;", u16 / 100, u16 % 100);
+						UART_PUTF("Brightness=%u;", msg_tempsensor_temphumbristatus_get_brightness());
+						break;
+					default:
+						break;
+				}
+				
+				break;
+
+			case MESSAGEGROUP_POWERSWITCH:
+				
+				switch (messageid)
+				{
+					case MESSAGEID_POWERSWITCH_SWITCHSTATE:
+						UART_PUTF("On=%u;", msg_powerswitch_switchstate_get_on());
+						UART_PUTF("TimeoutSec=%u;", msg_powerswitch_switchstate_get_timeoutsec());
+						break;
+					default:
+						break;
+				}
+				
+				break;
 			
-		case 141: // Dimmer Request
-			UART_PUTS("Command Name=Dimmer Request;");
-			UART_PUTF("Receiver ID=%u;", bufx[6]);
-			UART_PUTF("Animation Mode=%u;", bufx[7] >> 5);
-			UART_PUTF("Dimmer Bitmask=%u;", bufx[7] & 0b111);
-			UART_PUTF("Timeout=%u;", getBuf16(8));
-			UART_PUTF("Start Brightness=%u;", bufx[10]);
-			UART_PUTF("End Brightness=%u", bufx[11]);
-			break;
-			
-		default:
-			UART_PUTS("Command Name=Unknown;");
-			UART_PUTS("Data=");
-			printbytearray(bufx + 6, len - 6);
+			default:
+				break;
+		}
 	}
 
-	if (cmd != 1)
-	{
-		UART_PUTS("\r\n");
-	}
+	UART_PUTS("\r\n");
 }
 
 void send_packet(uint8_t aes_key_nr, uint8_t data_len)
@@ -257,7 +272,7 @@ int main ( void )
 	deviceID = eeprom_read_UIntValue16(EEPROM_DEVICEID_BYTE, EEPROM_DEVICEID_BIT,
 		EEPROM_DEVICEID_LENGTH_BITS, EEPROM_DEVICEID_MINVAL, EEPROM_DEVICEID_MAXVAL);
 
-	uart_init(true);
+	uart_init();
 	UART_PUTS ("\r\n");
 	UART_PUTS ("smarthomatic Base Station V1.0 (c) 2012 Uwe Freese, www.smarthomatic.org\r\n");
 	UART_PUTF ("Device ID: %u\r\n", deviceID);
@@ -331,10 +346,9 @@ int main ( void )
 			}
 			else // try to decrypt with all keys stored in EEPROM
 			{
-				uint32_t assumed_crc = 0;
-				uint32_t actual_crc = 1;
+				bool crcok = false;
 
-				for(aes_key_nr = 0; aes_key_nr < aes_key_count ; aes_key_nr++)
+				for (aes_key_nr = 0; aes_key_nr < aes_key_count ; aes_key_nr++)
 				{
 					//strncpy((char *)bufx, (char *)rfm12_rx_buffer(), len);
 					memcpy(bufx, rfm12_rx_buffer(), len);
@@ -353,26 +367,22 @@ int main ( void )
 
 					//UART_PUTS("Decrypted bytes: ");
 					//printbytearray(bufx, len);
-
-					assumed_crc = getBuf32(0);
-					actual_crc = crc32(bufx + 4, len - 4);
 					
-					//UART_PUTF("Received CRC32 would be %lx\r\n", assumed_crc);
-					//UART_PUTF("Re-calculated CRC32 is  %lx\r\n", actual_crc);
+					crcok = pkg_header_check_crc32(len);
 					
-					if (assumed_crc == actual_crc)
+					if (crcok)
 					{
 						//UART_PUTS("CRC correct, AES key found!\r\n");
 						UART_PUTF("Received (AES key %u): ", aes_key_nr);
-						printbytearray(bufx, len - 4);
+						printbytearray(bufx, len);
 						
-						decode_data(len - 4);
+						decode_data(len);
 						
 						break;
 					}
 				}
 				
-				if (assumed_crc != actual_crc)
+				if (!crcok)
 				{
 					UART_PUTS("Received garbage (CRC wrong after decryption).\r\n");
 				}
