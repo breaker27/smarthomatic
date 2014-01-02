@@ -31,6 +31,7 @@
 //#define UART_DEBUG
 
 #include "sht11.h"
+#include "lm75.h"
 
 #include "aes256.h"
 #include "util.h"
@@ -135,7 +136,11 @@ int main ( void )
 	{
 	  sht11_init();
 	}
-
+	else if (temperature_sensor_type == TEMPERATURESENSORTYPE_LM75)
+	{
+		lm75_init();
+	}
+	
 	rfm12_init();
 	//rfm12_set_wakeup_timer(0b11100110000);   // ~ 6s
 	//rfm12_set_wakeup_timer(0b11111000000);   // ~ 24576ms
@@ -169,6 +174,13 @@ int main ( void )
 		
 			temp += sht11_get_tmp();
 			hum += sht11_get_hum();
+		} 
+		else if (temperature_sensor_type == TEMPERATURESENSORTYPE_LM75)
+		{
+			lm75_wakeup();
+			_delay_ms(lm75_get_meas_time_ms());
+			temp += lm75_get_tmp();
+			lm75_shutdown();
 		}
 
 		avg++;
