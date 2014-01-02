@@ -32,6 +32,7 @@
 
 #include "sht11.h"
 #include "lm75.h"
+#include "bmp085.h"
 
 #include "aes256.h"
 #include "util.h"
@@ -52,6 +53,7 @@
 uint32_t packetcounter = 0;
 uint8_t temperature_sensor_type = 0;
 uint8_t brightness_sensor_type = 0;
+uint8_t barometric_sensor_type = 0;
 
 void printbytearray(uint8_t * b, uint8_t len)
 {
@@ -88,6 +90,7 @@ int main ( void )
 	uint16_t vlight = 0;
 	int16_t temp = 0;
 	uint16_t hum = 0;
+	uint32_t baro = 0;
 	uint8_t device_id = 0;
 	uint8_t avg = 0;
 
@@ -110,7 +113,10 @@ int main ( void )
 
 	brightness_sensor_type = eeprom_read_UIntValue8(EEPROM_BRIGHTNESSSENSORTYPE_BYTE,
 		EEPROM_BRIGHTNESSSENSORTYPE_BIT, EEPROM_BRIGHTNESSSENSORTYPE_LENGTH_BITS, 0, 255);
-
+	
+	barometric_sensor_type = eeprom_read_UIntValue8(EEPROM_BAROMETRICSENSORTYPE_BYTE,
+		EEPROM_BAROMETRICSENSORTYPE_BIT, EEPROM_BAROMETRICSENSORTYPE_LENGTH_BITS, 0, 255);
+	
 	// read device id
 	device_id = eeprom_read_UIntValue16(EEPROM_DEVICEID_BYTE, EEPROM_DEVICEID_BIT,
 		EEPROM_DEVICEID_LENGTH_BITS, EEPROM_DEVICEID_MINVAL, EEPROM_DEVICEID_MAXVAL);
@@ -125,6 +131,7 @@ int main ( void )
 	UART_PUTF ("Packet counter: %u\r\n", packetcounter);
 	UART_PUTF ("Temperature Sensor Type: %u\r\n", temperature_sensor_type);
 	UART_PUTF ("Brightness Sensor Type: %u\r\n", brightness_sensor_type);
+	UART_PUTF ("Barometric Sensor Type: %u\r\n", barometric_sensor_type);
 #endif
 	
 	// init AES key
@@ -139,6 +146,11 @@ int main ( void )
 	else if (temperature_sensor_type == TEMPERATURESENSORTYPE_LM75)
 	{
 		lm75_init();
+	}
+
+	if (barometric_sensor_type == BAROMETRICSENSORTYPE_BMP085)
+	{
+	  bmp085_init();
 	}
 	
 	rfm12_init();
@@ -183,6 +195,12 @@ int main ( void )
 			lm75_shutdown();
 		}
 
+		if (barometric_sensor_type == BAROMETRICSENSORTYPE_BMP085)
+		{
+			baro += bmp085_meas_pressure();
+			temp += bmp085_meas_temp();
+		} 
+
 		avg++;
 		
 		if (avg >= AVERAGE_COUNT)
@@ -191,6 +209,7 @@ int main ( void )
 			vlight /= AVERAGE_COUNT;
 			temp /= AVERAGE_COUNT;
 			hum /= AVERAGE_COUNT;
+			baro /= AVERAGE_COUNT;
 
 			// set device ID
 			bufx[0] = device_id;
@@ -211,9 +230,11 @@ int main ( void )
 			// update battery percentage
 			bufx[6] = bat_percentage(vbat);
 
-			// update temperature and humidity
+			// update temperature, humidity and barometric pressure
 			setBuf16(7, (uint16_t)temp);
 			setBuf16(9, hum);
+			//TODO: find a place in bufx for baro data
+			//setBuf32(11, baro);
 
 			// update brightness
 			if (brightness_sensor_type == BRIGHTNESSSENSORTYPE_PHOTOCELL)
@@ -228,6 +249,7 @@ int main ( void )
 
 #ifdef UART_DEBUG
 			UART_PUTF3("Battery: %u%%, Temperature: %d deg.C, Humidity: %d%%\r\n", bat_percentage(vbat), temp / 100.0, hum / 100.0);
+			UART_PUTF("Barometric: %ld pascal\r\n", baro);
 #endif
 
 			rfm12_sendbuf();
@@ -238,7 +260,7 @@ int main ( void )
 			_delay_ms(200);
 			switch_led(0);
 
-			vbat = temp = hum = vlight = avg = 0;
+			vbat = temp = hum = baro = vlight = avg = 0;
 		}
 		
 		// go to sleep. Wakeup by RFM12 wakeup-interrupt
