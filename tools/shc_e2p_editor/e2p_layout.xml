@@ -106,6 +106,10 @@
 				<Value>1</Value>
 				<Name>SHT15</Name>
 			</Element>
+			<Element>
+				<Value>2</Value>
+				<Name>LM75</Name>
+			</Element>
 		</EnumValue>
 		<EnumValue>
 			<ID>BrightnessSensorType</ID>
