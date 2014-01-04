@@ -224,6 +224,7 @@ public class SourceCodeGeneratorPacket
 		
 		outHeader.println("// Initialize the header offset variable, used to correctly interpret");
 		outHeader.println("// contents of the header extension and the message data after reception.");
+		outHeader.println("static void pkg_header_adjust_offset(void) __attribute__ ((unused));");
 		outHeader.println("static void pkg_header_adjust_offset(void)");
 		outHeader.println("{");
 		outHeader.println("  __MESSAGETYPE = pkg_header_get_messagetype();");
@@ -524,6 +525,7 @@ public class SourceCodeGeneratorPacket
 					
 					out.println("  __HEADEROFFSETBITS = " + hdrBits + ";");
 					out.println("  __PACKETSIZEBYTES = " + packetBytes + ";");
+					out.println("  __MESSAGETYPE = " + messageTypeID + ";");
 					out.println("}");
 					out.println("");
 				
@@ -804,7 +806,7 @@ public class SourceCodeGeneratorPacket
 				// TODO: Return minimal type uint8_t, ...
 				sb.append("static inline bool " + functionPrefix + "_get_" + ID.toLowerCase() + "(void)" + newline);
 				sb.append("{" + newline);
-				sb.append("  return array_read_IntValue32(" + offsetStr + ", 1, 0, 1, bufx) == 1;" + newline);
+				sb.append("  return array_read_UIntValue8(" + offsetStr + ", 1, 0, 1, bufx) == 1;" + newline);
 				sb.append("}" + newline);
 				sb.append(newline);
 				
