@@ -60,6 +60,7 @@ static inline void pkg_header_init_powerswitch_switchstate_get(void)
   pkg_headerext_get_set_messageid(1);
   __HEADEROFFSETBITS = 95;
   __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 0;
 }
 
 // Function to initialize header for the MessageType "Set".
@@ -71,6 +72,7 @@ static inline void pkg_header_init_powerswitch_switchstate_set(void)
   pkg_headerext_set_set_messageid(1);
   __HEADEROFFSETBITS = 95;
   __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 1;
 }
 
 // Function to initialize header for the MessageType "SetGet".
@@ -82,6 +84,7 @@ static inline void pkg_header_init_powerswitch_switchstate_setget(void)
   pkg_headerext_setget_set_messageid(1);
   __HEADEROFFSETBITS = 95;
   __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 2;
 }
 
 // Function to initialize header for the MessageType "Status".
@@ -93,6 +96,7 @@ static inline void pkg_header_init_powerswitch_switchstate_status(void)
   pkg_headerext_status_set_messageid(1);
   __HEADEROFFSETBITS = 83;
   __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 8;
 }
 
 // Function to initialize header for the MessageType "Ack".
@@ -102,6 +106,7 @@ static inline void pkg_header_init_powerswitch_switchstate_ack(void)
   pkg_header_set_messagetype(9);
   __HEADEROFFSETBITS = 109;
   __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 9;
 }
 
 // Function to initialize header for the MessageType "AckStatus".
@@ -113,6 +118,7 @@ static inline void pkg_header_init_powerswitch_switchstate_ackstatus(void)
   pkg_headerext_ackstatus_set_messageid(1);
   __HEADEROFFSETBITS = 120;
   __PACKETSIZEBYTES = 32;
+  __MESSAGETYPE = 10;
 }
 
 // Set On (BoolValue)
@@ -126,7 +132,7 @@ static inline void msg_powerswitch_switchstate_set_on(bool val)
 // Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 1
 static inline bool msg_powerswitch_switchstate_get_on(void)
 {
-  return array_read_IntValue32(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 1, 0, 1, bufx) == 1;
+  return array_read_UIntValue8(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 1, 0, 1, bufx) == 1;
 }
 
 // Set TimeoutSec (UIntValue)

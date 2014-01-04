@@ -132,7 +132,7 @@ void decode_data(uint8_t len)
 	
 		for (i = start; i < start + count; i++)
 		{
-			UART_PUTF("%02x", (((bufx[i] << 8) + bufx[i + 1]) << shift) >> 8);
+			UART_PUTF("%02x", array_read_UIntValue8(i, shift, 8, 0, 255, bufx));
 		}
 		
 		UART_PUTS(";");
@@ -198,10 +198,11 @@ void decode_data(uint8_t len)
 	UART_PUTS("\r\n");
 }
 
-void send_packet(uint8_t aes_key_nr, uint8_t data_len)
+void send_packet(uint8_t aes_key_nr, uint8_t message_type, uint8_t packet_len)
 {
-	// set device ID (base station has ID 0 by definition)
-	bufx[0] = deviceID;
+	// init packet buffer
+	//memset(&bufx[0], 0, sizeof(bufx));
+	pkg_header_set_senderid(deviceID);
 
 	// update packet counter
 	packetcounter++;
@@ -211,12 +212,14 @@ void send_packet(uint8_t aes_key_nr, uint8_t data_len)
 		eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
 	}
 
-	setBuf32(1, packetcounter);
+	pkg_header_set_packetcounter(packetcounter);
+
+	// set message type
+	pkg_header_set_messagetype(message_type);
 
 	// set CRC32
-	uint32_t crc = crc32(bufx, data_len + 6);
-	setBuf32(data_len + 6, crc);
-
+	pkg_header_set_crc32(crc32(bufx + 4, packet_len - 4));
+	
 	// load AES key (0 is first AES key)
 	if (aes_key_nr >= aes_key_count)
 	{
@@ -226,15 +229,13 @@ void send_packet(uint8_t aes_key_nr, uint8_t data_len)
 	eeprom_read_block (aes_key, (uint8_t *)(EEPROM_AESKEYS_BYTE + aes_key_nr * 32), 32);
 	
 	// show info
-	decode_data(data_len + 6);
+	decode_data(packet_len);
 	UART_PUTF("       AES key: %u\r\n", aes_key_nr);
-	
-	UART_PUTF("         CRC32: %02lx\r\n", crc);
 	UART_PUTS("   Unencrypted: ");
-	printbytearray(bufx, data_len + 10);
+	printbytearray(bufx, packet_len);
 
 	// encrypt and send
-	uint8_t aes_byte_count = rfm12_sendbuf(data_len + 10);
+	uint8_t aes_byte_count = rfm12_sendbuf(packet_len);
 	
 	UART_PUTS("Send encrypted: ");
 	printbytearray(bufx, aes_byte_count);
@@ -404,21 +405,33 @@ int main ( void )
 			
 			uint8_t data_len_raw = strlen(sendbuf) / 2 - 2;
 			
-			// round data length to 6 + 16 bytes (including padding bytes)
-			uint8_t data_len = (((data_len_raw + 9) / 16) + 1) * 16 - 10;
-	
-			// set aes key nr
+			// round data length to 7 + x * 16 bytes (including padding bytes)
+			uint8_t data_len = ((data_len_raw + 9 - 1) / 16 + 1) * 16 - 9;
+			
+			//UART_PUTF("Data len raw = %u\r\n", data_len_raw);
+			//UART_PUTF("Data len = %u\r\n", data_len);
+			
+			// set AES key nr
 			aes_key_nr = hex_to_uint8((uint8_t *)sendbuf, 0);
 			
 			//UART_PUTF("AES KEY = %u\r\n", aes_key_nr);
 
-			// set command id
-			uint8_t command_id = hex_to_uint8((uint8_t *)sendbuf, 2);
+			// init packet buffer
+			memset(&bufx[0], 0, sizeof(bufx));
+			pkg_header_set_senderid(deviceID);
+
+			// set message type
+			uint8_t message_type = hex_to_uint8((uint8_t *)sendbuf, 2);
+			pkg_header_set_messagetype(message_type);
+			
+			//UART_PUTF("MessageType = %u\r\n", message_type);
 
 			// set data
 			for (i = 0; i < data_len_raw; i++)
 			{
 				data[i] = hex_to_uint8((uint8_t *)sendbuf, 4 + 2 * i);
+				
+				//UART_PUTF2("Data byte %u = %u\r\n", i, data[i]);
 			}
 			
 			// set padding bytes
@@ -427,20 +440,17 @@ int main ( void )
 				data[i] = 0;
 			}
 
-			// send status packet immediately (command IDs are less than 128)
-			if (command_id < 128)
+			// send packets other than known request types immediately
+			if (true) // ((messagetype != MESSAGETYPE_GET) && (messagetype != MESSAGETYPE_SET) && (messagetype != MESSAGETYPE_SETGET))
 			{
-				// set command id
-				bufx[5] = command_id;
-				
 				// set data
-				memcpy(bufx + 6, data, data_len);
+				memcpy(bufx + 9, data, data_len); // header size = 9 bytes
 				
-				send_packet(aes_key_nr, data_len);
+				send_packet(aes_key_nr, message_type, data_len + 9);
 			}
 			else // enqueue request (don't send immediately)
 			{
-				if (queue_request(data[0], command_id, aes_key_nr, data + 1))
+				/*if (queue_request(data[0], command_id, aes_key_nr, data + 1))
 				{
 					UART_PUTS("Adding request to queue.\r\n");
 				}
@@ -450,6 +460,7 @@ int main ( void )
 				}
 
 				print_request_queue();
+				*/
 			}
 		
 			// clear send text buffer
@@ -470,15 +481,15 @@ int main ( void )
 			if (set_repeat_request(packetcounter + 1)) // if request to repeat was found in queue
 			{
 				UART_PUTS("Repeating request.\r\n");					
-				send_packet(0, 6);
+				send_packet(0, 1, 16);
 				print_request_queue();
 			}
 			
 			// Auto-send something for debugging purposes...
 			if (loop2 == 50)
 			{
-				//strcpy(sendbuf, "008c0001003d");
-				//send_data_avail = true;
+				strcpy(sendbuf, "000102828300");
+				send_data_avail = true;
 				
 				loop2 = 0;
 			}

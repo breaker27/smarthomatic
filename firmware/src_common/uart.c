@@ -25,9 +25,6 @@
 #include "uart.h"
 #include "util.h"
 
-bool enable_write_eeprom = false;
-uint8_t bytes_to_read = 0;
-uint8_t bytes_pos = 0;
 
 // This buffer is used for sending strings over UART using UART_PUT... functions.
 char uartbuf[65]; 
@@ -46,7 +43,11 @@ char uartbuf[65];
 #endif
 
 // This buffer is used to store the bytes that will be sent by the RFM module.
-char sendbuf[50];
+#ifdef UART_RX
+bool enable_write_eeprom = false;
+uint8_t bytes_to_read = 0;
+uint8_t bytes_pos = 0;
+char sendbuf[52];
 bool send_data_avail = false;
 
 // Take two characters and return the hex value they represent.
@@ -86,7 +87,11 @@ uint8_t hex_to_byte(char c)
 	}		
 }
 
-#ifdef UART_RX
+uint8_t hex_to_uint8(uint8_t * buf, uint8_t offset)
+{
+	return hex_to_byte(buf[offset]) * 16 + hex_to_byte(buf[offset + 1]);
+}
+
 void process_cmd(void)
 {
 	uart_putstr("Processing command: ");
@@ -109,7 +114,6 @@ void process_cmd(void)
 	}
 	else if ((cmdbuf[0] == 'r') && (strlen(cmdbuf) == 3))
 	{
-		
 		uint16_t adr = hex_to_byte((uint8_t)cmdbuf[1]) * 16 + hex_to_byte((uint8_t)cmdbuf[2]);
 		uint8_t val = eeprom_read_byte((uint8_t *)adr);
 		UART_PUTF2("EEPROM value at position 0x%x is 0x%x.\r\n", adr, val);
@@ -187,8 +191,8 @@ void process_rxbuf(void)
 			UART_PUTS("wAAXX.....write EEPROM at hex address AA to hex value XX\r\n");
 			UART_PUTS("x.........enable writing to EEPROM\r\n");
 			UART_PUTS("z.........disable writing to EEPROM\r\n");
-			UART_PUTS("sKKCCXX...Use AES key KK to send a packet with command ID CC and data XX (0..22 bytes).\r\n");
-			UART_PUTS("          End data with ENTER. Packet number and CRC are automatically added.\r\n");
+			UART_PUTS("sKKTTXX...Use AES key KK to send a packet with MessageType TT and header ext. + data XX (0..23 bytes).\r\n");
+			UART_PUTS("          End data with ENTER. SenderID, PacketCounter and CRC are automatically added.\r\n");
 		}
 		else if (input == 'x')
 		{
@@ -216,9 +220,9 @@ void process_rxbuf(void)
 		}
 		else if (input == 's')
 		{
-			UART_PUTS("*** Enter AES key nr, command ID and data in hex format to send, finish with ENTER. ***\r\n");
+			UART_PUTS("*** Enter AES key nr, MessageType and header extension + data in hex format to send, finish with ENTER. ***\r\n");
 			cmdbuf[0] = 's';
-			bytes_to_read = 49; // 's' + 2 characters for key nr + 2 characters for command ID + 2*22 characters for data
+			bytes_to_read = 51; // 's' + 2 characters for key nr + 2 characters for MessageType + 2*23 characters for data
 			bytes_pos = 1;
 		}
 		else
@@ -281,9 +285,4 @@ void uart_putstr_P(PGM_P str)
 		str++;
 	}
 #endif // UART_DEBUG
-}
-
-uint16_t hex_to_uint8(uint8_t * buf, uint8_t offset)
-{
-	return hex_to_byte(buf[offset]) * 16 + hex_to_byte(buf[offset + 1]);
 }

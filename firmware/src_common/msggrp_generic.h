@@ -61,6 +61,7 @@ static inline void pkg_header_init_generic_batterystatus_get(void)
   pkg_headerext_get_set_messageid(5);
   __HEADEROFFSETBITS = 95;
   __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 0;
 }
 
 // Function to initialize header for the MessageType "Status".
@@ -72,6 +73,7 @@ static inline void pkg_header_init_generic_batterystatus_status(void)
   pkg_headerext_status_set_messageid(5);
   __HEADEROFFSETBITS = 83;
   __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 8;
 }
 
 // Function to initialize header for the MessageType "AckStatus".
@@ -83,6 +85,7 @@ static inline void pkg_header_init_generic_batterystatus_ackstatus(void)
   pkg_headerext_ackstatus_set_messageid(5);
   __HEADEROFFSETBITS = 120;
   __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 10;
 }
 
 // Set Percentage (UIntValue)

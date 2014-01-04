@@ -43,6 +43,7 @@
 
 // Initialize the header offset variable, used to correctly interpret
 // contents of the header extension and the message data after reception.
+static void pkg_header_adjust_offset(void) __attribute__ ((unused));
 static void pkg_header_adjust_offset(void)
 {
   __MESSAGETYPE = pkg_header_get_messagetype();

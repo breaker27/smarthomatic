@@ -52,15 +52,18 @@
 #endif
 
 extern char uartbuf[];
-extern char sendbuf[];
-extern bool send_data_avail;
-extern uint8_t uart_timeout;
+
+#ifdef UART_RX
+	extern char sendbuf[];
+	extern bool send_data_avail;
+	extern uint8_t uart_timeout;
+#endif
 
 void uart_init(void);
 void uart_putstr(char * str);
 void uart_putstr_P(PGM_P str);
 
-uint16_t hex_to_uint8(uint8_t * buf, uint8_t offset);
+uint8_t hex_to_uint8(uint8_t * buf, uint8_t offset);
 
 #ifdef UART_RX
 	void process_rxbuf(void);

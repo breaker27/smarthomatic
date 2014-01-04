@@ -65,7 +65,7 @@ static inline void pkg_headerext_ackstatus_set_error(bool val)
 // Offset: 13, 4, length bits 1
 static inline bool pkg_headerext_ackstatus_get_error(void)
 {
-  return array_read_IntValue32(13, 4, 1, 0, 1, bufx) == 1;
+  return array_read_UIntValue8(13, 4, 1, 0, 1, bufx) == 1;
 }
 
 // Set MessageGroupID (UIntValue)
