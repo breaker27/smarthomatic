@@ -154,15 +154,19 @@ void switchRelais(int8_t num, uint8_t on)
 // React accordingly on the MessageType, MessageGroup and MessageID.
 void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint32_t messageid)
 {
+	UART_PUTF("MessageGroupID:%u;", messagegroupid);
+	
 	if (messagegroupid != MESSAGEGROUP_POWERSWITCH)
 	{
-		UART_PUTF("ERR: Unsupported MessageGroupID %u.\r\n", messagegroupid);
+		UART_PUTS("\r\nERR: Unsupported MessageGroupID.\r\n");
 		return;
 	}
 	
+	UART_PUTF("MessageID:%u;", messageid);
+
 	if (messageid != MESSAGEID_POWERSWITCH_SWITCHSTATE)
 	{
-		UART_PUTF("ERR: Unsupported MessageID %u.\r\n", messageid);
+		UART_PUTS("\r\nERR: Unsupported MessageID.\r\n");
 		return;
 	}
 
@@ -173,8 +177,8 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		bool req_on = msg_powerswitch_switchstate_get_on();
 		uint16_t req_timeout = msg_powerswitch_switchstate_get_timeoutsec();
 
-		UART_PUTF("Req' State: %u\r\n", req_on);
-		UART_PUTF("Req' Timeout: %u\r\n", req_timeout);
+		UART_PUTF("On:%u;", req_on);
+		UART_PUTF("TimeoutSec:%u;\r\n", req_timeout);
 		
 		// store the one bit in a bitmask, which can be used later for support of more than one switch
 		uint8_t switch_bitmask = req_on ? 1 : 0;
@@ -182,7 +186,7 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		// react on changed state (version for more than one switch...)
 		for (i = 0; i < SWITCH_COUNT; i++)
 		{
-			if (switch_bitmask & (1 << i)) // this switch is to be switched
+			if ((switch_bitmask & (1 << i)) != switch_state[i]) // this switch is to be switched
 			{
 				UART_PUTF4("Switching relais %u from %u to %u with timeout %us.\r\n", i + 1, switch_state[i], req_on, req_timeout);
 
@@ -249,23 +253,23 @@ void process_packet(uint8_t len)
 	printbytearray(bufx, len);
 	
 	// check SenderID
-	uint32_t sender = pkg_header_get_senderid();
-	UART_PUTF("Sender: %u\r\n", sender);
+	uint32_t senderID = pkg_header_get_senderid();
+	UART_PUTF("SenderID:%u;", senderID);
 	
-	if (sender != 0)
+	if (senderID != 0)
 	{
-		UART_PUTF("ERR: Illegal Sender ID: %u.\r\n", sender);
+		UART_PUTS("\r\nERR: Illegal SenderID.\r\n");
 		return;
 	}
 
 	// check PacketCounter
 	// TODO: Reject if packet counter lower than remembered!!
 	uint32_t packcnt = pkg_header_get_packetcounter();
-	UART_PUTF("Packet Counter: %lu\r\n", packcnt);
+	UART_PUTF("PacketCounter:%lu;", packcnt);
 
 	if (0) // packcnt <= station_packetcounter ??
 	{
-		UART_PUTF2("ERR: Received packet counter %lu < %lu.\r\n", packcnt, station_packetcounter);
+		UART_PUTF("\r\nERR: Received PacketCounter < %lu.\r\n", station_packetcounter);
 		return;
 	}
 	
@@ -277,21 +281,22 @@ void process_packet(uint8_t len)
 	
 	// check MessageType
 	MessageTypeEnum messagetype = pkg_header_get_messagetype();
+	UART_PUTF("MessageType:%u;", messagetype);
 	
 	if ((messagetype != MESSAGETYPE_GET) && (messagetype != MESSAGETYPE_SET) && (messagetype != MESSAGETYPE_SETGET))
 	{
-		UART_PUTF("ERR: Unsupported MessageType %u.\r\n", messagetype);
+		UART_PUTF("\r\nERR: Unsupported MessageType %u.\r\n", messagetype);
 		return;
 	}
 	
 	// check device id
 	uint8_t rcv_id = pkg_headerext_common_get_receiverid();
 
-	UART_PUTF("      Receiver ID: %u\r\n", rcv_id);
+	UART_PUTF("ReceiverID:%u;", rcv_id);
 	
 	if (rcv_id != device_id)
 	{
-		UART_PUTF("WRN: DeviceID %u does not match.\r\n", rcv_id);
+		UART_PUTF("\r\nWRN: DeviceID %u does not match.\r\n", rcv_id);
 		return;
 	}
 	
@@ -307,13 +312,15 @@ int main ( void )
 	uint8_t loop = 0;
 	uint8_t i;
 
+	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
+	_delay_ms(1000);
+
+	util_init();
+
 	for (i = 0; i < SWITCH_COUNT; i++)
 	{
 		sbi(DDRC, RELAIS_PIN_START + i);
 	}
-
-	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
-	_delay_ms(1000);
 
 	// read packetcounter, increase by cycle and write back
 	packetcounter = eeprom_read_UIntValue32(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT,
@@ -343,7 +350,7 @@ int main ( void )
 	osccal_init();
 
 	uart_init();
-	util_init();
+	
 	UART_PUTS ("\r\n");
 	UART_PUTS ("smarthomatic Power Switch V1.0 (c) 2013 Uwe Freese, www.smarthomatic.org\r\n");
 	UART_PUTF ("Device ID: %u\r\n", device_id);
@@ -470,7 +477,3 @@ int main ( void )
 	// never called
 	// aes256_done(&aes_ctx);
 }
-
-//Image size:
-//   text	   data	    bss	    dec	    hex	filename
-//  14162	    305	    514	  14981	   3a85	build/shc_powerswitch.elf
