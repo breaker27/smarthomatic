@@ -254,7 +254,7 @@ void process_packet(uint8_t len)
 	
 	if (sender != 0)
 	{
-		UART_PUTF("ERR: Illegal Sender ID: %u).\r\n", sender);
+		UART_PUTF("ERR: Illegal Sender ID: %u.\r\n", sender);
 		return;
 	}
 
@@ -339,6 +339,8 @@ int main ( void )
 	// read device id
 	device_id = eeprom_read_UIntValue16(EEPROM_DEVICEID_BYTE, EEPROM_DEVICEID_BIT,
 		EEPROM_DEVICEID_LENGTH_BITS, EEPROM_DEVICEID_MINVAL, EEPROM_DEVICEID_MAXVAL);
+
+	osccal_init();
 
 	uart_init();
 	util_init();
