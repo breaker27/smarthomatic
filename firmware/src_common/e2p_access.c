@@ -25,9 +25,53 @@ void signal_error_state(void)
 
 #endif
 
+void limitUIntValue32(uint32_t *val, uint32_t minval, uint32_t maxval)
+{
+	if (*val < minval)
+	{
+		*val = minval;
+	}
+	
+	if (*val > maxval)
+	{
+		*val = maxval;
+	}
+}
+
+void limitIntValue32(int32_t *val, int32_t minval, int32_t maxval)
+{
+	if (*val < minval)
+	{
+		*val = minval;
+	}
+	
+	if (*val > maxval)
+	{
+		*val = maxval;
+	}
+}
+
+uint32_t _eeprom_read_UIntValue32(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t minval, uint32_t maxval, uint16_t max_bits_for_type, uint8_t * array)
+{
+	uint32_t x = __eeprom_read_UIntValue32(byte, bit, length_bits, max_bits_for_type, array);
+	limitUIntValue32(&x, minval, maxval);
+	return x;
+}
+
+int32_t _eeprom_read_IntValue32(uint16_t byte, uint8_t bit, uint16_t length_bits, int32_t minval, int32_t maxval, uint8_t * array)
+{
+	uint32_t x = __eeprom_read_UIntValue32(byte, bit, length_bits, 32, array);
+
+	// move the sign bit of our variable-sized int type to bit 31
+	int32_t y = (int32_t)((((x >> (length_bits - 1)) & 1) << 31) | (x & (((uint32_t)1 << (length_bits - 1)) - 1)));
+	
+	limitIntValue32(&y, minval, maxval);
+	return x;
+}
+
 // Read UIntValue from EEPROM and limit it to the given boundaries.
 // Go into error mode if bit length is not as assumed.
-uint32_t _eeprom_read_UIntValue32(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t minval, uint32_t maxval, uint16_t max_bits_for_type, uint8_t * array)
+uint32_t __eeprom_read_UIntValue32(uint16_t byte, uint8_t bit, uint16_t length_bits, uint16_t max_bits_for_type, uint8_t * array)
 {
 	if (length_bits > max_bits_for_type)
 	{
@@ -60,16 +104,6 @@ uint32_t _eeprom_read_UIntValue32(uint16_t byte, uint8_t bit, uint16_t length_bi
 	if (length_bits < 32)
 	{
 		val = val & (((uint32_t)1 << length_bits) - 1);
-	}
-
-	if (val < minval)
-	{
-		val = minval;
-	}
-	
-	if (val > maxval)
-	{
-		val = maxval;
 	}
 
 	return val;
@@ -122,12 +156,16 @@ void _eeprom_write_UIntValue(uint16_t byte, uint8_t bit, uint16_t length_bits, u
 {
 	// move bits to the left border
 	val = val << (32 - length_bits);
-		
+
+	//UART_PUTF("Moved left: val %lu\r\n", val);	
+	
 	// 1st byte
 	uint8_t src_start = 0;
 	uint8_t dst_start = bit;
 	uint8_t len = MIN(length_bits, 8 - bit);
 	uint8_t val8 = get_bits(val, src_start, len);
+	
+	//UART_PUTF4("Write bits to byte %u, dst_start %u, len %u, val8 %u\r\n", byte, dst_start, len, val8);	
 	
 	_eeprom_write_bits(byte, dst_start, len, val8, array);
 	
@@ -140,7 +178,7 @@ void _eeprom_write_UIntValue(uint16_t byte, uint8_t bit, uint16_t length_bits, u
 		val8 = get_bits(val, src_start, len);
 		byte++;
 
-		//printf(" Byte nr. %d, src_start %d, len %d, val8 %d\n", byte, src_start, len, val8);
+		//UART_PUTF4(" Byte nr. %d, src_start %d, len %d, val8 %d\r\n", byte, src_start, len, val8);
 
 		_eeprom_write_bits(byte, dst_start, len, val8, array);
 		
