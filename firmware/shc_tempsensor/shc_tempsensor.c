@@ -175,7 +175,7 @@ int main ( void )
 			vbat /= AVERAGE_COUNT;
 			vlight /= AVERAGE_COUNT;
 			temp /= AVERAGE_COUNT;
-			hum /= AVERAGE_COUNT;
+			hum /= AVERAGE_COUNT * 10;
 
 			// update packet counter
 			packetcounter++;
@@ -186,7 +186,6 @@ int main ( void )
 			}
 
 			// Set packet content
-			temp = -5000;
 			pkg_header_init_tempsensor_temphumbristatus_status();
 			pkg_header_set_senderid(device_id);
 			pkg_header_set_packetcounter(packetcounter);
@@ -205,8 +204,7 @@ int main ( void )
 			UART_PUTF("CRC32 is %lx (added as first 4 bytes)\r\n", getBuf32(0));
 			UART_PUTF("Battery: %u%%, Temperature: ", bat_p_val);
 			printSigned(temp);
-			UART_PUTS(" deg.C, Humidity: ");
-			printSigned(hum);
+			UART_PUTF2(" deg.C, Humidity: %u.%u", hum / 10, hum % 10);
 			UART_PUTS("%\r\n");
 
 			rfm12_sendbuf();
