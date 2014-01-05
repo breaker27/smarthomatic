@@ -289,7 +289,7 @@ int main ( void )
 	UART_PUTF ("Device ID: %u\r\n", deviceID);
 	UART_PUTF ("Packet counter: %lu\r\n", packetcounter);
 	UART_PUTF ("AES key count: %u\r\n", aes_key_count);
-	UART_PUTS ("Waiting for incoming data. Press h for help.\r\n");
+	UART_PUTS ("Waiting for incoming data. Press h for help.\r\n\r\n");
 
 	rfm12_init();
 	sei();

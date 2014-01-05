@@ -285,7 +285,7 @@ void process_packet(uint8_t len)
 	
 	if ((messagetype != MESSAGETYPE_GET) && (messagetype != MESSAGETYPE_SET) && (messagetype != MESSAGETYPE_SETGET))
 	{
-		UART_PUTF("\r\nERR: Unsupported MessageType %u.\r\n", messagetype);
+		UART_PUTS("\r\nERR: Unsupported MessageType.\r\n");
 		return;
 	}
 	
@@ -296,7 +296,7 @@ void process_packet(uint8_t len)
 	
 	if (rcv_id != device_id)
 	{
-		UART_PUTF("\r\nWRN: DeviceID %u does not match.\r\n", rcv_id);
+		UART_PUTS("\r\nWRN: DeviceID does not match.\r\n");
 		return;
 	}
 	
@@ -353,10 +353,10 @@ int main ( void )
 	
 	UART_PUTS ("\r\n");
 	UART_PUTS ("smarthomatic Power Switch V1.0 (c) 2013 Uwe Freese, www.smarthomatic.org\r\n");
-	UART_PUTF ("Device ID: %u\r\n", device_id);
-	UART_PUTF ("Packet counter: %lu\r\n", packetcounter);
+	UART_PUTF ("DeviceID: %u\r\n", device_id);
+	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);
 	print_switch_state();
-	UART_PUTF ("Last received station packet counter: %u\r\n\r\n", station_packetcounter);
+	UART_PUTF ("Last received base station PacketCounter: %u\r\n\r\n", station_packetcounter);
 	
 	// init AES key
 	eeprom_read_block(aes_key, (uint8_t *)EEPROM_AESKEY_BYTE, 32);
@@ -441,7 +441,7 @@ int main ( void )
 					{
 						switch_state[i] = switch_state[i] ? 0 : 1;
 						
-						UART_PUTF2("Timeout exceeded, switch relais %u to %u.\r\n", i + 1, switch_state[i]);
+						UART_PUTF2("Timeout! Switch %u to %u.\r\n", i + 1, switch_state[i]);
 						
 						// switch PIN for relais
 						switchRelais(i, switch_state[i]);
