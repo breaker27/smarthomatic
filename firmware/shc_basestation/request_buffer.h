@@ -37,10 +37,10 @@
 #define RS_UNUSED 255
 
 typedef struct {
-	uint8_t command_id; // set to RS_UNUSED to show that this buffer is unused
+	uint8_t message_type; // set to RS_UNUSED to show that this buffer is unused
 	uint8_t aes_key;
 	uint32_t packet_counter;
-	uint8_t data[5]; 
+	uint8_t data[23]; 
 
 	uint8_t timeout;
 	uint8_t retry_count;
@@ -52,12 +52,12 @@ extern request_t request_buffer[REQUEST_BUFFER_SIZE];
 // The request queue is a lookup table which shows requests are queued for which receivers.
 // This is to support many requests for few receivers also as few requests for many receivers
 // with a limited size of the request_buffer.
-extern uint8_t request_queue[REQUEST_QUEUE_RECEIVERS][REQUEST_QUEUE_PACKETS + 1];
+extern uint16_t request_queue[REQUEST_QUEUE_RECEIVERS][REQUEST_QUEUE_PACKETS + 1];
 
 void request_queue_init(void);
 void print_request_queue(void);
-bool queue_request(uint8_t receiver_id, uint8_t command_id, uint8_t aes_key, uint8_t * data);
+bool queue_request(uint16_t receiver_id, uint8_t message_type, uint8_t aes_key, uint8_t * data);
 bool set_repeat_request(uint32_t packet_counter);
-void remove_request(uint8_t sender_id, uint8_t request_sender_id, uint32_t packet_counter);
+void remove_request(uint16_t sender_id, uint16_t request_sender_id, uint32_t packet_counter);
 
 #endif

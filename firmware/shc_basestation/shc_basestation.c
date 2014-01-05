@@ -98,11 +98,14 @@ void decode_data(uint8_t len)
 		UART_PUTF("ReceiverID=%u;", receiverid);
 	}
 	
+	uint16_t acksenderid = 65000;
+	uint32_t ackpacketcounter = 0;
+
 	// show AckSenderID, AckPacketCounter and Error for "Ack" and "AckStatus"
 	if ((messagetype == MESSAGETYPE_ACK) || (messagetype == MESSAGETYPE_ACKSTATUS))
 	{
-		uint16_t acksenderid = pkg_headerext_common_get_acksenderid();
-		uint32_t ackpacketcounter = pkg_headerext_common_get_ackpacketcounter();
+		acksenderid = pkg_headerext_common_get_acksenderid();
+		ackpacketcounter = pkg_headerext_common_get_ackpacketcounter();
 		uint8_t error = pkg_headerext_common_get_error();
 		UART_PUTF("AckSenderID=%u;", acksenderid);
 		UART_PUTF("AckPacketCounter=%lu;", ackpacketcounter);
@@ -118,7 +121,7 @@ void decode_data(uint8_t len)
 		UART_PUTF("MessageID=%u;", messageid);
 	}
 	
-	// show raw message data for all MessageTypes except "Get" and "Ack"
+	// show raw message data for all MessageTypes with data (= all except "Get" and "Ack")
 	if ((messagetype != MESSAGETYPE_GET) && (messagetype != MESSAGETYPE_ACK))
 	{
 		uint8_t i;
@@ -196,6 +199,15 @@ void decode_data(uint8_t len)
 	}
 
 	UART_PUTS("\r\n");
+	
+	// Detect and process Acknowledges to base station, whose requests have to be removed from the request queue
+	if ((messagetype == MESSAGETYPE_ACK) || (messagetype == MESSAGETYPE_ACKSTATUS))
+	{
+		if (acksenderid == deviceID) // request sent from base station
+		{
+			remove_request(senderid, deviceID, ackpacketcounter);
+		}
+	}
 }
 
 void send_packet(uint8_t aes_key_nr, uint8_t message_type, uint8_t packet_len)
@@ -249,8 +261,6 @@ int main ( void )
 	uint8_t loop = 0;
 	uint8_t loop2 = 0;
 	
-	uint8_t data[22];
-
 	sbi(LED_DDR, LED_PIN);
 
 	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
@@ -403,56 +413,95 @@ int main ( void )
 		{
 			uint8_t i;
 			
-			uint8_t data_len_raw = strlen(sendbuf) / 2 - 2;
-			
-			// round data length to 7 + x * 16 bytes (including padding bytes)
-			uint8_t data_len = ((data_len_raw + 9 - 1) / 16 + 1) * 16 - 9;
-			
-			//UART_PUTF("Data len raw = %u\r\n", data_len_raw);
-			//UART_PUTF("Data len = %u\r\n", data_len);
-			
 			// set AES key nr
 			aes_key_nr = hex_to_uint8((uint8_t *)sendbuf, 0);
-			
 			//UART_PUTF("AES KEY = %u\r\n", aes_key_nr);
 
 			// init packet buffer
 			memset(&bufx[0], 0, sizeof(bufx));
-			pkg_header_set_senderid(deviceID);
 
 			// set message type
 			uint8_t message_type = hex_to_uint8((uint8_t *)sendbuf, 2);
 			pkg_header_set_messagetype(message_type);
-			
+			pkg_header_adjust_offset();
 			//UART_PUTF("MessageType = %u\r\n", message_type);
 
-			// set data
-			for (i = 0; i < data_len_raw; i++)
-			{
-				data[i] = hex_to_uint8((uint8_t *)sendbuf, 4 + 2 * i);
-				
-				//UART_PUTF2("Data byte %u = %u\r\n", i, data[i]);
-			}
+			uint8_t string_offset_data = 0;
 			
-			// set padding bytes
-			for (i = data_len_raw; i < data_len; i++)
+			/*
+			UART_PUTS("sKK00RRRRGGMM.............Get\r\n");
+			UART_PUTS("sKK01RRRRGGMMDD...........Set\r\n");
+			UART_PUTS("sKK02RRRRGGMMDD...........SetGet\r\n");
+			UART_PUTS("sKK08GGMMDD...............Status\r\n");
+			UART_PUTS("sKK09SSSSPPPPPPEE.........Ack\r\n");
+			UART_PUTS("sKK0ASSSSPPPPPPEEGGMMDD...AckStatus\r\n");
+			*/
+			
+			// set header extension fields
+			switch (message_type)
 			{
-				data[i] = 0;
+				case MESSAGETYPE_GET:
+				case MESSAGETYPE_SET:
+				case MESSAGETYPE_SETGET:
+					pkg_headerext_common_set_receiverid(hex_to_uint16((uint8_t *)sendbuf, 4));
+					pkg_headerext_common_set_messagegroupid(hex_to_uint8((uint8_t *)sendbuf, 8));
+					pkg_headerext_common_set_messageid(hex_to_uint8((uint8_t *)sendbuf, 10));
+					string_offset_data = 12;
+					break;
+				case MESSAGETYPE_STATUS:
+					pkg_headerext_common_set_messagegroupid(hex_to_uint8((uint8_t *)sendbuf, 4));
+					pkg_headerext_common_set_messageid(hex_to_uint8((uint8_t *)sendbuf, 6));
+					string_offset_data = 8;
+					break;
+				case MESSAGETYPE_ACK:
+					pkg_headerext_common_set_acksenderid(hex_to_uint16((uint8_t *)sendbuf, 4));
+					pkg_headerext_common_set_ackpacketcounter(hex_to_uint24((uint8_t *)sendbuf, 8));
+					pkg_headerext_common_set_error(hex_to_uint8((uint8_t *)sendbuf, 14));
+					// fallthrough!
+				case MESSAGETYPE_ACKSTATUS:
+					pkg_headerext_common_set_messagegroupid(hex_to_uint8((uint8_t *)sendbuf, 16));
+					pkg_headerext_common_set_messageid(hex_to_uint8((uint8_t *)sendbuf, 18));
+					string_offset_data = 20;
+					break;
 			}
 
-			// send packets other than known request types immediately
-			if (true) // ((messagetype != MESSAGETYPE_GET) && (messagetype != MESSAGETYPE_SET) && (messagetype != MESSAGETYPE_SETGET))
+			uint8_t data_len_raw = 0;
+
+			// copy message data, which exists in all packets except in Get and Ack packets
+			if ((message_type != MESSAGETYPE_GET) && (message_type != MESSAGETYPE_ACK))
 			{
-				// set data
-				memcpy(bufx + 9, data, data_len); // header size = 9 bytes
+				uint8_t data_len_raw = (strlen(sendbuf) - string_offset_data) / 2;
+				//UART_PUTF("Data bytes = %u\r\n", data_len_raw);
 				
-				send_packet(aes_key_nr, message_type, data_len + 9);
+				uint8_t start = __HEADEROFFSETBITS / 8;
+				uint8_t shift = __HEADEROFFSETBITS % 8;
+
+				// copy message data, using __HEADEROFFSETBITS value and string_offset_data
+				for (i = 0; i < data_len_raw; i++)
+				{
+					uint8_t val = hex_to_uint8((uint8_t *)sendbuf, string_offset_data + 2 * i);
+					array_write_UIntValue(start + i, shift, 8, val, bufx);
+
+					UART_PUTF2("Data byte %u = %u\r\n", i, val);
+				}
+			}
+			
+			// round packet length to x * 16 bytes
+			uint8_t packet_len = ((uint16_t)__HEADEROFFSETBITS + (uint16_t)data_len_raw * 8) / 8;
+			packet_len = ((packet_len - 1) / 16 + 1) * 16;
+
+			// send packet which doesn't require an acknowledge immediately
+			if ((message_type != MESSAGETYPE_GET) && (message_type != MESSAGETYPE_SET) && (message_type != MESSAGETYPE_SETGET))
+			{
+				send_packet(aes_key_nr, message_type, packet_len);
 			}
 			else // enqueue request (don't send immediately)
 			{
-				/*if (queue_request(data[0], command_id, aes_key_nr, data + 1))
+				//memcpy(data, bufx + 9, packet_len - 9); // header size = 9 bytes
+
+				if (queue_request(pkg_headerext_common_get_receiverid(), message_type, aes_key_nr, bufx + 9))
 				{
-					UART_PUTS("Adding request to queue.\r\n");
+					UART_PUTS("Request added to queue.\r\n");
 				}
 				else
 				{
@@ -460,7 +509,6 @@ int main ( void )
 				}
 
 				print_request_queue();
-				*/
 			}
 		
 			// clear send text buffer
@@ -488,8 +536,8 @@ int main ( void )
 			// Auto-send something for debugging purposes...
 			if (loop2 == 50)
 			{
-				strcpy(sendbuf, "000102828300");
-				send_data_avail = true;
+				//strcpy(sendbuf, "000102828300");
+				//send_data_avail = true;
 				
 				loop2 = 0;
 			}

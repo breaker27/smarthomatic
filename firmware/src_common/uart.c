@@ -31,13 +31,13 @@ char uartbuf[65];
 
 #ifdef UART_RX	
 	// All received bytes from UART are stored in this buffer by the interrupt routine. This is a ringbuffer.
-	#define RXBUF_LENGTH 50
+	#define RXBUF_LENGTH 60
 	char rxbuf[RXBUF_LENGTH];
 	uint8_t rxbuf_startpos = 0; // points to the first (oldest) byte to be processed from the buffer
 	uint8_t rxbuf_count = 0; // number of bytes currently in the buffer
 
 	// This buffer stores the command string, which is a copy of the allowed bytes from the rxbuf, filled in the main loop (not ISR!).
-	char cmdbuf[50];
+	char cmdbuf[56];
 
 	uint8_t uart_timeout = 0;
 #endif
@@ -186,13 +186,23 @@ void process_rxbuf(void)
 		else if (input == 'h')
 		{
 			UART_PUTS("*** Help ***\r\n");
-			UART_PUTS("h.........this help\r\n");
-			UART_PUTS("rAA.......read EEPROM at hex address AA\r\n");
-			UART_PUTS("wAAXX.....write EEPROM at hex address AA to hex value XX\r\n");
-			UART_PUTS("x.........enable writing to EEPROM\r\n");
-			UART_PUTS("z.........disable writing to EEPROM\r\n");
-			UART_PUTS("sKKTTXX...Use AES key KK to send a packet with MessageType TT and header ext. + data XX (0..23 bytes).\r\n");
-			UART_PUTS("          End data with ENTER. SenderID, PacketCounter and CRC are automatically added.\r\n");
+			UART_PUTS("h..............this help\r\n");
+			UART_PUTS("rAA............read EEPROM at hex address AA\r\n");
+			UART_PUTS("wAAXX..........write EEPROM at hex address AA to hex value XX\r\n");
+			UART_PUTS("x..............enable writing to EEPROM\r\n");
+			UART_PUTS("z..............disable writing to EEPROM\r\n");
+			UART_PUTS("sKK{T}{X}{D}...Use AES key KK to send a packet with MessageType T, followed\r\n");
+			UART_PUTS("               by all necessary extension header fields and message data.\r\n");
+			UART_PUTS("               Fields are: ReceiverID (RRRR), MessageGroup (GG), MessageID (MM)\r\n");
+			UART_PUTS("               AckSenderID (SSSS), AckPacketCounter (PPPPPP), Error (EE).\r\n");
+			UART_PUTS("               MessageData (DD) can be 0..17 bytes with bits moved to the left.\r\n");
+			UART_PUTS("               End data with ENTER. SenderID, PacketCounter and CRC are automatically added.\r\n");
+			UART_PUTS("sKK00RRRRGGMMDD...........Get\r\n");
+			UART_PUTS("sKK01RRRRGGMMDD...........Set\r\n");
+			UART_PUTS("sKK02RRRRGGMMDD...........SetGet\r\n");
+			UART_PUTS("sKK08GGMMDD...............Status\r\n");
+			UART_PUTS("sKK09SSSSPPPPPPEE.........Ack\r\n");
+			UART_PUTS("sKK0ASSSSPPPPPPEEGGMMDD...AckStatus\r\n");
 		}
 		else if (input == 'x')
 		{
@@ -220,9 +230,9 @@ void process_rxbuf(void)
 		}
 		else if (input == 's')
 		{
-			UART_PUTS("*** Enter AES key nr, MessageType and header extension + data in hex format to send, finish with ENTER. ***\r\n");
+			UART_PUTS("*** Enter AES key nr, MessageType, header extension + data in hex format to send, finish with ENTER. ***\r\n");
 			cmdbuf[0] = 's';
-			bytes_to_read = 51; // 's' + 2 characters for key nr + 2 characters for MessageType + 2*23 characters for data
+			bytes_to_read = 54; // 2 characters for key nr + 2 characters for MessageType + 16 characters for hdr.ext. + 2*17 characters for data
 			bytes_pos = 1;
 		}
 		else
