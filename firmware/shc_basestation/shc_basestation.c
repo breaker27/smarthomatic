@@ -291,6 +291,8 @@ int main ( void )
 	UART_PUTF ("AES key count: %u\r\n", aes_key_count);
 	UART_PUTS ("Waiting for incoming data. Press h for help.\r\n\r\n");
 
+	led_blink(500, 500, 3);
+
 	rfm12_init();
 	sei();
 	
