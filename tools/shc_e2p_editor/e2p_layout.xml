@@ -151,7 +151,7 @@
 			<MaxVal>16777215</MaxVal>
 		</UIntValue>
 		<Reserved>
-			<Bits>3424</Bits>
+			<Bits>7520</Bits>
 		</Reserved>
 	</Block>
 	<Block>

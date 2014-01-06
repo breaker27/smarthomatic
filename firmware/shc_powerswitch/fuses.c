@@ -20,11 +20,10 @@
 
 FUSES = 
 { 
-	// value 0xE2 - use internal oscillator with 8 MHz
-    .low = (FUSE_CKSEL0 & FUSE_CKSEL2 & FUSE_CKSEL3 & FUSE_SUT0),
-	// value 0xD6 - set EESAVE, set BOD to 1.8V to prevent accidentially
-	// FLASH garbage, others are default
-	.high = (FUSE_EESAVE & FUSE_SPIEN & FUSE_BODLEVEL0),
-	// should be value F9 at ATMega168
-    .extended = EFUSE_DEFAULT, 
+	// value 0xE2 - disable clock divider for 8 MHz clock, the other fuses are default for ATMega328
+	.low = (FUSE_CKSEL0 & FUSE_CKSEL2 & FUSE_CKSEL3 & FUSE_SUT0),
+	// value 0xD1 - EESAVE is 0, others are default
+	.high = (FUSE_SPIEN & FUSE_EESAVE & FUSE_BOOTSZ1 & FUSE_BOOTSZ0),
+	// value 0xFD - set BOD to 2.7V to prevent accidentially FLASH garbage
+	.extended = FUSE_BODLEVEL1,
 };
