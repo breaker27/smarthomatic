@@ -241,7 +241,7 @@
 		<MessageGroupID>20</MessageGroupID>
 		<Message>
 			<Name>SwitchState</Name>
-			<Description/>
+			<Description>This is the state of the relais and its timeout value.</Description>
 			<MessageID>1</MessageID>
 			<MessageType>0</MessageType>
 			<MessageType>1</MessageType>
@@ -260,6 +260,76 @@
 				<Bits>16</Bits>
 				<MinVal>0</MinVal>
 				<MaxVal>65535</MaxVal>
+			</UIntValue>
+		</Message>
+	</MessageGroup>
+	<MessageGroup>
+		<Name>Dimmer</Name>
+		<Description/>
+		<MessageGroupID>60</MessageGroupID>
+		<Message>
+			<Name>Brightness</Name>
+			<Description>This is to set a fixed brightness.</Description>
+			<MessageID>1</MessageID>
+			<MessageType>0</MessageType>
+			<MessageType>1</MessageType>
+			<MessageType>2</MessageType>
+			<MessageType>8</MessageType>
+			<MessageType>9</MessageType>
+			<MessageType>10</MessageType>
+			<Validity>test</Validity>
+			<UIntValue>
+				<ID>Brightness</ID>
+				<Description>The brightness in percent. 0 = Off.</Description>
+				<Bits>7</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>100</MaxVal>
+			</UIntValue>
+		</Message>
+		<Message>
+			<Name>Animation</Name>
+			<Description>This is the state of the dimmer output voltage and its timeout value.</Description>
+			<MessageID>2</MessageID>
+			<MessageType>0</MessageType>
+			<MessageType>1</MessageType>
+			<MessageType>2</MessageType>
+			<MessageType>8</MessageType>
+			<MessageType>9</MessageType>
+			<MessageType>10</MessageType>
+			<Validity>test</Validity>
+			<EnumValue>
+				<ID>AnimationMode</ID>
+				<Description>If a time is set, use this animation mode to change the brightness over time (none = leave at start state for the whole time and switch to end state at the end).</Description>
+				<Bits>2</Bits>
+				<Element>
+					<Value>0</Value>
+					<Name>none</Name>
+				</Element>
+				<Element>
+					<Value>1</Value>
+					<Name>linear</Name>
+				</Element>
+			</EnumValue>
+			<UIntValue>
+				<ID>TimeoutSec</ID>
+				<Description>The time for the animation. Use 0 to disable this.</Description>
+				<Bits>16</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>65535</MaxVal>
+			</UIntValue>
+			<UIntValue>
+				<ID>StartBrightness</ID>
+				<Description>The brightness in percent at the beginning of the animation.</Description>
+				<Bits>7</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>100</MaxVal>
+			</UIntValue>
+			<UIntValue>
+				<ID>EndBrightness</ID>
+				<Description>The brightness in percent at the end of the animation.</Description>
+				<Bits>7</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>100</MaxVal>
 			</UIntValue>
 		</Message>
 	</MessageGroup>
