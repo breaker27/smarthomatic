@@ -519,7 +519,7 @@ public class SourceCodeGeneratorPacket
 					}
 					
 					int hdrBits = headerExtOffset.get(messageTypeName);
-					int ovrBits = hdrBits + offset2;
+					int ovrBits = containsMessageData(xmlRoot, messageTypeID) ? hdrBits + offset2 : hdrBits;
 					int neededBytes = (ovrBits - 1) / 8 + 1;
 					int packetBytes = ((neededBytes - 1) / 16 + 1) * 16;
 					
@@ -591,6 +591,19 @@ public class SourceCodeGeneratorPacket
 	{
 		Node field = XPathAPI.selectSingleNode(xmlRoot, "HeaderExtension[MessageType=" + messageTypeID + "]/*[ID=\"" + fieldName + "\"]");
 		return field != null;
+	}
+	
+	/**
+	 * Check if the MessageType with the given ID contains message data according to the definition in the XML file.
+	 * @param root
+	 * @param messageTypeID
+	 * @return
+	 * @throws TransformerException 
+	 */
+	private boolean containsMessageData(Node xmlRoot, int messageTypeID) throws TransformerException
+	{
+		Node hext = XPathAPI.selectSingleNode(xmlRoot, "HeaderExtension[MessageType=" + messageTypeID + "]");
+		return Util.getChildNodeValue(hext, "ContainsMessageData").equals("true");		
 	}
 	
 	/**

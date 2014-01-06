@@ -201,7 +201,7 @@ static inline void pkg_header_init_dimmer_animation_ack(void)
   memset(&bufx[0], 0, sizeof(bufx));
   pkg_header_set_messagetype(9);
   __HEADEROFFSETBITS = 109;
-  __PACKETSIZEBYTES = 32;
+  __PACKETSIZEBYTES = 16;
   __MESSAGETYPE = 9;
 }
 
@@ -262,7 +262,6 @@ static inline void msg_dimmer_animation_set_startbrightness(uint32_t val)
 // Offset: ((uint16_t)__HEADEROFFSETBITS + 18) / 8, ((uint16_t)__HEADEROFFSETBITS + 18) % 8, length bits 7, min val 0, max val 100
 static inline uint32_t msg_dimmer_animation_get_startbrightness(void)
 {
-
   return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 18) / 8, ((uint16_t)__HEADEROFFSETBITS + 18) % 8, 7, 0, 100, bufx);
 }
 
@@ -270,9 +269,6 @@ static inline uint32_t msg_dimmer_animation_get_startbrightness(void)
 // Offset: ((uint16_t)__HEADEROFFSETBITS + 25) / 8, ((uint16_t)__HEADEROFFSETBITS + 25) % 8, length bits 7, min val 0, max val 100
 static inline void msg_dimmer_animation_set_endbrightness(uint32_t val)
 {
-UART_PUTF("Read from byte %u", ((uint16_t)__HEADEROFFSETBITS + 25) / 8);
-UART_PUTF("bit %u", ((uint16_t)__HEADEROFFSETBITS + 25) % 8);
-
   array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 25) / 8, ((uint16_t)__HEADEROFFSETBITS + 25) % 8, 7, val, bufx);
 }
 
