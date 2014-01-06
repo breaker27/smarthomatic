@@ -324,6 +324,8 @@ int main ( void )
 	_delay_ms(1000);
 
 	util_init();
+	
+	check_eeprom_compatibility(DEVICETYPE_POWER_SWITCH);
 
 	for (i = 0; i < SWITCH_COUNT; i++)
 	{
