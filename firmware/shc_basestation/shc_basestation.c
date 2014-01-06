@@ -210,7 +210,7 @@ void decode_data(uint8_t len)
 	}
 }
 
-void send_packet(uint8_t aes_key_nr, uint8_t message_type, uint8_t packet_len)
+void send_packet(uint8_t aes_key_nr, uint8_t packet_len)
 {
 	// init packet buffer
 	//memset(&bufx[0], 0, sizeof(bufx));
@@ -225,9 +225,6 @@ void send_packet(uint8_t aes_key_nr, uint8_t message_type, uint8_t packet_len)
 	}
 
 	pkg_header_set_packetcounter(packetcounter);
-
-	// set message type
-	pkg_header_set_messagetype(message_type);
 
 	// set CRC32
 	pkg_header_set_crc32(crc32(bufx + 4, packet_len - 4));
@@ -495,7 +492,7 @@ int main ( void )
 			// send packet which doesn't require an acknowledge immediately
 			if ((message_type != MESSAGETYPE_GET) && (message_type != MESSAGETYPE_SET) && (message_type != MESSAGETYPE_SETGET))
 			{
-				send_packet(aes_key_nr, message_type, packet_len);
+				send_packet(aes_key_nr, packet_len);
 			}
 			else // enqueue request (don't send immediately)
 			{
@@ -527,11 +524,13 @@ int main ( void )
 			led_blink(10, 10, 1);
 			
 			loop = 0;
+			
+			request_t* request = find_request_to_repeat(packetcounter + 1);
 
-			if (set_repeat_request(packetcounter + 1)) // if request to repeat was found in queue
+			if (request != 0) // if request to repeat was found in queue
 			{
 				UART_PUTS("Repeating request.\r\n");					
-				send_packet(0, 1, 16);
+				send_packet((*request).aes_key, 16);
 				print_request_queue();
 			}
 			

@@ -57,7 +57,7 @@ extern uint16_t request_queue[REQUEST_QUEUE_RECEIVERS][REQUEST_QUEUE_PACKETS + 1
 void request_queue_init(void);
 void print_request_queue(void);
 bool queue_request(uint16_t receiver_id, uint8_t message_type, uint8_t aes_key, uint8_t * data);
-bool set_repeat_request(uint32_t packet_counter);
+request_t * find_request_to_repeat(uint32_t packet_counter);
 void remove_request(uint16_t sender_id, uint16_t request_sender_id, uint32_t packet_counter);
 
 #endif

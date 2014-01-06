@@ -102,7 +102,7 @@ bool queue_request(uint16_t receiver_id, uint8_t message_type, uint8_t aes_key, 
 	request_buffer[rb_slot].message_type = message_type;
 	request_buffer[rb_slot].aes_key = aes_key;
 	request_buffer[rb_slot].packet_counter = 0;
-	memcpy(request_buffer[rb_slot].data, data, 5);
+	memcpy(request_buffer[rb_slot].data, data, 23);
 	request_buffer[rb_slot].timeout = 1;
 	request_buffer[rb_slot].retry_count = 0;
 	
@@ -123,7 +123,8 @@ void print_request_queue(void)
 			UART_PUTF("Request Buffer %u: ", i);
 			UART_PUTF4("MessageType %u, PacketCounter %lu, Timeout %u, Retry %u, Data", request_buffer[i].message_type, request_buffer[i].packet_counter, request_buffer[i].timeout, request_buffer[i].retry_count);
 			
-			for (j = 0; j < 5; j++)
+			// TODO: only show bytes of real data length
+			for (j = 0; j < 23; j++)
 			{
 				UART_PUTF(" %02x", request_buffer[i].data[j]);
 			}
@@ -166,18 +167,18 @@ void print_request_queue(void)
 }
 
 // Search for a request to repeat (with timeout reached) and write the data to the send buffer bufx.
-// Return true if successful, false if no request to repeat was found.
+// Return a pointer to the request if successful, 0 if no request to repeat was found.
 // Automatically decrease timeout counters for all waiting requests in the queue,
 // delete a request if it is repeated the last time and cleanup the queue and repeat_buffer accordingly.
 // This function has to be called once a second, because the timeout values represent the amount of seconds.
 //
 // TODO (optimization): Change the behaviour so that a new packet can be sent out of the queue without a delay (currently, we have ~0.5s delay in average).
 // So check the queue for "timeout 0" packets more often, but don't reduce the timeout  in this case.
-bool set_repeat_request(uint32_t packet_counter)
+request_t * find_request_to_repeat(uint32_t packet_counter)
 {
 	uint8_t i, j;
 	uint8_t slot;
-	bool found = false;
+	request_t * res = 0;
 
 	for (i = 0; i < REQUEST_QUEUE_RECEIVERS; i++)
 	{
@@ -204,10 +205,10 @@ bool set_repeat_request(uint32_t packet_counter)
 			// set bufx to the request to retry, if timeout is reached
 			slot = request_queue[i][1];
 			
-			if ((request_buffer[slot].timeout == 0) && !found)
+			if ((request_buffer[slot].timeout == 0) && (res == 0))
 			{
-				found = true;
-			
+				res = &request_buffer[slot];
+
 				// Init header
 				memset(&bufx[0], 0, sizeof(bufx));
 				pkg_header_set_senderid(0); // FIXME: Use DeviceID instead?!
@@ -254,7 +255,7 @@ bool set_repeat_request(uint32_t packet_counter)
 		//UART_PUTS("\r\n");
 	}
 	
-	return found;
+	return res;
 }
 
 // Assume a request as acknowledged and delete it from the request_buffer and request_queue.
