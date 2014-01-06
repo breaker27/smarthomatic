@@ -217,8 +217,15 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 
 	inc_packetcounter();
 
+	// "Set" -> send "Ack"
+	if (messagetype == MESSAGETYPE_SET)
+	{
+		pkg_header_init_powerswitch_switchstate_ack();
+
+		UART_PUTS("Sending Ack\r\n");
+	}
 	// "Get" or "SetGet" -> send "AckStatus"
-	if ((messagetype == MESSAGETYPE_GET) && (messagetype != MESSAGETYPE_SETGET))
+	else
 	{
 		pkg_header_init_powerswitch_switchstate_ackstatus();
 		
@@ -227,13 +234,6 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		msg_powerswitch_switchstate_set_timeoutsec(switch_timeout[0]); // TODO: Support > 1 switch
 
 		UART_PUTS("Sending AckStatus\r\n");
-	}
-	// "Set" -> send "Ack"
-	else
-	{
-		pkg_header_init_powerswitch_switchstate_ack();
-
-		UART_PUTS("Sending Ack\r\n");
 	}
 
 	// set common fields
