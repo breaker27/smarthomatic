@@ -49,7 +49,7 @@ typedef enum {
 // Validity: test
 // Length w/o Header + HeaderExtension: 17 bits
 // Data fields: On, TimeoutSec
-// Description: 
+// Description: This is the state of the relais and its timeout value.
 
 // Function to initialize header for the MessageType "Get".
 static inline void pkg_header_init_powerswitch_switchstate_get(void)
