@@ -46,6 +46,11 @@
 #define RELAIS_PORT PORTC
 #define RELAIS_PIN_START 0
 
+#define BUTTON_DDR DDRD
+#define BUTTON_PORT PORTD
+#define BUTTON_PINPORT PIND
+#define BUTTON_PIN 3
+
 #define SEND_STATUS_EVERY_SEC 600 // how often should a status be sent?
 
 uint8_t device_id;
@@ -311,6 +316,9 @@ int main ( void )
 {
 	uint8_t loop = 0;
 	uint8_t i;
+	uint8_t button = 0;
+	uint8_t button_old = 0;
+	uint8_t button_debounce = 0;
 
 	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
 	_delay_ms(1000);
@@ -322,6 +330,10 @@ int main ( void )
 		sbi(DDRC, RELAIS_PIN_START + i);
 	}
 
+	// init button input
+	cbi(BUTTON_DDR, BUTTON_PIN);
+	sbi(BUTTON_PORT, BUTTON_PIN);
+	
 	// read packetcounter, increase by cycle and write back
 	packetcounter = eeprom_read_UIntValue32(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT,
 		EEPROM_PACKETCOUNTER_LENGTH_BITS, EEPROM_PACKETCOUNTER_MINVAL, EEPROM_PACKETCOUNTER_MAXVAL) + PACKET_COUNTER_WRITE_CYCLE;
@@ -351,6 +363,10 @@ int main ( void )
 
 	uart_init();
 	
+	
+		
+		
+		
 	UART_PUTS ("\r\n");
 	UART_PUTS ("smarthomatic Power Switch V1.0 (c) 2013 Uwe Freese, www.smarthomatic.org\r\n");
 	UART_PUTF ("DeviceID: %u\r\n", device_id);
@@ -423,10 +439,7 @@ int main ( void )
 		// flash LED every second to show the device is alive
 		if (loop == 50)
 		{
-			sbi(PORTD, 3);
-			_delay_ms(10);
-			cbi(PORTD, 3);
-			_delay_ms(10);
+			led_blink(10, 0, 1);
 			
 			loop = 0;
 
@@ -459,9 +472,7 @@ int main ( void )
 				send_status_timeout = SEND_STATUS_EVERY_SEC;
 				send_power_switch_status();
 				
-				sbi(PORTD, 3);
-				_delay_ms(200);
-				cbi(PORTD, 3);
+				led_blink(200, 0, 1);
 			}			
 		}
 		else
@@ -470,6 +481,30 @@ int main ( void )
 		}
 
 		rfm12_tick();
+
+		button = !(BUTTON_PINPORT & (1 << BUTTON_PIN));
+		
+		if (button_debounce > 0)
+		{
+			button_debounce--;
+		}
+		else if (button != button_old)
+		{
+			button_old = button;
+			button_debounce = 10;
+			
+			if (button) // on button press
+			{
+				switch_state[0] = !switch_state[0];
+				
+				UART_PUTF("Switch 0 to %u.\r\n", switch_state[0]);
+				
+				// switch PIN for relais
+				switchRelais(0, switch_state[0]);
+				
+				send_status_timeout = 15; // send status after 15s
+			}
+		}		
 
 		loop++;
 	}
