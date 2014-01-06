@@ -362,11 +362,7 @@ int main ( void )
 	osccal_init();
 
 	uart_init();
-	
-	
-		
-		
-		
+
 	UART_PUTS ("\r\n");
 	UART_PUTS ("smarthomatic Power Switch V1.0 (c) 2013 Uwe Freese, www.smarthomatic.org\r\n");
 	UART_PUTF ("DeviceID: %u\r\n", device_id);
@@ -377,15 +373,15 @@ int main ( void )
 	// init AES key
 	eeprom_read_block(aes_key, (uint8_t *)EEPROM_AESKEY_BYTE, 32);
 
-	rfm12_init();
-
-	led_blink(200, 200, 5);
+	led_blink(500, 500, 3);
 
 	// set initial switch state
 	for (i = 0; i < SWITCH_COUNT; i++)
 	{
 		switchRelais(i, switch_state[i]);
 	}
+
+	rfm12_init();
 
 	sei();
 
@@ -439,8 +435,11 @@ int main ( void )
 		// flash LED every second to show the device is alive
 		if (loop == 50)
 		{
-			led_blink(10, 0, 1);
-			
+			if (switch_timeout[0])
+			{
+				led_blink(10, 10, 1);
+			}
+
 			loop = 0;
 
 			// Check timeouts and toggle switches
@@ -480,6 +479,8 @@ int main ( void )
 			_delay_ms(20);
 		}
 
+		switch_led(switch_state[0]);
+
 		rfm12_tick();
 
 		button = !(BUTTON_PINPORT & (1 << BUTTON_PIN));
@@ -504,7 +505,7 @@ int main ( void )
 				
 				send_status_timeout = 15; // send status after 15s
 			}
-		}		
+		}	
 
 		loop++;
 	}
