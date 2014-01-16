@@ -258,10 +258,10 @@ int main ( void )
 	uint8_t loop = 0;
 	uint8_t loop2 = 0;
 	
-	sbi(LED_DDR, LED_PIN);
-
 	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
 	_delay_ms(1000);
+
+	util_init();
 
 	check_eeprom_compatibility(DEVICETYPE_BASE_STATION);
 
@@ -293,7 +293,7 @@ int main ( void )
 	rfm12_init();
 	sei();
 	
-	// ENCODE TEST
+	// ENCODE TEST (OLD!)
 	/*
 	uint8_t testlen = 64;
 	
