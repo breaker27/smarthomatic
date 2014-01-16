@@ -36,6 +36,9 @@
 #include "uart.h"
 
 #include "e2p_access.h"
+#include "packet_header.h"
+#include "rfm12.h"
+#include "aes256.h"
 
 #define LED_PIN 7
 #define LED_PORT PORTD
@@ -339,4 +342,17 @@ void osccal_init(void)
 		float speedup = ((float)mode - 128) / 1000;
 		OSCCAL = (uint16_t)((float)OSCCAL * (1 + speedup));
 	}
+}
+
+void rfm12_sendbuf(void)
+{
+	UART_PUTS("Before encryption: ");
+	print_bytearray(bufx, __PACKETSIZEBYTES);
+
+	uint8_t aes_byte_count = aes256_encrypt_cbc(bufx, __PACKETSIZEBYTES);
+
+	UART_PUTS("After encryption:  ");
+	print_bytearray(bufx, aes_byte_count);
+
+	rfm12_tx(aes_byte_count, 0, (uint8_t *) bufx);
 }

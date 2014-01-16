@@ -61,19 +61,6 @@ uint16_t switch_timeout[SWITCH_COUNT];
 
 uint16_t send_status_timeout = 5;
 
-void rfm12_sendbuf(void)
-{
-	UART_PUTS("Before encryption: ");
-	print_bytearray(bufx, __PACKETSIZEBYTES);
-
-	uint8_t aes_byte_count = aes256_encrypt_cbc(bufx, __PACKETSIZEBYTES);
-
-	UART_PUTS("After encryption:  ");
-	print_bytearray(bufx, aes_byte_count);
-
-	rfm12_tx(aes_byte_count, 0, (uint8_t *) bufx);
-}
-
 void inc_packetcounter(void)
 {
 	packetcounter++;

@@ -54,13 +54,6 @@ uint32_t packetcounter;
 uint16_t deviceID;
 uint8_t aes_key_count;
 
-uint8_t rfm12_sendbuf(uint8_t len)
-{
-	uint8_t aes_byte_count = aes256_encrypt_cbc(bufx, len);
-	rfm12_tx(aes_byte_count, 0, (uint8_t *) bufx);	
-	return aes_byte_count;
-}
-
 // Show info about the received packets.
 // This is only for debugging and only few messages are supported. The definition
 // of all packets must be known at the PC program that's processing the data.
@@ -227,17 +220,10 @@ void send_packet(uint8_t aes_key_nr, uint8_t packet_len)
 	
 	// show info
 	decode_data(packet_len);
-	UART_PUTF("       AES key: %u\r\n", aes_key_nr);
-	UART_PUTS("   Unencrypted: ");
-	print_bytearray(bufx, packet_len);
 
 	// encrypt and send
-	uint8_t aes_byte_count = rfm12_sendbuf(packet_len);
-	
-	UART_PUTS("Send encrypted: ");
-	print_bytearray(bufx, aes_byte_count);
-
-	UART_PUTS("\r\n");
+	__PACKETSIZEBYTES = packet_len;
+	rfm12_sendbuf();
 }
 
 int main ( void )
@@ -518,7 +504,7 @@ int main ( void )
 			if (request != 0) // if request to repeat was found in queue
 			{
 				UART_PUTS("Repeating request.\r\n");					
-				send_packet((*request).aes_key, 16);
+				send_packet((*request).aes_key, 16); // FIXME!!! Remember packet length in struct and use it here!!
 				print_request_queue();
 			}
 			

@@ -58,5 +58,6 @@ void led_blink(uint16_t on, uint16_t off, uint8_t times);
 void check_eeprom_compatibility(uint8_t deviceType);
 void osccal_info(void);
 void osccal_init(void);
+void rfm12_sendbuf(void);
 
 #endif

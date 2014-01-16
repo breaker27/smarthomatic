@@ -82,19 +82,6 @@ uint32_t packetcounter;
 uint32_t station_packetcounter;
 uint8_t switch_off_delay = 0; // If 0% brightness is reached, switch off power (relais) with a delay to 1) dim down before switching off and to 2) avoid switching power off at manual dimming.
 
-void rfm12_sendbuf(void)
-{
-	UART_PUTS("Before encryption: ");
-	print_bytearray(bufx, __PACKETSIZEBYTES);
-
-	uint8_t aes_byte_count = aes256_encrypt_cbc(bufx, __PACKETSIZEBYTES);
-
-	UART_PUTS("After encryption:  ");
-	print_bytearray(bufx, aes_byte_count);
-
-	rfm12_tx(aes_byte_count, 0, (uint8_t *) bufx);
-}
-
 void send_dimmer_status(void)
 {
 // FIXME!!
