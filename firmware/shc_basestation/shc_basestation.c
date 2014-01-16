@@ -54,18 +54,6 @@ uint32_t packetcounter;
 uint16_t deviceID;
 uint8_t aes_key_count;
 
-void printbytearray(uint8_t * b, uint8_t len)
-{
-	uint8_t i;
-	
-	for (i = 0; i < len; i++)
-	{
-		UART_PUTF("%02x ", b[i]);
-	}
-	
-	UART_PUTS ("\r\n");
-}
-
 uint8_t rfm12_sendbuf(uint8_t len)
 {
 	uint8_t aes_byte_count = aes256_encrypt_cbc(bufx, len);
@@ -241,13 +229,13 @@ void send_packet(uint8_t aes_key_nr, uint8_t packet_len)
 	decode_data(packet_len);
 	UART_PUTF("       AES key: %u\r\n", aes_key_nr);
 	UART_PUTS("   Unencrypted: ");
-	printbytearray(bufx, packet_len);
+	print_bytearray(bufx, packet_len);
 
 	// encrypt and send
 	uint8_t aes_byte_count = rfm12_sendbuf(packet_len);
 	
 	UART_PUTS("Send encrypted: ");
-	printbytearray(bufx, aes_byte_count);
+	print_bytearray(bufx, aes_byte_count);
 
 	UART_PUTS("\r\n");
 }
@@ -352,7 +340,7 @@ int main ( void )
 			if ((len == 0) || (len % 16 != 0))
 			{
 				UART_PUTF("Received garbage (%u bytes not multiple of 16): ", len);
-				printbytearray(bufx, len);
+				print_bytearray(bufx, len);
 			}
 			else // try to decrypt with all keys stored in EEPROM
 			{
@@ -384,7 +372,7 @@ int main ( void )
 					{
 						//UART_PUTS("CRC correct, AES key found!\r\n");
 						UART_PUTF("Received (AES key %u): ", aes_key_nr);
-						printbytearray(bufx, len);
+						print_bytearray(bufx, len);
 						
 						decode_data(len);
 						

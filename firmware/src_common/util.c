@@ -55,6 +55,18 @@ void printSigned(int16_t i)
 	UART_PUTF2("%d.%02d", i / 100, i % 100);
 }
 
+void print_bytearray(uint8_t * b, uint8_t len)
+{
+	uint8_t i;
+	
+	for (i = 0; i < len; i++)
+	{
+		UART_PUTF("%02x ", b[i]);
+	}
+	
+	UART_PUTS ("\r\n");
+}
+
 // reference battery voltage (alkaline) for 100%, 90%,... 0% with end voltage 0,9V
 //static short vbat_alkaline[] = {1600, 1400, 1320, 1280, 1240, 1210, 1180, 1160, 1100, 1030, 900};
 

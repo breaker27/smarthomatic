@@ -82,29 +82,15 @@ uint32_t packetcounter;
 uint32_t station_packetcounter;
 uint8_t switch_off_delay = 0; // If 0% brightness is reached, switch off power (relais) with a delay to 1) dim down before switching off and to 2) avoid switching power off at manual dimming.
 
-void printbytearray(uint8_t * b, uint8_t len)
-{
-#ifdef UART_DEBUG
-	uint8_t i;
-	
-	for (i = 0; i < len; i++)
-	{
-		UART_PUTF("%02x ", b[i]);
-	}
-	
-	UART_PUTS ("\r\n");
-#endif
-}
-
 void rfm12_sendbuf(void)
 {
 	UART_PUTS("Before encryption: ");
-	printbytearray(bufx, __PACKETSIZEBYTES);
+	print_bytearray(bufx, __PACKETSIZEBYTES);
 
 	uint8_t aes_byte_count = aes256_encrypt_cbc(bufx, __PACKETSIZEBYTES);
 
 	UART_PUTS("After encryption:  ");
-	printbytearray(bufx, aes_byte_count);
+	print_bytearray(bufx, aes_byte_count);
 
 	rfm12_tx(aes_byte_count, 0, (uint8_t *) bufx);
 }
@@ -450,7 +436,7 @@ void process_packet(uint8_t len)
 	pkg_header_adjust_offset();
 
 	UART_PUTS("Received: ");
-	printbytearray(bufx, len);
+	print_bytearray(bufx, len);
 	
 	// check SenderID
 	uint32_t senderID = pkg_header_get_senderid();
@@ -647,19 +633,19 @@ int main(void)
 			if ((len == 0) || (len % 16 != 0))
 			{
 				UART_PUTF("Received garbage (%u bytes not multiple of 16): ", len);
-				printbytearray(bufx, len);
+				print_bytearray(bufx, len);
 			}
 			else // try to decrypt with all keys stored in EEPROM
 			{
 				memcpy(bufx, rfm12_rx_buffer(), len);
 				
 				UART_PUTS("Before decryption: ");
-				printbytearray(bufx, len);
+				print_bytearray(bufx, len);
 					
 				aes256_decrypt_cbc(bufx, len);
 
 				UART_PUTS("Decrypted bytes: ");
-				printbytearray(bufx, len);
+				print_bytearray(bufx, len);
 				
 				if (!pkg_header_check_crc32(len))
 				{

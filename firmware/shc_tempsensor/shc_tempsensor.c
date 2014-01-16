@@ -54,27 +54,15 @@ uint8_t temperature_sensor_type = 0;
 uint8_t brightness_sensor_type = 0;
 uint8_t batt_status_cycle = SEND_BATT_STATUS_CYCLE - 1; // send promptly after startup
 
-void printbytearray(uint8_t * b, uint8_t len)
-{
-	uint8_t i;
-	
-	for (i = 0; i < len; i++)
-	{
-		UART_PUTF("%02x ", b[i]);
-	}
-	
-	UART_PUTS ("\r\n");
-}
-
 void rfm12_sendbuf(void)
 {
 	UART_PUTS("Before encryption: ");
-	printbytearray(bufx, __PACKETSIZEBYTES);
+	print_bytearray(bufx, __PACKETSIZEBYTES);
 
 	uint8_t aes_byte_count = aes256_encrypt_cbc(bufx, __PACKETSIZEBYTES);
 
 	UART_PUTS("After encryption:  ");
-	printbytearray(bufx, aes_byte_count);
+	print_bytearray(bufx, aes_byte_count);
 
 	rfm12_tx(aes_byte_count, 0, (uint8_t *) bufx);
 }
