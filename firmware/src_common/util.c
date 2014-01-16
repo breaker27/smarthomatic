@@ -44,7 +44,7 @@
 // printf for floating point numbers takes ~1500 bytes program size.
 // Therefore, we use a smaller special function instead
 // as long it is used so rarely.
-void printSigned(int16_t i)
+void print_signed(int16_t i)
 {
 	if (i < 0)
 	{

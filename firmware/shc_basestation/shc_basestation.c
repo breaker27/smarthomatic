@@ -156,7 +156,7 @@ void decode_data(uint8_t len)
 				{
 					case MESSAGEID_TEMPSENSOR_TEMPHUMBRISTATUS:
 						UART_PUTS("Temperature=");
-						printSigned(msg_tempsensor_temphumbristatus_get_temperature());
+						print_signed(msg_tempsensor_temphumbristatus_get_temperature());
 						u16 = msg_tempsensor_temphumbristatus_get_humidity();
 						UART_PUTF2(";Humidity=%u.%u;", u16 / 10, u16 % 10);
 						UART_PUTF("Brightness=%u;", msg_tempsensor_temphumbristatus_get_brightness());

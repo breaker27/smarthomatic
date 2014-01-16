@@ -192,7 +192,7 @@ int main ( void )
 			
 			UART_PUTF("CRC32 is %lx (added as first 4 bytes)\r\n", getBuf32(0));
 			UART_PUTF("Battery: %u%%, Temperature: ", bat_p_val);
-			printSigned(temp);
+			print_signed(temp);
 			UART_PUTF2(" deg.C, Humidity: %u.%u", hum / 10, hum % 10);
 			UART_PUTS("%\r\n");
 

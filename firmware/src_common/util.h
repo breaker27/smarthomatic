@@ -33,7 +33,7 @@
 uint8_t bufx[65];
 unsigned int adc_data;
 
-void printSigned(int16_t i);
+void print_signed(int16_t i);
 void print_bytearray(uint8_t * b, uint8_t len);
 uint16_t linear_interpolate16(uint16_t in, uint16_t min_in, uint16_t max_in, uint16_t min_out, uint16_t max_out);
 uint32_t linear_interpolate32(uint32_t in, uint32_t min_in, uint32_t max_in, uint32_t min_out, uint32_t max_out);
