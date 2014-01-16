@@ -191,10 +191,9 @@ void decode_data(uint8_t len)
 	}
 }
 
+// Set senderid, packetcounter and CRC into the partly filled packet, encrypt it using the given AES key number and send it.
 void send_packet(uint8_t aes_key_nr, uint8_t packet_len)
 {
-	// init packet buffer
-	//memset(&bufx[0], 0, sizeof(bufx));
 	pkg_header_set_senderid(deviceID);
 
 	// update packet counter
