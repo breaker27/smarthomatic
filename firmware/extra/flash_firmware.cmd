@@ -7,6 +7,7 @@ rem detect ATMega type by device name
 set SHC_PROC=m168
 if %SHC_HEX%==shc_basestation.hex set SHC_PROC=m328p
 if %SHC_HEX%==shc_dimmer.hex set SHC_PROC=m328p
+if %SHC_HEX%==shc_powerswitch.hex set SHC_PROC=m328p
 
 echo.
 echo Firmware: %SHC_HEX%
