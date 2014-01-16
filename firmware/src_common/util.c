@@ -61,8 +61,8 @@ void printSigned(int16_t i)
 // reference battery voltage (alkaline) for 100%, 90%,... 0% with end voltage 1,1V (= minimum for RFM12)
 static short vbat_alkaline[] = {1600, 1405, 1333, 1293, 1260, 1232, 1205, 1183, 1170, 1145, 1100};
 
-// PRECONDITION: min_in < max_in, min_out < max_out
-uint16_t linear_interpolate(uint16_t in, uint16_t min_in, uint16_t max_in, uint16_t min_out, uint16_t max_out)
+// PRECONDITION (which is NOT checked!): min_in < max_in, min_out < max_out
+uint16_t linear_interpolate16(uint16_t in, uint16_t min_in, uint16_t max_in, uint16_t min_out, uint16_t max_out)
 {
 	if (in >= max_in)
 		return max_out;
@@ -112,20 +112,18 @@ int bat_percentage(int vbat)
 			i++;
 		}
 		
-		return linear_interpolate(vbat, vbat_alkaline[i], vbat_alkaline[i - 1], 100 - i * 10, 100 - (i - 1) * 10);
+		return linear_interpolate16(vbat, vbat_alkaline[i], vbat_alkaline[i - 1], 100 - i * 10, 100 - (i - 1) * 10);
 	}
 }
 
 void adc_init(void)
 {
-	//{{WIZARD_MAP(ADC)
 	// ADC Clock: 62.500kHz
 	// ADC Voltage Reference: Internal 1.1V, External capacitor
 	// ADC Noise Canceler Enabled
 	ADCSRB |= 0x0;
 	ADMUX = 0xc0;
 	ADCSRA = 0x8e;
-	//}}WIZARD_MAP(ADC)
 }
 
 void adc_on(bool on)

@@ -34,7 +34,7 @@ uint8_t bufx[65];
 unsigned int adc_data;
 
 void printSigned(int16_t i);
-uint16_t linear_interpolate(uint16_t in, uint16_t min_in, uint16_t max_in, uint16_t min_out, uint16_t max_out);
+uint16_t linear_interpolate16(uint16_t in, uint16_t min_in, uint16_t max_in, uint16_t min_out, uint16_t max_out);
 uint32_t linear_interpolate32(uint32_t in, uint32_t min_in, uint32_t max_in, uint32_t min_out, uint32_t max_out);
 float linear_interpolate_f(float in, float min_in, float max_in, float min_out, float max_out);
 int bat_percentage(int vbat);
