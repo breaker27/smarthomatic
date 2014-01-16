@@ -1,3 +1,21 @@
+/*
+* This file is part of smarthomatic, http://www.smarthomatic.org.
+* Copyright (c) 2013 Uwe Freese
+*
+* smarthomatic is free software: you can redistribute it and/or modify it
+* under the terms of the GNU General Public License as published by the
+* Free Software Foundation, either version 3 of the License, or (at your
+* option) any later version.
+*
+* smarthomatic is distributed in the hope that it will be useful, but
+* WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+* Public License for more details.
+*
+* You should have received a copy of the GNU General Public License along
+* with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include <stdint.h>
 
 #ifndef E2P_ACCESS_H
@@ -15,7 +33,6 @@ void signal_error_state(void);
 	#define NULL ((void*)0) 
 #endif
 
-uint32_t __eeprom_read_UIntValue32(uint16_t byte, uint8_t bit, uint16_t length_bits, uint16_t max_bits_for_type, uint8_t * array);
 uint32_t _eeprom_read_UIntValue32(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t minval, uint32_t maxval, uint16_t max_bits_for_type, uint8_t * array);
 int32_t _eeprom_read_IntValue32(uint16_t byte, uint8_t bit, uint16_t length_bits, int32_t minval, int32_t maxval, uint8_t * array);
 
