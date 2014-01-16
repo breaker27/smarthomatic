@@ -237,7 +237,7 @@ void util_init(void)
 	sbi(LED_DDR, LED_PIN);
 }
 
-void switch_led(uint8_t b_on)
+void switch_led(bool b_on)
 {
 	if (b_on)
 	{

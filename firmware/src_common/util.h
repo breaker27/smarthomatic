@@ -52,7 +52,7 @@ void setBuf32(uint8_t offset, uint32_t val);
 void setBuf16(uint8_t offset, uint16_t val);
 
 void util_init(void);
-void switch_led(uint8_t b_on);
+void switch_led(bool b_on);
 void led_blink(uint16_t on, uint16_t off, uint8_t times);
 void check_eeprom_compatibility(uint8_t deviceType);
 void osccal_info(void);
