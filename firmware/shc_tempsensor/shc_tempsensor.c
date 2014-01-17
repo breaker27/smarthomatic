@@ -54,7 +54,7 @@ uint8_t temperature_sensor_type = 0;
 uint8_t brightness_sensor_type = 0;
 uint8_t batt_status_cycle = SEND_BATT_STATUS_CYCLE - 1; // send promptly after startup
 
-int main ( void )
+int main(void)
 {
 	uint16_t vbat = 0;
 	uint16_t vlight = 0;
