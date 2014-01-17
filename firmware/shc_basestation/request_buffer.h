@@ -35,12 +35,14 @@
                                        // decode, react, encode and send an acknowledge. So don't make the timeout too short!
 #define REQUEST_ADDITIONAL_TIMEOUT_S 2 // Additional timeout per retry.
 #define RS_UNUSED 255
+#define REQUEST_DATA_BYTES_MAX   23    // leave this at 23, which is needed for 32 byte packets with the current header format
 
 typedef struct {
 	uint8_t message_type; // set to RS_UNUSED to show that this buffer is unused
 	uint8_t aes_key;
 	uint32_t packet_counter;
-	uint8_t data[23]; 
+	uint8_t data[REQUEST_DATA_BYTES_MAX];
+	uint8_t data_bytes;
 
 	uint8_t timeout;
 	uint8_t retry_count;
@@ -56,7 +58,7 @@ extern uint16_t request_queue[REQUEST_QUEUE_RECEIVERS][REQUEST_QUEUE_PACKETS + 1
 
 void request_queue_init(void);
 void print_request_queue(void);
-bool queue_request(uint16_t receiver_id, uint8_t message_type, uint8_t aes_key, uint8_t * data);
+bool queue_request(uint16_t receiver_id, uint8_t message_type, uint8_t aes_key, uint8_t * data, uint8_t data_len);
 request_t * find_request_to_repeat(uint32_t packet_counter);
 void remove_request(uint16_t sender_id, uint16_t request_sender_id, uint32_t packet_counter);
 

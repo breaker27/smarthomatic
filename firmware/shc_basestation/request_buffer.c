@@ -51,7 +51,7 @@ void request_queue_init(void)
 
 // Remember the request in the request queue and return if it was successful.
 // If not, the request will not be queued and therefore not repeated if no acknowledge is received.
-bool queue_request(uint16_t receiver_id, uint8_t message_type, uint8_t aes_key, uint8_t * data)
+bool queue_request(uint16_t receiver_id, uint8_t message_type, uint8_t aes_key, uint8_t * data, uint8_t data_bytes)
 {
 	// Search free slot in request_buffer.
 	uint8_t rb_slot = 0;
@@ -98,11 +98,17 @@ bool queue_request(uint16_t receiver_id, uint8_t message_type, uint8_t aes_key, 
 	// Set id of request_buffer index in request queue.
 	request_queue[rs_slot][msg_slot] = rb_slot;
 	
+	if (data_bytes > REQUEST_DATA_BYTES_MAX)
+	{
+		data_bytes = REQUEST_DATA_BYTES_MAX;
+	}
+	
 	// Set data in request_buffer.
 	request_buffer[rb_slot].message_type = message_type;
 	request_buffer[rb_slot].aes_key = aes_key;
 	request_buffer[rb_slot].packet_counter = 0;
-	memcpy(request_buffer[rb_slot].data, data, 23);
+	memcpy(request_buffer[rb_slot].data, data, data_bytes);
+	request_buffer[rb_slot].data_bytes = data_bytes;
 	request_buffer[rb_slot].timeout = 1;
 	request_buffer[rb_slot].retry_count = 0;
 	
@@ -124,7 +130,7 @@ void print_request_queue(void)
 			UART_PUTF4("MessageType %u, PacketCounter %lu, Timeout %u, Retry %u, Data", request_buffer[i].message_type, request_buffer[i].packet_counter, request_buffer[i].timeout, request_buffer[i].retry_count);
 			
 			// TODO: only show bytes of real data length
-			for (j = 0; j < 23; j++)
+			for (j = 0; j < request_buffer[i].data_bytes; j++)
 			{
 				UART_PUTF(" %02x", request_buffer[i].data[j]);
 			}

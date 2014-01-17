@@ -225,7 +225,7 @@ void send_packet(uint8_t aes_key_nr, uint8_t packet_len)
 	rfm12_sendbuf();
 }
 
-int main ( void )
+int main(void)
 {
 	uint8_t aes_key_nr;
 	uint8_t loop = 0;
@@ -266,7 +266,7 @@ int main ( void )
 	rfm12_init();
 	sei();
 	
-	// ENCODE TEST (OLD!)
+	// ENCODE TEST (OLD! Move to unit test some day...)
 	/*
 	uint8_t testlen = 64;
 	
@@ -409,7 +409,7 @@ int main ( void )
 			UART_PUTS("sKK0ASSSSPPPPPPEEGGMMDD...AckStatus\r\n");
 			*/
 			
-			// set header extension fields
+			// set header extension fields to the values given as hex string in the user input
 			switch (message_type)
 			{
 				case MESSAGETYPE_GET:
@@ -453,8 +453,6 @@ int main ( void )
 				{
 					uint8_t val = hex_to_uint8((uint8_t *)sendbuf, string_offset_data + 2 * i);
 					array_write_UIntValue(start + i, shift, 8, val, bufx);
-
-					UART_PUTF2("Data byte %u = %u\r\n", i, val);
 				}
 			}
 			
@@ -469,11 +467,10 @@ int main ( void )
 			}
 			else // enqueue request (don't send immediately)
 			{
-				//memcpy(data, bufx + 9, packet_len - 9); // header size = 9 bytes
-
-				if (queue_request(pkg_headerext_common_get_receiverid(), message_type, aes_key_nr, bufx + 9))
+				// header size = 9 bytes!
+				if (queue_request(pkg_headerext_common_get_receiverid(), message_type, aes_key_nr, bufx + 9, packet_len - 9))
 				{
-					UART_PUTS("Request added to queue.\r\n");
+					UART_PUTF("Request added to queue (%u bytes packet).\r\n", packet_len);
 				}
 				else
 				{
@@ -503,7 +500,7 @@ int main ( void )
 			if (request != 0) // if request to repeat was found in queue
 			{
 				UART_PUTS("Repeating request.\r\n");					
-				send_packet((*request).aes_key, 16); // FIXME!!! Remember packet length in struct and use it here!!
+				send_packet((*request).aes_key, (*request).data_bytes + 9); // header size = 9 bytes!
 				print_request_queue();
 			}
 			
