@@ -51,7 +51,7 @@
 #define BUTTON_PINPORT PIND
 #define BUTTON_PIN 3
 
-#define SEND_STATUS_EVERY_SEC 600 // how often should a status be sent?
+#define SEND_STATUS_EVERY_SEC 1800 // how often should a status be sent?
 
 uint8_t device_id;
 uint32_t packetcounter;
@@ -287,7 +287,7 @@ void process_packet(uint8_t len)
 	process_message(messagetype, messagegroupid, messageid);
 }
 
-int main ( void )
+int main(void)
 {
 	uint8_t loop = 0;
 	uint8_t i;

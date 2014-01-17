@@ -40,7 +40,7 @@
 // Therefore 100 is a good value.
 #define PACKET_COUNTER_WRITE_CYCLE 100
 
-#define SEND_STATUS_EVERY_SEC 600 // how often should a status be sent
+#define SEND_STATUS_EVERY_SEC 1800 // how often should a status be sent
 
 #define DIMMER_DDR DDRB
 #define DIMMER_PORT PORTB
