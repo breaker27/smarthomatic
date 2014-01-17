@@ -16805,7 +16805,7 @@ high speed (Philips)</description>
 <part name="C4" library="rcl" deviceset="C-EU" device="025-030X050" value="220n"/>
 <part name="JP2" library="pinhead" deviceset="PINHD-1X1" device="" value="ANT"/>
 <part name="IC3" library="linear" deviceset="LP2950" device="Z"/>
-<part name="D1" library="diode" deviceset="1N4148" device="DO35-7"/>
+<part name="D1" library="diode" deviceset="1N4148" device="DO35-7" value="1N4148"/>
 <part name="+3V1" library="supply1" deviceset="+3V3" device=""/>
 <part name="P+4" library="supply1" deviceset="+5V" device=""/>
 <part name="P+1" library="supply1" deviceset="+5V" device=""/>
