@@ -213,10 +213,8 @@ void setPWMDutyCycle(float percent)
 
 	current_brightness = percent; // used for status packet
 
-#ifdef UART_DEBUG_CALCULATIONS	
+#ifdef UART_DEBUG_CALCULATIONS
 	UART_PUTF2 ("Percent requested: %d.%02d\r\n", (uint16_t)percent, (uint16_t)(percent * 100) % 100);
-#else
-	//UART_PUTF2 ("Percent=%d.%02d\r\n", (uint16_t)percent, (uint16_t)(percent * 100) % 100);
 #endif
 	
 	// My OSRAM CFL lamp does not react to the 1..10V input in a linear way.
@@ -545,7 +543,6 @@ int main(void)
 
 	osccal_init();
 
-#ifdef UART_DEBUG
 	uart_init();
 	UART_PUTS ("\r\n");
 	UART_PUTS ("smarthomatic Dimmer V1.0 (c) 2013 Uwe Freese, www.smarthomatic.org\r\n");
@@ -554,7 +551,6 @@ int main(void)
 	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);
 	UART_PUTF ("Use PWM translation table: %u\r\n", use_pwm_translation);
 	UART_PUTF ("Last received base station PacketCounter: %u\r\n\r\n", station_packetcounter);
-#endif
 
 	// init AES key
 	eeprom_read_block (aes_key, (uint8_t *)EEPROM_AESKEY_BYTE, 32);
