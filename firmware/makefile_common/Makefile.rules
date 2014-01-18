@@ -50,14 +50,11 @@ endif
 # set (differently named) CPU type for avrdude
 ifeq ($(MCU),atmega328)
 	AVRDUDEMCU = m328p
-endif
-ifeq ($(MCU),atmega168)
+else ifeq ($(MCU),atmega168)
 	AVRDUDEMCU = m168
-endif
-ifeq ($(MCU),atmega329)
+else ifeq ($(MCU),atmega329)
 	AVRDUDEMCU = m329p
-endif
-ifeq ($(MCU),atmega169)
+else ifeq ($(MCU),atmega169)
 	AVRDUDEMCU = m169p
 endif
 
