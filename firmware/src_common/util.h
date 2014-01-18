@@ -29,9 +29,16 @@
 
 #include "e2p_layout.h" // device specific (!) version of e2p layout in the device's directory
 
+// How often should the packetcounter_base be increased and written to EEPROM?
+// This should be 2^32 (which is the maximum transmitted packet counter) /
+// 100.000 (which is the maximum amount of possible EEPROM write cycles) or more.
+// Therefore 100 is a good value.
+#define PACKET_COUNTER_WRITE_CYCLE 100
+
 // used as buffer for sending data to SHT
 uint8_t bufx[65];
 unsigned int adc_data;
+uint32_t packetcounter;
 
 void print_signed(int16_t i);
 void print_bytearray(uint8_t * b, uint8_t len);
@@ -58,6 +65,7 @@ void led_blink(uint16_t on, uint16_t off, uint8_t times);
 void check_eeprom_compatibility(uint8_t deviceType);
 void osccal_info(void);
 void osccal_init(void);
+void inc_packetcounter(void);
 void rfm12_sendbuf(void);
 
 #endif

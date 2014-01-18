@@ -32,12 +32,6 @@
 #include "aes256.h"
 #include "util.h"
 
-// How often should the packetcounter_base be increased and written to EEPROM?
-// This should be 2^32 (which is the maximum transmitted packet counter) /
-// 100.000 (which is the maximum amount of possible EEPROM write cycles) or more.
-// Therefore 100 is a good value.
-#define PACKET_COUNTER_WRITE_CYCLE 100
-
 // Don't change this, because other switch count like 8 needs other status message.
 // If support implemented, use EEPROM_SUPPORTEDSWITCHES_* E2P addresses.
 #define SWITCH_COUNT 1
@@ -54,22 +48,11 @@
 #define SEND_STATUS_EVERY_SEC 1800 // how often should a status be sent?
 
 uint8_t device_id;
-uint32_t packetcounter;
 uint32_t station_packetcounter;
 uint8_t switch_state[SWITCH_COUNT];
 uint16_t switch_timeout[SWITCH_COUNT];
 
 uint16_t send_status_timeout = 5;
-
-void inc_packetcounter(void)
-{
-	packetcounter++;
-	
-	if (packetcounter % PACKET_COUNTER_WRITE_CYCLE == 0)
-	{
-		eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
-	}
-}
 
 void print_switch_state(void)
 {

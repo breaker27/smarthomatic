@@ -344,6 +344,16 @@ void osccal_init(void)
 	}
 }
 
+void inc_packetcounter(void)
+{
+	packetcounter++;
+	
+	if (packetcounter % PACKET_COUNTER_WRITE_CYCLE == 0)
+	{
+		eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
+	}
+}
+
 void rfm12_sendbuf(void)
 {
 	UART_PUTS("Before encryption: ");

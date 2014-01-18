@@ -43,13 +43,6 @@
 #define AVERAGE_COUNT 4 // Average over how many values before sending over RFM12?
 #define SEND_BATT_STATUS_CYCLE 30 // send battery status x times less than temp status
 
-// How often should the packetcounter_base be increased and written to EEPROM?
-// This should be 2^32 (which is the maximum transmitted packet counter) /
-// 100.000 (which is the maximum amount of possible EEPROM write cycles) or more.
-// Therefore 100 is a good value.
-#define PACKET_COUNTER_WRITE_CYCLE 100
-
-uint32_t packetcounter = 0;
 uint8_t temperature_sensor_type = 0;
 uint8_t brightness_sensor_type = 0;
 uint8_t batt_status_cycle = SEND_BATT_STATUS_CYCLE - 1; // send promptly after startup
@@ -153,13 +146,7 @@ int main(void)
 			temp /= AVERAGE_COUNT;
 			hum /= AVERAGE_COUNT * 10;
 
-			// update packet counter
-			packetcounter++;
-			
-			if (packetcounter % PACKET_COUNTER_WRITE_CYCLE == 0)
-			{
-				eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
-			}
+			inc_packetcounter();
 
 			// Set packet content
 			pkg_header_init_tempsensor_temphumbristatus_status();
@@ -198,6 +185,7 @@ int main(void)
 			if (batt_status_cycle >= SEND_BATT_STATUS_CYCLE)
 			{
 				batt_status_cycle = 0;
+				inc_packetcounter();
 				
 				// Set packet content
 				pkg_header_init_generic_batterystatus_status();
