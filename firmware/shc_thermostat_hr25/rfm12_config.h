@@ -115,9 +115,9 @@
 // muss das EICRA (External Interrupt Control Register A) des ATMega88 verwendet werden.
 // UF: Benutze (wie in RFM12 lib empfohlen) low level interrupt statt low edge triggered.
 // Sonst wird Wakeup-Interrupt nicht erkannt!
-//#define RFM12_INT_SETUP()   EICRA |= (1<<ISC01)
+#define RFM12_INT_SETUP()   EICRA |= (1<<ISC01)
 // ISC01 NICHT setzen!
-#define RFM12_INT_SETUP()
+//#define RFM12_INT_SETUP()
 
 /**** UART DEBUGGING
  * en- or disable debugging via uart.
@@ -135,8 +135,8 @@ This is a bitmask that defines how "rude" this library behaves
  **/
 #define RFM12_LIVECTRL 0
 #define RFM12_NORETURNS 0
-#define RFM12_USE_WAKEUP_TIMER 1 // Do not use - it leads to problems... Use Timer2 Power Safe mode of ATMega88 instead.
-#define RFM12_TRANSMIT_ONLY 1
+#define RFM12_USE_WAKEUP_TIMER 0 // Do not use - it leads to problems... Use Timer2 Power Safe mode of ATMega88 instead.
+#define RFM12_TRANSMIT_ONLY 0
 #define RFM12_NOCOLLISIONDETECTION 0
 #define RFM12_USE_POLLING 0
 #define RFM12_LOW_POWER 0
