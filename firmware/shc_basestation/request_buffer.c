@@ -37,14 +37,14 @@ void request_queue_init(void)
 	
 	for (i = 0; i < REQUEST_BUFFER_SIZE; i++)
 	{
-		request_buffer[i].message_type = RS_UNUSED;
+		request_buffer[i].message_type = MESSAGETYPE_UNUSED;
 	}
 
 	for (i = 0; i < REQUEST_QUEUE_RECEIVERS; i++)
 	{
 		for (j = 0; j < REQUEST_QUEUE_PACKETS + 1; j++)
 		{
-			request_queue[i][j] = RS_UNUSED;
+			request_queue[i][j] = SLOT_UNUSED;
 		}
 	}
 }
@@ -56,7 +56,7 @@ bool queue_request(uint16_t receiver_id, uint8_t message_type, uint8_t aes_key, 
 	// Search free slot in request_buffer.
 	uint8_t rb_slot = 0;
 	
-	while (request_buffer[rb_slot].message_type != RS_UNUSED)
+	while (request_buffer[rb_slot].message_type != MESSAGETYPE_UNUSED)
 	{
 		rb_slot++;
 		
@@ -69,7 +69,7 @@ bool queue_request(uint16_t receiver_id, uint8_t message_type, uint8_t aes_key, 
 	// Search free slot in request_queue for receiver_id.
 	uint8_t rs_slot = 0;
 	
-	while ((request_queue[rs_slot][0] != RS_UNUSED) && (request_queue[rs_slot][0] != receiver_id))
+	while ((request_queue[rs_slot][0] != SLOT_UNUSED) && (request_queue[rs_slot][0] != receiver_id))
 	{
 		rs_slot++;
 		
@@ -85,7 +85,7 @@ bool queue_request(uint16_t receiver_id, uint8_t message_type, uint8_t aes_key, 
 	// Search free slot in request_queue for request.
 	uint8_t msg_slot = 1;
 	
-	while (request_queue[rs_slot][msg_slot] != RS_UNUSED)
+	while (request_queue[rs_slot][msg_slot] != SLOT_UNUSED)
 	{
 		msg_slot++;
 		
@@ -124,7 +124,7 @@ void print_request_queue(void)
 	for (i = 0; i < REQUEST_BUFFER_SIZE; i++)
 	{
 		
-		if (request_buffer[i].message_type != RS_UNUSED)
+		if (request_buffer[i].message_type != MESSAGETYPE_UNUSED)
 		{
 			UART_PUTF("Request Buffer %u: ", i);
 			UART_PUTF4("MessageType %u, PacketCounter %lu, Timeout %u, Retry %u, Data", request_buffer[i].message_type, request_buffer[i].packet_counter, request_buffer[i].timeout, request_buffer[i].retry_count);
@@ -141,7 +141,7 @@ void print_request_queue(void)
 
 	for (i = 0; i < REQUEST_QUEUE_RECEIVERS; i++)
 	{
-		if (request_queue[i][0] != RS_UNUSED)
+		if (request_queue[i][0] != SLOT_UNUSED)
 		{
 			empty = false;
 			
@@ -150,7 +150,7 @@ void print_request_queue(void)
 			
 			for (j = 0; j < REQUEST_QUEUE_PACKETS; j++)
 			{
-				if (request_queue[i][j + 1] == RS_UNUSED)
+				if (request_queue[i][j + 1] == SLOT_UNUSED)
 				{
 					UART_PUTS(" -");
 				}
@@ -188,13 +188,13 @@ request_t * find_request_to_repeat(uint32_t packet_counter)
 
 	for (i = 0; i < REQUEST_QUEUE_RECEIVERS; i++)
 	{
-		if (request_queue[i][0] != RS_UNUSED)
+		if (request_queue[i][0] != SLOT_UNUSED)
 		{
 			for (j = 0; j < REQUEST_QUEUE_PACKETS; j++)
 			{
 				slot = request_queue[i][j + 1];
 				
-				if (slot == RS_UNUSED)
+				if (slot == SLOT_UNUSED)
 				{
 					break;
 				}
@@ -234,7 +234,7 @@ request_t * find_request_to_repeat(uint32_t packet_counter)
 				if (request_buffer[slot].retry_count > REQUEST_RETRY_COUNT)
 				{
 					// delete request from queue
-					request_buffer[slot].message_type = RS_UNUSED;
+					request_buffer[slot].message_type = MESSAGETYPE_UNUSED;
 
 					uint8_t x;
 					
@@ -243,12 +243,12 @@ request_t * find_request_to_repeat(uint32_t packet_counter)
 						request_queue[i][x] = request_queue[i][x + 1];
 					}
 					
-					request_queue[i][REQUEST_QUEUE_PACKETS] = RS_UNUSED;
+					request_queue[i][REQUEST_QUEUE_PACKETS] = SLOT_UNUSED;
 					
 					// delete request queue completely (if no requests are in the queue)
-					if (request_queue[i][1] == RS_UNUSED)
+					if (request_queue[i][1] == SLOT_UNUSED)
 					{
-						request_queue[i][0] = RS_UNUSED;
+						request_queue[i][0] = SLOT_UNUSED;
 					}
 				}
 				else
@@ -290,7 +290,7 @@ void remove_request(uint16_t sender_id, uint16_t request_sender_id, uint32_t pac
 						UART_PUTF("Removing request from request buffer slot %u.\r\n", rb_slot);
 						
 						// remove from request buffer
-						request_buffer[rb_slot].message_type = RS_UNUSED;
+						request_buffer[rb_slot].message_type = MESSAGETYPE_UNUSED;
 						
 						// remove from request queue
 						for (i = 1; i < REQUEST_QUEUE_PACKETS; i++)
@@ -298,13 +298,13 @@ void remove_request(uint16_t sender_id, uint16_t request_sender_id, uint32_t pac
 							request_queue[rq_slot][i] = request_queue[rq_slot][i + 1];
 						}
 						
-						request_queue[rq_slot][REQUEST_QUEUE_PACKETS] = RS_UNUSED;
+						request_queue[rq_slot][REQUEST_QUEUE_PACKETS] = SLOT_UNUSED;
 						
 						// delete request queue entry if no more packets in this queue_request
-						if (request_queue[rq_slot][1] == RS_UNUSED)
+						if (request_queue[rq_slot][1] == SLOT_UNUSED)
 						{
 							UART_PUTF("Request queue %u is now empty.\r\n", rq_slot);
-							request_queue[rq_slot][0] = RS_UNUSED;
+							request_queue[rq_slot][0] = SLOT_UNUSED;
 						}
 						
 						print_request_queue();

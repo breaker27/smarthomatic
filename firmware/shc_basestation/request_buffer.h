@@ -34,11 +34,12 @@
 #define REQUEST_INITIAL_TIMEOUT_S 5    // The initial timeout in seconds. Please note that a receiver needs some time to receive,
                                        // decode, react, encode and send an acknowledge. So don't make the timeout too short!
 #define REQUEST_ADDITIONAL_TIMEOUT_S 2 // Additional timeout per retry.
-#define RS_UNUSED 255
+#define MESSAGETYPE_UNUSED 255         // marker for request_t elements which are not used
+#define SLOT_UNUSED 65535              // marker for request_queue slots which are not used
 #define REQUEST_DATA_BYTES_MAX   23    // leave this at 23, which is needed for 32 byte packets with the current header format
 
 typedef struct {
-	uint8_t message_type; // set to RS_UNUSED to show that this buffer is unused
+	uint8_t message_type; // set to MESSAGETYPE_UNUSED to show that this buffer is unused
 	uint8_t aes_key;
 	uint32_t packet_counter;
 	uint8_t data[REQUEST_DATA_BYTES_MAX];
