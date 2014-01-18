@@ -50,8 +50,15 @@ endif
 # set (differently named) CPU type for avrdude
 ifeq ($(MCU),atmega328)
 	AVRDUDEMCU = m328p
-else
+endif
+ifeq ($(MCU),atmega168)
 	AVRDUDEMCU = m168
+endif
+ifeq ($(MCU),atmega329)
+	AVRDUDEMCU = m329p
+endif
+ifeq ($(MCU),atmega169)
+	AVRDUDEMCU = m169p
 endif
 
 # Create final output files (.hex, .eep) from ELF output file.
