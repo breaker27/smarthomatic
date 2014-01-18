@@ -24,7 +24,6 @@ import javax.swing.JTextArea;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.PlainDocument;
-
 import shcee.Util;
 
 /**
@@ -49,7 +48,9 @@ public class ByteArrayTextArea extends JTextArea
 		
 		PlainDocument d = new TextFieldLimit(bytes * 2);
 		setDocument(d);
-		
+
+		this.setText(Util.fillString('0', bytes * 2));
+
 		d.addDocumentListener(new DocumentListener()
 		{
 			@Override

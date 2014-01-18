@@ -300,6 +300,13 @@ public class Util {
 		return "" + hexArray[i >>> 4] + hexArray[i & 0x0F];
 	}
 
+	public static String fillString(char fillChar, int count)
+	{  
+		char[] chars = new char[count];  
+		java.util.Arrays.fill(chars, fillChar);  
+		return new String(chars);  
+	}  
+	
 	/**
 	 * Create a file with the given length (in bytes). The content will
 	 * be 0-bytes.
