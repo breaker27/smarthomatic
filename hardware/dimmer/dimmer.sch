@@ -15296,10 +15296,10 @@ grid 15mm, 19649 Wickmann</description>
 <part name="R4" library="rcl" deviceset="R-EU_" device="0207/7" value="1M"/>
 <part name="JP5" library="pinhead" deviceset="PINHD-1X1" device="" value="ANT"/>
 <part name="TR1" library="trafo" deviceset="EE20-1" device="" value="12V"/>
-<part name="D1" library="diode" deviceset="1N4148" device="DO35-7"/>
-<part name="D2" library="diode" deviceset="1N4148" device="DO35-7"/>
-<part name="D3" library="diode" deviceset="1N4148" device="DO35-7"/>
-<part name="D4" library="diode" deviceset="1N4148" device="DO35-7"/>
+<part name="D1" library="diode" deviceset="1N4148" device="DO35-7" value="1N4148"/>
+<part name="D2" library="diode" deviceset="1N4148" device="DO35-7" value="1N4148"/>
+<part name="D3" library="diode" deviceset="1N4148" device="DO35-7" value="1N4148"/>
+<part name="D4" library="diode" deviceset="1N4148" device="DO35-7" value="1N4148"/>
 <part name="IC3" library="linear" deviceset="78*" device="L" technology="12"/>
 <part name="P+4" library="supply1" deviceset="VCC" device=""/>
 <part name="GND3" library="supply1" deviceset="GND" device=""/>
@@ -15312,8 +15312,8 @@ grid 15mm, 19649 Wickmann</description>
 <part name="C2" library="rcl" deviceset="CPOL-EU" device="E1.8-4" value="100µ"/>
 <part name="X1" library="con-ptr500" deviceset="AK500/2" device="" value="AC In"/>
 <part name="X2" library="con-ptr500" deviceset="AK500/2" device="" value="DIM Out"/>
-<part name="D5" library="diode" deviceset="1N4148" device="DO35-7"/>
-<part name="D6" library="diode" deviceset="1N4148" device="DO35-7"/>
+<part name="D5" library="diode" deviceset="1N4148" device="DO35-7" value="1N4148"/>
+<part name="D6" library="diode" deviceset="1N4148" device="DO35-7" value="1N4148"/>
 <part name="C4" library="rcl" deviceset="CPOL-EU" device="E1.8-4" value="10µ"/>
 <part name="C3" library="rcl" deviceset="C-EU" device="025-030X050" value="220n"/>
 <part name="X3" library="con-ptr500" deviceset="AK500/2" device="" value="AC Out">
@@ -15327,7 +15327,7 @@ grid 15mm, 19649 Wickmann</description>
 <part name="T2" library="transistor" deviceset="BC547" device=""/>
 <part name="R6" library="rcl" deviceset="R-EU_" device="0207/7" value="1k"/>
 <part name="JP2" library="pinhead" deviceset="PINHD-1X2" device="" value="POWER"/>
-<part name="JP3" library="pinhead" deviceset="PINHD-1X1" device="" value="TX"/>
+<part name="JP3" library="pinhead" deviceset="PINHD-1X1" device="" value="PD1/TX"/>
 <part name="JP4" library="pinhead" deviceset="PINHD-1X2" device="" value="On/Off"/>
 <part name="GND4" library="supply1" deviceset="GND" device=""/>
 </parts>
