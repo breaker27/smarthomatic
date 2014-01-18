@@ -20,6 +20,8 @@
 MCU		       = atmega329
 F_CPU	       = 4000000
 UART_BAUD_RATE = 4800
+#UART_DEBUG     = 1
+#UART_RX        = 1
 
 # Target file name (without extension).
 TARGET = shc_thermostat_hr25
@@ -44,4 +46,3 @@ include ../makefile_common/Makefile.targets
 include ../makefile_common/Makefile.rules
 # Include the dependency files.
 -include $(wildcard $(OBJDIR)/*.d)
-
