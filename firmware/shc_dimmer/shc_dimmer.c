@@ -34,12 +34,6 @@
 
 //#define UART_DEBUG_CALCULATIONS
 
-// How often should the packetcounter_base be increased and written to EEPROM?
-// This should be 2^32 (which is the maximum transmitted packet counter) /
-// 100.000 (which is the maximum amount of possible EEPROM write cycles) or more.
-// Therefore 100 is a good value.
-#define PACKET_COUNTER_WRITE_CYCLE 100
-
 #define SEND_STATUS_EVERY_SEC 1800 // how often should a status be sent
 
 #define DIMMER_DDR DDRB
@@ -78,60 +72,8 @@ float current_brightness = 0;
 
 uint8_t device_id;
 uint8_t use_pwm_translation = 1;
-uint32_t packetcounter;
 uint32_t station_packetcounter;
 uint8_t switch_off_delay = 0; // If 0% brightness is reached, switch off power (relais) with a delay to 1) dim down before switching off and to 2) avoid switching power off at manual dimming.
-
-void send_dimmer_status(void)
-{
-// FIXME!!
-/*
-	UART_PUTS("Sending Dimmer Status:\r\n");
-
-	// set device ID
-	bufx[0] = device_id;
-	
-	// update packet counter
-	packetcounter++;
-	
-	if (packetcounter % PACKET_COUNTER_WRITE_CYCLE == 0)
-	{
-		eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
-	}
-
-	setBuf32(1, packetcounter);
-
-	// set command ID "Dimmer Status"
-	bufx[5] = 30; // TODO: Move command IDs to global definition file as defines
-
-	// set current brightness
-	bufx[6] = (uint8_t)(current_brightness * 255 / 100);
-	
-	// set end brightness
-	bufx[7] = end_brightness;
-	
-	// set total animation time
-	setBuf16(8, (uint16_t)(animation_length * ANIMATION_CYCLE_MS / 1000));
-
-	// set time until animation finishes
-	setBuf16(10, (uint16_t)((animation_length - animation_position) * ANIMATION_CYCLE_MS / 1000));
-
-	// set CRC32
-	uint32_t crc = crc32(bufx, 12);
-	setBuf32(12, crc);
-
-	// show info
-	UART_PUTF("CRC32: %lx\r\n", crc);
-	uart_putstr("Unencrypted: ");
-	printbytearray(bufx, 16);
-
-	rfm12_sendbuf();
-	
-	UART_PUTS("Send encrypted: ");
-	printbytearray(bufx, 16);
-	UART_PUTS("\r\n");
-	*/
-}
 
 void switchRelais(uint8_t on)
 {
@@ -201,7 +143,7 @@ void checkSwitchOff(void)
 	}
 }
 
-void setPWMDutyCycle(float percent)
+void setPWMDutyCyclePercent(float percent)
 {
 	uint8_t index, index2;
 	float modulo;
@@ -271,14 +213,25 @@ ISR (TIMER0_OVF_vect)
 	}
 }
 
-void inc_packetcounter(void)
+void send_dimmer_status(void)
 {
-	packetcounter++;
+	UART_PUTS("Sending Dimmer Status:\r\n");
+
+	inc_packetcounter();
+	uint8_t bri = (uint8_t)current_brightness;
 	
-	if (packetcounter % PACKET_COUNTER_WRITE_CYCLE == 0)
-	{
-		eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
-	}
+	// Set packet content
+	pkg_header_init_dimmer_brightness_status();
+	pkg_header_set_senderid(device_id);
+	pkg_header_set_packetcounter(packetcounter);
+	msg_dimmer_brightness_set_brightness(bri);
+
+	pkg_header_calc_crc32();
+	
+	UART_PUTF("CRC32 is %lx (added as first 4 bytes)\r\n", getBuf32(0));
+	UART_PUTF("Brightness: %u%%\r\n", bri);
+
+	rfm12_sendbuf();
 }
 
 // process message "brightness"
@@ -289,13 +242,13 @@ void process_brightness(MessageTypeEnum messagetype)
 	{
 		start_brightness = end_brightness = msg_dimmer_brightness_get_brightness();
 
-		UART_PUTF("Brightness:%u;", start_brightness);
+		UART_PUTF("Requested Brightness: %u%%;", start_brightness);
 		
 		animation_length = 0;
 		animation_mode = 0;
 		animation_position = 0;
 
-		setPWMDutyCycle(start_brightness);
+		setPWMDutyCyclePercent(start_brightness);
 						
 		/* TODO: Write to EEPROM (?)
 		// write back switch state to EEPROM
@@ -356,16 +309,13 @@ void process_animation(MessageTypeEnum messagetype)
 
 		UART_PUTF("   Animation Mode: %u\r\n", animation_mode);
 		UART_PUTF("   Animation Time: %us\r\n", animation_length);
-		UART_PUTF(" Start Brightness: %u\r\n", start_brightness);
-		UART_PUTF("   End Brightness: %u\r\n", end_brightness);
-		
-		start_brightness = (uint16_t)start_brightness * 255 / 16;	
-		end_brightness = (uint16_t)end_brightness * 255 / 16;
+		UART_PUTF(" Start Brightness: %u%%\r\n", start_brightness);
+		UART_PUTF("   End Brightness: %u%%\r\n", end_brightness);
 		
 		animation_length = (uint32_t)((float)animation_length * 1000 / ANIMATION_CYCLE_MS);
 		animation_position = 0;
 		
-		setPWMDutyCycle(start_brightness);
+		setPWMDutyCyclePercent(start_brightness);
 		
 		/* TODO: Write to EEPROM (?)
 		// write back switch state to EEPROM
@@ -558,7 +508,7 @@ int main(void)
 	rfm12_init();
 	PWM_init();
 	io_init();
-	setPWMDutyCycle(0);
+	setPWMDutyCyclePercent(0);
 	timer0_init();
 
 	// DEMO to measure the voltages of different PWM settings to calculate the pwm_lookup table
@@ -670,7 +620,7 @@ int main(void)
 					if (current_brightness < 100)
 					{
 						current_brightness = (uint8_t)current_brightness / 2 * 2 + 2;
-						setPWMDutyCycle(current_brightness);
+						setPWMDutyCyclePercent(current_brightness);
 					}
 					else
 					{
@@ -683,7 +633,7 @@ int main(void)
 					if (current_brightness > 0)
 					{
 						current_brightness = (((uint8_t)current_brightness - 1) / 2) * 2;
-						setPWMDutyCycle(current_brightness);
+						setPWMDutyCyclePercent(current_brightness);
 					}
 					else
 					{
@@ -703,12 +653,12 @@ int main(void)
 				if (current_brightness > 0)
 				{
 					UART_PUTS(" -> 0%\r\n");
-					setPWMDutyCycle(0);
+					setPWMDutyCyclePercent(0);
 				}
 				else
 				{
 					UART_PUTS(" -> 100%\r\n");
-					setPWMDutyCycle(100);
+					setPWMDutyCyclePercent(100);
 				}
 			}
 			else
@@ -728,16 +678,16 @@ int main(void)
 			
 			if (pos == animation_length)
 			{
-				UART_PUTF("END Brightness %u%%, ", end_brightness * 100 / 255);
-				setPWMDutyCycle((float)end_brightness * 100 / 255);
+				UART_PUTF("END Brightness %u%%, ", end_brightness);
+				setPWMDutyCyclePercent((float)end_brightness);
 				animation_length = 0;
 				animation_position = 0;
 			}
 			else
 			{			
-				float brightness = (start_brightness + ((float)end_brightness - start_brightness) * pos / animation_length) * 100 / 255;
+				float brightness = (start_brightness + ((float)end_brightness - start_brightness) * pos / animation_length);
 				UART_PUTF("Br.%u%%, ", (uint32_t)(brightness));
-				setPWMDutyCycle(brightness);
+				setPWMDutyCyclePercent(brightness);
 			}
 		}			
 		
