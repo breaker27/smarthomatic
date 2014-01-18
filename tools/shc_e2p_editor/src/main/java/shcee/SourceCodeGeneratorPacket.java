@@ -23,11 +23,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Dictionary;
-import java.util.HashSet;
 import java.util.Hashtable;
-import java.util.Vector;
 
 import javax.swing.JOptionPane;
 import javax.xml.transform.TransformerException;
