@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <E2P xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="e2p_metamodel.xsd">
 	<Block>
-		<Name>HardwareConfig</Name>
+		<Name>Hardware</Name>
 		<Description>Values for hardware setup, which have no special meaning to SHC device concepts + the DeviceType, which decides about the existence of further blocks.</Description>
 		<EnumValue>
 			<ID>DeviceType</ID>
@@ -40,7 +40,7 @@
 		</Reserved>
 	</Block>
 	<Block>
-		<Name>GenericConfig</Name>
+		<Name>Generic</Name>
 		<Description>This block contains SHC configuration data which every device has.</Description>
 		<UIntValue>
 			<ID>DeviceID</ID>
@@ -69,7 +69,7 @@
 		</ByteArray>
 	</Block>
 	<Block>
-		<Name>BaseStationConfig</Name>
+		<Name>BaseStation</Name>
 		<Description>This block contains the specific configuration data that only Base Station devices need.</Description>
 		<Restriction>
 			<RefID>DeviceType</RefID>
@@ -92,7 +92,7 @@
 		</Reserved>
 	</Block>
 	<Block>
-		<Name>TempSensorConfig</Name>
+		<Name>TempSensor</Name>
 		<Description>This block contains the specific configuration data that only Temperature Sensor devices need.</Description>
 		<Restriction>
 			<RefID>DeviceType</RefID>
@@ -129,7 +129,7 @@
 		</Reserved>
 	</Block>
 	<Block>
-		<Name>PowerSwitchConfig</Name>
+		<Name>PowerSwitch</Name>
 		<Description>This block contains the specific configuration data that only Power Switch devices need.</Description>
 		<Restriction>
 			<RefID>DeviceType</RefID>
@@ -159,7 +159,7 @@
 		</Reserved>
 	</Block>
 	<Block>
-		<Name>DimmerConfig</Name>
+		<Name>Dimmer</Name>
 		<Description>This block contains the specific configuration data that only Dimmer devices need.</Description>
 		<Restriction>
 			<RefID>DeviceType</RefID>
@@ -182,7 +182,7 @@
 		</Reserved>
 	</Block>
 	<Block>
-		<Name>ThermostatConfig</Name>
+		<Name>Thermostat</Name>
 		<Description>This block contains the specific configuration data that only thermostat devices need.</Description>
 		<Restriction>
 			<RefID>DeviceType</RefID>
