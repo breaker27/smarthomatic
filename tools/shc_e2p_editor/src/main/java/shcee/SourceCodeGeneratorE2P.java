@@ -78,7 +78,7 @@ public class SourceCodeGeneratorE2P
 			String devTypeID = Util.getChildNodeValue(devTypeNode, "Value");
 
 			String filename = Util.getChildNodeValue(devTypeNode, "Name").toLowerCase().replace(' ', '_');
-			PrintWriter out = new PrintWriter(new FileWriter("e2p_layout_" + filename + ".h"));
+			PrintWriter out = new PrintWriter(new FileWriter("../../firmware/src_common/e2p_" + filename + ".h"));
 
 			out.println("/*");
 			out.println("* This file is part of smarthomatic, http://www.smarthomatic.org.");
