@@ -4,6 +4,9 @@
 		<xs:complexType>
 			<xs:sequence>
 				<xs:element name="Block" maxOccurs="unbounded">
+					<xs:annotation>
+						<xs:documentation>The first two blocks have to be "Hardware" and "Generic", followed by device specific blocks with Restriction.</xs:documentation>
+					</xs:annotation>
 					<xs:complexType>
 						<xs:sequence>
 							<xs:element name="Name" type="xs:string"/>
