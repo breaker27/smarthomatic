@@ -21,34 +21,13 @@
 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 */
 
-
-// ---------- HardwareConfig ----------
-
-// EnumValue DeviceType
-
-typedef enum {
-  DEVICETYPE_BASE_STATION = 0,
-  DEVICETYPE_TEMPERATURE_SENSOR = 20,
-  DEVICETYPE_POWER_SWITCH = 40,
-  DEVICETYPE_DIMMER = 60
-} DeviceTypeEnum;
-
-#define EEPROM_DEVICETYPE_BYTE 0
-#define EEPROM_DEVICETYPE_BIT 0
-#define EEPROM_DEVICETYPE_LENGTH_BITS 8
-
-// UIntValue OsccalMode
-
-#define EEPROM_OSCCALMODE_BYTE 1
-#define EEPROM_OSCCALMODE_BIT 0
-#define EEPROM_OSCCALMODE_LENGTH_BITS 8
-#define EEPROM_OSCCALMODE_MINVAL 0
-#define EEPROM_OSCCALMODE_MAXVAL 255
-
-// Reserved area with 48 bits
+#ifndef _E2P_GENERIC_H
+#define _E2P_GENERIC_H
 
 
-// ---------- GenericConfig ----------
+// ---------- Generic ----------
+// Start offset (bit): 64
+// Overall block length: 448 bits
 
 // UIntValue DeviceID
 
@@ -77,31 +56,4 @@ typedef enum {
 #define EEPROM_AESKEY_LENGTH_BYTES 32
 
 
-// ---------- TemperatureSensorConfig ----------
-
-// EnumValue TemperatureSensorType
-
-typedef enum {
-  TEMPERATURESENSORTYPE_NOSENSOR = 0,
-  TEMPERATURESENSORTYPE_SHT15 = 1
-} TemperatureSensorTypeEnum;
-
-#define EEPROM_TEMPERATURESENSORTYPE_BYTE 64
-#define EEPROM_TEMPERATURESENSORTYPE_BIT 0
-#define EEPROM_TEMPERATURESENSORTYPE_LENGTH_BITS 8
-
-// EnumValue BrightnessSensorType
-
-typedef enum {
-  BRIGHTNESSSENSORTYPE_NOSENSOR = 0,
-  BRIGHTNESSSENSORTYPE_PHOTOCELL = 1
-} BrightnessSensorTypeEnum;
-
-#define EEPROM_BRIGHTNESSSENSORTYPE_BYTE 65
-#define EEPROM_BRIGHTNESSSENSORTYPE_BIT 0
-#define EEPROM_BRIGHTNESSSENSORTYPE_LENGTH_BITS 8
-
-// Reserved area with 3568 bits
-
-// overall length: 4096 bits
-
+#endif /* _E2P_GENERIC_H */

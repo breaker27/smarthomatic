@@ -27,8 +27,6 @@
 #define sbi(ADDRESS,BIT) ((ADDRESS) |= (1<<(BIT)))
 #define cbi(ADDRESS,BIT) ((ADDRESS) &= ~(1<<(BIT)))
 
-#include "e2p_layout.h" // device specific (!) version of e2p layout in the device's directory
-
 // How often should the packetcounter_base be increased and written to EEPROM?
 // This should be 2^32 (which is the maximum transmitted packet counter) /
 // 100.000 (which is the maximum amount of possible EEPROM write cycles) or more.

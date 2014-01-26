@@ -31,6 +31,10 @@
 #include "../src_common/msggrp_tempsensor.h"
 #include "../src_common/msggrp_powerswitch.h"
 
+#include "../src_common/e2p_hardware.h"
+#include "../src_common/e2p_generic.h"
+#include "../src_common/e2p_basestation.h"
+
 #include "aes256.h"
 #include "util.h"
 #include "request_buffer.h"
@@ -222,7 +226,7 @@ int main(void)
 
 	util_init();
 
-	check_eeprom_compatibility(DEVICETYPE_BASE_STATION);
+	check_eeprom_compatibility(DEVICETYPE_BASESTATION);
 
 	request_queue_init();
 

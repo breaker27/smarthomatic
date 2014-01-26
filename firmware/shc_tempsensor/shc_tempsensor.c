@@ -30,6 +30,10 @@
 #include "../src_common/msggrp_generic.h"
 #include "../src_common/msggrp_tempsensor.h"
 
+#include "../src_common/e2p_hardware.h"
+#include "../src_common/e2p_generic.h"
+#include "../src_common/e2p_tempsensor.h"
+
 #include "sht11.h"
 
 #include "aes256.h"
@@ -62,7 +66,7 @@ int main(void)
 
 	util_init();
 
-	check_eeprom_compatibility(DEVICETYPE_TEMPERATURE_SENSOR);
+	check_eeprom_compatibility(DEVICETYPE_TEMPSENSOR);
 
 	// read packetcounter, increase by cycle and write back
 	packetcounter = eeprom_read_UIntValue32(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT,

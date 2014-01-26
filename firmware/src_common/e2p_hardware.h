@@ -21,16 +21,22 @@
 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 */
 
+#ifndef _E2P_HARDWARE_H
+#define _E2P_HARDWARE_H
 
-// ---------- HardwareConfig ----------
+
+// ---------- Hardware ----------
+// Start offset (bit): 0
+// Overall block length: 64 bits
 
 // EnumValue DeviceType
 
 typedef enum {
-  DEVICETYPE_BASE_STATION = 0,
-  DEVICETYPE_TEMPERATURE_SENSOR = 20,
-  DEVICETYPE_POWER_SWITCH = 40,
-  DEVICETYPE_DIMMER = 60
+  DEVICETYPE_BASESTATION = 0,
+  DEVICETYPE_TEMPSENSOR = 20,
+  DEVICETYPE_POWERSWITCH = 40,
+  DEVICETYPE_DIMMER = 60,
+  DEVICETYPE_THERMOSTAT = 80
 } DeviceTypeEnum;
 
 #define EEPROM_DEVICETYPE_BYTE 0
@@ -48,52 +54,4 @@ typedef enum {
 // Reserved area with 48 bits
 
 
-// ---------- GenericConfig ----------
-
-// UIntValue DeviceID
-
-#define EEPROM_DEVICEID_BYTE 8
-#define EEPROM_DEVICEID_BIT 0
-#define EEPROM_DEVICEID_LENGTH_BITS 12
-#define EEPROM_DEVICEID_MINVAL 0
-#define EEPROM_DEVICEID_MAXVAL 4095
-
-// Reserved area with 4 bits
-
-// UIntValue PacketCounter
-
-#define EEPROM_PACKETCOUNTER_BYTE 10
-#define EEPROM_PACKETCOUNTER_BIT 0
-#define EEPROM_PACKETCOUNTER_LENGTH_BITS 24
-#define EEPROM_PACKETCOUNTER_MINVAL 0
-#define EEPROM_PACKETCOUNTER_MAXVAL 16777215
-
-// Reserved area with 152 bits
-
-// ByteArray AesKey
-
-#define EEPROM_AESKEY_BYTE 32
-#define EEPROM_AESKEY_BIT 0
-#define EEPROM_AESKEY_LENGTH_BYTES 32
-
-
-// ---------- BaseStationConfig ----------
-
-// UIntValue AesKeyCount
-
-#define EEPROM_AESKEYCOUNT_BYTE 64
-#define EEPROM_AESKEYCOUNT_BIT 0
-#define EEPROM_AESKEYCOUNT_LENGTH_BITS 8
-#define EEPROM_AESKEYCOUNT_MINVAL 1
-#define EEPROM_AESKEYCOUNT_MAXVAL 16
-
-// ByteArray AesKeys
-
-#define EEPROM_AESKEYS_BYTE 65
-#define EEPROM_AESKEYS_BIT 0
-#define EEPROM_AESKEYS_LENGTH_BYTES 512
-
-// Reserved area with 3576 bits
-
-// overall length: 8192 bits
-
+#endif /* _E2P_HARDWARE_H */

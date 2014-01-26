@@ -29,6 +29,10 @@
 
 #include "../src_common/msggrp_powerswitch.h"
 
+#include "../src_common/e2p_hardware.h"
+#include "../src_common/e2p_generic.h"
+#include "../src_common/e2p_powerswitch.h"
+
 #include "aes256.h"
 #include "util.h"
 
@@ -283,7 +287,7 @@ int main(void)
 
 	util_init();
 	
-	check_eeprom_compatibility(DEVICETYPE_POWER_SWITCH);
+	check_eeprom_compatibility(DEVICETYPE_POWERSWITCH);
 
 	for (i = 0; i < SWITCH_COUNT; i++)
 	{

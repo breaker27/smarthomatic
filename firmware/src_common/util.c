@@ -36,6 +36,8 @@
 #include "uart.h"
 
 #include "e2p_access.h"
+#include "e2p_hardware.h"
+#include "e2p_generic.h"
 #include "packet_header.h"
 #include "rfm12.h"
 #include "aes256.h"

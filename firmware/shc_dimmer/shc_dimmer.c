@@ -29,6 +29,10 @@
 
 #include "../src_common/msggrp_dimmer.h"
 
+#include "../src_common/e2p_hardware.h"
+#include "../src_common/e2p_generic.h"
+#include "../src_common/e2p_dimmer.h"
+
 #include "aes256.h"
 #include "util.h"
 
