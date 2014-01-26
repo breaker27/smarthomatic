@@ -9,19 +9,23 @@
 			<Bits>8</Bits>
 			<Element>
 				<Value>0</Value>
-				<Name>Base Station</Name>
+				<Name>BaseStation</Name>
 			</Element>
 			<Element>
 				<Value>20</Value>
-				<Name>Temperature Sensor</Name>
+				<Name>TempSensor</Name>
 			</Element>
 			<Element>
 				<Value>40</Value>
-				<Name>Power Switch</Name>
+				<Name>PowerSwitch</Name>
 			</Element>
 			<Element>
 				<Value>60</Value>
 				<Name>Dimmer</Name>
+			</Element>
+			<Element>
+				<Value>80</Value>
+				<Name>Thermostat</Name>
 			</Element>
 		</EnumValue>
 		<UIntValue>
@@ -88,7 +92,7 @@
 		</Reserved>
 	</Block>
 	<Block>
-		<Name>TemperatureSensorConfig</Name>
+		<Name>TempSensorConfig</Name>
 		<Description>This block contains the specific configuration data that only Temperature Sensor devices need.</Description>
 		<Restriction>
 			<RefID>DeviceType</RefID>
@@ -175,6 +179,24 @@
 		</ByteArray>
 		<Reserved>
 			<Bits>6848</Bits>
+		</Reserved>
+	</Block>
+	<Block>
+		<Name>ThermostatConfig</Name>
+		<Description>This block contains the specific configuration data that only thermostat devices need.</Description>
+		<Restriction>
+			<RefID>DeviceType</RefID>
+			<Value>80</Value>
+		</Restriction>
+		<UIntValue>
+			<ID>BaseStationPacketCounter</ID>
+			<Description>This is the last remembered packet counter of a command from the base station. Packets with the same or lower number are ignored.</Description>
+			<Bits>24</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>16777215</MaxVal>
+		</UIntValue>
+		<Reserved>
+			<Bits>7656</Bits>
 		</Reserved>
 	</Block>
 </E2P>
