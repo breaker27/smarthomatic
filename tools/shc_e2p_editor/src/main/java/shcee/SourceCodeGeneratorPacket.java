@@ -839,7 +839,7 @@ public class SourceCodeGeneratorPacket
 		 
 	}
 
-	private String genCopyrightNotice()
+	public static String genCopyrightNotice()
 	{
 		return "/*" + newline +
 				"* This file is part of smarthomatic, http://www.smarthomatic.org." + newline +
