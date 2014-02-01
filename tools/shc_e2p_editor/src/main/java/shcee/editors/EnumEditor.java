@@ -67,6 +67,8 @@ public class EnumEditor extends AbstractEditor
 
 	protected void onChangeValue()
 	{
+		// If the DeviceType is changes, the layout of the ValueEditorPanel has to be changed, because
+		// different DeviceTypes have different values to edit.
 		if (id.equals("DeviceType"))
 		{
 			SHCEEMain.mySHCEEMain.valueEditor.updateBlockVisibility();

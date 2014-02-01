@@ -140,7 +140,7 @@
 		</UIntValue>
 		<ByteArray>
 			<ID>SwitchState</ID>
-			<Description>This field stores the last known switch state(s) to allow restoring the same state after power loss.</Description>
+			<Description>This field stores the last known switch state(s) for eight switches to allow restoring the same state after power loss. It contains also the remaining timeout value. Fill this with zeros when creating a e2p file!</Description>
 			<Bytes>16</Bytes>
 		</ByteArray>
 		<UIntValue>
@@ -151,7 +151,7 @@
 			<MaxVal>16777215</MaxVal>
 		</UIntValue>
 		<Reserved>
-			<Bits>3424</Bits>
+			<Bits>7520</Bits>
 		</Reserved>
 	</Block>
 	<Block>

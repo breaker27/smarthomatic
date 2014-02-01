@@ -38,9 +38,9 @@ import com.sun.org.apache.xpath.internal.XPathAPI;
  * is the case for SHC) and creates one file per DeviceType.
  * @author uwe
  */
-public class SourceCodeGenerator
+public class SourceCodeGeneratorE2P
 {
-	public SourceCodeGenerator() throws TransformerException, IOException
+	public SourceCodeGeneratorE2P() throws TransformerException, IOException
 	{
 		String errMsg = Util.conformsToSchema(SHCEEMain.EEPROM_LAYOUT_XML, SHCEEMain.EEPROM_METAMODEL_XSD);
 		

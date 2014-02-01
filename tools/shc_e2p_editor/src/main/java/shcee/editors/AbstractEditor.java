@@ -18,7 +18,6 @@
 
 package shcee.editors;
 
-import java.awt.Font;
 import java.awt.LayoutManager;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;

@@ -21,13 +21,15 @@
 #include "util.h"
 #include <string.h>
 
+#include "../src_common/msggrp_generic.h"
+
 // The request buffer holds several requests for different receivers.
 request_t request_buffer[];
 
 // The request queue holds the id of the device it holds the data for and a number of indices to the request buffer slots that are used for this device.
 // The items request_queue[DEVICEID][0] holds the device id DEVICEID,
 // items request_queue[DEVICEID][x] with x > 0 hold the indices to the request buffer.
-uint8_t request_queue[REQUEST_QUEUE_RECEIVERS][REQUEST_QUEUE_PACKETS + 1];
+uint16_t request_queue[REQUEST_QUEUE_RECEIVERS][REQUEST_QUEUE_PACKETS + 1];
 
 void request_queue_init(void)
 {
@@ -35,26 +37,26 @@ void request_queue_init(void)
 	
 	for (i = 0; i < REQUEST_BUFFER_SIZE; i++)
 	{
-		request_buffer[i].command_id = RS_UNUSED;
+		request_buffer[i].message_type = MESSAGETYPE_UNUSED;
 	}
 
 	for (i = 0; i < REQUEST_QUEUE_RECEIVERS; i++)
 	{
 		for (j = 0; j < REQUEST_QUEUE_PACKETS + 1; j++)
 		{
-			request_queue[i][j] = RS_UNUSED;
+			request_queue[i][j] = SLOT_UNUSED;
 		}
 	}
 }
 
 // Remember the request in the request queue and return if it was successful.
 // If not, the request will not be queued and therefore not repeated if no acknowledge is received.
-bool queue_request(uint8_t receiver_id, uint8_t command_id, uint8_t aes_key, uint8_t * data)
+bool queue_request(uint16_t receiver_id, uint8_t message_type, uint8_t aes_key, uint8_t * data, uint8_t data_bytes)
 {
 	// Search free slot in request_buffer.
 	uint8_t rb_slot = 0;
 	
-	while (request_buffer[rb_slot].command_id != RS_UNUSED)
+	while (request_buffer[rb_slot].message_type != MESSAGETYPE_UNUSED)
 	{
 		rb_slot++;
 		
@@ -67,7 +69,7 @@ bool queue_request(uint8_t receiver_id, uint8_t command_id, uint8_t aes_key, uin
 	// Search free slot in request_queue for receiver_id.
 	uint8_t rs_slot = 0;
 	
-	while ((request_queue[rs_slot][0] != RS_UNUSED) && (request_queue[rs_slot][0] != receiver_id))
+	while ((request_queue[rs_slot][0] != SLOT_UNUSED) && (request_queue[rs_slot][0] != receiver_id))
 	{
 		rs_slot++;
 		
@@ -83,7 +85,7 @@ bool queue_request(uint8_t receiver_id, uint8_t command_id, uint8_t aes_key, uin
 	// Search free slot in request_queue for request.
 	uint8_t msg_slot = 1;
 	
-	while (request_queue[rs_slot][msg_slot] != RS_UNUSED)
+	while (request_queue[rs_slot][msg_slot] != SLOT_UNUSED)
 	{
 		msg_slot++;
 		
@@ -96,11 +98,17 @@ bool queue_request(uint8_t receiver_id, uint8_t command_id, uint8_t aes_key, uin
 	// Set id of request_buffer index in request queue.
 	request_queue[rs_slot][msg_slot] = rb_slot;
 	
+	if (data_bytes > REQUEST_DATA_BYTES_MAX)
+	{
+		data_bytes = REQUEST_DATA_BYTES_MAX;
+	}
+	
 	// Set data in request_buffer.
-	request_buffer[rb_slot].command_id = command_id;
+	request_buffer[rb_slot].message_type = message_type;
 	request_buffer[rb_slot].aes_key = aes_key;
 	request_buffer[rb_slot].packet_counter = 0;
-	memcpy(request_buffer[rb_slot].data, data, 5);
+	memcpy(request_buffer[rb_slot].data, data, data_bytes);
+	request_buffer[rb_slot].data_bytes = data_bytes;
 	request_buffer[rb_slot].timeout = 1;
 	request_buffer[rb_slot].retry_count = 0;
 	
@@ -116,12 +124,13 @@ void print_request_queue(void)
 	for (i = 0; i < REQUEST_BUFFER_SIZE; i++)
 	{
 		
-		if (request_buffer[i].command_id != RS_UNUSED)
+		if (request_buffer[i].message_type != MESSAGETYPE_UNUSED)
 		{
-			UART_PUTF("Request buffer %u: ", i);
-			UART_PUTF4("Command ID %u, Packet Counter %lu, Timeout %u, Retry %u, Data", request_buffer[i].command_id, request_buffer[i].packet_counter, request_buffer[i].timeout, request_buffer[i].retry_count);
+			UART_PUTF("Request Buffer %u: ", i);
+			UART_PUTF4("MessageType %u, PacketCounter %lu, Timeout %u, Retry %u, Data", request_buffer[i].message_type, request_buffer[i].packet_counter, request_buffer[i].timeout, request_buffer[i].retry_count);
 			
-			for (j = 0; j < 5; j++)
+			// TODO: only show bytes of real data length
+			for (j = 0; j < request_buffer[i].data_bytes; j++)
 			{
 				UART_PUTF(" %02x", request_buffer[i].data[j]);
 			}
@@ -132,16 +141,16 @@ void print_request_queue(void)
 
 	for (i = 0; i < REQUEST_QUEUE_RECEIVERS; i++)
 	{
-		if (request_queue[i][0] != RS_UNUSED)
+		if (request_queue[i][0] != SLOT_UNUSED)
 		{
 			empty = false;
 			
 			UART_PUTF("Request Queue %u: ", i);
-			UART_PUTF("Receiver ID %u, Buffer slots", request_queue[i][0]);
+			UART_PUTF("ReceiverID %u, Buffer slots", request_queue[i][0]);
 			
 			for (j = 0; j < REQUEST_QUEUE_PACKETS; j++)
 			{
-				if (request_queue[i][j + 1] == RS_UNUSED)
+				if (request_queue[i][j + 1] == SLOT_UNUSED)
 				{
 					UART_PUTS(" -");
 				}
@@ -164,28 +173,28 @@ void print_request_queue(void)
 }
 
 // Search for a request to repeat (with timeout reached) and write the data to the send buffer bufx.
-// Return true if successful, false if no request to repeat was found.
+// Return a pointer to the request if successful, 0 if no request to repeat was found.
 // Automatically decrease timeout counters for all waiting requests in the queue,
 // delete a request if it is repeated the last time and cleanup the queue and repeat_buffer accordingly.
 // This function has to be called once a second, because the timeout values represent the amount of seconds.
 //
 // TODO (optimization): Change the behaviour so that a new packet can be sent out of the queue without a delay (currently, we have ~0.5s delay in average).
 // So check the queue for "timeout 0" packets more often, but don't reduce the timeout  in this case.
-bool set_repeat_request(uint32_t packet_counter)
+request_t * find_request_to_repeat(uint32_t packet_counter)
 {
 	uint8_t i, j;
 	uint8_t slot;
-	bool found = false;
+	request_t * res = 0;
 
 	for (i = 0; i < REQUEST_QUEUE_RECEIVERS; i++)
 	{
-		if (request_queue[i][0] != RS_UNUSED)
+		if (request_queue[i][0] != SLOT_UNUSED)
 		{
 			for (j = 0; j < REQUEST_QUEUE_PACKETS; j++)
 			{
 				slot = request_queue[i][j + 1];
 				
-				if (slot == RS_UNUSED)
+				if (slot == SLOT_UNUSED)
 				{
 					break;
 				}
@@ -202,18 +211,20 @@ bool set_repeat_request(uint32_t packet_counter)
 			// set bufx to the request to retry, if timeout is reached
 			slot = request_queue[i][1];
 			
-			if ((request_buffer[slot].timeout == 0) && !found)
+			if ((request_buffer[slot].timeout == 0) && (res == 0))
 			{
-				found = true;
-				
-				// set command id
-				bufx[5] = request_buffer[slot].command_id;
-				
-				// set receiver id
-				bufx[6] = request_queue[i][0];
-				
-				// set data
-				memcpy(bufx + 7, request_buffer[slot].data, 5);
+				res = &request_buffer[slot];
+
+				// Init header
+				memset(&bufx[0], 0, sizeof(bufx));
+				pkg_header_set_senderid(0); // FIXME: Use DeviceID instead?!
+				pkg_header_set_packetcounter(packet_counter);
+
+				// set message type
+				pkg_header_set_messagetype(request_buffer[slot].message_type);
+
+				// set header extension (incl. receiver_id) + data
+				memcpy(bufx + 9, request_buffer[slot].data, 7); // header size = 9 bytes
 				
 				// remember packet counter
 				request_buffer[slot].packet_counter = packet_counter;
@@ -223,7 +234,7 @@ bool set_repeat_request(uint32_t packet_counter)
 				if (request_buffer[slot].retry_count > REQUEST_RETRY_COUNT)
 				{
 					// delete request from queue
-					request_buffer[slot].command_id = RS_UNUSED;
+					request_buffer[slot].message_type = MESSAGETYPE_UNUSED;
 
 					uint8_t x;
 					
@@ -232,12 +243,12 @@ bool set_repeat_request(uint32_t packet_counter)
 						request_queue[i][x] = request_queue[i][x + 1];
 					}
 					
-					request_queue[i][REQUEST_QUEUE_PACKETS] = RS_UNUSED;
+					request_queue[i][REQUEST_QUEUE_PACKETS] = SLOT_UNUSED;
 					
 					// delete request queue completely (if no requests are in the queue)
-					if (request_queue[i][1] == RS_UNUSED)
+					if (request_queue[i][1] == SLOT_UNUSED)
 					{
-						request_queue[i][0] = RS_UNUSED;
+						request_queue[i][0] = SLOT_UNUSED;
 					}
 				}
 				else
@@ -250,11 +261,11 @@ bool set_repeat_request(uint32_t packet_counter)
 		//UART_PUTS("\r\n");
 	}
 	
-	return found;
+	return res;
 }
 
 // Assume a request as acknowledged and delete it from the request_buffer and request_queue.
-void remove_request(uint8_t sender_id, uint8_t request_sender_id, uint32_t packet_counter)
+void remove_request(uint16_t sender_id, uint16_t request_sender_id, uint32_t packet_counter)
 {
 	if (request_sender_id != 0) // if acknowledge is not meant for the base station (which has device id 0)
 	{			
@@ -279,7 +290,7 @@ void remove_request(uint8_t sender_id, uint8_t request_sender_id, uint32_t packe
 						UART_PUTF("Removing request from request buffer slot %u.\r\n", rb_slot);
 						
 						// remove from request buffer
-						request_buffer[rb_slot].command_id = RS_UNUSED;
+						request_buffer[rb_slot].message_type = MESSAGETYPE_UNUSED;
 						
 						// remove from request queue
 						for (i = 1; i < REQUEST_QUEUE_PACKETS; i++)
@@ -287,20 +298,20 @@ void remove_request(uint8_t sender_id, uint8_t request_sender_id, uint32_t packe
 							request_queue[rq_slot][i] = request_queue[rq_slot][i + 1];
 						}
 						
-						request_queue[rq_slot][REQUEST_QUEUE_PACKETS] = RS_UNUSED;
+						request_queue[rq_slot][REQUEST_QUEUE_PACKETS] = SLOT_UNUSED;
 						
 						// delete request queue entry if no more packets in this queue_request
-						if (request_queue[rq_slot][1] == RS_UNUSED)
+						if (request_queue[rq_slot][1] == SLOT_UNUSED)
 						{
 							UART_PUTF("Request queue %u is now empty.\r\n", rq_slot);
-							request_queue[rq_slot][0] = RS_UNUSED;
+							request_queue[rq_slot][0] = SLOT_UNUSED;
 						}
 						
 						print_request_queue();
 					}
 					else
 					{
-						UART_PUTS("Warning: Sender ID from ack found in queue, but Packet Counter does not match.\r\n");
+						UART_PUTS("Warning: SenderID from ack found in queue, but PacketCounter does not match.\r\n");
 					}
 					
 					return;

@@ -52,6 +52,8 @@ public class UIntTextArea extends JTextArea
 		PlainDocument d = new TextFieldLimit((int)Math.log10(maxVal) + 1);
 		setDocument(d);
 		
+		this.setText("" + minVal);
+		
 		d.addDocumentListener(new DocumentListener()
 		{
 			@Override

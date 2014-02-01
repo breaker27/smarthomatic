@@ -20,6 +20,9 @@
 MCU		       = atmega328
 F_CPU	       = 20000000
 UART_BAUD_RATE = 19200
+
+# never remove this, because the base station needs the UART
+UART_DEBUG     = 1
 UART_RX        = 1
 
 # Target file name (without extension).

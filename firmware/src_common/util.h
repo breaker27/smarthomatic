@@ -29,11 +29,20 @@
 
 #include "e2p_layout.h" // device specific (!) version of e2p layout in the device's directory
 
-// used as buffer for sending data to SHT
-extern uint8_t bufx[];
-unsigned int adc_data;
+// How often should the packetcounter_base be increased and written to EEPROM?
+// This should be 2^32 (which is the maximum transmitted packet counter) /
+// 100.000 (which is the maximum amount of possible EEPROM write cycles) or more.
+// Therefore 100 is a good value.
+#define PACKET_COUNTER_WRITE_CYCLE 100
 
-uint16_t linear_interpolate(uint16_t in, uint16_t min_in, uint16_t max_in, uint16_t min_out, uint16_t max_out);
+// used as buffer for sending data to SHT
+uint8_t bufx[65];
+unsigned int adc_data;
+uint32_t packetcounter;
+
+void print_signed(int16_t i);
+void print_bytearray(uint8_t * b, uint8_t len);
+uint16_t linear_interpolate16(uint16_t in, uint16_t min_in, uint16_t max_in, uint16_t min_out, uint16_t max_out);
 uint32_t linear_interpolate32(uint32_t in, uint32_t min_in, uint32_t max_in, uint32_t min_out, uint32_t max_out);
 float linear_interpolate_f(float in, float min_in, float max_in, float min_out, float max_out);
 int bat_percentage(int vbat);
@@ -51,10 +60,12 @@ void setBuf32(uint8_t offset, uint32_t val);
 void setBuf16(uint8_t offset, uint16_t val);
 
 void util_init(void);
-void switch_led(uint8_t b_on);
+void switch_led(bool b_on);
 void led_blink(uint16_t on, uint16_t off, uint8_t times);
 void check_eeprom_compatibility(uint8_t deviceType);
 void osccal_info(void);
 void osccal_init(void);
+void inc_packetcounter(void);
+void rfm12_sendbuf(void);
 
 #endif

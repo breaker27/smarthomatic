@@ -26,7 +26,7 @@ LST = $(CSRC:%.c=$(OBJDIR)/%.lst) $(ASRC:%.S=$(OBJDIR)/%.lst)
 ALL_CFLAGS = -g$(DEBUG)
 ALL_CFLAGS += -DF_CPU=$(F_CPU)UL
 ALL_CFLAGS += -DUART_BAUD_RATE=$(UART_BAUD_RATE)UL
-ALL_CFLAGS += -DUART_RX=$(UART_RX)UL
+
 ALL_CFLAGS += -O$(OPT)
 ALL_CFLAGS += -mmcu=$(MCU) -I. 
 ALL_CFLAGS += $(CFLAGS) 
@@ -37,6 +37,15 @@ ALL_ASFLAGS += $(ASFLAGS)
 ALL_ASFLAGS += -Wa,-adhlns=$(<:%.S=$(OBJDIR)/%.lst),-gstabs
 ALL_LDFLAGS = $(LDFLAGS)
 ALL_LDFLAGS += -Wl,-Map=$(OBJDIR)/$(TARGET).map,--cref
+
+# add UART defines used to compile some object files
+ifeq ($(UART_DEBUG),1)
+	ALL_CFLAGS += -DUART_DEBUG
+	
+	ifeq ($(UART_RX),1)
+		ALL_CFLAGS += -DUART_RX
+	endif
+endif
 
 # set (differently named) CPU type for avrdude
 ifeq ($(MCU),atmega328)

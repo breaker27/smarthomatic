@@ -36,12 +36,39 @@
 #include "uart.h"
 
 #include "e2p_access.h"
-
-uint8_t bufx[65];
+#include "packet_header.h"
+#include "rfm12.h"
+#include "aes256.h"
 
 #define LED_PIN 7
 #define LED_PORT PORTD
 #define LED_DDR DDRD
+
+// printf for floating point numbers takes ~1500 bytes program size.
+// Therefore, we use a smaller special function instead
+// as long it is used so rarely.
+void print_signed(int16_t i)
+{
+	if (i < 0)
+	{
+		UART_PUTS("-");
+		i = -i;
+	}
+	
+	UART_PUTF2("%d.%02d", i / 100, i % 100);
+}
+
+void print_bytearray(uint8_t * b, uint8_t len)
+{
+	uint8_t i;
+	
+	for (i = 0; i < len; i++)
+	{
+		UART_PUTF("%02x ", b[i]);
+	}
+	
+	UART_PUTS ("\r\n");
+}
 
 // reference battery voltage (alkaline) for 100%, 90%,... 0% with end voltage 0,9V
 //static short vbat_alkaline[] = {1600, 1400, 1320, 1280, 1240, 1210, 1180, 1160, 1100, 1030, 900};
@@ -49,8 +76,8 @@ uint8_t bufx[65];
 // reference battery voltage (alkaline) for 100%, 90%,... 0% with end voltage 1,1V (= minimum for RFM12)
 static short vbat_alkaline[] = {1600, 1405, 1333, 1293, 1260, 1232, 1205, 1183, 1170, 1145, 1100};
 
-// PRECONDITION: min_in < max_in, min_out < max_out
-uint16_t linear_interpolate(uint16_t in, uint16_t min_in, uint16_t max_in, uint16_t min_out, uint16_t max_out)
+// PRECONDITION (which is NOT checked!): min_in < max_in, min_out < max_out
+uint16_t linear_interpolate16(uint16_t in, uint16_t min_in, uint16_t max_in, uint16_t min_out, uint16_t max_out)
 {
 	if (in >= max_in)
 		return max_out;
@@ -100,20 +127,18 @@ int bat_percentage(int vbat)
 			i++;
 		}
 		
-		return linear_interpolate(vbat, vbat_alkaline[i], vbat_alkaline[i - 1], 100 - i * 10, 100 - (i - 1) * 10);
+		return linear_interpolate16(vbat, vbat_alkaline[i], vbat_alkaline[i - 1], 100 - i * 10, 100 - (i - 1) * 10);
 	}
 }
 
 void adc_init(void)
 {
-	//{{WIZARD_MAP(ADC)
 	// ADC Clock: 62.500kHz
 	// ADC Voltage Reference: Internal 1.1V, External capacitor
 	// ADC Noise Canceler Enabled
 	ADCSRB |= 0x0;
 	ADMUX = 0xc0;
 	ADCSRA = 0x8e;
-	//}}WIZARD_MAP(ADC)
 }
 
 void adc_on(bool on)
@@ -227,7 +252,7 @@ void util_init(void)
 	sbi(LED_DDR, LED_PIN);
 }
 
-void switch_led(uint8_t b_on)
+void switch_led(bool b_on)
 {
 	if (b_on)
 	{
@@ -275,6 +300,7 @@ void check_eeprom_compatibility(uint8_t expectedDeviceType)
 // print an info over UART about the OSCCAL adjustment that was made
 void osccal_info(void)
 {
+#ifdef UART_DEBUG
 	uint8_t mode = eeprom_read_UIntValue8(EEPROM_OSCCALMODE_BYTE, EEPROM_OSCCALMODE_BIT,
 		EEPROM_OSCCALMODE_LENGTH_BITS, EEPROM_OSCCALMODE_MINVAL, EEPROM_OSCCALMODE_MAXVAL);
 	
@@ -283,6 +309,7 @@ void osccal_info(void)
 		int16_t adjustment = (int16_t)mode - 128;
 		UART_PUTF("The CPU speed was adjusted by +%d/1000 as set in OSCCAL_MODE byte.\r\n", adjustment);
 	}
+#endif // UART_DEBUG
 }
 
 // Initialize the OSCCAL register, used to adjust the internal clock.
@@ -315,4 +342,27 @@ void osccal_init(void)
 		float speedup = ((float)mode - 128) / 1000;
 		OSCCAL = (uint16_t)((float)OSCCAL * (1 + speedup));
 	}
+}
+
+void inc_packetcounter(void)
+{
+	packetcounter++;
+	
+	if (packetcounter % PACKET_COUNTER_WRITE_CYCLE == 0)
+	{
+		eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
+	}
+}
+
+void rfm12_sendbuf(void)
+{
+	UART_PUTS("Before encryption: ");
+	print_bytearray(bufx, __PACKETSIZEBYTES);
+
+	uint8_t aes_byte_count = aes256_encrypt_cbc(bufx, __PACKETSIZEBYTES);
+
+	UART_PUTS("After encryption:  ");
+	print_bytearray(bufx, aes_byte_count);
+
+	rfm12_tx(aes_byte_count, 0, (uint8_t *) bufx);
 }

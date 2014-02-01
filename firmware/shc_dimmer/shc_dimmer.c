@@ -26,19 +26,15 @@
 
 #include "rfm12.h"
 #include "uart.h"
+
+#include "../src_common/msggrp_dimmer.h"
+
 #include "aes256.h"
 #include "util.h"
 
-#define UART_DEBUG   // Debug output over UART
 //#define UART_DEBUG_CALCULATIONS
 
-// How often should the packetcounter_base be increased and written to EEPROM?
-// This should be 2^32 (which is the maximum transmitted packet counter) /
-// 100.000 (which is the maximum amount of possible EEPROM write cycles) or more.
-// Therefore 100 is a good value.
-#define PACKET_COUNTER_WRITE_CYCLE 100
-
-#define SEND_STATUS_EVERY_SEC 600 // how often should a status be sent
+#define SEND_STATUS_EVERY_SEC 1800 // how often should a status be sent
 
 #define DIMMER_DDR DDRB
 #define DIMMER_PORT PORTB
@@ -76,76 +72,8 @@ float current_brightness = 0;
 
 uint8_t device_id;
 uint8_t use_pwm_translation = 1;
-uint32_t packetcounter;
+uint32_t station_packetcounter;
 uint8_t switch_off_delay = 0; // If 0% brightness is reached, switch off power (relais) with a delay to 1) dim down before switching off and to 2) avoid switching power off at manual dimming.
-
-void printbytearray(uint8_t * b, uint8_t len)
-{
-#ifdef UART_DEBUG
-	uint8_t i;
-	
-	for (i = 0; i < len; i++)
-	{
-		UART_PUTF("%02x ", b[i]);
-	}
-	
-	UART_PUTS ("\r\n");
-#endif
-}
-
-void rfm12_sendbuf(void)
-{
-	uint8_t aes_byte_count = aes256_encrypt_cbc(bufx, 16);
-	rfm12_tx(aes_byte_count, 0, (uint8_t *) bufx);
-}
-
-void send_dimmer_status(void)
-{
-	UART_PUTS("Sending Dimmer Status:\r\n");
-
-	// set device ID
-	bufx[0] = device_id;
-	
-	// update packet counter
-	packetcounter++;
-	
-	if (packetcounter % PACKET_COUNTER_WRITE_CYCLE == 0)
-	{
-		eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
-	}
-
-	setBuf32(1, packetcounter);
-
-	// set command ID "Dimmer Status"
-	bufx[5] = 30; // TODO: Move command IDs to global definition file as defines
-
-	// set current brightness
-	bufx[6] = (uint8_t)(current_brightness * 255 / 100);
-	
-	// set end brightness
-	bufx[7] = end_brightness;
-	
-	// set total animation time
-	setBuf16(8, (uint16_t)(animation_length * ANIMATION_CYCLE_MS / 1000));
-
-	// set time until animation finishes
-	setBuf16(10, (uint16_t)((animation_length - animation_position) * ANIMATION_CYCLE_MS / 1000));
-
-	// set CRC32
-	uint32_t crc = crc32(bufx, 12);
-	setBuf32(12, crc);
-
-	// show info
-	UART_PUTF("CRC32: %lx\r\n", crc);
-	uart_putstr("Unencrypted: ");
-	printbytearray(bufx, 16);
-
-	rfm12_sendbuf();
-	
-	UART_PUTS("Send encrypted: ");
-	printbytearray(bufx, 16);
-	UART_PUTS("\r\n");
-}
 
 void switchRelais(uint8_t on)
 {
@@ -215,7 +143,7 @@ void checkSwitchOff(void)
 	}
 }
 
-void setPWMDutyCycle(float percent)
+void setPWMDutyCyclePercent(float percent)
 {
 	uint8_t index, index2;
 	float modulo;
@@ -227,10 +155,8 @@ void setPWMDutyCycle(float percent)
 
 	current_brightness = percent; // used for status packet
 
-#ifdef UART_DEBUG_CALCULATIONS	
+#ifdef UART_DEBUG_CALCULATIONS
 	UART_PUTF2 ("Percent requested: %d.%02d\r\n", (uint16_t)percent, (uint16_t)(percent * 100) % 100);
-#else
-	//UART_PUTF2 ("Percent=%d.%02d\r\n", (uint16_t)percent, (uint16_t)(percent * 100) % 100);
 #endif
 	
 	// My OSRAM CFL lamp does not react to the 1..10V input in a linear way.
@@ -287,10 +213,245 @@ ISR (TIMER0_OVF_vect)
 	}
 }
 
+void send_dimmer_status(void)
+{
+	UART_PUTS("Sending Dimmer Status:\r\n");
+
+	inc_packetcounter();
+	uint8_t bri = (uint8_t)current_brightness;
+	
+	// Set packet content
+	pkg_header_init_dimmer_brightness_status();
+	pkg_header_set_senderid(device_id);
+	pkg_header_set_packetcounter(packetcounter);
+	msg_dimmer_brightness_set_brightness(bri);
+
+	pkg_header_calc_crc32();
+	
+	UART_PUTF("CRC32 is %lx (added as first 4 bytes)\r\n", getBuf32(0));
+	UART_PUTF("Brightness: %u%%\r\n", bri);
+
+	rfm12_sendbuf();
+}
+
+// process message "brightness"
+void process_brightness(MessageTypeEnum messagetype)
+{
+	// "Set" or "SetGet" -> modify dimmer state and abort any running animation
+	if ((messagetype == MESSAGETYPE_SET) || (messagetype == MESSAGETYPE_SETGET))
+	{
+		start_brightness = end_brightness = msg_dimmer_brightness_get_brightness();
+
+		UART_PUTF("Requested Brightness: %u%%;", start_brightness);
+		
+		animation_length = 0;
+		animation_mode = 0;
+		animation_position = 0;
+
+		setPWMDutyCyclePercent(start_brightness);
+						
+		/* TODO: Write to EEPROM (?)
+		// write back switch state to EEPROM
+		switch_state[i] = req_state;
+		switch_timeout[i] = req_timeout;
+		
+		eeprom_write_word((uint16_t*)EEPROM_POS_SWITCH_STATE + i * 2, u16);
+		*/
+	}
+
+	// remember some values before the packet buffer is destroyed
+	uint32_t acksenderid = pkg_header_get_senderid();
+	uint32_t ackpacketcounter = pkg_header_get_packetcounter();
+
+	inc_packetcounter();
+
+	// "Set" -> send "Ack"
+	if (messagetype == MESSAGETYPE_SET)
+	{
+		pkg_header_init_dimmer_brightness_ack();
+
+		UART_PUTS("Sending Ack\r\n");
+	}
+	// "Get" or "SetGet" -> send "AckStatus"
+	else
+	{
+		pkg_header_init_dimmer_brightness_ackstatus();
+		
+		// set message data
+		msg_dimmer_brightness_set_brightness(start_brightness);
+
+		UART_PUTS("Sending AckStatus\r\n");
+	}
+
+	// set common fields
+	pkg_header_set_senderid(device_id);
+	pkg_header_set_packetcounter(packetcounter);
+	
+	pkg_headerext_common_set_acksenderid(acksenderid);
+	pkg_headerext_common_set_ackpacketcounter(ackpacketcounter);
+	pkg_headerext_common_set_error(false); // FIXME: Move code for the Ack to a function and also return an Ack when errors occur before!
+	
+	pkg_header_calc_crc32();
+	
+	rfm12_sendbuf();
+}
+
+// process message "animation"
+void process_animation(MessageTypeEnum messagetype)
+{
+	// "Set" or "SetGet" -> modify dimmer state and start new animation
+	if ((messagetype == MESSAGETYPE_SET) || (messagetype == MESSAGETYPE_SETGET))
+	{
+		animation_mode = msg_dimmer_animation_get_animationmode();
+		animation_length = msg_dimmer_animation_get_timeoutsec();
+		start_brightness = msg_dimmer_animation_get_startbrightness();
+		end_brightness = msg_dimmer_animation_get_endbrightness();
+
+		UART_PUTF("   Animation Mode: %u\r\n", animation_mode);
+		UART_PUTF("   Animation Time: %us\r\n", animation_length);
+		UART_PUTF(" Start Brightness: %u%%\r\n", start_brightness);
+		UART_PUTF("   End Brightness: %u%%\r\n", end_brightness);
+		
+		animation_length = (uint32_t)((float)animation_length * 1000 / ANIMATION_CYCLE_MS);
+		animation_position = 0;
+		
+		setPWMDutyCyclePercent(start_brightness);
+		
+		/* TODO: Write to EEPROM (?)
+		// write back switch state to EEPROM
+		switch_state[i] = req_state;
+		switch_timeout[i] = req_timeout;
+		
+		eeprom_write_word((uint16_t*)EEPROM_POS_SWITCH_STATE + i * 2, u16);
+		*/
+	}
+
+	// remember some values before the packet buffer is destroyed
+	uint32_t acksenderid = pkg_header_get_senderid();
+	uint32_t ackpacketcounter = pkg_header_get_packetcounter();
+
+	inc_packetcounter();
+
+	// "Set" -> send "Ack"
+	if (messagetype == MESSAGETYPE_SET)
+	{
+		pkg_header_init_dimmer_animation_ack();
+
+		UART_PUTS("Sending Ack\r\n");
+	}
+	// "Get" or "SetGet" -> send "AckStatus"
+	else
+	{
+		pkg_header_init_dimmer_animation_ackstatus();
+		
+		// set message data
+		msg_dimmer_animation_set_animationmode(animation_mode);
+		msg_dimmer_animation_set_timeoutsec(animation_length);
+		msg_dimmer_animation_set_startbrightness(start_brightness);
+		msg_dimmer_animation_set_endbrightness(end_brightness);
+
+		UART_PUTS("Sending AckStatus\r\n");
+	}
+
+	// set common fields
+	pkg_header_set_senderid(device_id);
+	pkg_header_set_packetcounter(packetcounter);
+	
+	pkg_headerext_common_set_acksenderid(acksenderid);
+	pkg_headerext_common_set_ackpacketcounter(ackpacketcounter);
+	pkg_headerext_common_set_error(false); // FIXME: Move code for the Ack to a function and also return an Ack when errors occur before!
+	
+	pkg_header_calc_crc32();
+	
+	rfm12_sendbuf();
+}
+
+void process_packet(uint8_t len)
+{
+	pkg_header_adjust_offset();
+
+	UART_PUTS("Received: ");
+	print_bytearray(bufx, len);
+	
+	// check SenderID
+	uint32_t senderID = pkg_header_get_senderid();
+	UART_PUTF("SenderID:%u;", senderID);
+	
+	if (senderID != 0)
+	{
+		UART_PUTS("\r\nERR: Illegal SenderID.\r\n");
+		return;
+	}
+
+	// check PacketCounter
+	// TODO: Reject if packet counter lower than remembered!!
+	uint32_t packcnt = pkg_header_get_packetcounter();
+	UART_PUTF("PacketCounter:%lu;", packcnt);
+
+	if (0) // packcnt <= station_packetcounter ??
+	{
+		UART_PUTF("\r\nERR: Received PacketCounter < %lu.\r\n", station_packetcounter);
+		return;
+	}
+	
+	// write received counter
+	station_packetcounter = packcnt;
+	
+	eeprom_write_UIntValue(EEPROM_BASESTATIONPACKETCOUNTER_BYTE, EEPROM_BASESTATIONPACKETCOUNTER_BIT,
+		EEPROM_BASESTATIONPACKETCOUNTER_LENGTH_BITS, station_packetcounter);
+	
+	// check MessageType
+	MessageTypeEnum messagetype = pkg_header_get_messagetype();
+	UART_PUTF("MessageType:%u;", messagetype);
+	
+	if ((messagetype != MESSAGETYPE_GET) && (messagetype != MESSAGETYPE_SET) && (messagetype != MESSAGETYPE_SETGET))
+	{
+		UART_PUTS("\r\nERR: Unsupported MessageType.\r\n");
+		return;
+	}
+	
+	// check device id
+	uint8_t rcv_id = pkg_headerext_common_get_receiverid();
+
+	UART_PUTF("ReceiverID:%u;", rcv_id);
+	
+	if (rcv_id != device_id)
+	{
+		UART_PUTS("\r\nWRN: DeviceID does not match.\r\n");
+		return;
+	}
+	
+	// check MessageGroup + MessageID
+	uint32_t messagegroupid = pkg_headerext_common_get_messagegroupid();
+	uint32_t messageid = pkg_headerext_common_get_messageid();
+	
+	UART_PUTF("MessageGroupID:%u;", messagegroupid);
+	
+	if (messagegroupid != MESSAGEGROUP_DIMMER)
+	{
+		UART_PUTS("\r\nERR: Unsupported MessageGroupID.\r\n");
+		return;
+	}
+	
+	UART_PUTF("MessageID:%u;", messageid);
+
+	switch (messageid)
+	{
+		case MESSAGEID_DIMMER_BRIGHTNESS:
+			process_brightness(messagetype);
+			break;
+		case MESSAGEID_DIMMER_ANIMATION:
+			process_animation(messagetype);
+			break;
+		default:
+			UART_PUTS("\r\nERR: Unsupported MessageID.\r\n");
+			break;
+	}
+}
+
 int main(void)
 {
 	uint16_t send_status_timeout = 25;
-	uint32_t station_packetcounter;
 	uint32_t pos;
 	uint8_t button_state = 0;
 	uint8_t manual_dim_direction = 0;
@@ -299,6 +460,7 @@ int main(void)
 	_delay_ms(1000);
 
 	util_init();
+	
 	check_eeprom_compatibility(DEVICETYPE_DIMMER);
 	
 	// read packetcounter, increase by cycle and write back
@@ -327,20 +489,18 @@ int main(void)
 	station_packetcounter = eeprom_read_UIntValue32(EEPROM_BASESTATIONPACKETCOUNTER_BYTE, EEPROM_BASESTATIONPACKETCOUNTER_BIT,
 		EEPROM_BASESTATIONPACKETCOUNTER_LENGTH_BITS, EEPROM_BASESTATIONPACKETCOUNTER_MINVAL, EEPROM_BASESTATIONPACKETCOUNTER_MAXVAL);
 	
-	led_blink(200, 200, 5);
+	led_blink(500, 500, 3);
 
 	osccal_init();
 
-#ifdef UART_DEBUG
-	uart_init(false);
+	uart_init();
 	UART_PUTS ("\r\n");
 	UART_PUTS ("smarthomatic Dimmer V1.0 (c) 2013 Uwe Freese, www.smarthomatic.org\r\n");
 	osccal_info();
-	UART_PUTF ("Device ID: %u\r\n", device_id);
-	UART_PUTF ("Packet counter: %lu\r\n", packetcounter);
+	UART_PUTF ("DeviceID: %u\r\n", device_id);
+	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);
 	UART_PUTF ("Use PWM translation table: %u\r\n", use_pwm_translation);
-	UART_PUTF ("Last received station packet counter: %u\r\n\r\n", station_packetcounter);
-#endif
+	UART_PUTF ("Last received base station PacketCounter: %u\r\n\r\n", station_packetcounter);
 
 	// init AES key
 	eeprom_read_block (aes_key, (uint8_t *)EEPROM_AESKEY_BYTE, 32);
@@ -348,7 +508,7 @@ int main(void)
 	rfm12_init();
 	PWM_init();
 	io_init();
-	setPWMDutyCycle(0);
+	setPWMDutyCyclePercent(0);
 	timer0_init();
 
 	// DEMO to measure the voltages of different PWM settings to calculate the pwm_lookup table
@@ -406,168 +566,28 @@ int main(void)
 			if ((len == 0) || (len % 16 != 0))
 			{
 				UART_PUTF("Received garbage (%u bytes not multiple of 16): ", len);
-				printbytearray(bufx, len);
+				print_bytearray(bufx, len);
 			}
 			else // try to decrypt with all keys stored in EEPROM
 			{
 				memcpy(bufx, rfm12_rx_buffer(), len);
 				
-				//UART_PUTS("Before decryption: ");
-				//printbytearray(bufx, len);
+				UART_PUTS("Before decryption: ");
+				print_bytearray(bufx, len);
 					
 				aes256_decrypt_cbc(bufx, len);
 
-				//UART_PUTS("Decrypted bytes: ");
-				//printbytearray(bufx, len);
-
-				uint32_t assumed_crc = getBuf32(len - 4);
-				uint32_t actual_crc = crc32(bufx, len - 4);
+				UART_PUTS("Decrypted bytes: ");
+				print_bytearray(bufx, len);
 				
-				//UART_PUTF("Received CRC32 would be %lx\r\n", assumed_crc);
-				//UART_PUTF("Re-calculated CRC32 is  %lx\r\n", actual_crc);
-				
-				if (assumed_crc != actual_crc)
+				if (!pkg_header_check_crc32(len))
 				{
 					UART_PUTS("Received garbage (CRC wrong after decryption).\r\n");
 				}
 				else
 				{
-					//UART_PUTS("CRC correct, AES key found!\r\n");
-					UART_PUTS("         Received: ");
-					printbytearray(bufx, len - 4);
-					
-					// decode command and react
-					uint8_t sender = bufx[0];
-					
-					UART_PUTF("           Sender: %u\r\n", sender);
-					
-					if (sender != 0)
-					{
-						UART_PUTF("Packet not from base station. Ignoring (Sender ID was: %u).\r\n", sender);
-					}
-					else
-					{
-						uint32_t packcnt = getBuf32(1);
-
-						UART_PUTF("   Packet Counter: %lu\r\n", packcnt);
-
-						// check received counter
-						if (0) //packcnt <= station_packetcounter)
-						{
-							UART_PUTF2("Received packet counter %lu is lower than last received counter %lu. Ignoring packet.\r\n", packcnt, station_packetcounter);
-						}
-						else
-						{
-							// write received counter
-							station_packetcounter = packcnt;
-							
-							eeprom_write_UIntValue(EEPROM_BASESTATIONPACKETCOUNTER_BYTE, EEPROM_BASESTATIONPACKETCOUNTER_BIT,
-								EEPROM_BASESTATIONPACKETCOUNTER_LENGTH_BITS, station_packetcounter);
-							
-							// check command ID
-							uint8_t cmd = bufx[5];
-
-							UART_PUTF("       Command ID: %u\r\n", cmd);
-							
-							if (cmd != 141) // ID 141 == Dimmer Request
-							{
-								UART_PUTF("Received unknown command ID %u. Ignoring packet.\r\n", cmd);
-							}
-							else
-							{
-								// check device id
-								uint8_t rcv_id = bufx[6];
-
-								UART_PUTF("      Receiver ID: %u\r\n", rcv_id);
-								
-								if (rcv_id != device_id)
-								{
-									UART_PUTF("Device ID %u does not match. Ignoring packet.\r\n", rcv_id);
-								}
-								else
-								{
-									// read animation mode and parameters
-									uint8_t animation_mode = bufx[7] >> 5;
-									
-									// TODO: Implement support for multiple dimmers (e.g. RGB)
-									// uint8_t dimmer_bitmask = bufx[7] & 0b111;
-									
-									animation_length = getBuf16(8);
-									start_brightness = bufx[10];
-									end_brightness = bufx[11];
-
-									UART_PUTF("   Animation Mode: %u\r\n", animation_mode); // TODO: Set binary mode like 00010110
-									//UART_PUTF("   Dimmer Bitmask: %u\r\n", dimmer_bitmask);
-									UART_PUTF("   Animation Time: %us\r\n", animation_length);
-									UART_PUTF(" Start Brightness: %u\r\n", start_brightness);
-									UART_PUTF("   End Brightness: %u\r\n", end_brightness);
-									
-									animation_length = (uint32_t)((float)animation_length * 1000 / ANIMATION_CYCLE_MS);
-									animation_position = 0;
-									
-									/* TODO: Write to EEPROM (?)
-									// write back switch state to EEPROM
-									switch_state[i] = req_state;
-									switch_timeout[i] = req_timeout;
-									
-									eeprom_write_word((uint16_t*)EEPROM_POS_SWITCH_STATE + i * 2, u16);
-									
-									*/
-									
-									// send acknowledge
-									UART_PUTS("Sending ACK:\r\n");
-
-									// set device ID (base station has ID 0 by definition)
-									bufx[0] = device_id;
-									
-									// update packet counter
-									packetcounter++;
-									
-									if (packetcounter % PACKET_COUNTER_WRITE_CYCLE == 0)
-									{
-										eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
-									}
-
-									setBuf32(1, packetcounter);
-
-									// set command ID "Generic Acknowledge"
-									bufx[5] = 1;
-									
-									// set sender ID of request
-									bufx[6] = sender;
-									
-									// set Packet counter of request
-									setBuf32(7, station_packetcounter);
-
-									// zero unused bytes
-									bufx[11] = 0;
-									
-									// set CRC32
-									uint32_t crc = crc32(bufx, 12);
-									setBuf32(12, crc);
-
-									// show info
-									UART_PUTF("            CRC32: %lx\r\n", crc);
-									uart_putstr("      Unencrypted: ");
-									printbytearray(bufx, 16);
-
-									rfm12_sendbuf();
-									
-									UART_PUTS("   Send encrypted: ");
-									printbytearray(bufx, 16);
-									UART_PUTS("\r\n");
-								
-									rfm12_tick();
-									
-									led_blink(200, 0, 1);
-									
-									send_status_timeout = 25;
-								}
-							}
-						}
-					}
-				}
-				
+					process_packet(len);
+				}		
 			}
 
 			// tell the implementation that the buffer can be reused for the next data.
@@ -600,7 +620,7 @@ int main(void)
 					if (current_brightness < 100)
 					{
 						current_brightness = (uint8_t)current_brightness / 2 * 2 + 2;
-						setPWMDutyCycle(current_brightness);
+						setPWMDutyCyclePercent(current_brightness);
 					}
 					else
 					{
@@ -613,7 +633,7 @@ int main(void)
 					if (current_brightness > 0)
 					{
 						current_brightness = (((uint8_t)current_brightness - 1) / 2) * 2;
-						setPWMDutyCycle(current_brightness);
+						setPWMDutyCyclePercent(current_brightness);
 					}
 					else
 					{
@@ -633,12 +653,12 @@ int main(void)
 				if (current_brightness > 0)
 				{
 					UART_PUTS(" -> 0%\r\n");
-					setPWMDutyCycle(0);
+					setPWMDutyCyclePercent(0);
 				}
 				else
 				{
 					UART_PUTS(" -> 100%\r\n");
-					setPWMDutyCycle(100);
+					setPWMDutyCyclePercent(100);
 				}
 			}
 			else
@@ -658,16 +678,16 @@ int main(void)
 			
 			if (pos == animation_length)
 			{
-				UART_PUTF("END Brightness %u%%, ", end_brightness * 100 / 255);
-				setPWMDutyCycle((float)end_brightness * 100 / 255);
+				UART_PUTF("END Brightness %u%%, ", end_brightness);
+				setPWMDutyCyclePercent((float)end_brightness);
 				animation_length = 0;
 				animation_position = 0;
 			}
 			else
 			{			
-				float brightness = (start_brightness + ((float)end_brightness - start_brightness) * pos / animation_length) * 100 / 255;
+				float brightness = (start_brightness + ((float)end_brightness - start_brightness) * pos / animation_length);
 				UART_PUTF("Br.%u%%, ", (uint32_t)(brightness));
-				setPWMDutyCycle(brightness);
+				setPWMDutyCyclePercent(brightness);
 			}
 		}			
 		

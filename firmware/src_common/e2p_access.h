@@ -1,3 +1,21 @@
+/*
+* This file is part of smarthomatic, http://www.smarthomatic.org.
+* Copyright (c) 2013 Uwe Freese
+*
+* smarthomatic is free software: you can redistribute it and/or modify it
+* under the terms of the GNU General Public License as published by the
+* Free Software Foundation, either version 3 of the License, or (at your
+* option) any later version.
+*
+* smarthomatic is distributed in the hope that it will be useful, but
+* WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+* Public License for more details.
+*
+* You should have received a copy of the GNU General Public License along
+* with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include <stdint.h>
 
 #ifndef E2P_ACCESS_H
@@ -16,8 +34,9 @@ void signal_error_state(void);
 #endif
 
 uint32_t _eeprom_read_UIntValue32(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t minval, uint32_t maxval, uint16_t max_bits_for_type, uint8_t * array);
-void _eeprom_write_UIntValue(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t val, uint8_t * array);
+int32_t _eeprom_read_IntValue32(uint16_t byte, uint8_t bit, uint16_t length_bits, int32_t minval, int32_t maxval, uint8_t * array);
 
+void _eeprom_write_UIntValue(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t val, uint8_t * array);
 
 // function wrappers for EEPROM access
 static inline uint8_t eeprom_read_UIntValue8(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t minval, uint32_t maxval)
@@ -40,6 +59,13 @@ static inline void eeprom_write_UIntValue(uint16_t byte, uint8_t bit, uint16_t l
 	_eeprom_write_UIntValue(byte, bit, length_bits, val, NULL);
 }
 
+static inline void eeprom_write_IntValue(uint16_t byte, uint8_t bit, uint16_t length_bits, int32_t val)
+{
+	// move the sign bit of the standard int type to the sign bit position of our variable-sized int type
+	_eeprom_write_UIntValue(byte, bit, length_bits,
+		(((val >> 31) & 1) << (length_bits - 1)) | (val & (((uint32_t)1 << (length_bits - 1)) - 1)),
+		NULL);
+}
 
 // function wrappers for ARRAY access
 static inline uint8_t array_read_UIntValue8(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t minval, uint32_t maxval, uint8_t * array)
@@ -57,9 +83,22 @@ static inline uint32_t array_read_UIntValue32(uint16_t byte, uint8_t bit, uint16
 	return _eeprom_read_UIntValue32(byte, bit, length_bits, minval, maxval, 32, array);
 }
 
+static inline int32_t array_read_IntValue32(uint16_t byte, uint8_t bit, uint16_t length_bits, int32_t minval, int32_t maxval, uint8_t * array)
+{
+	return _eeprom_read_IntValue32(byte, bit, length_bits, minval, maxval, array);
+}
+
 static inline void array_write_UIntValue(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t val, uint8_t * array)
 {
 	_eeprom_write_UIntValue(byte, bit, length_bits, val, array);
+}
+
+static inline void array_write_IntValue(uint16_t byte, uint8_t bit, uint16_t length_bits, int32_t val, uint8_t * array)
+{
+	// move the sign bit of the standard int type to the sign bit position of our variable-sized int type
+	_eeprom_write_UIntValue(byte, bit, length_bits,
+		(((val >> 31) & 1) << (length_bits - 1)) | (val & (((uint32_t)1 << (length_bits - 1)) - 1)),
+		array);
 }
 
 #endif // E2P_ACCESS
