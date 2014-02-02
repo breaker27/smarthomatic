@@ -60,6 +60,7 @@ int main(void)
 	uint8_t device_id = 0;
 	uint8_t avg = 0;
 	uint8_t bat_p_val = 0;
+	uint16_t vempty = 1100; // 1.1V * 2 cells = 2.2V = min. voltage for RFM2
 
 	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
 	_delay_ms(1000);
@@ -93,8 +94,8 @@ int main(void)
 	osccal_info();
 	UART_PUTF ("Device ID: %u\r\n", device_id);
 	UART_PUTF ("Packet counter: %lu\r\n", packetcounter);
-	UART_PUTF ("Temperature Sensor Type: %u\r\n", temperature_sensor_type);
-	UART_PUTF ("Brightness Sensor Type: %u\r\n", brightness_sensor_type);
+	UART_PUTF ("Temperature sensor type: %u\r\n", temperature_sensor_type);
+	UART_PUTF ("Brightness sensor type: %u\r\n", brightness_sensor_type);
 	
 	// init AES key
 	eeprom_read_block(aes_key, (uint8_t *)EEPROM_AESKEY_BYTE, 32);
@@ -104,7 +105,10 @@ int main(void)
 	if (temperature_sensor_type == TEMPERATURESENSORTYPE_SHT15)
 	{
 	  sht11_init();
+	  vempty = 1200; // 1.2V * 2 cells = 2.4V = min. voltage for SHT15
 	}
+	
+	UART_PUTF ("Min. battery voltage: %umV\r\n", vempty);
 
 	led_blink(500, 500, 3);
 	
@@ -166,7 +170,7 @@ int main(void)
 			
 			pkg_header_calc_crc32();
 			
-			bat_p_val = bat_percentage(vbat);
+			bat_p_val = bat_percentage(vbat, vempty);
 			
 			UART_PUTF("CRC32 is %lx (added as first 4 bytes)\r\n", getBuf32(0));
 			UART_PUTF("Battery: %u%%, Temperature: ", bat_p_val);

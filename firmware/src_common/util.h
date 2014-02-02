@@ -43,7 +43,7 @@ void print_bytearray(uint8_t * b, uint8_t len);
 uint16_t linear_interpolate16(uint16_t in, uint16_t min_in, uint16_t max_in, uint16_t min_out, uint16_t max_out);
 uint32_t linear_interpolate32(uint32_t in, uint32_t min_in, uint32_t max_in, uint32_t min_out, uint32_t max_out);
 float linear_interpolate_f(float in, float min_in, float max_in, float min_out, float max_out);
-int bat_percentage(int vbat);
+uint16_t bat_percentage(uint16_t vbat, uint16_t vempty);
 
 void adc_init(void);
 void adc_on(bool on);

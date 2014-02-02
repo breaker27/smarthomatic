@@ -73,10 +73,10 @@ void print_bytearray(uint8_t * b, uint8_t len)
 }
 
 // reference battery voltage (alkaline) for 100%, 90%,... 0% with end voltage 0,9V
-//static short vbat_alkaline[] = {1600, 1400, 1320, 1280, 1240, 1210, 1180, 1160, 1100, 1030, 900};
+static short vbat_alkaline[] = {1600, 1400, 1320, 1280, 1240, 1210, 1180, 1160, 1100, 1030, 900};
 
 // reference battery voltage (alkaline) for 100%, 90%,... 0% with end voltage 1,1V (= minimum for RFM12)
-static short vbat_alkaline[] = {1600, 1405, 1333, 1293, 1260, 1232, 1205, 1183, 1170, 1145, 1100};
+//static short vbat_alkaline[] = {1600, 1405, 1333, 1293, 1260, 1232, 1205, 1183, 1170, 1145, 1100};
 
 // PRECONDITION (which is NOT checked!): min_in < max_in, min_out < max_out
 uint16_t linear_interpolate16(uint16_t in, uint16_t min_in, uint16_t max_in, uint16_t min_out, uint16_t max_out)
@@ -109,8 +109,9 @@ float linear_interpolate_f(float in, float min_in, float max_in, float min_out, 
 	return min_out + (in - min_in) * (max_out - min_out) / (max_in - min_in);
 }
 
-// return the remaining battery capacity according to the battery voltage
-int bat_percentage(int vbat)
+// Return the remaining battery capacity according to the battery voltage,
+// without considering the minimum voltage for the device.
+uint16_t _bat_percentage_raw(uint16_t vbat)
 {
 	if (vbat >= vbat_alkaline[0])
 	{
@@ -122,7 +123,7 @@ int bat_percentage(int vbat)
 	}
 	else // linear interpolation between the array values
 	{
-		int i = 0;
+		uint8_t i = 0;
 		
 		while (vbat < vbat_alkaline[i])
 		{
@@ -130,6 +131,24 @@ int bat_percentage(int vbat)
 		}
 		
 		return linear_interpolate16(vbat, vbat_alkaline[i], vbat_alkaline[i - 1], 100 - i * 10, 100 - (i - 1) * 10);
+	}
+}
+
+// Return the remaining battery capacity according to the battery voltage,
+// considering the minimum voltage for the device as well.
+// Only this function should be called from the main file.
+uint16_t bat_percentage(uint16_t vbat, uint16_t vempty)
+{
+	uint16_t percentage = _bat_percentage_raw(vbat);
+	uint16_t min_percentage = _bat_percentage_raw(vempty);
+	
+	if (percentage < min_percentage)
+	{
+		return 0;
+	}
+	else
+	{
+		return (percentage - min_percentage) * 100 / (100 - min_percentage);
 	}
 }
 
