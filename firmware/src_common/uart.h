@@ -16,8 +16,8 @@
 * with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef UART_H
-#define UART_H
+#ifndef _UART_H
+#define _UART_H
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -79,4 +79,4 @@ static inline uint32_t hex_to_uint24(uint8_t * buf, uint8_t offset)
 	void process_rxbuf(void);
 #endif
 
-#endif
+#endif /* _UART_H */

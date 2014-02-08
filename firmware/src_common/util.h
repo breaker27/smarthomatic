@@ -16,8 +16,8 @@
 * with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef _UTIL_H
+#define _UTIL_H
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -66,4 +66,4 @@ void osccal_init(void);
 void inc_packetcounter(void);
 void rfm12_sendbuf(void);
 
-#endif
+#endif /* _UTIL_H */
