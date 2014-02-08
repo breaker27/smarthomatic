@@ -27,6 +27,7 @@
 #include "rfm12.h"
 #include "uart.h"
 
+#include "../src_common/msggrp_generic.h"
 #include "../src_common/msggrp_dimmer.h"
 
 #include "../src_common/e2p_hardware.h"
@@ -35,10 +36,12 @@
 
 #include "aes256.h"
 #include "util.h"
+#include "version.h"
 
 //#define UART_DEBUG_CALCULATIONS
 
 #define SEND_STATUS_EVERY_SEC 1800 // how often should a status be sent
+#define SEND_VERSION_STATUS_CYCLE 50 // send version status x times less than switch status (~once per day)
 
 #define DIMMER_DDR DDRB
 #define DIMMER_PORT PORTB
@@ -78,6 +81,7 @@ uint8_t device_id;
 uint8_t use_pwm_translation = 1;
 uint32_t station_packetcounter;
 uint8_t switch_off_delay = 0; // If 0% brightness is reached, switch off power (relais) with a delay to 1) dim down before switching off and to 2) avoid switching power off at manual dimming.
+uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly after startup
 
 void switchRelais(uint8_t on)
 {
@@ -234,6 +238,25 @@ void send_dimmer_status(void)
 	
 	UART_PUTF("CRC32 is %lx (added as first 4 bytes)\r\n", getBuf32(0));
 	UART_PUTF("Brightness: %u%%\r\n", bri);
+
+	rfm12_sendbuf();
+}
+
+void send_version_status(void)
+{
+	inc_packetcounter();
+
+	UART_PUTF4("Sending Version: v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
+	
+	// Set packet content
+	pkg_header_init_generic_version_status();
+	pkg_header_set_senderid(device_id);
+	pkg_header_set_packetcounter(packetcounter);
+	msg_generic_version_set_major(VERSION_MAJOR);
+	msg_generic_version_set_minor(VERSION_MINOR);
+	msg_generic_version_set_patch(VERSION_PATCH);
+	msg_generic_version_set_githash(VERSION_HASH);
+	pkg_header_calc_crc32();
 
 	rfm12_sendbuf();
 }
@@ -499,7 +522,8 @@ int main(void)
 
 	uart_init();
 	UART_PUTS ("\r\n");
-	UART_PUTS ("smarthomatic Dimmer V1.0 (c) 2013 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTF4("smarthomatic Dimmer v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
+	UART_PUTS("(c) 2013..2014 Uwe Freese, www.smarthomatic.org\r\n");
 	osccal_info();
 	UART_PUTF ("DeviceID: %u\r\n", device_id);
 	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);
@@ -700,6 +724,12 @@ int main(void)
 		{
 			send_status_timeout = SEND_STATUS_EVERY_SEC * (1000 / ANIMATION_UPDATE_MS);
 			send_dimmer_status();
+			led_blink(200, 0, 1);
+		}
+		else if (version_status_cycle >= SEND_VERSION_STATUS_CYCLE)
+		{
+			version_status_cycle = 0;
+			send_version_status();
 			led_blink(200, 0, 1);
 		}
 

@@ -27,6 +27,7 @@
 #include "rfm12.h"
 #include "uart.h"
 
+#include "../src_common/msggrp_generic.h"
 #include "../src_common/msggrp_powerswitch.h"
 
 #include "../src_common/e2p_hardware.h"
@@ -35,6 +36,7 @@
 
 #include "aes256.h"
 #include "util.h"
+#include "version.h"
 
 // Don't change this, because other switch count like 8 needs other status message.
 // If support implemented, use EEPROM_SUPPORTEDSWITCHES_* E2P addresses.
@@ -50,6 +52,7 @@
 #define BUTTON_PIN 3
 
 #define SEND_STATUS_EVERY_SEC 1800 // how often should a status be sent?
+#define SEND_VERSION_STATUS_CYCLE 50 // send version status x times less than switch status (~once per day)
 
 uint8_t device_id;
 uint32_t station_packetcounter;
@@ -57,6 +60,7 @@ uint8_t switch_state[SWITCH_COUNT];
 uint16_t switch_timeout[SWITCH_COUNT];
 
 uint16_t send_status_timeout = 5;
+uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly after startup
 
 void print_switch_state(void)
 {
@@ -98,6 +102,25 @@ void send_power_switch_status(void)
 	pkg_header_set_packetcounter(packetcounter);
 	msg_powerswitch_switchstate_set_on(switch_state[0] & 1); // TODO: Support > 1 switch
 	msg_powerswitch_switchstate_set_timeoutsec(switch_timeout[0]); // TODO: Support > 1 switch
+	pkg_header_calc_crc32();
+
+	rfm12_sendbuf();
+}
+
+void send_version_status(void)
+{
+	inc_packetcounter();
+
+	UART_PUTF4("Sending Version: v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
+	
+	// Set packet content
+	pkg_header_init_generic_version_status();
+	pkg_header_set_senderid(device_id);
+	pkg_header_set_packetcounter(packetcounter);
+	msg_generic_version_set_major(VERSION_MAJOR);
+	msg_generic_version_set_minor(VERSION_MINOR);
+	msg_generic_version_set_patch(VERSION_PATCH);
+	msg_generic_version_set_githash(VERSION_HASH);
 	pkg_header_calc_crc32();
 
 	rfm12_sendbuf();
@@ -328,7 +351,8 @@ int main(void)
 	uart_init();
 
 	UART_PUTS ("\r\n");
-	UART_PUTS ("smarthomatic Power Switch V1.0 (c) 2013 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTF4("smarthomatic Power Switch v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
+	UART_PUTS("(c) 2013..2014 Uwe Freese, www.smarthomatic.org\r\n");
 	osccal_info();
 	UART_PUTF ("DeviceID: %u\r\n", device_id);
 	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);
@@ -435,9 +459,16 @@ int main(void)
 			{
 				send_status_timeout = SEND_STATUS_EVERY_SEC;
 				send_power_switch_status();
-				
 				led_blink(200, 0, 1);
-			}			
+				
+				version_status_cycle++;
+			}
+			else if (version_status_cycle >= SEND_VERSION_STATUS_CYCLE)
+			{
+				version_status_cycle = 0;
+				send_version_status();
+				led_blink(200, 0, 1);
+			}
 		}
 		else
 		{

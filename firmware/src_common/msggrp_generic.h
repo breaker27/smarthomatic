@@ -38,8 +38,112 @@
 
 // ENUM for MessageIDs of this MessageGroup
 typedef enum {
+  MESSAGEID_GENERIC_VERSION = 1,
   MESSAGEID_GENERIC_BATTERYSTATUS = 5
 } GENERIC_MessageIDEnum;
+
+
+// Message "generic_version"
+// -------------------------
+// MessageGroupID: 0
+// MessageID: 1
+// Possible MessageTypes: Get, Status, AckStatus
+// Validity: test
+// Length w/o Header + HeaderExtension: 56 bits
+// Data fields: Major, Minor, Patch, GitHash
+// Description: Reports the current firmware version. Version information is only available when set in source code, which is usually only done for official builds by the build robot.
+
+// Function to initialize header for the MessageType "Get".
+static inline void pkg_header_init_generic_version_get(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(0);
+  pkg_headerext_get_set_messagegroupid(0);
+  pkg_headerext_get_set_messageid(1);
+  __HEADEROFFSETBITS = 95;
+  __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 0;
+}
+
+// Function to initialize header for the MessageType "Status".
+static inline void pkg_header_init_generic_version_status(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(8);
+  pkg_headerext_status_set_messagegroupid(0);
+  pkg_headerext_status_set_messageid(1);
+  __HEADEROFFSETBITS = 83;
+  __PACKETSIZEBYTES = 32;
+  __MESSAGETYPE = 8;
+}
+
+// Function to initialize header for the MessageType "AckStatus".
+static inline void pkg_header_init_generic_version_ackstatus(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(10);
+  pkg_headerext_ackstatus_set_messagegroupid(0);
+  pkg_headerext_ackstatus_set_messageid(1);
+  __HEADEROFFSETBITS = 120;
+  __PACKETSIZEBYTES = 32;
+  __MESSAGETYPE = 10;
+}
+
+// Set Major (UIntValue)
+// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 8, min val 0, max val 255
+static inline void msg_generic_version_set_major(uint32_t val)
+{
+  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 8, val, bufx);
+}
+
+// Get Major (UIntValue)
+// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 8, min val 0, max val 255
+static inline uint32_t msg_generic_version_get_major(void)
+{
+  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 8, 0, 255, bufx);
+}
+
+// Set Minor (UIntValue)
+// Offset: ((uint16_t)__HEADEROFFSETBITS + 8) / 8, ((uint16_t)__HEADEROFFSETBITS + 8) % 8, length bits 8, min val 0, max val 255
+static inline void msg_generic_version_set_minor(uint32_t val)
+{
+  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 8) / 8, ((uint16_t)__HEADEROFFSETBITS + 8) % 8, 8, val, bufx);
+}
+
+// Get Minor (UIntValue)
+// Offset: ((uint16_t)__HEADEROFFSETBITS + 8) / 8, ((uint16_t)__HEADEROFFSETBITS + 8) % 8, length bits 8, min val 0, max val 255
+static inline uint32_t msg_generic_version_get_minor(void)
+{
+  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 8) / 8, ((uint16_t)__HEADEROFFSETBITS + 8) % 8, 8, 0, 255, bufx);
+}
+
+// Set Patch (UIntValue)
+// Offset: ((uint16_t)__HEADEROFFSETBITS + 16) / 8, ((uint16_t)__HEADEROFFSETBITS + 16) % 8, length bits 8, min val 0, max val 255
+static inline void msg_generic_version_set_patch(uint32_t val)
+{
+  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 16) / 8, ((uint16_t)__HEADEROFFSETBITS + 16) % 8, 8, val, bufx);
+}
+
+// Get Patch (UIntValue)
+// Offset: ((uint16_t)__HEADEROFFSETBITS + 16) / 8, ((uint16_t)__HEADEROFFSETBITS + 16) % 8, length bits 8, min val 0, max val 255
+static inline uint32_t msg_generic_version_get_patch(void)
+{
+  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 16) / 8, ((uint16_t)__HEADEROFFSETBITS + 16) % 8, 8, 0, 255, bufx);
+}
+
+// Set GitHash (UIntValue)
+// Offset: ((uint16_t)__HEADEROFFSETBITS + 24) / 8, ((uint16_t)__HEADEROFFSETBITS + 24) % 8, length bits 32, min val 0, max val 4294967295
+static inline void msg_generic_version_set_githash(uint32_t val)
+{
+  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 24) / 8, ((uint16_t)__HEADEROFFSETBITS + 24) % 8, 32, val, bufx);
+}
+
+// Get GitHash (UIntValue)
+// Offset: ((uint16_t)__HEADEROFFSETBITS + 24) / 8, ((uint16_t)__HEADEROFFSETBITS + 24) % 8, length bits 32, min val 0, max val 4294967295
+static inline uint32_t msg_generic_version_get_githash(void)
+{
+  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 24) / 8, ((uint16_t)__HEADEROFFSETBITS + 24) % 8, 32, 0, 4294967295, bufx);
+}
 
 
 // Message "generic_batterystatus"

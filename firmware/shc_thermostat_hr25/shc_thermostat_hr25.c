@@ -35,6 +35,7 @@
 
 #include "aes256.h"
 #include "util.h"
+#include "version.h"
 
 #define SEND_STATUS_EVERY_SEC 1800 // how often should a status be sent?
 
@@ -148,7 +149,8 @@ int main(void)
 	uart_init();
 
 	UART_PUTS ("\r\n");
-	UART_PUTS ("smarthomatic Thermostat HR25 V1.0 (c) 2013 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTF4("smarthomatic Thermostat HR25 v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
+	UART_PUTS("(c) 2014 Uwe Freese, www.smarthomatic.org\r\n");
 	osccal_info();
 	UART_PUTF ("DeviceID: %u\r\n", device_id);
 	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);

@@ -38,6 +38,7 @@
 #include "aes256.h"
 #include "util.h"
 #include "request_buffer.h"
+#include "version.h"
 
 #define LED_PIN 7
 #define LED_PORT PORTD
@@ -125,6 +126,13 @@ void decode_data(uint8_t len)
 
 				switch (messageid)
 				{
+					case MESSAGEID_GENERIC_VERSION:
+						UART_PUTF("Major=%u;", msg_generic_version_get_major());
+						UART_PUTF("Minor=%u;", msg_generic_version_get_minor());
+						UART_PUTF("Patch=%u;", msg_generic_version_get_patch());
+						UART_PUTF("GitHash=%08lx;", msg_generic_version_get_githash());
+						break;
+						
 					case MESSAGEID_GENERIC_BATTERYSTATUS:
 						UART_PUTF("Percentage=%u;", msg_generic_batterystatus_get_percentage());
 						break;
@@ -244,65 +252,57 @@ int main(void)
 		EEPROM_DEVICEID_LENGTH_BITS, EEPROM_DEVICEID_MINVAL, EEPROM_DEVICEID_MAXVAL);
 
 	uart_init();
-	UART_PUTS ("\r\n");
-	UART_PUTS ("smarthomatic Base Station V1.0 (c) 2012 Uwe Freese, www.smarthomatic.org\r\n");
-	UART_PUTF ("Device ID: %u\r\n", deviceID);
-	UART_PUTF ("Packet counter: %lu\r\n", packetcounter);
-	UART_PUTF ("AES key count: %u\r\n", aes_key_count);
-	UART_PUTS ("Waiting for incoming data. Press h for help.\r\n\r\n");
+	UART_PUTS("\r\n");
+	UART_PUTF4("smarthomatic Base Station v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
+	UART_PUTS("(c) 2012..2014 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTF("Device ID: %u\r\n", deviceID);
+	UART_PUTF("Packet counter: %lu\r\n", packetcounter);
+	UART_PUTF("AES key count: %u\r\n", aes_key_count);
+	UART_PUTS("Waiting for incoming data. Press h for help.\r\n\r\n");
 
 	led_blink(500, 500, 3);
 
 	rfm12_init();
 	sei();
 	
-	// ENCODE TEST (OLD! Move to unit test some day...)
+	// ENCODE TEST (Move to unit test some day...)
 	/*
-	uint8_t testlen = 64;
+	uint8_t testlen = 32;
+	uint8_t aes_key_num = 0;
 	
-	eeprom_read_block (aes_key, (uint8_t *)EEPROM_AESKEYS_BYTE, 32);
-	UART_PUTS("Using AES key ");
-	printbytearray((uint8_t *)aes_key, 32);
-			
-	UART_PUTS("Before encryption: ");
-	printbytearray(bufx, testlen);
-  
-	unsigned long crc = crc32(bufx, testlen);
-	UART_PUTF("CRC32 is %lx (added as last 4 bytes)\r\n", crc);
-	
-	UART_PUTS("1\r\n");
-	crc = crc32(bufx, testlen - 4);
-	UART_PUTS("2\r\n");
-	setBuf32(testlen - 4, crc);
-	
-	UART_PUTS("Before encryption (CRC added): ");
-	printbytearray(bufx, testlen);
+	memset(&bufx[0], 0, sizeof(bufx));
+	bufx[0] = 0xff;
+	bufx[1] = 0xb0;
+	bufx[2] = 0xa0;
+	bufx[3] = 0x3f;
+	bufx[4] = 0x01;
+	bufx[5] = 0x70;
+	bufx[6] = 0x00;
+	bufx[7] = 0x0c;
+	bufx[8] = 0xa8;
+	bufx[9] = 0x00;
+	bufx[10] = 0x20;
+	bufx[20] = 0x20;
 
-	UART_PUTS("1\r\n");
+	eeprom_read_block (aes_key, (uint8_t *)(EEPROM_AESKEYS_BYTE + aes_key_num * 32), 32);
+	UART_PUTS("Using AES key ");
+	print_bytearray((uint8_t *)aes_key, 32);
+	
+	UART_PUTS("Before encryption: ");
+	print_bytearray(bufx, testlen);
+	
 	uint8_t aes_byte_count = aes256_encrypt_cbc(bufx, testlen);
-	UART_PUTS("2\r\n");
-  
+	
+	UART_PUTF("byte count = %u\r\n", aes_byte_count);
+	
 	UART_PUTS("After encryption: ");
-	printbytearray(bufx, aes_byte_count);
+	print_bytearray(bufx, aes_byte_count);
 	
-	UART_PUTF("String len = %u\r\n", aes_byte_count);
-	
-	UART_PUTS("1\r\n");
 	aes256_decrypt_cbc(bufx, aes_byte_count);
-	UART_PUTS("2\r\n");
   
 	UART_PUTS("After decryption: ");
-	printbytearray(bufx, testlen);
+	print_bytearray(bufx, testlen);
 	
-	crc = getBuf32(testlen - 4);
-	UART_PUTF("CRC32 is %lx (last 4 bytes from decrypted message)\r\n", crc);
-	printbytearray(bufx, testlen);
-	
-	UART_PUTS("After decryption (CRC removed): ");
-	printbytearray(bufx, testlen);
-	
-	UART_PUTF("String len = %u\r\n", testlen);
-  
 	while(1);
 	*/
 
@@ -339,7 +339,7 @@ int main(void)
 					aes256_decrypt_cbc(bufx, len);
 
 					//UART_PUTS("Decrypted bytes: ");
-					//printbytearray(bufx, len);
+					//print_bytearray(bufx, len);
 					
 					crcok = pkg_header_check_crc32(len);
 					
@@ -357,7 +357,9 @@ int main(void)
 				
 				if (!crcok)
 				{
-					UART_PUTS("Received garbage (CRC wrong after decryption).\r\n");
+					UART_PUTS("Received garbage (CRC wrong after decryption): ");
+					memcpy(bufx, rfm12_rx_buffer(), len);
+					print_bytearray(bufx, len);
 				}
 				
 				UART_PUTS("\r\n");

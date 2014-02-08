@@ -38,6 +38,7 @@
 
 #include "aes256.h"
 #include "util.h"
+#include "version.h"
 
 // check some assumptions at precompile time about flash layout
 #if (EEPROM_AESKEY_BIT != 0)
@@ -46,10 +47,12 @@
 
 #define AVERAGE_COUNT 4 // Average over how many values before sending over RFM12?
 #define SEND_BATT_STATUS_CYCLE 30 // send battery status x times less than temp status
+#define SEND_VERSION_STATUS_CYCLE 200 // send version status x times less than temp status (~once per day)
 
 uint8_t temperature_sensor_type = 0;
 uint8_t brightness_sensor_type = 0;
 uint8_t batt_status_cycle = SEND_BATT_STATUS_CYCLE - 1; // send promptly after startup
+uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly after startup
 
 int main(void)
 {
@@ -90,7 +93,8 @@ int main(void)
 	
 	uart_init();
 	UART_PUTS ("\r\n");
-	UART_PUTS ("smarthomatic Tempsensor V1.0 (c) 2013 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTF4("smarthomatic Tempsensor v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
+	UART_PUTS("(c) 2012..2014 Uwe Freese, www.smarthomatic.org\r\n");
 	osccal_info();
 	UART_PUTF ("Device ID: %u\r\n", device_id);
 	UART_PUTF ("Packet counter: %lu\r\n", packetcounter);
@@ -172,7 +176,6 @@ int main(void)
 			
 			bat_p_val = bat_percentage(vbat, vempty);
 			
-			UART_PUTF("CRC32 is %lx (added as first 4 bytes)\r\n", getBuf32(0));
 			UART_PUTF("Battery: %u%%, Temperature: ", bat_p_val);
 			print_signed(temp);
 			UART_PUTF2(" deg.C, Humidity: %u.%u", hum / 10, hum % 10);
@@ -187,6 +190,7 @@ int main(void)
 
 			vbat = temp = hum = vlight = avg = 0;
 			batt_status_cycle++;
+			version_status_cycle++;
 		}
 		else
 		{
@@ -203,6 +207,30 @@ int main(void)
 				pkg_header_calc_crc32();
 				
 				UART_PUTF("Battery: %u%%\r\n", bat_p_val);
+
+				rfm12_sendbuf();
+				rfm12_tick(); // send packet, and then WAIT SOME TIME BEFORE GOING TO SLEEP (otherwise packet would not be sent)
+
+				switch_led(1);
+				_delay_ms(200);
+				switch_led(0);
+			}
+			else if (version_status_cycle >= SEND_VERSION_STATUS_CYCLE)
+			{
+				version_status_cycle = 0;
+				inc_packetcounter();
+				
+				// Set packet content
+				pkg_header_init_generic_version_status();
+				pkg_header_set_senderid(device_id);
+				pkg_header_set_packetcounter(packetcounter);
+				msg_generic_version_set_major(VERSION_MAJOR);
+				msg_generic_version_set_minor(VERSION_MINOR);
+				msg_generic_version_set_patch(VERSION_PATCH);
+				msg_generic_version_set_githash(VERSION_HASH);
+				pkg_header_calc_crc32();
+				
+				UART_PUTF4("Version: v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
 
 				rfm12_sendbuf();
 				rfm12_tick(); // send packet, and then WAIT SOME TIME BEFORE GOING TO SLEEP (otherwise packet would not be sent)
