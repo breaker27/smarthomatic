@@ -26,9 +26,7 @@
 #ifndef AES256_H
 #define AES256_H
 
-#ifndef uint8_t
-#define uint8_t unsigned char
-#endif
+#include <inttypes.h>
 
 typedef struct {
 	uint8_t key[32]; 
