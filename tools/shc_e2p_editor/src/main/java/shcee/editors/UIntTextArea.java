@@ -75,7 +75,7 @@ public class UIntTextArea extends JTextArea
 			}
 	    });
 		
-		valid = false;
+		checkInput();
 	}
 
 	protected void checkInput()

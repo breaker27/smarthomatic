@@ -74,7 +74,7 @@ public class ByteArrayTextArea extends JTextArea
 		
 		setLineWrap(true);
 
-		valid = false;
+		checkInput();
 	}
 
 	protected void checkInput()
