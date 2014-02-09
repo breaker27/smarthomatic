@@ -191,21 +191,19 @@ public class Util {
 	/**
 	 * Run program after creating a tmp.cmd (Windows) or by using the bash (Linux).
 	 * Currently, only Windows is supported!!
-	 * TODO: Support linux by calling bash in a way that the user can see the output.
+	 * TODO: Support Linux by calling bash in a way that the user can see the output.
 	 * @param cmdLine
 	 * @throws IOException 
 	 */
 	public static void execute(String cmdLine, boolean linuxBash) throws IOException
 	{
-		Process p;
-		
 		if (linuxBash)
 		{
 			String[] cmd = new String[3];
 			cmd[0] = "/bin/bash";
 			cmd[1] = "-c";
 			cmd[2] = cmdLine;
-			p = Runtime.getRuntime().exec(cmd);
+			Runtime.getRuntime().exec(cmd);
 		}
 		else
 		{
@@ -214,7 +212,7 @@ public class Util {
 					cmdLine + "\r\n" +
 					"pause\r\n" +
 					"exit\r\n");
-			p = Runtime.getRuntime().exec("cmd /c start flash_tmp.cmd");
+			Runtime.getRuntime().exec("cmd /c start flash_tmp.cmd");
 		}
 	}
 
@@ -227,7 +225,7 @@ public class Util {
 	    float fAmount = (float)amount;
 		float fInverse = 1.0f - fAmount;
 
-	    // I had to look up getting colour components in java.  Google is good :)
+	    // I had to look up getting color components in java.  Google is good :)
 	    float afOne[] = new float[3];
 	    clOne.getColorComponents(afOne);
 	    float afTwo[] = new float[3]; 

@@ -39,7 +39,7 @@ public class EnumEditor extends AbstractEditor
 	private int bits;
 	private ArrayList<Integer> itemIndex2enumValue; // store ENUM values additionally for quick access 
 	private HashMap<Integer, Integer> enumValue2itemIndex;
-	private JComboBox input;
+	private JComboBox<String> input;
 	
 	public EnumEditor(Node root)
 	{
@@ -104,7 +104,7 @@ public class EnumEditor extends AbstractEditor
 		{
 			itemIndex2enumValue = new ArrayList<Integer>();
 			enumValue2itemIndex = new HashMap<Integer, Integer>();
-			input = new JComboBox();
+			input = new JComboBox<String>();
 		}
 		
 		String name = n.getNodeName();
