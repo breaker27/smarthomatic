@@ -254,7 +254,7 @@ public class Util {
 	}
 	
 	/**
-	 * Read a number of bits from a byteArray and return it as int value.
+	 * Read a number of bits from a byteArray and return it as ("unsigned") int value.
 	 * @param byteArray The array with the bytes to read from.
 	 * @param startBit The position of the first bit to read from.
 	 *        This needs not to be at byte boundaries.
@@ -280,7 +280,40 @@ public class Util {
 	}
 	
 	/**
-	 * Write an int value to a byte array at the given position.
+	 * Read a number of bits from a byteArray and return it as int value.
+	 * @param byteArray The array with the bytes to read from.
+	 * @param startBit The position of the first bit to read from.
+	 *        This needs not to be at byte boundaries.
+	 * @param lengthBits The length of the value in bits.
+	 * @return
+	 */
+	public static int getIntFromByteArray(byte[] byteArray, int startBit, int lengthBits)
+	{
+		long x = getUIntFromByteArray(byteArray, startBit, lengthBits);
+
+		// Decode 2's complement (if you have a nicer version, let us know...).
+		String bits = Long.toBinaryString(x);
+		
+		while (bits.length() < 32)
+			bits = "0" + bits;
+		
+		boolean positive = bits.charAt(32 - lengthBits) == '0';
+		
+		if (positive)
+		{
+			return (int)x;
+		}
+		else
+		{
+			x ^= 0xFFFFFFFF;
+			x = x & ((1 << lengthBits) - 1); // filter data bits without sign bit
+			x += 1;
+			return (int)-x;
+		}
+	}
+	
+	/**
+	 * Write an ("unsigned") int value to a byte array at the given position.
 	 * @param byteArray The array with the bytes to write to.
 	 * @param startBit The position of the first bit to write to.
 	 *        This needs not to be at byte boundaries.
@@ -301,6 +334,22 @@ public class Util {
 			
 			byteArray[dstByteOffset] = (byte)((byteArray[dstByteOffset] & bitMaskNeg) | (bit << dstBitOffset));
 		}
+	}
+	
+	/**
+	 * Write an (signed) int value to a byte array at the given position.
+	 * @param byteArray The array with the bytes to write to.
+	 * @param startBit The position of the first bit to write to.
+	 *        This needs not to be at byte boundaries.
+	 * @param lengthBits The length of the value in bits.
+	 * @return
+	 */
+	public static void setIntInByteArray(int value, byte[] byteArray, int startBit, int lengthBits)
+	{
+		// Encode 2's complement.
+		int uint = (((value >> 31) & 1) << (lengthBits - 1)) | (value & ((1 << (lengthBits - 1)) - 1));
+		
+		setUIntInByteArray(uint, byteArray, startBit, lengthBits);
 	}
 	
 	final protected static char[] hexArray = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};

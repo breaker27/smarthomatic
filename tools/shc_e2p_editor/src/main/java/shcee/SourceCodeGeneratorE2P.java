@@ -253,6 +253,48 @@ public class SourceCodeGeneratorE2P
 				
 				offset += bits;
 			}
+			else if (element.getNodeName().equals("IntValue"))
+			{
+				String ID = Util.getChildNodeValue(element, "ID");
+				int bits = Integer.parseInt(Util.getChildNodeValue(element, "Bits"));
+				String minVal = Util.getChildNodeValue(element, "MinVal");
+				String maxVal = Util.getChildNodeValue(element, "MaxVal");
+				int cTypeBits = calcCTypeBits(bits);
+				
+				sb.append("// " + ID + " (IntValue)" + newline);
+				
+				if (!description.equals(""))
+				{
+					sb.append("// Description: " + description + newline);
+				}
+				
+				sb.append(newline);
+				
+				// SET
+				
+				sb.append("// Set " + ID + " (IntValue)" + newline);
+				sb.append("// Byte offset: " + (offset / 8) + ", bit offset: " + (offset % 8) + ", length bits " + bits + ", min val " + minVal + ", max val " + maxVal + newline);
+				
+				sb.append("static inline void " + functionPrefix + "_set_" + ID.toLowerCase() + "(int" + cTypeBits + "_t val)" + newline);
+				sb.append("{" + newline);
+				sb.append("  eeprom_write_IntValue(" + (offset / 8) + ", " + (offset % 8) + ", " + bits + ", val);" + newline);
+				sb.append("}" + newline);
+				sb.append(newline);
+				
+				// GET
+				
+				sb.append("// Get " + ID + " (IntValue)" + newline);
+				sb.append("// Byte offset: " + (offset / 8) + ", bit offset: " + (offset % 8) + ", length bits " + bits + ", min val " + minVal + ", max val " + maxVal + newline);
+				
+				// TODO: Return minimal type uint8_t, ...
+				sb.append("static inline int" + cTypeBits + "_t " + functionPrefix + "_get_" + ID.toLowerCase() + "(void)" + newline);
+				sb.append("{" + newline);
+				sb.append("  return eeprom_read_IntValue32(" + (offset / 8) + ", " + (offset % 8) + ", " + bits + ", " + minVal + ", " + maxVal + ");" + newline);
+				sb.append("}" + newline);
+				sb.append(newline);
+				
+				offset += bits;
+			}
 			else if (element.getNodeName().equals("ByteArray"))
 			{
 				String ID = Util.getChildNodeValue(element, "ID");
@@ -273,6 +315,44 @@ public class SourceCodeGeneratorE2P
 				sb.append("#define EEPROM_" + ID + "_LENGTH_BYTES " + bytes + newline);
 				sb.append(newline);
 				offset += Integer.parseInt(bytes) * 8;
+			}
+			else if (element.getNodeName().equals("BoolValue"))
+			{
+				String ID = Util.getChildNodeValue(element, "ID");
+				
+				sb.append("// " + ID + " (BoolValue)" + newline);
+				
+				if (!description.equals(""))
+				{
+					sb.append("// Description: " + description + newline);
+				}
+				
+				sb.append(newline);
+				
+				// SET
+				
+				sb.append("// Set " + ID + " (BoolValue)" + newline);
+				sb.append("// Byte offset: " + (offset / 8) + ", bit offset: " + (offset % 8) + ", length bits 1" + newline);
+				
+				sb.append("static inline void " + functionPrefix + "_set_" + ID.toLowerCase() + "(bool val)" + newline);
+				sb.append("{" + newline);
+				sb.append("  eeprom_write_UIntValue(" + (offset / 8) + ", " + (offset % 8) + ", 1, val ? 1 : 0, bufx);" + newline);
+				sb.append("}" + newline);
+				sb.append(newline);
+				
+				// GET
+				
+				sb.append("// Get " + ID + " (BoolValue)" + newline);
+				sb.append("// Byte offset: " + (offset / 8) + ", bit offset: " + (offset % 8) + ", length bits 1" + newline);
+				
+				// TODO: Return minimal type uint8_t, ...
+				sb.append("static inline bool " + functionPrefix + "_get_" + ID.toLowerCase() + "(void)" + newline);
+				sb.append("{" + newline);
+				sb.append("  return eeprom_read_UIntValue8(" + (offset / 8) + ", " + (offset % 8) + ", 1, 0, 1, bufx) == 1;" + newline);
+				sb.append("}" + newline);
+				sb.append(newline);
+				
+				offset += 1;
 			}
 			else if (element.getNodeName().equals("Reserved"))
 			{

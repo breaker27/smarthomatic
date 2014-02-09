@@ -81,12 +81,16 @@ public class Block extends JPanel
 				addRestriction(n);
 			else if (n.getNodeName().equals("UIntValue"))
 				addElem(new UIntEditor(n));
+			else if (n.getNodeName().equals("IntValue"))
+				addElem(new IntEditor(n));
 			else if (n.getNodeName().equals("EnumValue"))
 				addElem(new EnumEditor(n));
 			else if (n.getNodeName().equals("ByteArray"))
 				addElem(new ByteArrayEditor(n));
 			else if (n.getNodeName().equals("Reserved"))
 				addElem(new ReservedBits(n));
+			
+			// TODO: Support BooleanEditor!
 		}
 	}	
 	
