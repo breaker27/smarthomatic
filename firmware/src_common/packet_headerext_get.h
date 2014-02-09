@@ -26,6 +26,9 @@
 
 #include "packet_header.h"
 
+// ReceiverID (UIntValue)
+// Description: The ID of the device to process the request. Use 4095 for broadcasts.
+
 // Set ReceiverID (UIntValue)
 // Offset: 9, 0, length bits 12, min val 0, max val 4095
 static inline void pkg_headerext_get_set_receiverid(uint32_t val)
@@ -40,6 +43,9 @@ static inline uint32_t pkg_headerext_get_get_receiverid(void)
   return array_read_UIntValue32(9, 0, 12, 0, 4095, bufx);
 }
 
+// MessageGroupID (UIntValue)
+// Description: 0 = Generic, 1..9 = Reserved, others are arbitrary
+
 // Set MessageGroupID (UIntValue)
 // Offset: 10, 4, length bits 7, min val 0, max val 127
 static inline void pkg_headerext_get_set_messagegroupid(uint32_t val)
@@ -53,6 +59,8 @@ static inline uint32_t pkg_headerext_get_get_messagegroupid(void)
 {
   return array_read_UIntValue32(10, 4, 7, 0, 127, bufx);
 }
+
+// MessageID (UIntValue)
 
 // Set MessageID (UIntValue)
 // Offset: 11, 3, length bits 4, min val 0, max val 15

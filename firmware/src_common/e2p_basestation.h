@@ -29,7 +29,8 @@
 // Start offset (bit): 512
 // Overall block length: 7680 bits
 
-// UIntValue AesKeyCount
+// AesKeyCount (UIntValue)
+// Description: This is the number of AES keys to use from the AesKeys block. Limit the number to the needed amount to avoid that the base station tries decoding with every one.
 
 // Set AesKeyCount (UIntValue)
 // Byte offset: 64, bit offset: 0, length bits 8, min val 1, max val 16
@@ -45,7 +46,8 @@ static inline uint8_t e2p_basestation_get_aeskeycount(void)
   return eeprom_read_UIntValue8(64, 0, 8, 1, 16);
 }
 
-// ByteArray AesKeys
+// AesKeys (ByteArray)
+// Description: These are all AES keys which can be used to encrypt or decrypt packages at the base station.
 
 #define EEPROM_AESKEYS_BYTE 65
 #define EEPROM_AESKEYS_BIT 0

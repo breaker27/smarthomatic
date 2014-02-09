@@ -29,7 +29,8 @@
 // Start offset (bit): 64
 // Overall block length: 448 bits
 
-// UIntValue DeviceID
+// DeviceID (UIntValue)
+// Description: The DeviceID identifies the specific unit in the SHC network. It is used to address the device and in messages the device sends. Every device has to have a different DeviceID.
 
 // Set DeviceID (UIntValue)
 // Byte offset: 8, bit offset: 0, length bits 12, min val 0, max val 4095
@@ -47,7 +48,8 @@ static inline uint16_t e2p_generic_get_deviceid(void)
 
 // Reserved area with 4 bits
 
-// UIntValue PacketCounter
+// PacketCounter (UIntValue)
+// Description: The PacketCounter is counted up throughout the whole lifetime of the device and is used to make the encrypted packets differently from each other every time.
 
 // Set PacketCounter (UIntValue)
 // Byte offset: 10, bit offset: 0, length bits 24, min val 0, max val 16777215
@@ -65,7 +67,8 @@ static inline uint32_t e2p_generic_get_packetcounter(void)
 
 // Reserved area with 152 bits
 
-// ByteArray AesKey
+// AesKey (ByteArray)
+// Description: This key is used to encrypt packets before sending and also used as primary key to decrypt packets. Special devices may have additional keys in their device specific block.
 
 #define EEPROM_AESKEY_BYTE 32
 #define EEPROM_AESKEY_BIT 0

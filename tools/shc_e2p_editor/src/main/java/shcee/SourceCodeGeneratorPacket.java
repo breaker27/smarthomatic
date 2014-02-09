@@ -499,7 +499,10 @@ public class SourceCodeGeneratorPacket
 				out.println("// Validity: " + validity);
 				out.println("// Length w/o Header + HeaderExtension: " + offset2 + " bits");
 				out.println("// Data fields: " + Util.arrayListToString(dataFields, ", "));
-				out.println("// Description: " + msgDescription);
+				if (!msgDescription.equals(""))
+				{
+					out.println("// Description: " + msgDescription);
+				}
 				out.println("");
 				
 				for (int p = 0; p < possibleMessageTypes.size(); p++)
@@ -652,6 +655,8 @@ public class SourceCodeGeneratorPacket
 		{
 			Node element = childs.item(e);
 		
+			String description = Util.getChildNodeValue(element, "Description", true);
+			
 			if (element.getNodeName().equals("EnumValue"))
 			{
 				String ID1 = Util.getChildNodeValue(element, "ID");
@@ -661,7 +666,15 @@ public class SourceCodeGeneratorPacket
 				// enum
 				NodeList enumElements = XPathAPI.selectNodeList(element, "Element");
 				
-				sb.append("// ENUM " + ID1 + newline);
+				sb.append("// " + ID1 + " (EnumValue)" + newline);
+				
+				if (!description.equals(""))
+				{
+					sb.append("// Description: " + description + newline);
+				}
+				
+				sb.append(newline);
+				
 				sb.append("typedef enum {" + newline);
 	
 				for (int ee = 0; ee < enumElements.getLength(); ee++)
@@ -711,6 +724,15 @@ public class SourceCodeGeneratorPacket
 				String minVal = Util.getChildNodeValue(element, "MinVal");
 				String maxVal = Util.getChildNodeValue(element, "MaxVal");
 				
+				sb.append("// " + ID + " (UIntValue)" + newline);
+				
+				if (!description.equals(""))
+				{
+					sb.append("// Description: " + description + newline);
+				}
+				
+				sb.append(newline);
+				
 				// SET
 				
 				sb.append("// Set " + ID + " (UIntValue)" + newline);
@@ -746,6 +768,15 @@ public class SourceCodeGeneratorPacket
 				String minVal = Util.getChildNodeValue(element, "MinVal");
 				String maxVal = Util.getChildNodeValue(element, "MaxVal");
 				
+				sb.append("// " + ID + " (IntValue)" + newline);
+				
+				if (!description.equals(""))
+				{
+					sb.append("// Description: " + description + newline);
+				}
+				
+				sb.append(newline);
+				
 				// SET
 				
 				sb.append("// Set " + ID + " (IntValue)" + newline);
@@ -778,6 +809,15 @@ public class SourceCodeGeneratorPacket
 				String bytes = Util.getChildNodeValue(element, "Bytes");
 				dataFields.add(ID);
 				
+				sb.append("// " + ID + " (ByteArray)" + newline);
+				
+				if (!description.equals(""))
+				{
+					sb.append("// Description: " + description + newline);
+				}
+				
+				sb.append(newline);
+				
 				sb.append("// Set " + ID + " (ByteArray)" + newline);
 				String offsetStr = generateOffsetString(useHeaderOffset, offset);
 				sb.append("// Offset: " + offsetStr + ", length bytes " + bytes + newline);
@@ -790,17 +830,19 @@ public class SourceCodeGeneratorPacket
 				
 				offset += Integer.parseInt(bytes) * 8;
 			}
-			else if (element.getNodeName().equals("Reserved"))
-			{
-				String bits = Util.getChildNodeValue(element, "Bits");
-				sb.append("// Reserved area with " + bits + " bits" + newline);
-				sb.append(newline);
-				offset += Integer.parseInt(bits);
-			}
 			else if (element.getNodeName().equals("BoolValue"))
 			{
 				String ID = Util.getChildNodeValue(element, "ID");
 				dataFields.add(ID);
+				
+				sb.append("// " + ID + " (BoolValue)" + newline);
+				
+				if (!description.equals(""))
+				{
+					sb.append("// Description: " + description + newline);
+				}
+				
+				sb.append(newline);
 				
 				// SET
 				
@@ -827,6 +869,13 @@ public class SourceCodeGeneratorPacket
 				sb.append(newline);
 				
 				offset += 1;
+			}
+			else if (element.getNodeName().equals("Reserved"))
+			{
+				String bits = Util.getChildNodeValue(element, "Bits");
+				sb.append("// Reserved area with " + bits + " bits" + newline);
+				sb.append(newline);
+				offset += Integer.parseInt(bits);
 			}
 		}
 

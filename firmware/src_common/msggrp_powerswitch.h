@@ -124,6 +124,8 @@ static inline void pkg_header_init_powerswitch_switchstate_ackstatus(void)
   __MESSAGETYPE = 10;
 }
 
+// On (BoolValue)
+
 // Set On (BoolValue)
 // Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 1
 static inline void msg_powerswitch_switchstate_set_on(bool val)
@@ -137,6 +139,9 @@ static inline bool msg_powerswitch_switchstate_get_on(void)
 {
   return array_read_UIntValue8(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 1, 0, 1, bufx) == 1;
 }
+
+// TimeoutSec (UIntValue)
+// Description: The time after which the switch is automatically toggled again. Use 0 to disable this.
 
 // Set TimeoutSec (UIntValue)
 // Offset: ((uint16_t)__HEADEROFFSETBITS + 1) / 8, ((uint16_t)__HEADEROFFSETBITS + 1) % 8, length bits 16, min val 0, max val 65535

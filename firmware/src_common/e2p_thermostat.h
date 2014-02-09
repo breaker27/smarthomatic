@@ -29,7 +29,8 @@
 // Start offset (bit): 512
 // Overall block length: 7680 bits
 
-// UIntValue BaseStationPacketCounter
+// BaseStationPacketCounter (UIntValue)
+// Description: This is the last remembered packet counter of a command from the base station. Packets with the same or lower number are ignored.
 
 // Set BaseStationPacketCounter (UIntValue)
 // Byte offset: 64, bit offset: 0, length bits 24, min val 0, max val 16777215

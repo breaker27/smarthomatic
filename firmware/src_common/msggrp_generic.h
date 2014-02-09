@@ -92,6 +92,9 @@ static inline void pkg_header_init_generic_version_ackstatus(void)
   __MESSAGETYPE = 10;
 }
 
+// Major (UIntValue)
+// Description: Different major version means incompatible changes.
+
 // Set Major (UIntValue)
 // Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 8, min val 0, max val 255
 static inline void msg_generic_version_set_major(uint32_t val)
@@ -105,6 +108,9 @@ static inline uint32_t msg_generic_version_get_major(void)
 {
   return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 8, 0, 255, bufx);
 }
+
+// Minor (UIntValue)
+// Description: Different minor number means new functionality without breaking compatibility.
 
 // Set Minor (UIntValue)
 // Offset: ((uint16_t)__HEADEROFFSETBITS + 8) / 8, ((uint16_t)__HEADEROFFSETBITS + 8) % 8, length bits 8, min val 0, max val 255
@@ -120,6 +126,9 @@ static inline uint32_t msg_generic_version_get_minor(void)
   return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 8) / 8, ((uint16_t)__HEADEROFFSETBITS + 8) % 8, 8, 0, 255, bufx);
 }
 
+// Patch (UIntValue)
+// Description: The patch version is changed when backwards-compatible bug fixes are made.
+
 // Set Patch (UIntValue)
 // Offset: ((uint16_t)__HEADEROFFSETBITS + 16) / 8, ((uint16_t)__HEADEROFFSETBITS + 16) % 8, length bits 8, min val 0, max val 255
 static inline void msg_generic_version_set_patch(uint32_t val)
@@ -133,6 +142,9 @@ static inline uint32_t msg_generic_version_get_patch(void)
 {
   return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 16) / 8, ((uint16_t)__HEADEROFFSETBITS + 16) % 8, 8, 0, 255, bufx);
 }
+
+// GitHash (UIntValue)
+// Description: The beginning of the revision ID hash as reported by Git.
 
 // Set GitHash (UIntValue)
 // Offset: ((uint16_t)__HEADEROFFSETBITS + 24) / 8, ((uint16_t)__HEADEROFFSETBITS + 24) % 8, length bits 32, min val 0, max val 4294967295
@@ -194,6 +206,9 @@ static inline void pkg_header_init_generic_batterystatus_ackstatus(void)
   __PACKETSIZEBYTES = 16;
   __MESSAGETYPE = 10;
 }
+
+// Percentage (UIntValue)
+// Description: The remaining capacity of the battery from 0 (empty) to 100 (full).
 
 // Set Percentage (UIntValue)
 // Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 7, min val 0, max val 100

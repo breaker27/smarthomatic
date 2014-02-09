@@ -149,15 +149,23 @@ public class SourceCodeGeneratorE2P
 		{
 			Node element = elements.item(e);
 			
+			String description = Util.getChildNodeValue(element, "Description", true);
+			
 			if (element.getNodeName().equals("EnumValue"))
 			{
 				String ID1 = Util.getChildNodeValue(element, "ID");
 				int bits = Integer.parseInt(Util.getChildNodeValue(element, "Bits"));
-				sb.append("// EnumValue " + ID1 + newline);
-				sb.append(newline);
 				String ID = ID1.toUpperCase();
-				
 				int cTypeBits = calcCTypeBits(bits);
+
+				sb.append("// " + ID1 + " (EnumValue)" + newline);
+				
+				if (!description.equals(""))
+				{
+					sb.append("// Description: " + description + newline);
+				}
+				
+				sb.append(newline);
 				
 				NodeList enumElements = XPathAPI.selectNodeList(element, "Element");
 				
@@ -206,13 +214,19 @@ public class SourceCodeGeneratorE2P
 			else if (element.getNodeName().equals("UIntValue"))
 			{
 				String ID = Util.getChildNodeValue(element, "ID");
-				sb.append("// UIntValue " + ID + newline);
-				sb.append(newline);
 				int bits = Integer.parseInt(Util.getChildNodeValue(element, "Bits"));
 				String minVal = Util.getChildNodeValue(element, "MinVal");
 				String maxVal = Util.getChildNodeValue(element, "MaxVal");
-				
 				int cTypeBits = calcCTypeBits(bits);
+				
+				sb.append("// " + ID + " (UIntValue)" + newline);
+				
+				if (!description.equals(""))
+				{
+					sb.append("// Description: " + description + newline);
+				}
+				
+				sb.append(newline);
 				
 				// SET
 				
@@ -242,8 +256,16 @@ public class SourceCodeGeneratorE2P
 			else if (element.getNodeName().equals("ByteArray"))
 			{
 				String ID = Util.getChildNodeValue(element, "ID");
-				sb.append("// ByteArray " + ID + newline);
+				
+				sb.append("// " + ID + " (ByteArray)" + newline);
+				
+				if (!description.equals(""))
+				{
+					sb.append("// Description: " + description + newline);
+				}
+				
 				sb.append(newline);
+				
 				ID = ID.toUpperCase();
 				String bytes = Util.getChildNodeValue(element, "Bytes");
 				sb.append("#define EEPROM_" + ID + "_BYTE " + (offset / 8) + newline);

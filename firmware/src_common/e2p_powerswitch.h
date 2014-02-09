@@ -29,7 +29,8 @@
 // Start offset (bit): 512
 // Overall block length: 7680 bits
 
-// UIntValue SupportedSwitches
+// SupportedSwitches (UIntValue)
+// Description: This is a bit field about the connected switches. (Currently, only one switch is supported and the value has to be 0b00000001, but the value is for future usage.)
 
 // Set SupportedSwitches (UIntValue)
 // Byte offset: 64, bit offset: 0, length bits 8, min val 1, max val 1
@@ -45,13 +46,15 @@ static inline uint8_t e2p_powerswitch_get_supportedswitches(void)
   return eeprom_read_UIntValue8(64, 0, 8, 1, 1);
 }
 
-// ByteArray SwitchState
+// SwitchState (ByteArray)
+// Description: This field stores the last known switch state(s) for eight switches to allow restoring the same state after power loss. It contains also the remaining timeout value. Fill this with zeros when creating a e2p file!
 
 #define EEPROM_SWITCHSTATE_BYTE 65
 #define EEPROM_SWITCHSTATE_BIT 0
 #define EEPROM_SWITCHSTATE_LENGTH_BYTES 16
 
-// UIntValue BaseStationPacketCounter
+// BaseStationPacketCounter (UIntValue)
+// Description: This is the last remembered packet counter of a command from the base station. Packets with the same or lower number are ignored.
 
 // Set BaseStationPacketCounter (UIntValue)
 // Byte offset: 81, bit offset: 0, length bits 24, min val 0, max val 16777215

@@ -29,7 +29,8 @@
 // Start offset (bit): 512
 // Overall block length: 7680 bits
 
-// UIntValue BaseStationPacketCounter
+// BaseStationPacketCounter (UIntValue)
+// Description: This is the last remembered packet counter of a command from the base station. Packets with the same or lower number are ignored.
 
 // Set BaseStationPacketCounter (UIntValue)
 // Byte offset: 64, bit offset: 0, length bits 24, min val 0, max val 16777215
@@ -45,7 +46,8 @@ static inline uint32_t e2p_dimmer_get_basestationpacketcounter(void)
   return eeprom_read_UIntValue32(64, 0, 24, 0, 16777215);
 }
 
-// ByteArray BrightnessTranslationTable
+// BrightnessTranslationTable (ByteArray)
+// Description: These are the target values (one byte each) for the input brightness of 0, 1, ... 100% to adapt the specific brightness curve of your lamps. Set first byte to FF to not use it.
 
 #define EEPROM_BRIGHTNESSTRANSLATIONTABLE_BYTE 67
 #define EEPROM_BRIGHTNESSTRANSLATIONTABLE_BIT 0

@@ -172,8 +172,9 @@ public class Util {
 	 * @param root
 	 * @param string
 	 */
-	public static String getChildNodeValue(Node root, String childName) {
+	public static String getChildNodeValue(Node root, String childName, boolean emptyStringOnMissingChild) {
 		NodeList nl = root.getChildNodes();
+		
 		for (int i = 0; i < nl.getLength(); i++) {
 			if (nl.item(i).getNodeName().equals(childName)) {
 				Node textNode = nl.item(i).getFirstChild();
@@ -184,10 +185,23 @@ public class Util {
 					return textNode.getNodeValue();
 			}
 		}
-		System.err.println("Childnode " + childName + " not found!");
-		return null;	
+		
+		if (emptyStringOnMissingChild)
+		{
+			return "";
+		}
+		else
+		{
+			System.err.println("Childnode " + childName + " not found!");
+			return null;
+		}
 	}
 
+	public static String getChildNodeValue(Node root, String childName)
+	{
+		return getChildNodeValue(root, childName, false);	
+	}
+	
 	/**
 	 * Run program after creating a tmp.cmd (Windows) or by using the bash (Linux).
 	 * Currently, only Windows is supported!!

@@ -29,7 +29,8 @@
 // Start offset (bit): 512
 // Overall block length: 3584 bits
 
-// EnumValue TemperatureSensorType
+// TemperatureSensorType (EnumValue)
+// Description: You can choose one of the supported temperature / humidity sensors. If set to 0, no sensor is used, but the device sends out packets for testing purposes.
 
 typedef enum {
   TEMPERATURESENSORTYPE_NOSENSOR = 0,
@@ -50,7 +51,8 @@ static inline TemperatureSensorTypeEnum e2p_tempsensor_get_temperaturesensortype
   return eeprom_read_UIntValue8(64, 0, 8, 0, 255);
 }
 
-// EnumValue BrightnessSensorType
+// BrightnessSensorType (EnumValue)
+// Description: You can choose one of the supported light sensors. If set to 0, no sensor is used, but the device sends out packets for testing purposes.
 
 typedef enum {
   BRIGHTNESSSENSORTYPE_NOSENSOR = 0,

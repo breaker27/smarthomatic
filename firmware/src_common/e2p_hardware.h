@@ -29,7 +29,8 @@
 // Start offset (bit): 0
 // Overall block length: 64 bits
 
-// EnumValue DeviceType
+// DeviceType (EnumValue)
+// Description: The device can check with this value if the EEPROM data is meant for the actual type of device. If not, the device goes into an error mode.
 
 typedef enum {
   DEVICETYPE_BASESTATION = 0,
@@ -53,7 +54,8 @@ static inline DeviceTypeEnum e2p_hardware_get_devicetype(void)
   return eeprom_read_UIntValue8(0, 0, 8, 0, 255);
 }
 
-// UIntValue OsccalMode
+// OsccalMode (UIntValue)
+// Description: This value is used to change the speed of the internal oscillator. 0 = don't use OSCCAL calibration (e.g. external crystal oszillator is used). FF = OSCCAL measure mode: the LED blinks every 60s, so the user can measure the original speed. 01..FE = The speed is adjusted. If the value is X, the speed is adjusted by (X - 128) promille. (Example: Setting the value to 138 adjusts the speed by (X - 128) promille = +1%.)
 
 // Set OsccalMode (UIntValue)
 // Byte offset: 1, bit offset: 0, length bits 8, min val 0, max val 255

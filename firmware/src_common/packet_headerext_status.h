@@ -26,6 +26,9 @@
 
 #include "packet_header.h"
 
+// MessageGroupID (UIntValue)
+// Description: 0 = Generic, 1..9 = Reserved, others are arbitrary
+
 // Set MessageGroupID (UIntValue)
 // Offset: 9, 0, length bits 7, min val 0, max val 127
 static inline void pkg_headerext_status_set_messagegroupid(uint32_t val)
@@ -39,6 +42,8 @@ static inline uint32_t pkg_headerext_status_get_messagegroupid(void)
 {
   return array_read_UIntValue32(9, 0, 7, 0, 127, bufx);
 }
+
+// MessageID (UIntValue)
 
 // Set MessageID (UIntValue)
 // Offset: 9, 7, length bits 4, min val 0, max val 15
