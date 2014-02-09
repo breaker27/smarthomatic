@@ -16,10 +16,10 @@
 * with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <stdint.h>
-
 #ifndef E2P_ACCESS_H
 #define E2P_ACCESS_H
+
+#include <stdint.h>
 
 #ifdef UNITTEST
 
