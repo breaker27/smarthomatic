@@ -24,8 +24,8 @@
 #ifndef _E2P_HARDWARE_H
 #define _E2P_HARDWARE_H
 
-
-// ---------- Hardware ----------
+// E2P Block "Hardware"
+// ====================
 // Start offset (bit): 0
 // Overall block length: 64 bits
 
@@ -39,17 +39,35 @@ typedef enum {
   DEVICETYPE_THERMOSTAT = 80
 } DeviceTypeEnum;
 
-#define EEPROM_DEVICETYPE_BYTE 0
-#define EEPROM_DEVICETYPE_BIT 0
-#define EEPROM_DEVICETYPE_LENGTH_BITS 8
+// Set DeviceType (EnumValue)
+// Byte offset: 0, bit offset: 0, length bits 8
+static inline void e2p_hardware_set_devicetype(DeviceTypeEnum val)
+{
+  eeprom_write_UIntValue(0, 0, 8, val);
+}
+
+// Get DeviceType (EnumValue)
+// Byte offset: 0, bit offset: 0, length bits 8
+static inline DeviceTypeEnum e2p_hardware_get_devicetype(void)
+{
+  return eeprom_read_UIntValue8(0, 0, 8, 0, 255);
+}
 
 // UIntValue OsccalMode
 
-#define EEPROM_OSCCALMODE_BYTE 1
-#define EEPROM_OSCCALMODE_BIT 0
-#define EEPROM_OSCCALMODE_LENGTH_BITS 8
-#define EEPROM_OSCCALMODE_MINVAL 0
-#define EEPROM_OSCCALMODE_MAXVAL 255
+// Set OsccalMode (UIntValue)
+// Byte offset: 1, bit offset: 0, length bits 8, min val 0, max val 255
+static inline void e2p_hardware_set_osccalmode(uint8_t val)
+{
+  eeprom_write_UIntValue(1, 0, 8, val);
+}
+
+// Get OsccalMode (UIntValue)
+// Byte offset: 1, bit offset: 0, length bits 8, min val 0, max val 255
+static inline uint8_t e2p_hardware_get_osccalmode(void)
+{
+  return eeprom_read_UIntValue8(1, 0, 8, 0, 255);
+}
 
 // Reserved area with 48 bits
 

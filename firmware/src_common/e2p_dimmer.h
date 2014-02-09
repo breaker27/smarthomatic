@@ -24,18 +24,26 @@
 #ifndef _E2P_DIMMER_H
 #define _E2P_DIMMER_H
 
-
-// ---------- Dimmer ----------
+// E2P Block "Dimmer"
+// ==================
 // Start offset (bit): 512
 // Overall block length: 7680 bits
 
 // UIntValue BaseStationPacketCounter
 
-#define EEPROM_BASESTATIONPACKETCOUNTER_BYTE 64
-#define EEPROM_BASESTATIONPACKETCOUNTER_BIT 0
-#define EEPROM_BASESTATIONPACKETCOUNTER_LENGTH_BITS 24
-#define EEPROM_BASESTATIONPACKETCOUNTER_MINVAL 0
-#define EEPROM_BASESTATIONPACKETCOUNTER_MAXVAL 16777215
+// Set BaseStationPacketCounter (UIntValue)
+// Byte offset: 64, bit offset: 0, length bits 24, min val 0, max val 16777215
+static inline void e2p_dimmer_set_basestationpacketcounter(uint32_t val)
+{
+  eeprom_write_UIntValue(64, 0, 24, val);
+}
+
+// Get BaseStationPacketCounter (UIntValue)
+// Byte offset: 64, bit offset: 0, length bits 24, min val 0, max val 16777215
+static inline uint32_t e2p_dimmer_get_basestationpacketcounter(void)
+{
+  return eeprom_read_UIntValue32(64, 0, 24, 0, 16777215);
+}
 
 // ByteArray BrightnessTranslationTable
 

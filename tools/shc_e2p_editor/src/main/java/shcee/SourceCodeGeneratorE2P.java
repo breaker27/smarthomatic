@@ -117,14 +117,16 @@ public class SourceCodeGeneratorE2P
 		out.println("#ifndef _E2P_" + blockName.toUpperCase() + "_H");
 		out.println("#define _E2P_" + blockName.toUpperCase() + "_H");
 		out.println("");
-		out.println("");
 
 		Node hwConfigBlock = XPathAPI.selectSingleNode(xmlRoot, "Block[Name='" + blockName + "']");
 		
 		StringBuilder fieldDefs = new StringBuilder();
-		int length = generateFieldDefs(hwConfigBlock, offset, fieldDefs);
+		int length = generateFieldDefs(hwConfigBlock, offset, "e2p_" + blockName.toLowerCase(), fieldDefs);
 
-		out.println("// ---------- " + blockName + " ----------");
+		String h = "// E2P Block \"" + blockName + "\"";
+		out.println(h);
+		out.println("// " + String.format("%-" + (h.length() - 3) + "s", "").replace(' ', '='));
+		
 		out.println("// Start offset (bit): " + offset);
 		out.println("// Overall block length: " + length + " bits");
 		out.println("");
@@ -137,7 +139,7 @@ public class SourceCodeGeneratorE2P
 		return length;
 	}
 	
-	private int generateFieldDefs(Node blockNode, int startOffset, StringBuilder sb) throws TransformerException
+	private int generateFieldDefs(Node blockNode, int startOffset, String functionPrefix, StringBuilder sb) throws TransformerException
 	{
 		int offset = startOffset;
 		
@@ -150,9 +152,12 @@ public class SourceCodeGeneratorE2P
 			if (element.getNodeName().equals("EnumValue"))
 			{
 				String ID1 = Util.getChildNodeValue(element, "ID");
+				int bits = Integer.parseInt(Util.getChildNodeValue(element, "Bits"));
 				sb.append("// EnumValue " + ID1 + newline);
 				sb.append(newline);
 				String ID = ID1.toUpperCase();
+				
+				int cTypeBits = calcCTypeBits(bits);
 				
 				NodeList enumElements = XPathAPI.selectNodeList(element, "Element");
 				
@@ -172,10 +177,30 @@ public class SourceCodeGeneratorE2P
 				sb.append("} " + ID1 + "Enum;" + newline);
 				sb.append(newline);
 				
-				sb.append("#define EEPROM_" + ID + "_BYTE " + (offset / 8) + newline);
-				sb.append("#define EEPROM_" + ID + "_BIT " + (offset % 8) + newline);
-				sb.append("#define EEPROM_" + ID + "_LENGTH_BITS 8" + newline);
+				// SET
+				
+				sb.append("// Set " + ID1 + " (EnumValue)" + newline);
+				sb.append("// Byte offset: " + (offset / 8) + ", bit offset: " + (offset % 8) + ", length bits " + bits + newline);
+				
+				sb.append("static inline void " + functionPrefix + "_set_" + ID1.toLowerCase() + "(" + ID1 + "Enum val)" + newline);
+				sb.append("{" + newline);
+				sb.append("  eeprom_write_UIntValue(" + (offset / 8) + ", " + (offset % 8) + ", " + bits + ", val);" + newline);
+				sb.append("}" + newline);
 				sb.append(newline);
+				
+				// GET
+				
+				int maxVal = (1 << cTypeBits) - 1;
+				
+				sb.append("// Get " + ID1 + " (EnumValue)" + newline);
+				sb.append("// Byte offset: " + (offset / 8) + ", bit offset: " + (offset % 8) + ", length bits " + bits + newline);
+				
+				sb.append("static inline " + ID1 + "Enum " + functionPrefix + "_get_" + ID1.toLowerCase() + "(void)" + newline);
+				sb.append("{" + newline);
+				sb.append("  return eeprom_read_UIntValue" + cTypeBits + "(" + (offset / 8) + ", " + (offset % 8) + ", 8, 0, " + maxVal + ");" + newline);
+				sb.append("}" + newline);
+				sb.append(newline);
+				
 				offset += 8;
 			}
 			else if (element.getNodeName().equals("UIntValue"))
@@ -183,17 +208,36 @@ public class SourceCodeGeneratorE2P
 				String ID = Util.getChildNodeValue(element, "ID");
 				sb.append("// UIntValue " + ID + newline);
 				sb.append(newline);
-				ID = ID.toUpperCase();
-				String bits = Util.getChildNodeValue(element, "Bits");
+				int bits = Integer.parseInt(Util.getChildNodeValue(element, "Bits"));
 				String minVal = Util.getChildNodeValue(element, "MinVal");
 				String maxVal = Util.getChildNodeValue(element, "MaxVal");
-				sb.append("#define EEPROM_" + ID + "_BYTE " + (offset / 8) + newline);
-				sb.append("#define EEPROM_" + ID + "_BIT " + (offset % 8) + newline);
-				sb.append("#define EEPROM_" + ID + "_LENGTH_BITS " + bits + newline);
-				sb.append("#define EEPROM_" + ID + "_MINVAL " + minVal + newline);
-				sb.append("#define EEPROM_" + ID + "_MAXVAL " + maxVal + newline);
+				
+				int cTypeBits = calcCTypeBits(bits);
+				
+				// SET
+				
+				sb.append("// Set " + ID + " (UIntValue)" + newline);
+				sb.append("// Byte offset: " + (offset / 8) + ", bit offset: " + (offset % 8) + ", length bits " + bits + ", min val " + minVal + ", max val " + maxVal + newline);
+				
+				sb.append("static inline void " + functionPrefix + "_set_" + ID.toLowerCase() + "(uint" + cTypeBits + "_t val)" + newline);
+				sb.append("{" + newline);
+				sb.append("  eeprom_write_UIntValue(" + (offset / 8) + ", " + (offset % 8) + ", " + bits + ", val);" + newline);
+				sb.append("}" + newline);
 				sb.append(newline);
-				offset += Integer.parseInt(bits);
+				
+				// GET
+				
+				sb.append("// Get " + ID + " (UIntValue)" + newline);
+				sb.append("// Byte offset: " + (offset / 8) + ", bit offset: " + (offset % 8) + ", length bits " + bits + ", min val " + minVal + ", max val " + maxVal + newline);
+				
+				// TODO: Return minimal type uint8_t, ...
+				sb.append("static inline uint" + cTypeBits + "_t " + functionPrefix + "_get_" + ID.toLowerCase() + "(void)" + newline);
+				sb.append("{" + newline);
+				sb.append("  return eeprom_read_UIntValue" + cTypeBits + "(" + (offset / 8) + ", " + (offset % 8) + ", " + bits + ", " + minVal + ", " + maxVal + ");" + newline);
+				sb.append("}" + newline);
+				sb.append(newline);
+				
+				offset += bits;
 			}
 			else if (element.getNodeName().equals("ByteArray"))
 			{
@@ -218,5 +262,19 @@ public class SourceCodeGeneratorE2P
 		}
 		
 		return offset - startOffset;
+	}
+
+	/**
+	 * Get 8, 16 or 32 as used in c types, depending on the needed bits.
+	 * @param bits
+	 * @return
+	 */
+	private int calcCTypeBits(int bits) {
+		int cTypeBits = (((bits - 1) / 8) + 1) * 8;
+		if (cTypeBits == 24)
+		{
+			cTypeBits = 32;
+		}
+		return cTypeBits;
 	}
 }

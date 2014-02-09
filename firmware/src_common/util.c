@@ -311,8 +311,7 @@ void signal_error_state(void)
 // If not, wait in endless loop and let LED blink.
 void check_eeprom_compatibility(uint8_t expectedDeviceType)
 {
-	if (expectedDeviceType != eeprom_read_UIntValue8(EEPROM_DEVICETYPE_BYTE, EEPROM_DEVICETYPE_BIT,
-		EEPROM_DEVICETYPE_LENGTH_BITS, 0, (1 << EEPROM_DEVICETYPE_LENGTH_BITS) - 1))
+	if (expectedDeviceType != e2p_hardware_get_devicetype())
 	{
 		signal_error_state();
 	}
@@ -322,8 +321,7 @@ void check_eeprom_compatibility(uint8_t expectedDeviceType)
 void osccal_info(void)
 {
 #ifdef UART_DEBUG
-	uint8_t mode = eeprom_read_UIntValue8(EEPROM_OSCCALMODE_BYTE, EEPROM_OSCCALMODE_BIT,
-		EEPROM_OSCCALMODE_LENGTH_BITS, EEPROM_OSCCALMODE_MINVAL, EEPROM_OSCCALMODE_MAXVAL);
+	uint8_t mode = e2p_hardware_get_osccalmode();
 	
 	if ((mode > 0) && (mode < 255))
 	{
@@ -341,8 +339,7 @@ void osccal_info(void)
 //           Ex: Setting the value to 138 adjusts the speed by (X - 128) promille = +1%.
 void osccal_init(void)
 {
-	uint8_t mode = eeprom_read_UIntValue8(EEPROM_OSCCALMODE_BYTE, EEPROM_OSCCALMODE_BIT,
-		EEPROM_OSCCALMODE_LENGTH_BITS, EEPROM_OSCCALMODE_MINVAL, EEPROM_OSCCALMODE_MAXVAL);
+	uint8_t mode = e2p_hardware_get_osccalmode();
 	
 	if (mode == 255)
 	{
@@ -371,7 +368,7 @@ void inc_packetcounter(void)
 	
 	if (packetcounter % PACKET_COUNTER_WRITE_CYCLE == 0)
 	{
-		eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
+		e2p_generic_set_packetcounter(packetcounter);
 	}
 }
 

@@ -24,18 +24,26 @@
 #ifndef _E2P_POWERSWITCH_H
 #define _E2P_POWERSWITCH_H
 
-
-// ---------- PowerSwitch ----------
+// E2P Block "PowerSwitch"
+// =======================
 // Start offset (bit): 512
 // Overall block length: 7680 bits
 
 // UIntValue SupportedSwitches
 
-#define EEPROM_SUPPORTEDSWITCHES_BYTE 64
-#define EEPROM_SUPPORTEDSWITCHES_BIT 0
-#define EEPROM_SUPPORTEDSWITCHES_LENGTH_BITS 8
-#define EEPROM_SUPPORTEDSWITCHES_MINVAL 1
-#define EEPROM_SUPPORTEDSWITCHES_MAXVAL 1
+// Set SupportedSwitches (UIntValue)
+// Byte offset: 64, bit offset: 0, length bits 8, min val 1, max val 1
+static inline void e2p_powerswitch_set_supportedswitches(uint8_t val)
+{
+  eeprom_write_UIntValue(64, 0, 8, val);
+}
+
+// Get SupportedSwitches (UIntValue)
+// Byte offset: 64, bit offset: 0, length bits 8, min val 1, max val 1
+static inline uint8_t e2p_powerswitch_get_supportedswitches(void)
+{
+  return eeprom_read_UIntValue8(64, 0, 8, 1, 1);
+}
 
 // ByteArray SwitchState
 
@@ -45,11 +53,19 @@
 
 // UIntValue BaseStationPacketCounter
 
-#define EEPROM_BASESTATIONPACKETCOUNTER_BYTE 81
-#define EEPROM_BASESTATIONPACKETCOUNTER_BIT 0
-#define EEPROM_BASESTATIONPACKETCOUNTER_LENGTH_BITS 24
-#define EEPROM_BASESTATIONPACKETCOUNTER_MINVAL 0
-#define EEPROM_BASESTATIONPACKETCOUNTER_MAXVAL 16777215
+// Set BaseStationPacketCounter (UIntValue)
+// Byte offset: 81, bit offset: 0, length bits 24, min val 0, max val 16777215
+static inline void e2p_powerswitch_set_basestationpacketcounter(uint32_t val)
+{
+  eeprom_write_UIntValue(81, 0, 24, val);
+}
+
+// Get BaseStationPacketCounter (UIntValue)
+// Byte offset: 81, bit offset: 0, length bits 24, min val 0, max val 16777215
+static inline uint32_t e2p_powerswitch_get_basestationpacketcounter(void)
+{
+  return eeprom_read_UIntValue32(81, 0, 24, 0, 16777215);
+}
 
 // Reserved area with 7520 bits
 

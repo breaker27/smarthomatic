@@ -24,28 +24,44 @@
 #ifndef _E2P_GENERIC_H
 #define _E2P_GENERIC_H
 
-
-// ---------- Generic ----------
+// E2P Block "Generic"
+// ===================
 // Start offset (bit): 64
 // Overall block length: 448 bits
 
 // UIntValue DeviceID
 
-#define EEPROM_DEVICEID_BYTE 8
-#define EEPROM_DEVICEID_BIT 0
-#define EEPROM_DEVICEID_LENGTH_BITS 12
-#define EEPROM_DEVICEID_MINVAL 0
-#define EEPROM_DEVICEID_MAXVAL 4095
+// Set DeviceID (UIntValue)
+// Byte offset: 8, bit offset: 0, length bits 12, min val 0, max val 4095
+static inline void e2p_generic_set_deviceid(uint16_t val)
+{
+  eeprom_write_UIntValue(8, 0, 12, val);
+}
+
+// Get DeviceID (UIntValue)
+// Byte offset: 8, bit offset: 0, length bits 12, min val 0, max val 4095
+static inline uint16_t e2p_generic_get_deviceid(void)
+{
+  return eeprom_read_UIntValue16(8, 0, 12, 0, 4095);
+}
 
 // Reserved area with 4 bits
 
 // UIntValue PacketCounter
 
-#define EEPROM_PACKETCOUNTER_BYTE 10
-#define EEPROM_PACKETCOUNTER_BIT 0
-#define EEPROM_PACKETCOUNTER_LENGTH_BITS 24
-#define EEPROM_PACKETCOUNTER_MINVAL 0
-#define EEPROM_PACKETCOUNTER_MAXVAL 16777215
+// Set PacketCounter (UIntValue)
+// Byte offset: 10, bit offset: 0, length bits 24, min val 0, max val 16777215
+static inline void e2p_generic_set_packetcounter(uint32_t val)
+{
+  eeprom_write_UIntValue(10, 0, 24, val);
+}
+
+// Get PacketCounter (UIntValue)
+// Byte offset: 10, bit offset: 0, length bits 24, min val 0, max val 16777215
+static inline uint32_t e2p_generic_get_packetcounter(void)
+{
+  return eeprom_read_UIntValue32(10, 0, 24, 0, 16777215);
+}
 
 // Reserved area with 152 bits
 

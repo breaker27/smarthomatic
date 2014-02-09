@@ -24,18 +24,26 @@
 #ifndef _E2P_BASESTATION_H
 #define _E2P_BASESTATION_H
 
-
-// ---------- BaseStation ----------
+// E2P Block "BaseStation"
+// =======================
 // Start offset (bit): 512
 // Overall block length: 7680 bits
 
 // UIntValue AesKeyCount
 
-#define EEPROM_AESKEYCOUNT_BYTE 64
-#define EEPROM_AESKEYCOUNT_BIT 0
-#define EEPROM_AESKEYCOUNT_LENGTH_BITS 8
-#define EEPROM_AESKEYCOUNT_MINVAL 1
-#define EEPROM_AESKEYCOUNT_MAXVAL 16
+// Set AesKeyCount (UIntValue)
+// Byte offset: 64, bit offset: 0, length bits 8, min val 1, max val 16
+static inline void e2p_basestation_set_aeskeycount(uint8_t val)
+{
+  eeprom_write_UIntValue(64, 0, 8, val);
+}
+
+// Get AesKeyCount (UIntValue)
+// Byte offset: 64, bit offset: 0, length bits 8, min val 1, max val 16
+static inline uint8_t e2p_basestation_get_aeskeycount(void)
+{
+  return eeprom_read_UIntValue8(64, 0, 8, 1, 16);
+}
 
 // ByteArray AesKeys
 

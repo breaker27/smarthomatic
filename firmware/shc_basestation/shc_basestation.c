@@ -49,7 +49,7 @@
 	#error AES keys do not start at a byte border. Not supported by base station (maybe fix E2P layout?).
 #endif
 
-uint16_t deviceID;
+uint16_t device_id;
 uint8_t aes_key_count;
 
 // Show info about the received packets.
@@ -189,9 +189,9 @@ void decode_data(uint8_t len)
 	// Detect and process Acknowledges to base station, whose requests have to be removed from the request queue
 	if ((messagetype == MESSAGETYPE_ACK) || (messagetype == MESSAGETYPE_ACKSTATUS))
 	{
-		if (acksenderid == deviceID) // request sent from base station
+		if (acksenderid == device_id) // request sent from base station
 		{
-			remove_request(senderid, deviceID, ackpacketcounter);
+			remove_request(senderid, device_id, ackpacketcounter);
 		}
 	}
 }
@@ -199,7 +199,7 @@ void decode_data(uint8_t len)
 // Set senderid, packetcounter and CRC into the partly filled packet, encrypt it using the given AES key number and send it.
 void send_packet(uint8_t aes_key_nr, uint8_t packet_len)
 {
-	pkg_header_set_senderid(deviceID);
+	pkg_header_set_senderid(device_id);
 
 	inc_packetcounter();
 	pkg_header_set_packetcounter(packetcounter);
@@ -239,23 +239,19 @@ int main(void)
 	request_queue_init();
 
 	// read packetcounter, increase by cycle and write back
-	packetcounter = eeprom_read_UIntValue32(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT,
-		EEPROM_PACKETCOUNTER_LENGTH_BITS, EEPROM_PACKETCOUNTER_MINVAL, EEPROM_PACKETCOUNTER_MAXVAL) + PACKET_COUNTER_WRITE_CYCLE;
-
-	eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
+	packetcounter = e2p_generic_get_packetcounter() + PACKET_COUNTER_WRITE_CYCLE;
+	e2p_generic_set_packetcounter(packetcounter);
 
 	// read device specific config
-	aes_key_count = eeprom_read_UIntValue8(EEPROM_AESKEYCOUNT_BYTE, EEPROM_AESKEYCOUNT_BIT,
-		EEPROM_AESKEYCOUNT_LENGTH_BITS, EEPROM_AESKEYCOUNT_MINVAL, EEPROM_AESKEYCOUNT_MAXVAL);
+	aes_key_count = e2p_basestation_get_aeskeycount();
 
-	deviceID = eeprom_read_UIntValue16(EEPROM_DEVICEID_BYTE, EEPROM_DEVICEID_BIT,
-		EEPROM_DEVICEID_LENGTH_BITS, EEPROM_DEVICEID_MINVAL, EEPROM_DEVICEID_MAXVAL);
+	device_id = e2p_generic_get_deviceid();
 
 	uart_init();
 	UART_PUTS("\r\n");
 	UART_PUTF4("smarthomatic Base Station v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
 	UART_PUTS("(c) 2012..2014 Uwe Freese, www.smarthomatic.org\r\n");
-	UART_PUTF("Device ID: %u\r\n", deviceID);
+	UART_PUTF("Device ID: %u\r\n", device_id);
 	UART_PUTF("Packet counter: %lu\r\n", packetcounter);
 	UART_PUTF("AES key count: %u\r\n", aes_key_count);
 	UART_PUTS("Waiting for incoming data. Press h for help.\r\n\r\n");

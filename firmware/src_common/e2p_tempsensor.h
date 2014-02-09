@@ -24,8 +24,8 @@
 #ifndef _E2P_TEMPSENSOR_H
 #define _E2P_TEMPSENSOR_H
 
-
-// ---------- TempSensor ----------
+// E2P Block "TempSensor"
+// ======================
 // Start offset (bit): 512
 // Overall block length: 3584 bits
 
@@ -36,9 +36,19 @@ typedef enum {
   TEMPERATURESENSORTYPE_SHT15 = 1
 } TemperatureSensorTypeEnum;
 
-#define EEPROM_TEMPERATURESENSORTYPE_BYTE 64
-#define EEPROM_TEMPERATURESENSORTYPE_BIT 0
-#define EEPROM_TEMPERATURESENSORTYPE_LENGTH_BITS 8
+// Set TemperatureSensorType (EnumValue)
+// Byte offset: 64, bit offset: 0, length bits 8
+static inline void e2p_tempsensor_set_temperaturesensortype(TemperatureSensorTypeEnum val)
+{
+  eeprom_write_UIntValue(64, 0, 8, val);
+}
+
+// Get TemperatureSensorType (EnumValue)
+// Byte offset: 64, bit offset: 0, length bits 8
+static inline TemperatureSensorTypeEnum e2p_tempsensor_get_temperaturesensortype(void)
+{
+  return eeprom_read_UIntValue8(64, 0, 8, 0, 255);
+}
 
 // EnumValue BrightnessSensorType
 
@@ -47,9 +57,19 @@ typedef enum {
   BRIGHTNESSSENSORTYPE_PHOTOCELL = 1
 } BrightnessSensorTypeEnum;
 
-#define EEPROM_BRIGHTNESSSENSORTYPE_BYTE 65
-#define EEPROM_BRIGHTNESSSENSORTYPE_BIT 0
-#define EEPROM_BRIGHTNESSSENSORTYPE_LENGTH_BITS 8
+// Set BrightnessSensorType (EnumValue)
+// Byte offset: 65, bit offset: 0, length bits 8
+static inline void e2p_tempsensor_set_brightnesssensortype(BrightnessSensorTypeEnum val)
+{
+  eeprom_write_UIntValue(65, 0, 8, val);
+}
+
+// Get BrightnessSensorType (EnumValue)
+// Byte offset: 65, bit offset: 0, length bits 8
+static inline BrightnessSensorTypeEnum e2p_tempsensor_get_brightnesssensortype(void)
+{
+  return eeprom_read_UIntValue8(65, 0, 8, 0, 255);
+}
 
 // Reserved area with 3568 bits
 

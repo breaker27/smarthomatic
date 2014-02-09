@@ -86,8 +86,7 @@ void process_packet(uint8_t len)
 	// write received counter
 	station_packetcounter = packcnt;
 	
-	eeprom_write_UIntValue(EEPROM_BASESTATIONPACKETCOUNTER_BYTE, EEPROM_BASESTATIONPACKETCOUNTER_BIT,
-		EEPROM_BASESTATIONPACKETCOUNTER_LENGTH_BITS, station_packetcounter);
+	e2p_thermostat_set_basestationpacketcounter(station_packetcounter);
 	
 	// check MessageType
 	MessageTypeEnum messagetype = pkg_header_get_messagetype();
@@ -129,20 +128,16 @@ int main(void)
 	check_eeprom_compatibility(DEVICETYPE_THERMOSTAT);
 	
 	// read packetcounter, increase by cycle and write back
-	packetcounter = eeprom_read_UIntValue32(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT,
-		EEPROM_PACKETCOUNTER_LENGTH_BITS, EEPROM_PACKETCOUNTER_MINVAL, EEPROM_PACKETCOUNTER_MAXVAL) + PACKET_COUNTER_WRITE_CYCLE;
-
-	eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
+	packetcounter = e2p_generic_get_packetcounter() + PACKET_COUNTER_WRITE_CYCLE;
+	e2p_generic_set_packetcounter(packetcounter);
 
 	// read device specific config
 
 	// read last received station packetcounter
-	station_packetcounter = eeprom_read_UIntValue32(EEPROM_BASESTATIONPACKETCOUNTER_BYTE, EEPROM_BASESTATIONPACKETCOUNTER_BIT,
-		EEPROM_BASESTATIONPACKETCOUNTER_LENGTH_BITS, EEPROM_BASESTATIONPACKETCOUNTER_MINVAL, EEPROM_BASESTATIONPACKETCOUNTER_MAXVAL);
+	station_packetcounter = e2p_thermostat_get_basestationpacketcounter();
 	
 	// read device id
-	device_id = eeprom_read_UIntValue16(EEPROM_DEVICEID_BYTE, EEPROM_DEVICEID_BIT,
-		EEPROM_DEVICEID_LENGTH_BITS, EEPROM_DEVICEID_MINVAL, EEPROM_DEVICEID_MAXVAL);
+	device_id = e2p_generic_get_deviceid();
 
 	osccal_init();
 
