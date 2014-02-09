@@ -21,6 +21,9 @@
 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 */
 
+#ifndef _MSGGRP_GENERIC_H
+#define _MSGGRP_GENERIC_H
+
 #include "packet_header.h"
 #include "packet_headerext_common.h"
 #include "packet_headerext_ackstatus.h"
@@ -206,3 +209,4 @@ static inline uint32_t msg_generic_batterystatus_get_percentage(void)
   return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 7, 0, 100, bufx);
 }
 
+#endif /* _MSGGRP_GENERIC_H */

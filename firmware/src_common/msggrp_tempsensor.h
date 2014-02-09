@@ -21,6 +21,9 @@
 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 */
 
+#ifndef _MSGGRP_TEMPSENSOR_H
+#define _MSGGRP_TEMPSENSOR_H
+
 #include "packet_header.h"
 #include "packet_headerext_common.h"
 #include "packet_headerext_ackstatus.h"
@@ -130,3 +133,4 @@ static inline uint32_t msg_tempsensor_temphumbristatus_get_brightness(void)
   return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 26) / 8, ((uint16_t)__HEADEROFFSETBITS + 26) % 8, 7, 0, 100, bufx);
 }
 
+#endif /* _MSGGRP_TEMPSENSOR_H */

@@ -410,8 +410,13 @@ public class SourceCodeGeneratorPacket
 			// String.format("%03d", Integer.parseInt(messageGroupID))
 			PrintWriter out = new PrintWriter(new FileWriter("../../firmware/src_common/msggrp_" + messageGroupName + ".h"));
 
-			out.println(genCopyrightNotice());
+			String defineStr = "_MSGGRP_" + messageGroupName.toUpperCase() + "_H";
 
+			out.println(genCopyrightNotice());
+			out.println("#ifndef " + defineStr);
+			out.println("#define " + defineStr);
+			out.println("");
+			
 			out.println("#include \"packet_header.h\"");
 			out.println("#include \"packet_headerext_common.h\"");
 			
@@ -531,6 +536,8 @@ public class SourceCodeGeneratorPacket
 				
 			}
 
+			out.println("#endif /* " + defineStr + " */");
+			
 			out.close();
 		}
 	}

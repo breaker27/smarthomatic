@@ -21,6 +21,9 @@
 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 */
 
+#ifndef _MSGGRP_POWERSWITCH_H
+#define _MSGGRP_POWERSWITCH_H
+
 #include "packet_header.h"
 #include "packet_headerext_common.h"
 #include "packet_headerext_ackstatus.h"
@@ -149,3 +152,4 @@ static inline uint32_t msg_powerswitch_switchstate_get_timeoutsec(void)
   return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 1) / 8, ((uint16_t)__HEADEROFFSETBITS + 1) % 8, 16, 0, 65535, bufx);
 }
 
+#endif /* _MSGGRP_POWERSWITCH_H */
