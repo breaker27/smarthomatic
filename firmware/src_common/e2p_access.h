@@ -54,6 +54,11 @@ static inline uint32_t eeprom_read_UIntValue32(uint16_t byte, uint8_t bit, uint1
 	return _eeprom_read_UIntValue32(byte, bit, length_bits, minval, maxval, 32, NULL);
 }
 
+static inline int32_t eeprom_read_IntValue32(uint16_t byte, uint8_t bit, uint16_t length_bits, int32_t minval, int32_t maxval)
+{
+	return _eeprom_read_IntValue32(byte, bit, length_bits, minval, maxval, NULL);
+}
+
 static inline void eeprom_write_UIntValue(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t val)
 {
 	_eeprom_write_UIntValue(byte, bit, length_bits, val, NULL);
