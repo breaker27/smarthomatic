@@ -54,21 +54,21 @@ static inline DeviceTypeEnum e2p_hardware_get_devicetype(void)
   return eeprom_read_UIntValue8(0, 0, 8, 0, 255);
 }
 
-// OsccalMode (UIntValue)
-// Description: This value is used to change the speed of the internal oscillator. 0 = don't use OSCCAL calibration (e.g. external crystal oszillator is used). FF = OSCCAL measure mode: the LED blinks every 60s, so the user can measure the original speed. 01..FE = The speed is adjusted. If the value is X, the speed is adjusted by (X - 128) promille. (Example: Setting the value to 138 adjusts the speed by (X - 128) promille = +1%.)
+// OsccalMode (IntValue)
+// Description: This value is used to change the speed of the internal oscillator. 0 = don't use OSCCAL calibration (e.g. external crystal oszillator is used). -128 = OSCCAL measure mode: the LED blinks every 60s, so the user can measure the original speed. -127..+127 = The speed is adjusted by the given amount in per mill (e.g. 10 means to speed up the device by +1%).
 
-// Set OsccalMode (UIntValue)
-// Byte offset: 1, bit offset: 0, length bits 8, min val 0, max val 255
-static inline void e2p_hardware_set_osccalmode(uint8_t val)
+// Set OsccalMode (IntValue)
+// Byte offset: 1, bit offset: 0, length bits 8, min val -128, max val 127
+static inline void e2p_hardware_set_osccalmode(int8_t val)
 {
-  eeprom_write_UIntValue(1, 0, 8, val);
+  eeprom_write_IntValue(1, 0, 8, val);
 }
 
-// Get OsccalMode (UIntValue)
-// Byte offset: 1, bit offset: 0, length bits 8, min val 0, max val 255
-static inline uint8_t e2p_hardware_get_osccalmode(void)
+// Get OsccalMode (IntValue)
+// Byte offset: 1, bit offset: 0, length bits 8, min val -128, max val 127
+static inline int8_t e2p_hardware_get_osccalmode(void)
 {
-  return eeprom_read_UIntValue8(1, 0, 8, 0, 255);
+  return eeprom_read_IntValue32(1, 0, 8, -128, 127);
 }
 
 // Reserved area with 48 bits

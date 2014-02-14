@@ -321,27 +321,26 @@ void check_eeprom_compatibility(uint8_t expectedDeviceType)
 void osccal_info(void)
 {
 #ifdef UART_DEBUG
-	uint8_t mode = e2p_hardware_get_osccalmode();
+	int8_t mode = e2p_hardware_get_osccalmode();
 	
-	if ((mode > 0) && (mode < 255))
+	if (mode != 0)
 	{
-		int16_t adjustment = (int16_t)mode - 128;
-		UART_PUTF("The CPU speed was adjusted by +%d/1000 as set in OSCCAL_MODE byte.\r\n", adjustment);
+		UART_PUTF("The CPU speed was adjusted by %+d/1000 as set in OSCCAL_MODE byte.\r\n", mode);
 	}
 #endif // UART_DEBUG
 }
 
 // Initialize the OSCCAL register, used to adjust the internal clock.
 // Behaviour depends on OSCCAL_MODE EEPROM value:
-// - 00: don't use OSCCAL calibration (e.g. external crystal oszillator is used)
-// - FF: OSCCAL measure mode LED: The LED blinks every 60s, so the user can measure the original speed.
-// - 01..FE: The speed is adjusted. If the value is X, the speed is adjusted by (X - 128) promille.
-//           Ex: Setting the value to 138 adjusts the speed by (X - 128) promille = +1%.
+// - 0: don't use OSCCAL calibration (e.g. external crystal oszillator is used)
+// - -128: OSCCAL measure mode LED: The LED blinks every 60s, so the user can measure the original speed.
+// - -127..127: The speed is adjusted.
+//          Ex: Setting the value to 10 adjusts the speed by +1%.
 void osccal_init(void)
 {
-	uint8_t mode = e2p_hardware_get_osccalmode();
+	int8_t mode = e2p_hardware_get_osccalmode();
 	
-	if (mode == 255)
+	if (mode == -128)
 	{
 		uint8_t i;
 		
@@ -355,9 +354,9 @@ void osccal_init(void)
 			}
 		}
 	}
-	else if (mode > 0)
+	else if (mode != 0)
 	{
-		float speedup = ((float)mode - 128) / 1000;
+		float speedup = (float)mode / 1000;
 		OSCCAL = (uint16_t)((float)OSCCAL * (1 + speedup));
 	}
 }
