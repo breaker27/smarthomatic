@@ -75,6 +75,9 @@ static inline uint32_t hex_to_uint24(uint8_t * buf, uint8_t offset)
 	return ((uint32_t)hex_to_uint8(buf, offset) << 16) + ((uint32_t)hex_to_uint8(buf, offset + 2) << 8) + hex_to_uint8(buf, offset + 4);
 }
 
+void print_signed(int16_t i);
+void print_bytearray(uint8_t * b, uint8_t len);
+
 #ifdef UART_RX
 	void process_rxbuf(void);
 #endif

@@ -139,6 +139,87 @@ ISR(USART_RX_vect)
 	} // else: Buffer overflow (undetected!)
 }
 
+void uart_init(void)
+{
+#ifdef UART_DEBUG
+	PORTD |= 0x01;				            // Pullup an RXD an
+
+ 	UCSR0B |= (1 << TXEN0);			        // UART TX einschalten
+ 	UCSR0C |= (1 << USBS0) | (3 << UCSZ00);	// Asynchron 8N1
+ 	UCSR0B |= (1 << RXEN0 );			    // Uart RX einschalten
+ 
+ 	UBRR0H = (uint8_t)((UBRR_VAL) >> 8);
+ 	UBRR0L = (uint8_t)((UBRR_VAL) & 0xFF);
+
+#ifdef UART_RX
+	// activate rx IRQ
+	UCSR0B |= (1 << RXCIE0);
+#endif // UART_RX
+
+#endif // UART_DEBUG
+}
+
+#ifdef UART_DEBUG
+void uart_putc(char c)
+{
+	while (!(UCSR0A & (1<<UDRE0))); /* warten bis Senden moeglich                   */
+	UDR0 = c;                       /* schreibt das Zeichen x auf die Schnittstelle */
+}
+#endif // UART_DEBUG
+
+void uart_putstr(char *str)
+{
+#ifdef UART_DEBUG
+	while (*str)
+	{
+		uart_putc(*str++);
+	}
+#endif // UART_DEBUG
+}
+
+void uart_putstr_P(PGM_P str)
+{
+#ifdef UART_DEBUG
+	char tmp;
+
+	while ((tmp = pgm_read_byte(str)))
+	{
+		uart_putc(tmp);
+		str++;
+	}
+#endif // UART_DEBUG
+}
+
+// printf for floating point numbers takes ~1500 bytes program size.
+// Therefore, we use a smaller special function instead
+// as long it is used so rarely.
+void print_signed(int16_t i)
+{
+#ifdef UART_DEBUG
+	if (i < 0)
+	{
+		UART_PUTS("-");
+		i = -i;
+	}
+	
+	UART_PUTF2("%d.%02d", i / 100, i % 100);
+#endif // UART_DEBUG
+}
+
+void print_bytearray(uint8_t * b, uint8_t len)
+{
+#ifdef UART_DEBUG
+	uint8_t i;
+	
+	for (i = 0; i < len; i++)
+	{
+		UART_PUTF("%02x ", b[i]);
+	}
+	
+	UART_PUTS ("\r\n");
+#endif // UART_DEBUG
+}
+
 // Process all bytes in the rxbuffer. This function should be called in the main loop.
 // It can be interrupted by a UART RX interrupt, so additional bytes can be added into the ringbuffer while this function is running.
 void process_rxbuf(void)
@@ -245,54 +326,3 @@ void process_rxbuf(void)
 	}
 }
 #endif
-
-void uart_init(void)
-{
-#ifdef UART_DEBUG
-	PORTD |= 0x01;				            // Pullup an RXD an
-
- 	UCSR0B |= (1 << TXEN0);			        // UART TX einschalten
- 	UCSR0C |= (1 << USBS0) | (3 << UCSZ00);	// Asynchron 8N1
- 	UCSR0B |= (1 << RXEN0 );			    // Uart RX einschalten
- 
- 	UBRR0H = (uint8_t)((UBRR_VAL) >> 8);
- 	UBRR0L = (uint8_t)((UBRR_VAL) & 0xFF);
-
-#ifdef UART_RX
-	// activate rx IRQ
-	UCSR0B |= (1 << RXCIE0);
-#endif // UART_RX
-
-#endif // UART_DEBUG
-}
-
-#ifdef UART_DEBUG
-void uart_putc(char c)
-{
-	while (!(UCSR0A & (1<<UDRE0))); /* warten bis Senden moeglich                   */
-	UDR0 = c;                       /* schreibt das Zeichen x auf die Schnittstelle */
-}
-#endif // UART_DEBUG
-
-void uart_putstr(char *str)
-{
-#ifdef UART_DEBUG
-	while (*str)
-	{
-		uart_putc(*str++);
-	}
-#endif // UART_DEBUG
-}
-
-void uart_putstr_P(PGM_P str)
-{
-#ifdef UART_DEBUG
-	char tmp;
-
-	while ((tmp = pgm_read_byte(str)))
-	{
-		uart_putc(tmp);
-		str++;
-	}
-#endif // UART_DEBUG
-}
