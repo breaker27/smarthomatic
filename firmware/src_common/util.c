@@ -166,6 +166,48 @@ unsigned int read_adc(unsigned char adc_input)
 	return adc_data;
 }
 
+// Take one characters and return the hex value it represents (0..15).
+// If characters are not 0..9, a..f, A..F, character is interpreted as 0xf.
+// 0 = 48, 9 = 57
+// A = 65, F = 70
+// a = 97, f = 102
+uint8_t hex_to_byte(char c)
+{
+	if (c <= 48) // 0
+	{
+		return 0;
+	}
+	else if (c <= 57) // 1..9
+	{
+		return c - 48;
+	}
+	else if (c <= 65) // A
+	{
+		return 10;
+	}
+	else if (c <= 70) // B..F
+	{
+		return c - 55;
+	}
+	else if (c <= 97) // a
+	{
+		return 10;
+	}
+	else if (c <= 102) // b..f
+	{
+		return c - 87;
+	}
+	else // f
+	{
+		return 15;
+	}		
+}
+
+uint8_t hex_to_uint8(uint8_t * buf, uint8_t offset)
+{
+	return hex_to_byte(buf[offset]) * 16 + hex_to_byte(buf[offset + 1]);
+}
+
 /*
 Grundlagen zu diesen Funktionen wurden der Webseite:
 http://www.cs.waikato.ac.nz/~312/crc.txt

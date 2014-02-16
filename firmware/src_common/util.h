@@ -43,6 +43,19 @@ uint32_t linear_interpolate32(uint32_t in, uint32_t min_in, uint32_t max_in, uin
 float linear_interpolate_f(float in, float min_in, float max_in, float min_out, float max_out);
 uint16_t bat_percentage(uint16_t vbat, uint16_t vempty);
 
+uint8_t hex_to_byte(char c);
+uint8_t hex_to_uint8(uint8_t * buf, uint8_t offset);
+
+static inline uint16_t hex_to_uint16(uint8_t * buf, uint8_t offset)
+{
+	return ((uint16_t)hex_to_uint8(buf, offset) << 8) + hex_to_uint8(buf, offset + 2);
+}
+
+static inline uint32_t hex_to_uint24(uint8_t * buf, uint8_t offset)
+{
+	return ((uint32_t)hex_to_uint8(buf, offset) << 16) + ((uint32_t)hex_to_uint8(buf, offset + 2) << 8) + hex_to_uint8(buf, offset + 4);
+}
+
 void adc_init(void);
 void adc_on(bool on);
 unsigned int read_adc(unsigned char adc_input);

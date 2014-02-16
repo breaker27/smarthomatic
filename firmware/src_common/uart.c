@@ -25,7 +25,6 @@
 #include "uart.h"
 #include "util.h"
 
-
 // This buffer is used for sending strings over UART using UART_PUT... functions.
 char uartbuf[65]; 
 
@@ -50,48 +49,6 @@ uint8_t bytes_pos = 0;
 char sendbuf[52];
 bool send_data_avail = false;
 
-// Take two characters and return the hex value they represent.
-// If characters are not 0..9, a..f, A..F, character is interpreted as 0 or f.
-// 0 = 48, 9 = 57
-// A = 65, F = 70
-// a = 97, f = 102
-uint8_t hex_to_byte(char c)
-{
-	if (c <= 48) // 0
-	{
-		return 0;
-	}
-	else if (c <= 57) // 1..9
-	{
-		return c - 48;
-	}
-	else if (c <= 65) // A
-	{
-		return 10;
-	}
-	else if (c <= 70) // B..F
-	{
-		return c - 55;
-	}
-	else if (c <= 97) // a
-	{
-		return 10;
-	}
-	else if (c <= 102) // b..f
-	{
-		return c - 87;
-	}
-	else // f
-	{
-		return 15;
-	}		
-}
-
-uint8_t hex_to_uint8(uint8_t * buf, uint8_t offset)
-{
-	return hex_to_byte(buf[offset]) * 16 + hex_to_byte(buf[offset + 1]);
-}
-
 void process_cmd(void)
 {
 	uart_putstr("Processing command: ");
@@ -102,7 +59,7 @@ void process_cmd(void)
 	{
 		if (enable_write_eeprom)
 		{
-			uint16_t adr = hex_to_byte((uint8_t)cmdbuf[1]) * 16 + hex_to_byte((uint8_t)cmdbuf[2]);
+			uint16_t adr = hex_to_uint8((uint8_t *)cmdbuf, 1);
 			uint8_t val = hex_to_uint8((uint8_t *)cmdbuf, 3);
 			UART_PUTF2("Writing data 0x%x to EEPROM pos 0x%x.\r\n", val, adr);
 			eeprom_write_byte((uint8_t *)adr, val);
@@ -114,7 +71,7 @@ void process_cmd(void)
 	}
 	else if ((cmdbuf[0] == 'r') && (strlen(cmdbuf) == 3))
 	{
-		uint16_t adr = hex_to_byte((uint8_t)cmdbuf[1]) * 16 + hex_to_byte((uint8_t)cmdbuf[2]);
+		uint16_t adr = hex_to_uint8((uint8_t *)cmdbuf, 1);
 		uint8_t val = eeprom_read_byte((uint8_t *)adr);
 		UART_PUTF2("EEPROM value at position 0x%x is 0x%x.\r\n", adr, val);
 	}
