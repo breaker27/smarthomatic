@@ -60,6 +60,6 @@ void setBuf16(uint8_t offset, uint16_t val);
 
 // ########## CRC32
 
-unsigned long crc32(unsigned char *data, int len);
+uint32_t crc32(uint8_t *data, uint8_t len);
 
 #endif /* _UTIL_GENERIC_H */

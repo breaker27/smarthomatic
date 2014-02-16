@@ -124,7 +124,7 @@ ISR(ADC_vect)
 	adc_data = ADCW;
 }
 
-uint16_t read_adc(unsigned char adc_input)
+uint16_t read_adc(uint8_t adc_input)
 {
 	// Set ADC input
 	ADMUX &= 0xE0;

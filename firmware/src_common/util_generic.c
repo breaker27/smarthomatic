@@ -143,12 +143,12 @@ http://www.zorc.breitbandkatze.de/crc.html
 Autor: K.Moraw, www.helitron.de, Oktober 2009
 */
 
-static unsigned long reg32; // shift register
+static uint32_t reg32; // shift register
 
-static unsigned long crc32_bytecalc(unsigned char byte)
+static uint32_t crc32_bytecalc(uint8_t byte)
 {
-	int i;
-	unsigned long polynom = 0xEDB88320;		// Generatorpolynom
+	uint8_t i;
+	uint32_t polynom = 0xEDB88320;		// Generatorpolynom
 
     for (i = 0; i < 8; ++i)
 	{
@@ -161,9 +161,9 @@ static unsigned long crc32_bytecalc(unsigned char byte)
 	return reg32 ^ 0xffffffff;	 		// inverses Ergebnis, MSB zuerst
 }
 
-unsigned long crc32(unsigned char *data, int len)
+uint32_t crc32(uint8_t *data, uint8_t len)
 {
-	int i;
+	uint8_t i;
 	reg32 = 0xffffffff;
 
 	for (i = 0; i < len; i++)
