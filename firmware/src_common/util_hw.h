@@ -37,14 +37,13 @@
 // Therefore 100 is a good value.
 #define PACKET_COUNTER_WRITE_CYCLE 100
 
-unsigned int adc_data;
 uint32_t packetcounter;
 
 uint16_t bat_percentage(uint16_t vbat, uint16_t vempty);
 
 void adc_init(void);
 void adc_on(bool on);
-unsigned int read_adc(unsigned char adc_input);
+uint16_t read_adc(unsigned char adc_input);
 
 void util_init(void);
 void switch_led(bool b_on);

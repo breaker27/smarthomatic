@@ -47,15 +47,14 @@
 #define LED_PORT PORTD
 #define LED_DDR DDRD
 
+static uint16_t adc_data;
+
 // reference battery voltage (alkaline) for 100%, 90%,... 0% with end voltage 0,9V
 static short vbat_alkaline[] = {1600, 1400, 1320, 1280, 1240, 1210, 1180, 1160, 1100, 1030, 900};
 
-// reference battery voltage (alkaline) for 100%, 90%,... 0% with end voltage 1,1V (= minimum for RFM12)
-//static short vbat_alkaline[] = {1600, 1405, 1333, 1293, 1260, 1232, 1205, 1183, 1170, 1145, 1100};
-
 // Return the remaining battery capacity according to the battery voltage,
 // without considering the minimum voltage for the device.
-uint16_t _bat_percentage_raw(uint16_t vbat)
+static uint16_t _bat_percentage_raw(uint16_t vbat)
 {
 	if (vbat >= vbat_alkaline[0])
 	{
@@ -125,7 +124,7 @@ ISR(ADC_vect)
 	adc_data = ADCW;
 }
 
-unsigned int read_adc(unsigned char adc_input)
+uint16_t read_adc(unsigned char adc_input)
 {
 	// Set ADC input
 	ADMUX &= 0xE0;

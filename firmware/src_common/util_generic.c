@@ -98,7 +98,6 @@ uint8_t hex_to_uint8(uint8_t * buf, uint8_t offset)
 	return hex_to_byte(buf[offset]) * 16 + hex_to_byte(buf[offset + 1]);
 }
 
-
 // Return a 32 bit value stored in 4 bytes in the buffer at the given offset.
 uint32_t getBuf32(uint8_t offset)
 {
@@ -144,9 +143,9 @@ http://www.zorc.breitbandkatze.de/crc.html
 Autor: K.Moraw, www.helitron.de, Oktober 2009
 */
 
-unsigned long reg32; 		// Schieberegister
+static unsigned long reg32; // shift register
 
-unsigned long crc32_bytecalc(unsigned char byte)
+static unsigned long crc32_bytecalc(unsigned char byte)
 {
 	int i;
 	unsigned long polynom = 0xEDB88320;		// Generatorpolynom
