@@ -16,32 +16,27 @@
 * with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _UTIL_H
-#define _UTIL_H
+// Utility functions are split up into util_*.{c|h} files.
+// The util.{c|h} files in the devices directories include all of them.
+// Only one lib is therefore built that contains all functions.
+
+#ifndef _UTIL_GENERIC_H
+#define _UTIL_GENERIC_H
 
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include <avr/pgmspace.h>
-
-#define sbi(ADDRESS,BIT) ((ADDRESS) |= (1<<(BIT)))
-#define cbi(ADDRESS,BIT) ((ADDRESS) &= ~(1<<(BIT)))
-
-// How often should the packetcounter_base be increased and written to EEPROM?
-// This should be 2^32 (which is the maximum transmitted packet counter) /
-// 100.000 (which is the maximum amount of possible EEPROM write cycles) or more.
-// Therefore 100 is a good value.
-#define PACKET_COUNTER_WRITE_CYCLE 100
 
 // used as buffer for sending data to SHT
 uint8_t bufx[65];
-unsigned int adc_data;
-uint32_t packetcounter;
+
+// ########## Linear Interpolation
 
 uint16_t linear_interpolate16(uint16_t in, uint16_t min_in, uint16_t max_in, uint16_t min_out, uint16_t max_out);
 uint32_t linear_interpolate32(uint32_t in, uint32_t min_in, uint32_t max_in, uint32_t min_out, uint32_t max_out);
 float linear_interpolate_f(float in, float min_in, float max_in, float min_out, float max_out);
-uint16_t bat_percentage(uint16_t vbat, uint16_t vempty);
+
+// ########## Hex -> Dec conversion
 
 uint8_t hex_to_byte(char c);
 uint8_t hex_to_uint8(uint8_t * buf, uint8_t offset);
@@ -56,25 +51,15 @@ static inline uint32_t hex_to_uint24(uint8_t * buf, uint8_t offset)
 	return ((uint32_t)hex_to_uint8(buf, offset) << 16) + ((uint32_t)hex_to_uint8(buf, offset + 2) << 8) + hex_to_uint8(buf, offset + 4);
 }
 
-void adc_init(void);
-void adc_on(bool on);
-unsigned int read_adc(unsigned char adc_input);
+// ########## read/write 16 bit / 32 bit values to the byte buffer in PC byte order
 
-unsigned long crc32(unsigned char *data, int len);
-
-// read/write 16 bit / 32 bit values to the byte buffer in PC byte order
 uint32_t getBuf16(uint8_t offset);
 uint32_t getBuf32(uint8_t offset);
 void setBuf32(uint8_t offset, uint32_t val);
 void setBuf16(uint8_t offset, uint16_t val);
 
-void util_init(void);
-void switch_led(bool b_on);
-void led_blink(uint16_t on, uint16_t off, uint8_t times);
-void check_eeprom_compatibility(uint8_t deviceType);
-void osccal_info(void);
-void osccal_init(void);
-void inc_packetcounter(void);
-void rfm12_sendbuf(void);
+// ########## CRC32
 
-#endif /* _UTIL_H */
+unsigned long crc32(unsigned char *data, int len);
+
+#endif /* _UTIL_GENERIC_H */

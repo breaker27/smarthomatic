@@ -96,6 +96,8 @@ ISR(USART_RX_vect)
 	} // else: Buffer overflow (undetected!)
 }
 
+#endif // UART_RX
+
 void uart_init(void)
 {
 #ifdef UART_DEBUG
@@ -176,6 +178,8 @@ void print_bytearray(uint8_t * b, uint8_t len)
 	UART_PUTS ("\r\n");
 #endif // UART_DEBUG
 }
+
+#ifdef UART_RX
 
 // Process all bytes in the rxbuffer. This function should be called in the main loop.
 // It can be interrupted by a UART RX interrupt, so additional bytes can be added into the ringbuffer while this function is running.
@@ -282,4 +286,4 @@ void process_rxbuf(void)
 		uart_timeout = bytes_to_read == bytes_pos ? 0 : 255;
 	}
 }
-#endif
+#endif // UART_RX

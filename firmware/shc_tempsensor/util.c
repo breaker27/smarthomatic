@@ -16,5 +16,6 @@
 * with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "../src_common/util.c"
+#include "../src_common/util_generic.c"
+#include "../src_common/util_hw.c"
 #include "../src_common/e2p_access.c"
