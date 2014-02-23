@@ -239,7 +239,7 @@ void inc_packetcounter(void)
 	}
 }
 
-void rfm12_sendbuf(void)
+void rfm12_send_bufx(void)
 {
 	UART_PUTS("Before encryption: ");
 	print_bytearray(bufx, __PACKETSIZEBYTES);

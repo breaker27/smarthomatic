@@ -175,7 +175,7 @@ int main(void)
 			UART_PUTF2(" deg.C, Humidity: %u.%u", hum / 10, hum % 10);
 			UART_PUTS("%\r\n");
 
-			rfm12_sendbuf();
+			rfm12_send_bufx();
 			rfm12_tick(); // send packet, and then WAIT SOME TIME BEFORE GOING TO SLEEP (otherwise packet would not be sent)
 
 			switch_led(1);
@@ -202,7 +202,7 @@ int main(void)
 				
 				UART_PUTF("Battery: %u%%\r\n", bat_p_val);
 
-				rfm12_sendbuf();
+				rfm12_send_bufx();
 				rfm12_tick(); // send packet, and then WAIT SOME TIME BEFORE GOING TO SLEEP (otherwise packet would not be sent)
 
 				switch_led(1);
@@ -226,7 +226,7 @@ int main(void)
 				
 				UART_PUTF4("Version: v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
 
-				rfm12_sendbuf();
+				rfm12_send_bufx();
 				rfm12_tick(); // send packet, and then WAIT SOME TIME BEFORE GOING TO SLEEP (otherwise packet would not be sent)
 
 				switch_led(1);

@@ -52,6 +52,6 @@ void check_eeprom_compatibility(uint8_t deviceType);
 void osccal_info(void);
 void osccal_init(void);
 void inc_packetcounter(void);
-void rfm12_sendbuf(void);
+void rfm12_send_bufx(void);
 
 #endif /* _UTIL_HW_H */

@@ -239,7 +239,7 @@ void send_dimmer_status(void)
 	UART_PUTF("CRC32 is %lx (added as first 4 bytes)\r\n", getBuf32(0));
 	UART_PUTF("Brightness: %u%%\r\n", bri);
 
-	rfm12_sendbuf();
+	rfm12_send_bufx();
 }
 
 void send_version_status(void)
@@ -258,7 +258,7 @@ void send_version_status(void)
 	msg_generic_version_set_hash(VERSION_HASH);
 	pkg_header_calc_crc32();
 
-	rfm12_sendbuf();
+	rfm12_send_bufx();
 }
 
 // process message "brightness"
@@ -320,7 +320,7 @@ void process_brightness(MessageTypeEnum messagetype)
 	
 	pkg_header_calc_crc32();
 	
-	rfm12_sendbuf();
+	rfm12_send_bufx();
 }
 
 // process message "animation"
@@ -390,7 +390,7 @@ void process_animation(MessageTypeEnum messagetype)
 	
 	pkg_header_calc_crc32();
 	
-	rfm12_sendbuf();
+	rfm12_send_bufx();
 }
 
 void process_packet(uint8_t len)

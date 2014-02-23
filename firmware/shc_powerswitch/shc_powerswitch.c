@@ -104,7 +104,7 @@ void send_power_switch_status(void)
 	msg_powerswitch_switchstate_set_timeoutsec(switch_timeout[0]); // TODO: Support > 1 switch
 	pkg_header_calc_crc32();
 
-	rfm12_sendbuf();
+	rfm12_send_bufx();
 }
 
 void send_version_status(void)
@@ -123,7 +123,7 @@ void send_version_status(void)
 	msg_generic_version_set_hash(VERSION_HASH);
 	pkg_header_calc_crc32();
 
-	rfm12_sendbuf();
+	rfm12_send_bufx();
 }
 
 void switchRelais(int8_t num, uint8_t on)
@@ -231,7 +231,7 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	
 	pkg_header_calc_crc32();
 	
-	rfm12_sendbuf();
+	rfm12_send_bufx();
 	send_status_timeout = 5;
 }
 

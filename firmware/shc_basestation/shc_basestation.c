@@ -220,7 +220,7 @@ void send_packet(uint8_t aes_key_nr, uint8_t packet_len)
 
 	// encrypt and send
 	__PACKETSIZEBYTES = packet_len;
-	rfm12_sendbuf();
+	rfm12_send_bufx();
 }
 
 int main(void)
