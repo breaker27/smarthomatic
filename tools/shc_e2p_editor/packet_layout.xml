@@ -213,8 +213,8 @@
 				<MaxVal>255</MaxVal>
 			</UIntValue>
 			<UIntValue>
-				<ID>GitHash</ID>
-				<Description>The beginning of the revision ID hash as reported by Git.</Description>
+				<ID>Hash</ID>
+				<Description>The beginning of the revision ID hash (as reported by Git).</Description>
 				<Bits>32</Bits>
 				<MinVal>0</MinVal>
 				<MaxVal>4294967295</MaxVal>

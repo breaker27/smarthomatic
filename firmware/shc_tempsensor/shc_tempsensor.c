@@ -221,7 +221,7 @@ int main(void)
 				msg_generic_version_set_major(VERSION_MAJOR);
 				msg_generic_version_set_minor(VERSION_MINOR);
 				msg_generic_version_set_patch(VERSION_PATCH);
-				msg_generic_version_set_githash(VERSION_HASH);
+				msg_generic_version_set_hash(VERSION_HASH);
 				pkg_header_calc_crc32();
 				
 				UART_PUTF4("Version: v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);

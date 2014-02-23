@@ -120,7 +120,7 @@ void send_version_status(void)
 	msg_generic_version_set_major(VERSION_MAJOR);
 	msg_generic_version_set_minor(VERSION_MINOR);
 	msg_generic_version_set_patch(VERSION_PATCH);
-	msg_generic_version_set_githash(VERSION_HASH);
+	msg_generic_version_set_hash(VERSION_HASH);
 	pkg_header_calc_crc32();
 
 	rfm12_sendbuf();

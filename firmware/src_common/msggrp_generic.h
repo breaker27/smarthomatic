@@ -53,7 +53,7 @@ typedef enum {
 // Possible MessageTypes: Get, Status, AckStatus
 // Validity: test
 // Length w/o Header + HeaderExtension: 56 bits
-// Data fields: Major, Minor, Patch, GitHash
+// Data fields: Major, Minor, Patch, Hash
 // Description: Reports the current firmware version. Version information is only available when set in source code, which is usually only done for official builds by the build robot.
 
 // Function to initialize header for the MessageType "Get".
@@ -143,19 +143,19 @@ static inline uint32_t msg_generic_version_get_patch(void)
   return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 16) / 8, ((uint16_t)__HEADEROFFSETBITS + 16) % 8, 8, 0, 255, bufx);
 }
 
-// GitHash (UIntValue)
-// Description: The beginning of the revision ID hash as reported by Git.
+// Hash (UIntValue)
+// Description: The beginning of the revision ID hash (as reported by Git).
 
-// Set GitHash (UIntValue)
+// Set Hash (UIntValue)
 // Offset: ((uint16_t)__HEADEROFFSETBITS + 24) / 8, ((uint16_t)__HEADEROFFSETBITS + 24) % 8, length bits 32, min val 0, max val 4294967295
-static inline void msg_generic_version_set_githash(uint32_t val)
+static inline void msg_generic_version_set_hash(uint32_t val)
 {
   array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 24) / 8, ((uint16_t)__HEADEROFFSETBITS + 24) % 8, 32, val, bufx);
 }
 
-// Get GitHash (UIntValue)
+// Get Hash (UIntValue)
 // Offset: ((uint16_t)__HEADEROFFSETBITS + 24) / 8, ((uint16_t)__HEADEROFFSETBITS + 24) % 8, length bits 32, min val 0, max val 4294967295
-static inline uint32_t msg_generic_version_get_githash(void)
+static inline uint32_t msg_generic_version_get_hash(void)
 {
   return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 24) / 8, ((uint16_t)__HEADEROFFSETBITS + 24) % 8, 32, 0, 4294967295, bufx);
 }

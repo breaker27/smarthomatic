@@ -130,7 +130,7 @@ void decode_data(uint8_t len)
 						UART_PUTF("Major=%u;", msg_generic_version_get_major());
 						UART_PUTF("Minor=%u;", msg_generic_version_get_minor());
 						UART_PUTF("Patch=%u;", msg_generic_version_get_patch());
-						UART_PUTF("GitHash=%08lx;", msg_generic_version_get_githash());
+						UART_PUTF("Hash=%08lx;", msg_generic_version_get_hash());
 						break;
 						
 					case MESSAGEID_GENERIC_BATTERYSTATUS:
