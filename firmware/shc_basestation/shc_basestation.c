@@ -319,7 +319,6 @@ int main(void)
 
 				for (aes_key_nr = 0; aes_key_nr < aes_key_count ; aes_key_nr++)
 				{
-					//strncpy((char *)bufx, (char *)rfm12_rx_buffer(), len);
 					memcpy(bufx, rfm12_rx_buffer(), len);
 
 					/*if (aes_key_nr == 0)
@@ -468,7 +467,7 @@ int main(void)
 				print_request_queue();
 			}
 		
-			// clear send text buffer
+			// clear cmdbuf to receive more input from UART
 			send_data_avail = false;
 
 			rfm12_tick();
