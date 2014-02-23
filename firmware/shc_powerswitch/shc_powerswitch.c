@@ -176,7 +176,7 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		// react on changed state (version for more than one switch...)
 		for (i = 0; i < SWITCH_COUNT; i++)
 		{
-			if ((switch_bitmask & (1 << i)) != switch_state[i]) // this switch is to be switched
+			if (((switch_bitmask & (1 << i)) != switch_state[i]) || (req_timeout > 0)) // this switch is to be switched
 			{
 				UART_PUTF4("Switching relais %u from %u to %u with timeout %us.\r\n", i + 1, switch_state[i], req_on, req_timeout);
 
