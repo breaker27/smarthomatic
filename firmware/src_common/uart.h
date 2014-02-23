@@ -54,9 +54,9 @@
 extern char uartbuf[];
 
 #ifdef UART_RX
-	extern char sendbuf[];
-	extern bool send_data_avail;
+	extern char cmdbuf[];
 	extern uint8_t uart_timeout;
+	extern bool send_data_avail;
 #endif
 
 void uart_init(void);

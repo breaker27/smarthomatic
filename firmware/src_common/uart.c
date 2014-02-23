@@ -30,6 +30,7 @@ char uartbuf[65];
 
 #ifdef UART_RX	
 	// All received bytes from UART are stored in this buffer by the interrupt routine. This is a ringbuffer.
+	// No characters which will not make sense as a command are filtered out here.
 	#define RXBUF_LENGTH 60
 	char rxbuf[RXBUF_LENGTH];
 	uint8_t rxbuf_startpos = 0; // points to the first (oldest) byte to be processed from the buffer
@@ -46,45 +47,7 @@ char uartbuf[65];
 bool enable_write_eeprom = false;
 uint8_t bytes_to_read = 0;
 uint8_t bytes_pos = 0;
-char sendbuf[52];
 bool send_data_avail = false;
-
-void process_cmd(void)
-{
-	uart_putstr("Processing command: ");
-	uart_putstr(cmdbuf);
-	UART_PUTS("\r\n");
-	
-	if ((cmdbuf[0] == 'w') && (strlen(cmdbuf) == 5))
-	{
-		if (enable_write_eeprom)
-		{
-			uint16_t adr = hex_to_uint8((uint8_t *)cmdbuf, 1);
-			uint8_t val = hex_to_uint8((uint8_t *)cmdbuf, 3);
-			UART_PUTF2("Writing data 0x%x to EEPROM pos 0x%x.\r\n", val, adr);
-			eeprom_write_byte((uint8_t *)adr, val);
-		}
-		else
-		{
-			UART_PUTS("Ignoring EEPROM write, since write mode is DISABLED.\r\n");
-		}
-	}
-	else if ((cmdbuf[0] == 'r') && (strlen(cmdbuf) == 3))
-	{
-		uint16_t adr = hex_to_uint8((uint8_t *)cmdbuf, 1);
-		uint8_t val = eeprom_read_byte((uint8_t *)adr);
-		UART_PUTF2("EEPROM value at position 0x%x is 0x%x.\r\n", adr, val);
-	}
-	else if ((cmdbuf[0] == 's') && (strlen(cmdbuf) > 4))
-	{
-		strcpy(sendbuf, cmdbuf + 1);
-		send_data_avail = true;
-	}
-	else
-	{
-		UART_PUTS("Unknown command.\r\n");
-	}
-}
 
 // Store received byte in ringbuffer. No processing.
 ISR(USART_RX_vect)
@@ -181,15 +144,60 @@ void print_bytearray(uint8_t * b, uint8_t len)
 
 #ifdef UART_RX
 
-// Process all bytes in the rxbuffer. This function should be called in the main loop.
-// It can be interrupted by a UART RX interrupt, so additional bytes can be added into the ringbuffer while this function is running.
+// Process the user command now contained in the cmdbuf array.
+void process_cmd(void)
+{
+	uart_putstr("Processing command: ");
+	uart_putstr(cmdbuf);
+	UART_PUTS("\r\n");
+	
+	if ((cmdbuf[0] == 'w') && (strlen(cmdbuf) == 5)) // E2P write command
+	{
+		if (enable_write_eeprom)
+		{
+			uint16_t adr = hex_to_uint8((uint8_t *)cmdbuf, 1);
+			uint8_t val = hex_to_uint8((uint8_t *)cmdbuf, 3);
+			UART_PUTF2("Writing data 0x%x to EEPROM pos 0x%x.\r\n", val, adr);
+			eeprom_write_byte((uint8_t *)adr, val);
+		}
+		else
+		{
+			UART_PUTS("Ignoring EEPROM write, since write mode is DISABLED.\r\n");
+		}
+	}
+	else if ((cmdbuf[0] == 'r') && (strlen(cmdbuf) == 3)) // E2P read command
+	{
+		uint16_t adr = hex_to_uint8((uint8_t *)cmdbuf, 1);
+		uint8_t val = eeprom_read_byte((uint8_t *)adr);
+		UART_PUTF2("EEPROM value at position 0x%x is 0x%x.\r\n", adr, val);
+	}
+	else if ((cmdbuf[0] == 's') && (strlen(cmdbuf) > 4)) // "send" command
+	{
+		send_data_avail = true;
+	}
+	else
+	{
+		UART_PUTS("Unknown command.\r\n");
+	}
+}
+
+// Process all bytes in the UART RX ringbuffer ("rxbuf"). This function should be called in the
+// main loop. It can be interrupted by a UART RX interrupt, so additional bytes can be added
+// into the ringbuffer while this function is running.
 void process_rxbuf(void)
 {
+	// Only process characters if the cmdbuf is clear to be overwritten.
+	// If not, wait for the main loop to clear it by processing the user "send" command.	
+	if (send_data_avail)
+	{
+		return;
+	}
+	
 	while (rxbuf_count > 0)
 	{
 		char input;
 		
-		// get one char from the ringbuffer and reduce it's size without interruption through the UART ISR
+		// get one char from the ringbuffer and reduce its size without interruption through the UART ISR
 		cli();
 		input = rxbuf[rxbuf_startpos];
 		rxbuf_startpos = (rxbuf_startpos + 1) % RXBUF_LENGTH;

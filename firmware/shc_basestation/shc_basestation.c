@@ -374,14 +374,14 @@ int main(void)
 			uint8_t i;
 			
 			// set AES key nr
-			aes_key_nr = hex_to_uint8((uint8_t *)sendbuf, 0);
+			aes_key_nr = hex_to_uint8((uint8_t *)cmdbuf, 1);
 			//UART_PUTF("AES KEY = %u\r\n", aes_key_nr);
 
 			// init packet buffer
 			memset(&bufx[0], 0, sizeof(bufx));
 
 			// set message type
-			uint8_t message_type = hex_to_uint8((uint8_t *)sendbuf, 2);
+			uint8_t message_type = hex_to_uint8((uint8_t *)cmdbuf, 3);
 			pkg_header_set_messagetype(message_type);
 			pkg_header_adjust_offset();
 			//UART_PUTF("MessageType = %u\r\n", message_type);
@@ -403,24 +403,24 @@ int main(void)
 				case MESSAGETYPE_GET:
 				case MESSAGETYPE_SET:
 				case MESSAGETYPE_SETGET:
-					pkg_headerext_common_set_receiverid(hex_to_uint16((uint8_t *)sendbuf, 4));
-					pkg_headerext_common_set_messagegroupid(hex_to_uint8((uint8_t *)sendbuf, 8));
-					pkg_headerext_common_set_messageid(hex_to_uint8((uint8_t *)sendbuf, 10));
+					pkg_headerext_common_set_receiverid(hex_to_uint16((uint8_t *)cmdbuf, 5));
+					pkg_headerext_common_set_messagegroupid(hex_to_uint8((uint8_t *)cmdbuf, 9));
+					pkg_headerext_common_set_messageid(hex_to_uint8((uint8_t *)cmdbuf, 11));
 					string_offset_data = 12;
 					break;
 				case MESSAGETYPE_STATUS:
-					pkg_headerext_common_set_messagegroupid(hex_to_uint8((uint8_t *)sendbuf, 4));
-					pkg_headerext_common_set_messageid(hex_to_uint8((uint8_t *)sendbuf, 6));
+					pkg_headerext_common_set_messagegroupid(hex_to_uint8((uint8_t *)cmdbuf, 5));
+					pkg_headerext_common_set_messageid(hex_to_uint8((uint8_t *)cmdbuf, 7));
 					string_offset_data = 8;
 					break;
 				case MESSAGETYPE_ACK:
-					pkg_headerext_common_set_acksenderid(hex_to_uint16((uint8_t *)sendbuf, 4));
-					pkg_headerext_common_set_ackpacketcounter(hex_to_uint24((uint8_t *)sendbuf, 8));
-					pkg_headerext_common_set_error(hex_to_uint8((uint8_t *)sendbuf, 14));
+					pkg_headerext_common_set_acksenderid(hex_to_uint16((uint8_t *)cmdbuf, 5));
+					pkg_headerext_common_set_ackpacketcounter(hex_to_uint24((uint8_t *)cmdbuf, 9));
+					pkg_headerext_common_set_error(hex_to_uint8((uint8_t *)cmdbuf, 15));
 					// fallthrough!
 				case MESSAGETYPE_ACKSTATUS:
-					pkg_headerext_common_set_messagegroupid(hex_to_uint8((uint8_t *)sendbuf, 16));
-					pkg_headerext_common_set_messageid(hex_to_uint8((uint8_t *)sendbuf, 18));
+					pkg_headerext_common_set_messagegroupid(hex_to_uint8((uint8_t *)cmdbuf, 17));
+					pkg_headerext_common_set_messageid(hex_to_uint8((uint8_t *)cmdbuf, 19));
 					string_offset_data = 20;
 					break;
 			}
@@ -430,7 +430,7 @@ int main(void)
 			// copy message data, which exists in all packets except in Get and Ack packets
 			if ((message_type != MESSAGETYPE_GET) && (message_type != MESSAGETYPE_ACK))
 			{
-				uint8_t data_len_raw = (strlen(sendbuf) - string_offset_data) / 2;
+				uint8_t data_len_raw = (strlen(cmdbuf) - 1 - string_offset_data) / 2;
 				//UART_PUTF("Data bytes = %u\r\n", data_len_raw);
 				
 				uint8_t start = __HEADEROFFSETBITS / 8;
@@ -439,7 +439,7 @@ int main(void)
 				// copy message data, using __HEADEROFFSETBITS value and string_offset_data
 				for (i = 0; i < data_len_raw; i++)
 				{
-					uint8_t val = hex_to_uint8((uint8_t *)sendbuf, string_offset_data + 2 * i);
+					uint8_t val = hex_to_uint8((uint8_t *)cmdbuf, string_offset_data + 2 * i + 1);
 					array_write_UIntValue(start + i, shift, 8, val, bufx);
 				}
 			}
@@ -495,7 +495,7 @@ int main(void)
 			// Auto-send something for debugging purposes...
 			if (loop2 == 50)
 			{
-				//strcpy(sendbuf, "000102828300");
+				//strcpy(cmdbuf, "s000102828300");
 				//send_data_avail = true;
 				
 				loop2 = 0;
