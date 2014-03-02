@@ -25,12 +25,12 @@
 #include "uart.h"
 #include "util.h"
 
-
 // This buffer is used for sending strings over UART using UART_PUT... functions.
 char uartbuf[65]; 
 
 #ifdef UART_RX	
 	// All received bytes from UART are stored in this buffer by the interrupt routine. This is a ringbuffer.
+	// No characters which will not make sense as a command are filtered out here.
 	#define RXBUF_LENGTH 60
 	char rxbuf[RXBUF_LENGTH];
 	uint8_t rxbuf_startpos = 0; // points to the first (oldest) byte to be processed from the buffer
@@ -47,87 +47,7 @@ char uartbuf[65];
 bool enable_write_eeprom = false;
 uint8_t bytes_to_read = 0;
 uint8_t bytes_pos = 0;
-char sendbuf[52];
 bool send_data_avail = false;
-
-// Take two characters and return the hex value they represent.
-// If characters are not 0..9, a..f, A..F, character is interpreted as 0 or f.
-// 0 = 48, 9 = 57
-// A = 65, F = 70
-// a = 97, f = 102
-uint8_t hex_to_byte(char c)
-{
-	if (c <= 48) // 0
-	{
-		return 0;
-	}
-	else if (c <= 57) // 1..9
-	{
-		return c - 48;
-	}
-	else if (c <= 65) // A
-	{
-		return 10;
-	}
-	else if (c <= 70) // B..F
-	{
-		return c - 55;
-	}
-	else if (c <= 97) // a
-	{
-		return 10;
-	}
-	else if (c <= 102) // b..f
-	{
-		return c - 87;
-	}
-	else // f
-	{
-		return 15;
-	}		
-}
-
-uint8_t hex_to_uint8(uint8_t * buf, uint8_t offset)
-{
-	return hex_to_byte(buf[offset]) * 16 + hex_to_byte(buf[offset + 1]);
-}
-
-void process_cmd(void)
-{
-	uart_putstr("Processing command: ");
-	uart_putstr(cmdbuf);
-	UART_PUTS("\r\n");
-	
-	if ((cmdbuf[0] == 'w') && (strlen(cmdbuf) == 5))
-	{
-		if (enable_write_eeprom)
-		{
-			uint16_t adr = hex_to_byte((uint8_t)cmdbuf[1]) * 16 + hex_to_byte((uint8_t)cmdbuf[2]);
-			uint8_t val = hex_to_uint8((uint8_t *)cmdbuf, 3);
-			UART_PUTF2("Writing data 0x%x to EEPROM pos 0x%x.\r\n", val, adr);
-			eeprom_write_byte((uint8_t *)adr, val);
-		}
-		else
-		{
-			UART_PUTS("Ignoring EEPROM write, since write mode is DISABLED.\r\n");
-		}
-	}
-	else if ((cmdbuf[0] == 'r') && (strlen(cmdbuf) == 3))
-	{
-		uint16_t adr = hex_to_byte((uint8_t)cmdbuf[1]) * 16 + hex_to_byte((uint8_t)cmdbuf[2]);
-		uint8_t val = eeprom_read_byte((uint8_t *)adr);
-		UART_PUTF2("EEPROM value at position 0x%x is 0x%x.\r\n", adr, val);
-	}
-	else if ((cmdbuf[0] == 's') && (strlen(cmdbuf) > 4))
-	{
-		strcpy(sendbuf, cmdbuf + 1);
-		send_data_avail = true;
-	}
-	else
-	{
-		UART_PUTS("Unknown command.\r\n");
-	}
-}
 
 // Store received byte in ringbuffer. No processing.
 ISR(USART_RX_vect)
@@ -139,15 +59,145 @@ ISR(USART_RX_vect)
 	} // else: Buffer overflow (undetected!)
 }
 
-// Process all bytes in the rxbuffer. This function should be called in the main loop.
-// It can be interrupted by a UART RX interrupt, so additional bytes can be added into the ringbuffer while this function is running.
+#endif // UART_RX
+
+void uart_init(void)
+{
+#ifdef UART_DEBUG
+	PORTD |= 0x01;				            // Pullup an RXD an
+
+ 	UCSR0B |= (1 << TXEN0);			        // UART TX einschalten
+ 	UCSR0C |= (1 << USBS0) | (3 << UCSZ00);	// Asynchron 8N1
+ 	UCSR0B |= (1 << RXEN0 );			    // Uart RX einschalten
+ 
+ 	UBRR0H = (uint8_t)((UBRR_VAL) >> 8);
+ 	UBRR0L = (uint8_t)((UBRR_VAL) & 0xFF);
+
+#ifdef UART_RX
+	// activate rx IRQ
+	UCSR0B |= (1 << RXCIE0);
+#endif // UART_RX
+
+#endif // UART_DEBUG
+}
+
+#ifdef UART_DEBUG
+void uart_putc(char c)
+{
+	while (!(UCSR0A & (1<<UDRE0))); /* warten bis Senden moeglich                   */
+	UDR0 = c;                       /* schreibt das Zeichen x auf die Schnittstelle */
+}
+#endif // UART_DEBUG
+
+void uart_putstr(char *str)
+{
+#ifdef UART_DEBUG
+	while (*str)
+	{
+		uart_putc(*str++);
+	}
+#endif // UART_DEBUG
+}
+
+void uart_putstr_P(PGM_P str)
+{
+#ifdef UART_DEBUG
+	char tmp;
+
+	while ((tmp = pgm_read_byte(str)))
+	{
+		uart_putc(tmp);
+		str++;
+	}
+#endif // UART_DEBUG
+}
+
+// printf for floating point numbers takes ~1500 bytes program size.
+// Therefore, we use a smaller special function instead
+// as long it is used so rarely.
+void print_signed(int16_t i)
+{
+#ifdef UART_DEBUG
+	if (i < 0)
+	{
+		UART_PUTS("-");
+		i = -i;
+	}
+	
+	UART_PUTF2("%d.%02d", i / 100, i % 100);
+#endif // UART_DEBUG
+}
+
+void print_bytearray(uint8_t * b, uint8_t len)
+{
+#ifdef UART_DEBUG
+	uint8_t i;
+	
+	for (i = 0; i < len; i++)
+	{
+		UART_PUTF("%02x ", b[i]);
+	}
+	
+	UART_PUTS ("\r\n");
+#endif // UART_DEBUG
+}
+
+#ifdef UART_RX
+
+// Process the user command now contained in the cmdbuf array.
+void process_cmd(void)
+{
+	uart_putstr("Processing command: ");
+	uart_putstr(cmdbuf);
+	UART_PUTS("\r\n");
+	
+	if ((cmdbuf[0] == 'w') && (strlen(cmdbuf) == 5)) // E2P write command
+	{
+		if (enable_write_eeprom)
+		{
+			uint16_t adr = hex_to_uint8((uint8_t *)cmdbuf, 1);
+			uint8_t val = hex_to_uint8((uint8_t *)cmdbuf, 3);
+			UART_PUTF2("Writing data 0x%x to EEPROM pos 0x%x.\r\n", val, adr);
+			eeprom_write_byte((uint8_t *)adr, val);
+		}
+		else
+		{
+			UART_PUTS("Ignoring EEPROM write, since write mode is DISABLED.\r\n");
+		}
+	}
+	else if ((cmdbuf[0] == 'r') && (strlen(cmdbuf) == 3)) // E2P read command
+	{
+		uint16_t adr = hex_to_uint8((uint8_t *)cmdbuf, 1);
+		uint8_t val = eeprom_read_byte((uint8_t *)adr);
+		UART_PUTF2("EEPROM value at position 0x%x is 0x%x.\r\n", adr, val);
+	}
+	else if ((cmdbuf[0] == 's') && (strlen(cmdbuf) > 4)) // "send" command
+	{
+		send_data_avail = true;
+	}
+	else
+	{
+		UART_PUTS("Unknown command.\r\n");
+	}
+}
+
+// Process all bytes in the UART RX ringbuffer ("rxbuf"). This function should be called in the
+// main loop. It can be interrupted by a UART RX interrupt, so additional bytes can be added
+// into the ringbuffer while this function is running.
 void process_rxbuf(void)
 {
+	// Only process characters if the cmdbuf is clear to be overwritten.
+	// If not, wait for the main loop to clear it by processing the user "send" command.	
+	if (send_data_avail)
+	{
+		return;
+	}
+	
 	while (rxbuf_count > 0)
 	{
 		char input;
 		
-		// get one char from the ringbuffer and reduce it's size without interruption through the UART ISR
+		// get one char from the ringbuffer and reduce its size without interruption through the UART ISR
 		cli();
 		input = rxbuf[rxbuf_startpos];
 		rxbuf_startpos = (rxbuf_startpos + 1) % RXBUF_LENGTH;
@@ -244,55 +294,4 @@ void process_rxbuf(void)
 		uart_timeout = bytes_to_read == bytes_pos ? 0 : 255;
 	}
 }
-#endif
-
-void uart_init(void)
-{
-#ifdef UART_DEBUG
-	PORTD |= 0x01;				            // Pullup an RXD an
-
- 	UCSR0B |= (1 << TXEN0);			        // UART TX einschalten
- 	UCSR0C |= (1 << USBS0) | (3 << UCSZ00);	// Asynchron 8N1
- 	UCSR0B |= (1 << RXEN0 );			    // Uart RX einschalten
- 
- 	UBRR0H = (uint8_t)((UBRR_VAL) >> 8);
- 	UBRR0L = (uint8_t)((UBRR_VAL) & 0xFF);
-
-#ifdef UART_RX
-	// activate rx IRQ
-	UCSR0B |= (1 << RXCIE0);
 #endif // UART_RX
-
-#endif // UART_DEBUG
-}
-
-#ifdef UART_DEBUG
-void uart_putc(char c)
-{
-	while (!(UCSR0A & (1<<UDRE0))); /* warten bis Senden moeglich                   */
-	UDR0 = c;                       /* schreibt das Zeichen x auf die Schnittstelle */
-}
-#endif // UART_DEBUG
-
-void uart_putstr(char *str)
-{
-#ifdef UART_DEBUG
-	while (*str)
-	{
-		uart_putc(*str++);
-	}
-#endif // UART_DEBUG
-}
-
-void uart_putstr_P(PGM_P str)
-{
-#ifdef UART_DEBUG
-	char tmp;
-
-	while ((tmp = pgm_read_byte(str)))
-	{
-		uart_putc(tmp);
-		str++;
-	}
-#endif // UART_DEBUG
-}

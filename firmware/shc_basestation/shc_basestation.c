@@ -31,9 +31,14 @@
 #include "../src_common/msggrp_tempsensor.h"
 #include "../src_common/msggrp_powerswitch.h"
 
+#include "../src_common/e2p_hardware.h"
+#include "../src_common/e2p_generic.h"
+#include "../src_common/e2p_basestation.h"
+
 #include "aes256.h"
 #include "util.h"
 #include "request_buffer.h"
+#include "version.h"
 
 #define LED_PIN 7
 #define LED_PORT PORTD
@@ -44,7 +49,7 @@
 	#error AES keys do not start at a byte border. Not supported by base station (maybe fix E2P layout?).
 #endif
 
-uint16_t deviceID;
+uint16_t device_id;
 uint8_t aes_key_count;
 
 // Show info about the received packets.
@@ -121,6 +126,13 @@ void decode_data(uint8_t len)
 
 				switch (messageid)
 				{
+					case MESSAGEID_GENERIC_VERSION:
+						UART_PUTF("Major=%u;", msg_generic_version_get_major());
+						UART_PUTF("Minor=%u;", msg_generic_version_get_minor());
+						UART_PUTF("Patch=%u;", msg_generic_version_get_patch());
+						UART_PUTF("Hash=%08lx;", msg_generic_version_get_hash());
+						break;
+						
 					case MESSAGEID_GENERIC_BATTERYSTATUS:
 						UART_PUTF("Percentage=%u;", msg_generic_batterystatus_get_percentage());
 						break;
@@ -177,9 +189,9 @@ void decode_data(uint8_t len)
 	// Detect and process Acknowledges to base station, whose requests have to be removed from the request queue
 	if ((messagetype == MESSAGETYPE_ACK) || (messagetype == MESSAGETYPE_ACKSTATUS))
 	{
-		if (acksenderid == deviceID) // request sent from base station
+		if (acksenderid == device_id) // request sent from base station
 		{
-			remove_request(senderid, deviceID, ackpacketcounter);
+			remove_request(senderid, device_id, ackpacketcounter);
 		}
 	}
 }
@@ -187,7 +199,7 @@ void decode_data(uint8_t len)
 // Set senderid, packetcounter and CRC into the partly filled packet, encrypt it using the given AES key number and send it.
 void send_packet(uint8_t aes_key_nr, uint8_t packet_len)
 {
-	pkg_header_set_senderid(deviceID);
+	pkg_header_set_senderid(device_id);
 
 	inc_packetcounter();
 	pkg_header_set_packetcounter(packetcounter);
@@ -208,7 +220,7 @@ void send_packet(uint8_t aes_key_nr, uint8_t packet_len)
 
 	// encrypt and send
 	__PACKETSIZEBYTES = packet_len;
-	rfm12_sendbuf();
+	rfm12_send_bufx();
 }
 
 int main(void)
@@ -222,83 +234,71 @@ int main(void)
 
 	util_init();
 
-	check_eeprom_compatibility(DEVICETYPE_BASE_STATION);
+	check_eeprom_compatibility(DEVICETYPE_BASESTATION);
 
 	request_queue_init();
 
 	// read packetcounter, increase by cycle and write back
-	packetcounter = eeprom_read_UIntValue32(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT,
-		EEPROM_PACKETCOUNTER_LENGTH_BITS, EEPROM_PACKETCOUNTER_MINVAL, EEPROM_PACKETCOUNTER_MAXVAL) + PACKET_COUNTER_WRITE_CYCLE;
-
-	eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
+	packetcounter = e2p_generic_get_packetcounter() + PACKET_COUNTER_WRITE_CYCLE;
+	e2p_generic_set_packetcounter(packetcounter);
 
 	// read device specific config
-	aes_key_count = eeprom_read_UIntValue8(EEPROM_AESKEYCOUNT_BYTE, EEPROM_AESKEYCOUNT_BIT,
-		EEPROM_AESKEYCOUNT_LENGTH_BITS, EEPROM_AESKEYCOUNT_MINVAL, EEPROM_AESKEYCOUNT_MAXVAL);
+	aes_key_count = e2p_basestation_get_aeskeycount();
 
-	deviceID = eeprom_read_UIntValue16(EEPROM_DEVICEID_BYTE, EEPROM_DEVICEID_BIT,
-		EEPROM_DEVICEID_LENGTH_BITS, EEPROM_DEVICEID_MINVAL, EEPROM_DEVICEID_MAXVAL);
+	device_id = e2p_generic_get_deviceid();
 
 	uart_init();
-	UART_PUTS ("\r\n");
-	UART_PUTS ("smarthomatic Base Station V1.0 (c) 2012 Uwe Freese, www.smarthomatic.org\r\n");
-	UART_PUTF ("Device ID: %u\r\n", deviceID);
-	UART_PUTF ("Packet counter: %lu\r\n", packetcounter);
-	UART_PUTF ("AES key count: %u\r\n", aes_key_count);
-	UART_PUTS ("Waiting for incoming data. Press h for help.\r\n\r\n");
+	UART_PUTS("\r\n");
+	UART_PUTF4("smarthomatic Base Station v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
+	UART_PUTS("(c) 2012..2014 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTF("Device ID: %u\r\n", device_id);
+	UART_PUTF("Packet counter: %lu\r\n", packetcounter);
+	UART_PUTF("AES key count: %u\r\n", aes_key_count);
+	UART_PUTS("Waiting for incoming data. Press h for help.\r\n\r\n");
 
 	led_blink(500, 500, 3);
 
 	rfm12_init();
 	sei();
 	
-	// ENCODE TEST (OLD! Move to unit test some day...)
+	// ENCODE TEST (Move to unit test some day...)
 	/*
-	uint8_t testlen = 64;
+	uint8_t testlen = 32;
+	uint8_t aes_key_num = 0;
 	
-	eeprom_read_block (aes_key, (uint8_t *)EEPROM_AESKEYS_BYTE, 32);
-	UART_PUTS("Using AES key ");
-	printbytearray((uint8_t *)aes_key, 32);
-			
-	UART_PUTS("Before encryption: ");
-	printbytearray(bufx, testlen);
-  
-	unsigned long crc = crc32(bufx, testlen);
-	UART_PUTF("CRC32 is %lx (added as last 4 bytes)\r\n", crc);
-	
-	UART_PUTS("1\r\n");
-	crc = crc32(bufx, testlen - 4);
-	UART_PUTS("2\r\n");
-	setBuf32(testlen - 4, crc);
-	
-	UART_PUTS("Before encryption (CRC added): ");
-	printbytearray(bufx, testlen);
+	memset(&bufx[0], 0, sizeof(bufx));
+	bufx[0] = 0xff;
+	bufx[1] = 0xb0;
+	bufx[2] = 0xa0;
+	bufx[3] = 0x3f;
+	bufx[4] = 0x01;
+	bufx[5] = 0x70;
+	bufx[6] = 0x00;
+	bufx[7] = 0x0c;
+	bufx[8] = 0xa8;
+	bufx[9] = 0x00;
+	bufx[10] = 0x20;
+	bufx[20] = 0x20;
 
-	UART_PUTS("1\r\n");
+	eeprom_read_block (aes_key, (uint8_t *)(EEPROM_AESKEYS_BYTE + aes_key_num * 32), 32);
+	UART_PUTS("Using AES key ");
+	print_bytearray((uint8_t *)aes_key, 32);
+	
+	UART_PUTS("Before encryption: ");
+	print_bytearray(bufx, testlen);
+	
 	uint8_t aes_byte_count = aes256_encrypt_cbc(bufx, testlen);
-	UART_PUTS("2\r\n");
-  
+	
+	UART_PUTF("byte count = %u\r\n", aes_byte_count);
+	
 	UART_PUTS("After encryption: ");
-	printbytearray(bufx, aes_byte_count);
+	print_bytearray(bufx, aes_byte_count);
 	
-	UART_PUTF("String len = %u\r\n", aes_byte_count);
-	
-	UART_PUTS("1\r\n");
 	aes256_decrypt_cbc(bufx, aes_byte_count);
-	UART_PUTS("2\r\n");
   
 	UART_PUTS("After decryption: ");
-	printbytearray(bufx, testlen);
+	print_bytearray(bufx, testlen);
 	
-	crc = getBuf32(testlen - 4);
-	UART_PUTF("CRC32 is %lx (last 4 bytes from decrypted message)\r\n", crc);
-	printbytearray(bufx, testlen);
-	
-	UART_PUTS("After decryption (CRC removed): ");
-	printbytearray(bufx, testlen);
-	
-	UART_PUTF("String len = %u\r\n", testlen);
-  
 	while(1);
 	*/
 
@@ -319,7 +319,6 @@ int main(void)
 
 				for (aes_key_nr = 0; aes_key_nr < aes_key_count ; aes_key_nr++)
 				{
-					//strncpy((char *)bufx, (char *)rfm12_rx_buffer(), len);
 					memcpy(bufx, rfm12_rx_buffer(), len);
 
 					/*if (aes_key_nr == 0)
@@ -335,7 +334,7 @@ int main(void)
 					aes256_decrypt_cbc(bufx, len);
 
 					//UART_PUTS("Decrypted bytes: ");
-					//printbytearray(bufx, len);
+					//print_bytearray(bufx, len);
 					
 					crcok = pkg_header_check_crc32(len);
 					
@@ -353,7 +352,9 @@ int main(void)
 				
 				if (!crcok)
 				{
-					UART_PUTS("Received garbage (CRC wrong after decryption).\r\n");
+					UART_PUTS("Received garbage (CRC wrong after decryption): ");
+					memcpy(bufx, rfm12_rx_buffer(), len);
+					print_bytearray(bufx, len);
 				}
 				
 				UART_PUTS("\r\n");
@@ -372,14 +373,14 @@ int main(void)
 			uint8_t i;
 			
 			// set AES key nr
-			aes_key_nr = hex_to_uint8((uint8_t *)sendbuf, 0);
+			aes_key_nr = hex_to_uint8((uint8_t *)cmdbuf, 1);
 			//UART_PUTF("AES KEY = %u\r\n", aes_key_nr);
 
 			// init packet buffer
 			memset(&bufx[0], 0, sizeof(bufx));
 
 			// set message type
-			uint8_t message_type = hex_to_uint8((uint8_t *)sendbuf, 2);
+			uint8_t message_type = hex_to_uint8((uint8_t *)cmdbuf, 3);
 			pkg_header_set_messagetype(message_type);
 			pkg_header_adjust_offset();
 			//UART_PUTF("MessageType = %u\r\n", message_type);
@@ -401,24 +402,24 @@ int main(void)
 				case MESSAGETYPE_GET:
 				case MESSAGETYPE_SET:
 				case MESSAGETYPE_SETGET:
-					pkg_headerext_common_set_receiverid(hex_to_uint16((uint8_t *)sendbuf, 4));
-					pkg_headerext_common_set_messagegroupid(hex_to_uint8((uint8_t *)sendbuf, 8));
-					pkg_headerext_common_set_messageid(hex_to_uint8((uint8_t *)sendbuf, 10));
+					pkg_headerext_common_set_receiverid(hex_to_uint16((uint8_t *)cmdbuf, 5));
+					pkg_headerext_common_set_messagegroupid(hex_to_uint8((uint8_t *)cmdbuf, 9));
+					pkg_headerext_common_set_messageid(hex_to_uint8((uint8_t *)cmdbuf, 11));
 					string_offset_data = 12;
 					break;
 				case MESSAGETYPE_STATUS:
-					pkg_headerext_common_set_messagegroupid(hex_to_uint8((uint8_t *)sendbuf, 4));
-					pkg_headerext_common_set_messageid(hex_to_uint8((uint8_t *)sendbuf, 6));
+					pkg_headerext_common_set_messagegroupid(hex_to_uint8((uint8_t *)cmdbuf, 5));
+					pkg_headerext_common_set_messageid(hex_to_uint8((uint8_t *)cmdbuf, 7));
 					string_offset_data = 8;
 					break;
 				case MESSAGETYPE_ACK:
-					pkg_headerext_common_set_acksenderid(hex_to_uint16((uint8_t *)sendbuf, 4));
-					pkg_headerext_common_set_ackpacketcounter(hex_to_uint24((uint8_t *)sendbuf, 8));
-					pkg_headerext_common_set_error(hex_to_uint8((uint8_t *)sendbuf, 14));
+					pkg_headerext_common_set_acksenderid(hex_to_uint16((uint8_t *)cmdbuf, 5));
+					pkg_headerext_common_set_ackpacketcounter(hex_to_uint24((uint8_t *)cmdbuf, 9));
+					pkg_headerext_common_set_error(hex_to_uint8((uint8_t *)cmdbuf, 15));
 					// fallthrough!
 				case MESSAGETYPE_ACKSTATUS:
-					pkg_headerext_common_set_messagegroupid(hex_to_uint8((uint8_t *)sendbuf, 16));
-					pkg_headerext_common_set_messageid(hex_to_uint8((uint8_t *)sendbuf, 18));
+					pkg_headerext_common_set_messagegroupid(hex_to_uint8((uint8_t *)cmdbuf, 17));
+					pkg_headerext_common_set_messageid(hex_to_uint8((uint8_t *)cmdbuf, 19));
 					string_offset_data = 20;
 					break;
 			}
@@ -428,7 +429,7 @@ int main(void)
 			// copy message data, which exists in all packets except in Get and Ack packets
 			if ((message_type != MESSAGETYPE_GET) && (message_type != MESSAGETYPE_ACK))
 			{
-				uint8_t data_len_raw = (strlen(sendbuf) - string_offset_data) / 2;
+				uint8_t data_len_raw = (strlen(cmdbuf) - 1 - string_offset_data) / 2;
 				//UART_PUTF("Data bytes = %u\r\n", data_len_raw);
 				
 				uint8_t start = __HEADEROFFSETBITS / 8;
@@ -437,7 +438,7 @@ int main(void)
 				// copy message data, using __HEADEROFFSETBITS value and string_offset_data
 				for (i = 0; i < data_len_raw; i++)
 				{
-					uint8_t val = hex_to_uint8((uint8_t *)sendbuf, string_offset_data + 2 * i);
+					uint8_t val = hex_to_uint8((uint8_t *)cmdbuf, string_offset_data + 2 * i + 1);
 					array_write_UIntValue(start + i, shift, 8, val, bufx);
 				}
 			}
@@ -466,7 +467,7 @@ int main(void)
 				print_request_queue();
 			}
 		
-			// clear send text buffer
+			// clear cmdbuf to receive more input from UART
 			send_data_avail = false;
 
 			rfm12_tick();
@@ -493,7 +494,7 @@ int main(void)
 			// Auto-send something for debugging purposes...
 			if (loop2 == 50)
 			{
-				//strcpy(sendbuf, "000102828300");
+				//strcpy(cmdbuf, "s000102828300");
 				//send_data_avail = true;
 				
 				loop2 = 0;

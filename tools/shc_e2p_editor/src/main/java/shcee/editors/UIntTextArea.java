@@ -49,7 +49,11 @@ public class UIntTextArea extends JTextArea
 		this.minVal = minVal;
 		this.maxVal = maxVal;
 		
-		PlainDocument d = new TextFieldLimit((int)Math.log10(maxVal) + 1);
+		int charLimit = (int)Math.log10(maxVal) + 1;
+		if (minVal < 0)
+			charLimit++;
+		
+		PlainDocument d = new TextFieldLimit(charLimit);
 		setDocument(d);
 		
 		this.setText("" + minVal);
@@ -75,7 +79,7 @@ public class UIntTextArea extends JTextArea
 			}
 	    });
 		
-		valid = false;
+		checkInput();
 	}
 
 	protected void checkInput()

@@ -184,6 +184,43 @@
 		<Description>This group contains messages useful for different devices.</Description>
 		<MessageGroupID>0</MessageGroupID>
 		<Message>
+			<Name>Version</Name>
+			<Description>Reports the current firmware version. Version information is only available when set in source code, which is usually only done for official builds by the build robot.</Description>
+			<MessageID>1</MessageID>
+			<MessageType>0</MessageType>
+			<MessageType>8</MessageType>
+			<MessageType>10</MessageType>
+			<Validity>test</Validity>
+			<UIntValue>
+				<ID>Major</ID>
+				<Description>Different major version means incompatible changes.</Description>
+				<Bits>8</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>255</MaxVal>
+			</UIntValue>
+			<UIntValue>
+				<ID>Minor</ID>
+				<Description>Different minor number means new functionality without breaking compatibility.</Description>
+				<Bits>8</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>255</MaxVal>
+			</UIntValue>
+			<UIntValue>
+				<ID>Patch</ID>
+				<Description>The patch version is changed when backwards-compatible bug fixes are made.</Description>
+				<Bits>8</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>255</MaxVal>
+			</UIntValue>
+			<UIntValue>
+				<ID>Hash</ID>
+				<Description>The beginning of the revision ID hash (as reported by Git).</Description>
+				<Bits>32</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>4294967295</MaxVal>
+			</UIntValue>
+		</Message>
+		<Message>
 			<Name>BatteryStatus</Name>
 			<Description>Tells the current battery status in percent. Please note that the "Get" may not be answered because a device does not listen to requests.</Description>
 			<MessageID>5</MessageID>

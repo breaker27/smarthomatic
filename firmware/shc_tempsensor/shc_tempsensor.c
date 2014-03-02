@@ -30,10 +30,15 @@
 #include "../src_common/msggrp_generic.h"
 #include "../src_common/msggrp_tempsensor.h"
 
+#include "../src_common/e2p_hardware.h"
+#include "../src_common/e2p_generic.h"
+#include "../src_common/e2p_tempsensor.h"
+
 #include "sht11.h"
 
 #include "aes256.h"
 #include "util.h"
+#include "version.h"
 
 // check some assumptions at precompile time about flash layout
 #if (EEPROM_AESKEY_BIT != 0)
@@ -42,10 +47,12 @@
 
 #define AVERAGE_COUNT 4 // Average over how many values before sending over RFM12?
 #define SEND_BATT_STATUS_CYCLE 30 // send battery status x times less than temp status
+#define SEND_VERSION_STATUS_CYCLE 200 // send version status x times less than temp status (~once per day)
 
 uint8_t temperature_sensor_type = 0;
 uint8_t brightness_sensor_type = 0;
 uint8_t batt_status_cycle = SEND_BATT_STATUS_CYCLE - 1; // send promptly after startup
+uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly after startup
 
 int main(void)
 {
@@ -56,41 +63,37 @@ int main(void)
 	uint8_t device_id = 0;
 	uint8_t avg = 0;
 	uint8_t bat_p_val = 0;
+	uint16_t vempty = 1100; // 1.1V * 2 cells = 2.2V = min. voltage for RFM2
 
 	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
 	_delay_ms(1000);
 
 	util_init();
 
-	check_eeprom_compatibility(DEVICETYPE_TEMPERATURE_SENSOR);
+	check_eeprom_compatibility(DEVICETYPE_TEMPSENSOR);
 
 	// read packetcounter, increase by cycle and write back
-	packetcounter = eeprom_read_UIntValue32(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT,
-		EEPROM_PACKETCOUNTER_LENGTH_BITS, EEPROM_PACKETCOUNTER_MINVAL, EEPROM_PACKETCOUNTER_MAXVAL) + PACKET_COUNTER_WRITE_CYCLE;
-
-	eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
+	packetcounter = e2p_generic_get_packetcounter() + PACKET_COUNTER_WRITE_CYCLE;
+	e2p_generic_set_packetcounter(packetcounter);
 
 	// read device specific config
-	temperature_sensor_type = eeprom_read_UIntValue8(EEPROM_TEMPERATURESENSORTYPE_BYTE,
-		EEPROM_TEMPERATURESENSORTYPE_BIT, EEPROM_TEMPERATURESENSORTYPE_LENGTH_BITS, 0, 255);
-
-	brightness_sensor_type = eeprom_read_UIntValue8(EEPROM_BRIGHTNESSSENSORTYPE_BYTE,
-		EEPROM_BRIGHTNESSSENSORTYPE_BIT, EEPROM_BRIGHTNESSSENSORTYPE_LENGTH_BITS, 0, 255);
+	temperature_sensor_type = e2p_tempsensor_get_temperaturesensortype();
+	brightness_sensor_type = e2p_tempsensor_get_brightnesssensortype();
 
 	// read device id
-	device_id = eeprom_read_UIntValue16(EEPROM_DEVICEID_BYTE, EEPROM_DEVICEID_BIT,
-		EEPROM_DEVICEID_LENGTH_BITS, EEPROM_DEVICEID_MINVAL, EEPROM_DEVICEID_MAXVAL);
+	device_id = e2p_generic_get_deviceid();
 	
 	osccal_init();
 	
 	uart_init();
 	UART_PUTS ("\r\n");
-	UART_PUTS ("smarthomatic Tempsensor V1.0 (c) 2013 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTF4("smarthomatic Tempsensor v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
+	UART_PUTS("(c) 2012..2014 Uwe Freese, www.smarthomatic.org\r\n");
 	osccal_info();
 	UART_PUTF ("Device ID: %u\r\n", device_id);
 	UART_PUTF ("Packet counter: %lu\r\n", packetcounter);
-	UART_PUTF ("Temperature Sensor Type: %u\r\n", temperature_sensor_type);
-	UART_PUTF ("Brightness Sensor Type: %u\r\n", brightness_sensor_type);
+	UART_PUTF ("Temperature sensor type: %u\r\n", temperature_sensor_type);
+	UART_PUTF ("Brightness sensor type: %u\r\n", brightness_sensor_type);
 	
 	// init AES key
 	eeprom_read_block(aes_key, (uint8_t *)EEPROM_AESKEY_BYTE, 32);
@@ -100,7 +103,10 @@ int main(void)
 	if (temperature_sensor_type == TEMPERATURESENSORTYPE_SHT15)
 	{
 	  sht11_init();
+	  vempty = 1200; // 1.2V * 2 cells = 2.4V = min. voltage for SHT15
 	}
+	
+	UART_PUTF ("Min. battery voltage: %umV\r\n", vempty);
 
 	led_blink(500, 500, 3);
 	
@@ -162,15 +168,14 @@ int main(void)
 			
 			pkg_header_calc_crc32();
 			
-			bat_p_val = bat_percentage(vbat);
+			bat_p_val = bat_percentage(vbat, vempty);
 			
-			UART_PUTF("CRC32 is %lx (added as first 4 bytes)\r\n", getBuf32(0));
 			UART_PUTF("Battery: %u%%, Temperature: ", bat_p_val);
 			print_signed(temp);
 			UART_PUTF2(" deg.C, Humidity: %u.%u", hum / 10, hum % 10);
 			UART_PUTS("%\r\n");
 
-			rfm12_sendbuf();
+			rfm12_send_bufx();
 			rfm12_tick(); // send packet, and then WAIT SOME TIME BEFORE GOING TO SLEEP (otherwise packet would not be sent)
 
 			switch_led(1);
@@ -179,6 +184,7 @@ int main(void)
 
 			vbat = temp = hum = vlight = avg = 0;
 			batt_status_cycle++;
+			version_status_cycle++;
 		}
 		else
 		{
@@ -196,7 +202,31 @@ int main(void)
 				
 				UART_PUTF("Battery: %u%%\r\n", bat_p_val);
 
-				rfm12_sendbuf();
+				rfm12_send_bufx();
+				rfm12_tick(); // send packet, and then WAIT SOME TIME BEFORE GOING TO SLEEP (otherwise packet would not be sent)
+
+				switch_led(1);
+				_delay_ms(200);
+				switch_led(0);
+			}
+			else if (version_status_cycle >= SEND_VERSION_STATUS_CYCLE)
+			{
+				version_status_cycle = 0;
+				inc_packetcounter();
+				
+				// Set packet content
+				pkg_header_init_generic_version_status();
+				pkg_header_set_senderid(device_id);
+				pkg_header_set_packetcounter(packetcounter);
+				msg_generic_version_set_major(VERSION_MAJOR);
+				msg_generic_version_set_minor(VERSION_MINOR);
+				msg_generic_version_set_patch(VERSION_PATCH);
+				msg_generic_version_set_hash(VERSION_HASH);
+				pkg_header_calc_crc32();
+				
+				UART_PUTF4("Version: v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
+
+				rfm12_send_bufx();
 				rfm12_tick(); // send packet, and then WAIT SOME TIME BEFORE GOING TO SLEEP (otherwise packet would not be sent)
 
 				switch_led(1);

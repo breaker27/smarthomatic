@@ -26,6 +26,9 @@
 
 #include "packet_header.h"
 
+// AckSenderID (UIntValue)
+// Description: The ID of the requestor whose request is acknowledged.
+
 // Set AckSenderID (UIntValue)
 // Offset: 9, 0, length bits 12, min val 0, max val 4095
 static inline void pkg_headerext_ackstatus_set_acksenderid(uint32_t val)
@@ -39,6 +42,9 @@ static inline uint32_t pkg_headerext_ackstatus_get_acksenderid(void)
 {
   return array_read_UIntValue32(9, 0, 12, 0, 4095, bufx);
 }
+
+// AckPacketCounter (UIntValue)
+// Description: The PacketCounter of the request that is acknowledged.
 
 // Set AckPacketCounter (UIntValue)
 // Offset: 10, 4, length bits 24, min val 0, max val 16777215
@@ -54,6 +60,9 @@ static inline uint32_t pkg_headerext_ackstatus_get_ackpacketcounter(void)
   return array_read_UIntValue32(10, 4, 24, 0, 16777215, bufx);
 }
 
+// Error (BoolValue)
+// Description: Tells if there was an error fulfilling the request or not.
+
 // Set Error (BoolValue)
 // Offset: 13, 4, length bits 1
 static inline void pkg_headerext_ackstatus_set_error(bool val)
@@ -68,6 +77,9 @@ static inline bool pkg_headerext_ackstatus_get_error(void)
   return array_read_UIntValue8(13, 4, 1, 0, 1, bufx) == 1;
 }
 
+// MessageGroupID (UIntValue)
+// Description: 0 = Generic, 1..9 = Reserved, others are arbitrary
+
 // Set MessageGroupID (UIntValue)
 // Offset: 13, 5, length bits 7, min val 0, max val 127
 static inline void pkg_headerext_ackstatus_set_messagegroupid(uint32_t val)
@@ -81,6 +93,8 @@ static inline uint32_t pkg_headerext_ackstatus_get_messagegroupid(void)
 {
   return array_read_UIntValue32(13, 5, 7, 0, 127, bufx);
 }
+
+// MessageID (UIntValue)
 
 // Set MessageID (UIntValue)
 // Offset: 14, 4, length bits 4, min val 0, max val 15

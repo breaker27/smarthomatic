@@ -113,7 +113,7 @@ uint8_t rfm12_read_int_flags_inline(void)
 	return SPDR;
 
 	#else
-	unsigned char x, d=d;
+	uint8_t x, d=d;
 	PORT_MOSI &= ~(1<<BIT_MOSI);	
 	for(x=0;x<8;x++){
 		PORT_SCK |= (1<<BIT_SCK);

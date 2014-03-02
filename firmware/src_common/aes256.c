@@ -25,6 +25,11 @@
 
 #include "aes256.h"
 
+#include <string.h>
+
+#include "uart.h"
+#include "util.h"
+
 aes256_context aes_ctx;
 uint8_t aes_key[32];
 uint8_t aes_buf[16];
@@ -390,10 +395,10 @@ uint8_t aes256_encrypt_cbc(uint8_t *buffer, uint8_t len)
 		}
 		
 		// XOR the later buffers with the cyphertext from the block before
-		if (offset != 0)
-		{
+		if (offset > 0)
+		{	
 			for (i = 0; i < 16; i++)
-			{
+			{	
 				aes_buf[i] ^= buffer[(offset - 16) + i];
 			}
 		}
@@ -401,10 +406,7 @@ uint8_t aes256_encrypt_cbc(uint8_t *buffer, uint8_t len)
 		aes256_encrypt_ecb(&aes_ctx, aes_buf);
 		
 		// copy back to data buffer
-		for (i = 0; i < 16; i++)
-		{
-			buffer[offset + i] = aes_buf[i];
-		}
+		memcpy(buffer + offset, aes_buf, 16);
 		
 		offset += 16;
 	}
@@ -420,32 +422,30 @@ void aes256_decrypt_cbc(uint8_t *buffer, uint8_t len)
 {
 	uint8_t offset = 0;
 	uint8_t i;
+	uint8_t last_block[16];
+	uint8_t current_block[16];
 
 	aes256_init(&aes_ctx, aes_key);
 	
 	while (offset < len)
 	{
-		for (i = 0; i < 16; i++) // fill buffer with characters, fill up with zeros
-		{
-			aes_buf[i] = buffer[offset + i];
-		}
+		memcpy(aes_buf, buffer + offset, 16);
+		memcpy(current_block, aes_buf, 16);
 
 		aes256_decrypt_ecb(&aes_ctx, aes_buf);
 
 		// XOR the later buffers with the cyphertext from the block before
-		if (offset != 0)
+		if (offset > 0)
 		{
 			for (i = 0; i < 16; i++)
 			{
-				aes_buf[i] ^= buffer[(offset - 16) + i];
+				aes_buf[i] ^= last_block[i];
 			}
 		}
 
 		// copy back to data buffer
-		for (i = 0; i < 16; i++)
-		{
-			buffer[offset + i] = aes_buf[i];
-		}
+		memcpy(buffer + offset, aes_buf, 16);
+		memcpy(last_block, current_block, 16);
 		
 		offset += 16;
 	}

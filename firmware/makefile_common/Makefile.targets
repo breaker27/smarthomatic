@@ -26,18 +26,17 @@ eep: $(BINDIR)/$(TARGET).eep
 lss: $(OBJDIR)/$(TARGET).lss
 sym: $(OBJDIR)/$(TARGET).sym
 
-
 # Size of build
 size: $(OBJDIR)/$(TARGET).elf
 	@echo
-	@echo "Image size:"
-	@$(SIZE) -d -B $(OBJDIR)/$(TARGET).elf
+	@$(SIZE) -d -C --mcu=$(MCU) $(OBJDIR)/$(TARGET).elf
 
-# Clean project.
+# Clean project
 clean:
 	$(REMOVEDIR) $(OBJDIR)
-distclean: clean
-	$(REMOVEDIR) $(BINDIR)
+
+# Clean + build project
+cleanbuild: clean all
 
 # create fuse hex files by dumping the relevant section	from fuses.hex
 fuse: $(OBJDIR)/$(TARGET).elf

@@ -16,10 +16,10 @@
 * with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <stdint.h>
-
 #ifndef E2P_ACCESS_H
 #define E2P_ACCESS_H
+
+#include <stdint.h>
 
 #ifdef UNITTEST
 
@@ -52,6 +52,11 @@ static inline uint16_t eeprom_read_UIntValue16(uint16_t byte, uint8_t bit, uint1
 static inline uint32_t eeprom_read_UIntValue32(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t minval, uint32_t maxval)
 {
 	return _eeprom_read_UIntValue32(byte, bit, length_bits, minval, maxval, 32, NULL);
+}
+
+static inline int32_t eeprom_read_IntValue32(uint16_t byte, uint8_t bit, uint16_t length_bits, int32_t minval, int32_t maxval)
+{
+	return _eeprom_read_IntValue32(byte, bit, length_bits, minval, maxval, NULL);
 }
 
 static inline void eeprom_write_UIntValue(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t val)

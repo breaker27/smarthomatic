@@ -21,6 +21,9 @@
 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 */
 
+#ifndef _MSGGRP_TEMPSENSOR_H
+#define _MSGGRP_TEMPSENSOR_H
+
 #include "packet_header.h"
 #include "packet_headerext_common.h"
 #include "packet_headerext_ackstatus.h"
@@ -88,6 +91,9 @@ static inline void pkg_header_init_tempsensor_temphumbristatus_ackstatus(void)
   __MESSAGETYPE = 10;
 }
 
+// Temperature (IntValue)
+// Description: temperature [1/100 degree celsius], -50°C = -5000, 50°C = 5000
+
 // Set Temperature (IntValue)
 // Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 16, min val -32768, max val 32767
 static inline void msg_tempsensor_temphumbristatus_set_temperature(int32_t val)
@@ -101,6 +107,9 @@ static inline int32_t msg_tempsensor_temphumbristatus_get_temperature(void)
 {
   return array_read_IntValue32(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 16, -32768, 32767, bufx);
 }
+
+// Humidity (UIntValue)
+// Description: relative humidity permill, 0..1000 (other values not defined)
 
 // Set Humidity (UIntValue)
 // Offset: ((uint16_t)__HEADEROFFSETBITS + 16) / 8, ((uint16_t)__HEADEROFFSETBITS + 16) % 8, length bits 10, min val 0, max val 1000
@@ -116,6 +125,9 @@ static inline uint32_t msg_tempsensor_temphumbristatus_get_humidity(void)
   return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 16) / 8, ((uint16_t)__HEADEROFFSETBITS + 16) % 8, 10, 0, 1000, bufx);
 }
 
+// Brightness (UIntValue)
+// Description: brightness in percent
+
 // Set Brightness (UIntValue)
 // Offset: ((uint16_t)__HEADEROFFSETBITS + 26) / 8, ((uint16_t)__HEADEROFFSETBITS + 26) % 8, length bits 7, min val 0, max val 100
 static inline void msg_tempsensor_temphumbristatus_set_brightness(uint32_t val)
@@ -130,3 +142,4 @@ static inline uint32_t msg_tempsensor_temphumbristatus_get_brightness(void)
   return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 26) / 8, ((uint16_t)__HEADEROFFSETBITS + 26) % 8, 7, 0, 100, bufx);
 }
 
+#endif /* _MSGGRP_TEMPSENSOR_H */

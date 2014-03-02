@@ -4,6 +4,9 @@
 		<xs:complexType>
 			<xs:sequence>
 				<xs:element name="Block" maxOccurs="unbounded">
+					<xs:annotation>
+						<xs:documentation>The first two blocks have to be "Hardware" and "Generic", followed by device specific blocks with Restriction.</xs:documentation>
+					</xs:annotation>
 					<xs:complexType>
 						<xs:sequence>
 							<xs:element name="Name" type="xs:string"/>
@@ -38,6 +41,38 @@
 											</xs:element>
 											<xs:element name="MinVal" type="xs:unsignedInt"/>
 											<xs:element name="MaxVal" type="xs:unsignedInt"/>
+										</xs:sequence>
+									</xs:complexType>
+								</xs:element>
+								<xs:element name="IntValue">
+									<xs:annotation>
+										<xs:documentation>A signed integer value with 1 to 32 bits in size.</xs:documentation>
+									</xs:annotation>
+									<xs:complexType>
+										<xs:sequence>
+											<xs:element name="ID" type="xs:string"/>
+											<xs:element name="Description"/>
+											<xs:element name="Bits">
+												<xs:simpleType>
+													<xs:restriction base="xs:unsignedInt">
+														<xs:minInclusive value="1"/>
+														<xs:maxInclusive value="32"/>
+													</xs:restriction>
+												</xs:simpleType>
+											</xs:element>
+											<xs:element name="MinVal" type="xs:int"/>
+											<xs:element name="MaxVal" type="xs:int"/>
+										</xs:sequence>
+									</xs:complexType>
+								</xs:element>
+								<xs:element name="BoolValue">
+									<xs:annotation>
+										<xs:documentation>A boolean value, stored as one bit being 0 (false) or 1 (true).</xs:documentation>
+									</xs:annotation>
+									<xs:complexType>
+										<xs:sequence>
+											<xs:element name="ID" type="xs:string"/>
+											<xs:element name="Description"/>
 										</xs:sequence>
 									</xs:complexType>
 								</xs:element>

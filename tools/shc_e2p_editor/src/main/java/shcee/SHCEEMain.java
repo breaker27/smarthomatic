@@ -24,6 +24,8 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 
 import javax.swing.JFrame;
 import javax.swing.JSplitPane;
@@ -49,6 +51,8 @@ public class SHCEEMain extends JFrame {
 	public static int defaultWidth = 900;
 	public static int defaultHeight = 600;
 	
+	public static String version;
+	
 	private int oldWidth;
 	
 	public ValueEditorPanel valueEditor;
@@ -60,6 +64,8 @@ public class SHCEEMain extends JFrame {
 		super();
 		mySHCEEMain = this;
 	
+		readVersion();
+		
 		initializeMainFrame();
 		
 		valueEditor = new ValueEditorPanel();
@@ -80,6 +86,27 @@ public class SHCEEMain extends JFrame {
 		addComponentListener(resizeListener);
 		
 		jSplitPane.setDividerLocation(defaultWidth * 45 / 100);
+	}
+	
+	private void readVersion()
+	{
+		try
+		{
+			Properties p = new Properties();
+			InputStream is = getClass().getResourceAsStream("/META-INF/maven/org.smarthomatic/shcee/pom.properties");
+	        
+			if (is != null)
+			{
+				p.load(is);
+				version = p.getProperty("version", "");
+			}
+		} catch (Exception e)
+		{ }
+
+		if (version == null)
+		{
+			version = "(unofficial developer version)";
+		}
 	}
 	
 	private void onResize()

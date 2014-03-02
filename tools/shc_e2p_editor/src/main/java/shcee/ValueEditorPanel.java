@@ -134,12 +134,15 @@ public class ValueEditorPanel extends JPanel
 		initAccordingEepromLayout();
 	}
 	
+	
+	
 	protected void onButtonAbout()
 	{
 		JOptionPane.showMessageDialog(SHCEEMain.mySHCEEMain,
 				"<html><body><b>smarthomatic EEPROM Editor</b><br/>" +
+				SHCEEMain.version + "<br/>" +
 				"http://www.smarthomatic.org<br/>" +
-				"Copyright (c) 2013 Uwe Freese<br/>" +
+				"Copyright (c) 2013..2014 Uwe Freese<br/>" +
 				"Licensed under GLP 3 or later.</body></html>", "About", JOptionPane.INFORMATION_MESSAGE);
 	}
 

@@ -172,8 +172,9 @@ public class Util {
 	 * @param root
 	 * @param string
 	 */
-	public static String getChildNodeValue(Node root, String childName) {
+	public static String getChildNodeValue(Node root, String childName, boolean emptyStringOnMissingChild) {
 		NodeList nl = root.getChildNodes();
+		
 		for (int i = 0; i < nl.getLength(); i++) {
 			if (nl.item(i).getNodeName().equals(childName)) {
 				Node textNode = nl.item(i).getFirstChild();
@@ -184,28 +185,39 @@ public class Util {
 					return textNode.getNodeValue();
 			}
 		}
-		System.err.println("Childnode " + childName + " not found!");
-		return null;	
+		
+		if (emptyStringOnMissingChild)
+		{
+			return "";
+		}
+		else
+		{
+			System.err.println("Childnode " + childName + " not found!");
+			return null;
+		}
 	}
 
+	public static String getChildNodeValue(Node root, String childName)
+	{
+		return getChildNodeValue(root, childName, false);	
+	}
+	
 	/**
 	 * Run program after creating a tmp.cmd (Windows) or by using the bash (Linux).
 	 * Currently, only Windows is supported!!
-	 * TODO: Support linux by calling bash in a way that the user can see the output.
+	 * TODO: Support Linux by calling bash in a way that the user can see the output.
 	 * @param cmdLine
 	 * @throws IOException 
 	 */
 	public static void execute(String cmdLine, boolean linuxBash) throws IOException
 	{
-		Process p;
-		
 		if (linuxBash)
 		{
 			String[] cmd = new String[3];
 			cmd[0] = "/bin/bash";
 			cmd[1] = "-c";
 			cmd[2] = cmdLine;
-			p = Runtime.getRuntime().exec(cmd);
+			Runtime.getRuntime().exec(cmd);
 		}
 		else
 		{
@@ -214,7 +226,7 @@ public class Util {
 					cmdLine + "\r\n" +
 					"pause\r\n" +
 					"exit\r\n");
-			p = Runtime.getRuntime().exec("cmd /c start flash_tmp.cmd");
+			Runtime.getRuntime().exec("cmd /c start flash_tmp.cmd");
 		}
 	}
 
@@ -227,7 +239,7 @@ public class Util {
 	    float fAmount = (float)amount;
 		float fInverse = 1.0f - fAmount;
 
-	    // I had to look up getting colour components in java.  Google is good :)
+	    // I had to look up getting color components in java.  Google is good :)
 	    float afOne[] = new float[3];
 	    clOne.getColorComponents(afOne);
 	    float afTwo[] = new float[3]; 
@@ -242,7 +254,7 @@ public class Util {
 	}
 	
 	/**
-	 * Read a number of bits from a byteArray and return it as int value.
+	 * Read a number of bits from a byteArray and return it as ("unsigned") int value.
 	 * @param byteArray The array with the bytes to read from.
 	 * @param startBit The position of the first bit to read from.
 	 *        This needs not to be at byte boundaries.
@@ -268,7 +280,40 @@ public class Util {
 	}
 	
 	/**
-	 * Write an int value to a byte array at the given position.
+	 * Read a number of bits from a byteArray and return it as int value.
+	 * @param byteArray The array with the bytes to read from.
+	 * @param startBit The position of the first bit to read from.
+	 *        This needs not to be at byte boundaries.
+	 * @param lengthBits The length of the value in bits.
+	 * @return
+	 */
+	public static int getIntFromByteArray(byte[] byteArray, int startBit, int lengthBits)
+	{
+		long x = getUIntFromByteArray(byteArray, startBit, lengthBits);
+
+		// Decode 2's complement (if you have a nicer version, let us know...).
+		String bits = Long.toBinaryString(x);
+		
+		while (bits.length() < 32)
+			bits = "0" + bits;
+		
+		boolean positive = bits.charAt(32 - lengthBits) == '0';
+		
+		if (positive)
+		{
+			return (int)x;
+		}
+		else
+		{
+			x ^= 0xFFFFFFFF;
+			x = x & ((1 << lengthBits) - 1); // filter data bits without sign bit
+			x += 1;
+			return (int)-x;
+		}
+	}
+	
+	/**
+	 * Write an ("unsigned") int value to a byte array at the given position.
 	 * @param byteArray The array with the bytes to write to.
 	 * @param startBit The position of the first bit to write to.
 	 *        This needs not to be at byte boundaries.
@@ -289,6 +334,22 @@ public class Util {
 			
 			byteArray[dstByteOffset] = (byte)((byteArray[dstByteOffset] & bitMaskNeg) | (bit << dstBitOffset));
 		}
+	}
+	
+	/**
+	 * Write an (signed) int value to a byte array at the given position.
+	 * @param byteArray The array with the bytes to write to.
+	 * @param startBit The position of the first bit to write to.
+	 *        This needs not to be at byte boundaries.
+	 * @param lengthBits The length of the value in bits.
+	 * @return
+	 */
+	public static void setIntInByteArray(int value, byte[] byteArray, int startBit, int lengthBits)
+	{
+		// Encode 2's complement.
+		int uint = (((value >> 31) & 1) << (lengthBits - 1)) | (value & ((1 << (lengthBits - 1)) - 1));
+		
+		setUIntInByteArray(uint, byteArray, startBit, lengthBits);
 	}
 	
 	final protected static char[] hexArray = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};

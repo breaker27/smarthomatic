@@ -16,8 +16,8 @@
 * with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef UART_H
-#define UART_H
+#ifndef _UART_H
+#define _UART_H
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -54,29 +54,20 @@
 extern char uartbuf[];
 
 #ifdef UART_RX
-	extern char sendbuf[];
-	extern bool send_data_avail;
+	extern char cmdbuf[];
 	extern uint8_t uart_timeout;
+	extern bool send_data_avail;
 #endif
 
 void uart_init(void);
 void uart_putstr(char * str);
 void uart_putstr_P(PGM_P str);
 
-uint8_t hex_to_uint8(uint8_t * buf, uint8_t offset);
-
-static inline uint16_t hex_to_uint16(uint8_t * buf, uint8_t offset)
-{
-	return ((uint16_t)hex_to_uint8(buf, offset) << 8) + hex_to_uint8(buf, offset + 2);
-}
-
-static inline uint32_t hex_to_uint24(uint8_t * buf, uint8_t offset)
-{
-	return ((uint32_t)hex_to_uint8(buf, offset) << 16) + ((uint32_t)hex_to_uint8(buf, offset + 2) << 8) + hex_to_uint8(buf, offset + 4);
-}
+void print_signed(int16_t i);
+void print_bytearray(uint8_t * b, uint8_t len);
 
 #ifdef UART_RX
 	void process_rxbuf(void);
 #endif
 
-#endif
+#endif /* _UART_H */

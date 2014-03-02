@@ -21,6 +21,9 @@
 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 */
 
+#ifndef _MSGGRP_DIMMER_H
+#define _MSGGRP_DIMMER_H
+
 #include "packet_header.h"
 #include "packet_headerext_common.h"
 #include "packet_headerext_ackstatus.h"
@@ -122,6 +125,9 @@ static inline void pkg_header_init_dimmer_brightness_ackstatus(void)
   __MESSAGETYPE = 10;
 }
 
+// Brightness (UIntValue)
+// Description: The brightness in percent. 0 = Off.
+
 // Set Brightness (UIntValue)
 // Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 7, min val 0, max val 100
 static inline void msg_dimmer_brightness_set_brightness(uint32_t val)
@@ -217,7 +223,9 @@ static inline void pkg_header_init_dimmer_animation_ackstatus(void)
   __MESSAGETYPE = 10;
 }
 
-// ENUM AnimationMode
+// AnimationMode (EnumValue)
+// Description: If a time is set, use this animation mode to change the brightness over time (none = leave at start state for the whole time and switch to end state at the end).
+
 typedef enum {
   ANIMATIONMODE_NONE = 0,
   ANIMATIONMODE_LINEAR = 1
@@ -237,6 +245,9 @@ static inline AnimationModeEnum msg_dimmer_animation_get_animationmode(void)
   return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 2, 0, 3, bufx);
 }
 
+// TimeoutSec (UIntValue)
+// Description: The time for the animation. Use 0 to disable this.
+
 // Set TimeoutSec (UIntValue)
 // Offset: ((uint16_t)__HEADEROFFSETBITS + 2) / 8, ((uint16_t)__HEADEROFFSETBITS + 2) % 8, length bits 16, min val 0, max val 65535
 static inline void msg_dimmer_animation_set_timeoutsec(uint32_t val)
@@ -250,6 +261,9 @@ static inline uint32_t msg_dimmer_animation_get_timeoutsec(void)
 {
   return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 2) / 8, ((uint16_t)__HEADEROFFSETBITS + 2) % 8, 16, 0, 65535, bufx);
 }
+
+// StartBrightness (UIntValue)
+// Description: The brightness in percent at the beginning of the animation.
 
 // Set StartBrightness (UIntValue)
 // Offset: ((uint16_t)__HEADEROFFSETBITS + 18) / 8, ((uint16_t)__HEADEROFFSETBITS + 18) % 8, length bits 7, min val 0, max val 100
@@ -265,6 +279,9 @@ static inline uint32_t msg_dimmer_animation_get_startbrightness(void)
   return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 18) / 8, ((uint16_t)__HEADEROFFSETBITS + 18) % 8, 7, 0, 100, bufx);
 }
 
+// EndBrightness (UIntValue)
+// Description: The brightness in percent at the end of the animation.
+
 // Set EndBrightness (UIntValue)
 // Offset: ((uint16_t)__HEADEROFFSETBITS + 25) / 8, ((uint16_t)__HEADEROFFSETBITS + 25) % 8, length bits 7, min val 0, max val 100
 static inline void msg_dimmer_animation_set_endbrightness(uint32_t val)
@@ -279,3 +296,4 @@ static inline uint32_t msg_dimmer_animation_get_endbrightness(void)
   return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 25) / 8, ((uint16_t)__HEADEROFFSETBITS + 25) % 8, 7, 0, 100, bufx);
 }
 
+#endif /* _MSGGRP_DIMMER_H */

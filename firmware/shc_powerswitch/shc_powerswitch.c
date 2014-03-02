@@ -27,10 +27,16 @@
 #include "rfm12.h"
 #include "uart.h"
 
+#include "../src_common/msggrp_generic.h"
 #include "../src_common/msggrp_powerswitch.h"
+
+#include "../src_common/e2p_hardware.h"
+#include "../src_common/e2p_generic.h"
+#include "../src_common/e2p_powerswitch.h"
 
 #include "aes256.h"
 #include "util.h"
+#include "version.h"
 
 // Don't change this, because other switch count like 8 needs other status message.
 // If support implemented, use EEPROM_SUPPORTEDSWITCHES_* E2P addresses.
@@ -46,6 +52,7 @@
 #define BUTTON_PIN 3
 
 #define SEND_STATUS_EVERY_SEC 1800 // how often should a status be sent?
+#define SEND_VERSION_STATUS_CYCLE 50 // send version status x times less than switch status (~once per day)
 
 uint8_t device_id;
 uint32_t station_packetcounter;
@@ -53,6 +60,7 @@ uint8_t switch_state[SWITCH_COUNT];
 uint16_t switch_timeout[SWITCH_COUNT];
 
 uint16_t send_status_timeout = 5;
+uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly after startup
 
 void print_switch_state(void)
 {
@@ -96,7 +104,26 @@ void send_power_switch_status(void)
 	msg_powerswitch_switchstate_set_timeoutsec(switch_timeout[0]); // TODO: Support > 1 switch
 	pkg_header_calc_crc32();
 
-	rfm12_sendbuf();
+	rfm12_send_bufx();
+}
+
+void send_version_status(void)
+{
+	inc_packetcounter();
+
+	UART_PUTF4("Sending Version: v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
+	
+	// Set packet content
+	pkg_header_init_generic_version_status();
+	pkg_header_set_senderid(device_id);
+	pkg_header_set_packetcounter(packetcounter);
+	msg_generic_version_set_major(VERSION_MAJOR);
+	msg_generic_version_set_minor(VERSION_MINOR);
+	msg_generic_version_set_patch(VERSION_PATCH);
+	msg_generic_version_set_hash(VERSION_HASH);
+	pkg_header_calc_crc32();
+
+	rfm12_send_bufx();
 }
 
 void switchRelais(int8_t num, uint8_t on)
@@ -149,7 +176,7 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		// react on changed state (version for more than one switch...)
 		for (i = 0; i < SWITCH_COUNT; i++)
 		{
-			if ((switch_bitmask & (1 << i)) != switch_state[i]) // this switch is to be switched
+			if (((switch_bitmask & (1 << i)) != switch_state[i]) || (req_timeout > 0)) // this switch is to be switched
 			{
 				UART_PUTF4("Switching relais %u from %u to %u with timeout %us.\r\n", i + 1, switch_state[i], req_on, req_timeout);
 
@@ -204,7 +231,7 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	
 	pkg_header_calc_crc32();
 	
-	rfm12_sendbuf();
+	rfm12_send_bufx();
 	send_status_timeout = 5;
 }
 
@@ -239,8 +266,7 @@ void process_packet(uint8_t len)
 	// write received counter
 	station_packetcounter = packcnt;
 	
-	eeprom_write_UIntValue(EEPROM_BASESTATIONPACKETCOUNTER_BYTE, EEPROM_BASESTATIONPACKETCOUNTER_BIT,
-		EEPROM_BASESTATIONPACKETCOUNTER_LENGTH_BITS, station_packetcounter);
+	e2p_powerswitch_set_basestationpacketcounter(station_packetcounter);
 	
 	// check MessageType
 	MessageTypeEnum messagetype = pkg_header_get_messagetype();
@@ -283,7 +309,7 @@ int main(void)
 
 	util_init();
 	
-	check_eeprom_compatibility(DEVICETYPE_POWER_SWITCH);
+	check_eeprom_compatibility(DEVICETYPE_POWERSWITCH);
 
 	for (i = 0; i < SWITCH_COUNT; i++)
 	{
@@ -295,10 +321,8 @@ int main(void)
 	sbi(BUTTON_PORT, BUTTON_PIN);
 	
 	// read packetcounter, increase by cycle and write back
-	packetcounter = eeprom_read_UIntValue32(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT,
-		EEPROM_PACKETCOUNTER_LENGTH_BITS, EEPROM_PACKETCOUNTER_MINVAL, EEPROM_PACKETCOUNTER_MAXVAL) + PACKET_COUNTER_WRITE_CYCLE;
-
-	eeprom_write_UIntValue(EEPROM_PACKETCOUNTER_BYTE, EEPROM_PACKETCOUNTER_BIT, EEPROM_PACKETCOUNTER_LENGTH_BITS, packetcounter);
+	packetcounter = e2p_generic_get_packetcounter() + PACKET_COUNTER_WRITE_CYCLE;
+	e2p_generic_set_packetcounter(packetcounter);
 
 	// read device specific config
 	
@@ -312,19 +336,18 @@ int main(void)
 	}
 
 	// read last received station packetcounter
-	station_packetcounter = eeprom_read_UIntValue32(EEPROM_BASESTATIONPACKETCOUNTER_BYTE, EEPROM_BASESTATIONPACKETCOUNTER_BIT,
-		EEPROM_BASESTATIONPACKETCOUNTER_LENGTH_BITS, EEPROM_BASESTATIONPACKETCOUNTER_MINVAL, EEPROM_BASESTATIONPACKETCOUNTER_MAXVAL);
+	station_packetcounter = e2p_powerswitch_get_basestationpacketcounter();
 	
 	// read device id
-	device_id = eeprom_read_UIntValue16(EEPROM_DEVICEID_BYTE, EEPROM_DEVICEID_BIT,
-		EEPROM_DEVICEID_LENGTH_BITS, EEPROM_DEVICEID_MINVAL, EEPROM_DEVICEID_MAXVAL);
+	device_id = e2p_generic_get_deviceid();
 
 	osccal_init();
 
 	uart_init();
 
 	UART_PUTS ("\r\n");
-	UART_PUTS ("smarthomatic Power Switch V1.0 (c) 2013 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTF4("smarthomatic Power Switch v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
+	UART_PUTS("(c) 2013..2014 Uwe Freese, www.smarthomatic.org\r\n");
 	osccal_info();
 	UART_PUTF ("DeviceID: %u\r\n", device_id);
 	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);
@@ -431,9 +454,16 @@ int main(void)
 			{
 				send_status_timeout = SEND_STATUS_EVERY_SEC;
 				send_power_switch_status();
-				
 				led_blink(200, 0, 1);
-			}			
+				
+				version_status_cycle++;
+			}
+			else if (version_status_cycle >= SEND_VERSION_STATUS_CYCLE)
+			{
+				version_status_cycle = 0;
+				send_version_status();
+				led_blink(200, 0, 1);
+			}
 		}
 		else
 		{

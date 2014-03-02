@@ -48,6 +48,9 @@ typedef enum {
   MESSAGEGROUP_DIMMER = 60
 } MessageGroupIDEnum;
 
+// CRC32 (UIntValue)
+// Description: CRC32 value of byte 4..n
+
 // Set CRC32 (UIntValue)
 // Offset: 0, 0, length bits 32, min val 0, max val 4294967295
 static inline void pkg_header_set_crc32(uint32_t val)
@@ -61,6 +64,9 @@ static inline uint32_t pkg_header_get_crc32(void)
 {
   return array_read_UIntValue32(0, 0, 32, 0, 4294967295, bufx);
 }
+
+// SenderID (UIntValue)
+// Description: The SenderID is the DeviceID of the sending device. It's only allowed to send packets with the own DeviceID. 0 = base station, others are arbitrary.
 
 // Set SenderID (UIntValue)
 // Offset: 4, 0, length bits 12, min val 0, max val 4095
@@ -76,6 +82,9 @@ static inline uint32_t pkg_header_get_senderid(void)
   return array_read_UIntValue32(4, 0, 12, 0, 4095, bufx);
 }
 
+// PacketCounter (UIntValue)
+// Description: The PacketCounter is counted up throughout the whole lifetime of the device and is used to make the encrypted packets differently from each other every time. Packets received with the same or lower number must be ignored per SenderID.
+
 // Set PacketCounter (UIntValue)
 // Offset: 5, 4, length bits 24, min val 0, max val 16777215
 static inline void pkg_header_set_packetcounter(uint32_t val)
@@ -90,7 +99,9 @@ static inline uint32_t pkg_header_get_packetcounter(void)
   return array_read_UIntValue32(5, 4, 24, 0, 16777215, bufx);
 }
 
-// ENUM MessageType
+// MessageType (EnumValue)
+// Description: The message type influences the behaviour with sending the packet. E.g. requests are acknowledged.
+
 typedef enum {
   MESSAGETYPE_GET = 0,
   MESSAGETYPE_SET = 1,
