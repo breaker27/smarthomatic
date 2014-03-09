@@ -27,7 +27,7 @@
 // E2P Block "TempSensor"
 // ======================
 // Start offset (bit): 512
-// Overall block length: 3584 bits
+// Overall block length: 7680 bits
 
 // TemperatureSensorType (EnumValue)
 // Description: You can choose one of the supported temperature / humidity sensors. If set to 0, no sensor is used, but the device sends out packets for testing purposes.
@@ -73,7 +73,7 @@ static inline BrightnessSensorTypeEnum e2p_tempsensor_get_brightnesssensortype(v
   return eeprom_read_UIntValue8(65, 0, 8, 0, 255);
 }
 
-// Reserved area with 3568 bits
+// Reserved area with 7664 bits
 
 
 #endif /* _E2P_TEMPSENSOR_H */

@@ -125,7 +125,7 @@
 			</Element>
 		</EnumValue>
 		<Reserved>
-			<Bits>3568</Bits>
+			<Bits>7664</Bits>
 		</Reserved>
 	</Block>
 	<Block>
