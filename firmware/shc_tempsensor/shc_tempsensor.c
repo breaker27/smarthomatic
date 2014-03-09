@@ -35,6 +35,8 @@
 #include "../src_common/e2p_tempsensor.h"
 
 #include "sht11.h"
+#include "i2c.h"
+#include "lm75.h"
 
 #include "aes256.h"
 #include "util.h"
@@ -111,6 +113,7 @@ int main(void)
 	led_blink(500, 500, 3);
 	
 	rfm12_init();
+	
 	//rfm12_set_wakeup_timer(0b11100110000);   // ~ 6s
 	//rfm12_set_wakeup_timer(0b11111000000);   // ~ 24576ms
 	//rfm12_set_wakeup_timer(0b0100101110101); // ~ 59904ms
@@ -120,7 +123,7 @@ int main(void)
 
 	while (42)
 	{
-		// Measure using ADCs
+		// Measure voltage + brightness using ADCs
 		adc_on(true);
 
 		vbat += (int)((long)read_adc(0) * 34375 / 10000 / 2); // 1.1 * 480 Ohm / 150 Ohm / 1,024
@@ -132,7 +135,7 @@ int main(void)
 
 		adc_on(false);
 
-		// Measure SHT15
+		// Measure temperature (+ humidity in case of SHT15)
 		if (temperature_sensor_type == TEMPERATURESENSORTYPE_SHT15)
 		{
 			sht11_start_measure();
@@ -141,6 +144,15 @@ int main(void)
 		
 			temp += sht11_get_tmp();
 			hum += sht11_get_hum();
+		}
+		else if (temperature_sensor_type == TEMPERATURESENSORTYPE_DS7505)
+		{
+			i2c_enable();
+			lm75_wakeup();
+			_delay_ms(lm75_get_meas_time_ms());
+			temp += lm75_get_tmp();
+			lm75_shutdown();
+			i2c_disable();
 		}
 
 		avg++;

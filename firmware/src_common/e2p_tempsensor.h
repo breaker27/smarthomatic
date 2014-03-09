@@ -34,7 +34,8 @@
 
 typedef enum {
   TEMPERATURESENSORTYPE_NOSENSOR = 0,
-  TEMPERATURESENSORTYPE_SHT15 = 1
+  TEMPERATURESENSORTYPE_SHT15 = 1,
+  TEMPERATURESENSORTYPE_DS7505 = 2
 } TemperatureSensorTypeEnum;
 
 // Set TemperatureSensorType (EnumValue)

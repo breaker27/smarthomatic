@@ -110,6 +110,10 @@
 				<Value>1</Value>
 				<Name>SHT15</Name>
 			</Element>
+			<Element>
+				<Value>2</Value>
+				<Name>DS7505</Name>
+			</Element>
 		</EnumValue>
 		<EnumValue>
 			<ID>BrightnessSensorType</ID>
