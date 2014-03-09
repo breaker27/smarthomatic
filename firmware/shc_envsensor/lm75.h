@@ -36,6 +36,13 @@
  */
 #define LM75_I2C_ADR    0x48    // A0, A1 and A2 pin tied to GND
 
+#ifdef LM92_TYPE
+	#define CONV_TIME       1000  // uint16_t
+#endif
+#ifdef DS7505_TYPE
+	#define CONV_TIME       200   // 200ms at 12 bit Mode
+#endif
+
 /*
  * Wakes device from shutdown mode and starts measurement.
  */
@@ -50,7 +57,10 @@ void lm75_shutdown(void);
  * Returns the required time to wait after wakeup before a valid measurement
  * can be read with lm75_get_tmp.
  */
-uint16_t lm75_get_meas_time_ms(void);
+static inline uint16_t lm75_get_meas_time_ms(void)
+{
+	return(CONV_TIME);
+}
 
 /*
  * Reads temperature from lm75 or compatible.

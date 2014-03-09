@@ -21,13 +21,11 @@
 #include "i2c.h"
 
 #ifdef LM92_TYPE
-	#define CONV_TIME       1000  // uint16_t
 	#define MASK_TEMP_L     0xf0
 	#define CMD_SHUTDOWN    0x01
 	#define CMD_WAKEUP      0x00   
 #endif
 #ifdef DS7505_TYPE
-	#define CONV_TIME       200   // 200ms at 12 bit Mode
 	#define MASK_TEMP_L     0xf0
 	#define CMD_SHUTDOWN    0x01
 	#define CMD_WAKEUP      0x60  // wake up in 12 bit Mode
@@ -109,9 +107,4 @@ void lm75_shutdown(void)
 void lm75_wakeup(void)
 {
 	lm75_send_cmd(CMD_WAKEUP);
-}
-
-uint16_t lm75_get_meas_time_ms(void)
-{
-	return(CONV_TIME);
 }
