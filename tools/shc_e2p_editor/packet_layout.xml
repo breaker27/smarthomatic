@@ -238,8 +238,8 @@
 		</Message>
 	</MessageGroup>
 	<MessageGroup>
-		<Name>TempSensor</Name>
-		<Description>This message group contains messages for a device that can measure temperature and humidity as well as a brightness value.</Description>
+		<Name>EnvSensor</Name>
+		<Description>This message group contains messages for an environment sensor device that can measure temperature, humidity and other environmental values.</Description>
 		<MessageGroupID>10</MessageGroupID>
 		<Message>
 			<Name>TempHumBriStatus</Name>

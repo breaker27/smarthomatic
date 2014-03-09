@@ -28,11 +28,11 @@
 #include "uart.h"
 
 #include "../src_common/msggrp_generic.h"
-#include "../src_common/msggrp_tempsensor.h"
+#include "../src_common/msggrp_envsensor.h"
 
 #include "../src_common/e2p_hardware.h"
 #include "../src_common/e2p_generic.h"
-#include "../src_common/e2p_tempsensor.h"
+#include "../src_common/e2p_envsensor.h"
 
 #include "sht11.h"
 #include "i2c.h"
@@ -72,15 +72,15 @@ int main(void)
 
 	util_init();
 
-	check_eeprom_compatibility(DEVICETYPE_TEMPSENSOR);
+	check_eeprom_compatibility(DEVICETYPE_ENVSENSOR);
 
 	// read packetcounter, increase by cycle and write back
 	packetcounter = e2p_generic_get_packetcounter() + PACKET_COUNTER_WRITE_CYCLE;
 	e2p_generic_set_packetcounter(packetcounter);
 
 	// read device specific config
-	temperature_sensor_type = e2p_tempsensor_get_temperaturesensortype();
-	brightness_sensor_type = e2p_tempsensor_get_brightnesssensortype();
+	temperature_sensor_type = e2p_envsensor_get_temperaturesensortype();
+	brightness_sensor_type = e2p_envsensor_get_brightnesssensortype();
 
 	// read device id
 	device_id = e2p_generic_get_deviceid();
@@ -89,7 +89,7 @@ int main(void)
 	
 	uart_init();
 	UART_PUTS ("\r\n");
-	UART_PUTF4("smarthomatic Tempsensor v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
+	UART_PUTF4("smarthomatic EnvSensor v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
 	UART_PUTS("(c) 2012..2014 Uwe Freese, www.smarthomatic.org\r\n");
 	osccal_info();
 	UART_PUTF ("Device ID: %u\r\n", device_id);
@@ -167,15 +167,15 @@ int main(void)
 			inc_packetcounter();
 
 			// Set packet content
-			pkg_header_init_tempsensor_temphumbristatus_status();
+			pkg_header_init_envsensor_temphumbristatus_status();
 			pkg_header_set_senderid(device_id);
 			pkg_header_set_packetcounter(packetcounter);
-			msg_tempsensor_temphumbristatus_set_temperature(temp);
-			msg_tempsensor_temphumbristatus_set_humidity(hum);
+			msg_envsensor_temphumbristatus_set_temperature(temp);
+			msg_envsensor_temphumbristatus_set_humidity(hum);
 
 			if (brightness_sensor_type == BRIGHTNESSSENSORTYPE_PHOTOCELL)
 			{
-				msg_tempsensor_temphumbristatus_set_brightness(100 - (int)((long)vlight * 100 / 1024));
+				msg_envsensor_temphumbristatus_set_brightness(100 - (int)((long)vlight * 100 / 1024));
 			}
 			
 			pkg_header_calc_crc32();

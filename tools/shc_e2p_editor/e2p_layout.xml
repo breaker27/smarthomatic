@@ -13,7 +13,7 @@
 			</Element>
 			<Element>
 				<Value>20</Value>
-				<Name>TempSensor</Name>
+				<Name>EnvSensor</Name>
 			</Element>
 			<Element>
 				<Value>40</Value>
@@ -92,8 +92,8 @@
 		</Reserved>
 	</Block>
 	<Block>
-		<Name>TempSensor</Name>
-		<Description>This block contains the specific configuration data that only Temperature Sensor devices need.</Description>
+		<Name>EnvSensor</Name>
+		<Description>This block contains the specific configuration data that only Environment Sensor devices need.</Description>
 		<Restriction>
 			<RefID>DeviceType</RefID>
 			<Value>20</Value>

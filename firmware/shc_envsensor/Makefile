@@ -24,7 +24,7 @@ UART_DEBUG     = 1
 #UART_RX        = 1
 
 # Target file name (without extension).
-TARGET = shc_tempsensor
+TARGET = shc_envsensor
 
 # Source files (C dependencies are automatically generated).
 #   C			*.c

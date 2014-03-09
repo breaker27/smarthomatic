@@ -28,7 +28,7 @@
 #include "uart.h"
 
 #include "../src_common/msggrp_generic.h"
-#include "../src_common/msggrp_tempsensor.h"
+#include "../src_common/msggrp_envsensor.h"
 #include "../src_common/msggrp_powerswitch.h"
 
 #include "../src_common/e2p_hardware.h"
@@ -148,16 +148,16 @@ void decode_data(uint8_t len)
 				
 				break;
 
-			case MESSAGEGROUP_TEMPSENSOR:
+			case MESSAGEGROUP_ENVSENSOR:
 				
 				switch (messageid)
 				{
-					case MESSAGEID_TEMPSENSOR_TEMPHUMBRISTATUS:
+					case MESSAGEID_ENVSENSOR_TEMPHUMBRISTATUS:
 						UART_PUTS("Temperature=");
-						print_signed(msg_tempsensor_temphumbristatus_get_temperature());
-						u16 = msg_tempsensor_temphumbristatus_get_humidity();
+						print_signed(msg_envsensor_temphumbristatus_get_temperature());
+						u16 = msg_envsensor_temphumbristatus_get_humidity();
 						UART_PUTF2(";Humidity=%u.%u;", u16 / 10, u16 % 10);
-						UART_PUTF("Brightness=%u;", msg_tempsensor_temphumbristatus_get_brightness());
+						UART_PUTF("Brightness=%u;", msg_envsensor_temphumbristatus_get_brightness());
 						break;
 					default:
 						break;
