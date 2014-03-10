@@ -19,6 +19,7 @@
 #include "lm75.h"
 
 #include "i2c.h"
+#include "../src_common/e2p_access.h"
 
 #ifdef LM92_TYPE
 	#define MASK_TEMP_L     0xf0
@@ -74,29 +75,19 @@ int16_t lm75_get_tmp(void)
 	lm75_receive(LM75_TEMP_REG, 2, temp_raw);
 
 #ifdef LM92_TYPE
-	// Mask sign bit and put the two uint8 together
-	temp = ((temp_raw[0] & 0b01111111) << 8) | temp_raw[1];
-	// Divide by 8
-	temp = temp >> 3;
+	// 13 bit signed value shifted to the left in two's complement
+	temp = array_read_IntValue32(0, 0, 13, -4096, 4095, temp_raw);
 #endif
 #ifdef DS7505_TYPE
-	// Mask sign bit and put the two uint8 together
-	temp = ((temp_raw[0] & 0b01111111) << 8) | (temp_raw[1] & MASK_TEMP_L);
-	// Divide by 8
-	temp = temp >> 4;
+	// 12 bit signed value shifted to the left in two's complement
+	temp = array_read_IntValue32(0, 0, 12, -2048, 2047, temp_raw);
 #endif
 	// Calc temp in 1/10000 Celsius
 	temp = temp * 625;
 	// Calc temp in centi Celsius;
 	temp = temp / 100;
 
-	if ((temp_raw[0] & 0b10000000) > 0)
-	{
-		// Temperature is negative
-		temp = temp * -1;
-	}
-
-	return (temp);
+	return temp;
 }
 
 void lm75_shutdown(void)

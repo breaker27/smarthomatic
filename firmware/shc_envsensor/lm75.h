@@ -59,7 +59,7 @@ void lm75_shutdown(void);
  */
 static inline uint16_t lm75_get_meas_time_ms(void)
 {
-	return(CONV_TIME);
+	return CONV_TIME;
 }
 
 /*
