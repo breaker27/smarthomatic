@@ -171,11 +171,17 @@ int32_t _eeprom_read_IntValue32(uint16_t byte, uint8_t bit, uint16_t length_bits
 {
 	uint32_t x = __eeprom_read_UIntValue32(byte, bit, length_bits, 32, array);
 
-	// move the sign bit of our variable-sized int type to bit 31
-	int32_t y = (int32_t)((((x >> (length_bits - 1)) & 1) << 31) | (x & (((uint32_t)1 << (length_bits - 1)) - 1)));
+	// If MSB is 1 (value is negative interpreted as signed int),
+	// set all higher bits also to 1.
+	if (((x >> (length_bits - 1)) & 1) == 1)
+	{
+		x = x | ~(((uint32_t)1 << (length_bits - 1)) - 1);
+	}
+
+	int32_t y = (int32_t)x;
 	
 	__limitIntValue32(&y, minval, maxval);
-	return x;
+	return y;
 }
 
 // Write UIntValue to EEPROM.
