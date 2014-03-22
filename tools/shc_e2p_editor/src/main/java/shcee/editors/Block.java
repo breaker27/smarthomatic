@@ -80,17 +80,19 @@ public class Block extends JPanel
 			if (n.getNodeName().equals("Restriction"))
 				addRestriction(n);
 			else if (n.getNodeName().equals("UIntValue"))
-				addElem(new UIntEditor(n));
+				addElem(new UIntEditor(n, this.getBackground(), -1));
 			else if (n.getNodeName().equals("IntValue"))
-				addElem(new IntEditor(n));
+				addElem(new IntEditor(n, this.getBackground(), -1));
+			else if (n.getNodeName().equals("BoolValue"))
+				addElem(new BoolEditor(n, this.getBackground(), -1));
 			else if (n.getNodeName().equals("EnumValue"))
-				addElem(new EnumEditor(n));
+				addElem(new EnumEditor(n, this.getBackground(), -1));
 			else if (n.getNodeName().equals("ByteArray"))
-				addElem(new ByteArrayEditor(n));
+				addElem(new ByteArrayEditor(n, this.getBackground(), -1));
 			else if (n.getNodeName().equals("Reserved"))
-				addElem(new ReservedBits(n));
-			
-			// TODO: Support BooleanEditor!
+				addElem(new ReservedBits(n, this.getBackground(), -1));
+			else if (n.getNodeName().equals("Array"))
+				addElem(new ArrayEditor(n, this.getBackground(), -1));
 		}
 	}	
 	
@@ -121,9 +123,8 @@ public class Block extends JPanel
 
 	private void addElem(AbstractEditor c)
 	{
-		add(Box.createRigidArea(new Dimension(10,10))); // space between components
-		c.setBackground(Util.blendColor(this.getBackground(), Color.white, 0.5));
-		add(c);	
+		add(Box.createRigidArea(new Dimension(10, 10))); // space between components
+		add(c);
 		editors.add(c);
 	}
 	

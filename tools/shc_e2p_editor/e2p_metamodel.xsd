@@ -23,7 +23,7 @@
 									</xs:sequence>
 								</xs:complexType>
 							</xs:element>
-							<xs:group ref="SimpleDataValue" maxOccurs="unbounded"/>
+							<xs:group ref="ComplexDataValue" maxOccurs="unbounded"/>
 						</xs:sequence>
 					</xs:complexType>
 				</xs:element>

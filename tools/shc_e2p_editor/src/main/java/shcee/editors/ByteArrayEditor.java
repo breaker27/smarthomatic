@@ -18,12 +18,13 @@
 
 package shcee.editors;
 
+import java.awt.Color;
+
 import javax.swing.text.DefaultCaret;
 
-import shcee.LabelArea;
-import shcee.Util;
-
 import org.w3c.dom.Node;
+
+import shcee.Util;
 
 public class ByteArrayEditor extends AbstractEditor
 {
@@ -32,22 +33,21 @@ public class ByteArrayEditor extends AbstractEditor
 	private int bytes;
 	private ByteArrayTextArea input;
 	
-	public ByteArrayEditor(Node root)
+	public ByteArrayEditor(Node root, Color baseColor, int arrayIndex)
 	{
-		super(root);
+		super(root, baseColor, arrayIndex);
 		
 		// add label about format
-		LabelArea formatLabel = new LabelArea("ByteArray of " + bytes + " bytes (use HEX format as input)");
-		add(formatLabel);
+		format = "ByteArray of " + bytes + " bytes (use HEX format as input)";
+		addLabel(format);
 		
 		// add input
 		input = new ByteArrayTextArea(bytes);
 		add(input);
 		
 		// add description
-		String blockDescription = Util.getChildNodeValue(root, "Description");
-		LabelArea descriptionLabel = new LabelArea(blockDescription);
-		add(descriptionLabel);
+		description = Util.getChildNodeValue(root, "Description");
+		addLabel(description);
 	}
 
 	@Override
