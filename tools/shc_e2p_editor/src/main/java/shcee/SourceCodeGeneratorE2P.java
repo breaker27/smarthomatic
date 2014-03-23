@@ -383,6 +383,11 @@ public class SourceCodeGeneratorE2P
 				sb.append("}" + newline);
 				sb.append(newline);
 				
+				if (offset % 8 != 0)
+				{
+					System.err.println("Warning: BoolValue " + ID + " not a byte boundary! e2p leayout should be corrected.");
+				}
+				
 				offset += isArray ? 8 * arrayLength : 8;
 			}
 			else if (element.getNodeName().equals("Reserved"))
