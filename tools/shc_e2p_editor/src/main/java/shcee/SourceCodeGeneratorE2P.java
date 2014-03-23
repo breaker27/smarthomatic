@@ -169,15 +169,12 @@ public class SourceCodeGeneratorE2P
 			
 			if (element.getNodeName().equals("EnumValue"))
 			{
-				if (isArray)
-					throw new TransformerException("Arrays are not supported for EnumValue elements!");
-				
 				String ID1 = Util.getChildNodeValue(element, "ID");
 				int bits = Integer.parseInt(Util.getChildNodeValue(element, "Bits"));
 				String ID = ID1.toUpperCase();
 				int cTypeBits = calcCTypeBits(bits);
 
-				sb.append("// " + ID1 + " (EnumValue)" + newline);
+				sb.append("// " + ID1 + " (EnumValue" + arrayNameSuffix + ")" + newline);
 				
 				if (!description.equals(""))
 				{
@@ -211,7 +208,7 @@ public class SourceCodeGeneratorE2P
 				sb.append("// Set " + ID1 + " (EnumValue)" + newline);
 				sb.append("// Byte offset: " + (offset / 8) + ", bit offset: " + (offset % 8) + ", length bits " + bits + newline);
 				
-				sb.append("static inline void " + functionPrefix + "_set_" + ID1.toLowerCase() + "(" + ID1 + "Enum val)" + newline);
+				sb.append("static inline void " + functionPrefix + "_set_" + ID1.toLowerCase() + "(" + funcParam + ID1 + "Enum val)" + newline);
 				sb.append("{" + newline);
 				sb.append("  eeprom_write_UIntValue(" + accessStr + ", " + bits + ", val);" + newline);
 				sb.append("}" + newline);
@@ -224,13 +221,13 @@ public class SourceCodeGeneratorE2P
 				sb.append("// Get " + ID1 + " (EnumValue)" + newline);
 				sb.append("// Byte offset: " + (offset / 8) + ", bit offset: " + (offset % 8) + ", length bits " + bits + newline);
 				
-				sb.append("static inline " + ID1 + "Enum " + functionPrefix + "_get_" + ID1.toLowerCase() + "(void)" + newline);
+				sb.append("static inline " + ID1 + "Enum " + functionPrefix + "_get_" + ID1.toLowerCase() + "(" + funcParam2 + ")" + newline);
 				sb.append("{" + newline);
 				sb.append("  return eeprom_read_UIntValue" + cTypeBits + "(" + accessStr + ", 8, 0, " + maxVal + ");" + newline);
 				sb.append("}" + newline);
 				sb.append(newline);
 				
-				offset += bits;
+				offset += isArray ? bits * arrayLength : bits;
 			}
 			else if (element.getNodeName().equals("UIntValue"))
 			{
@@ -318,7 +315,7 @@ public class SourceCodeGeneratorE2P
 				sb.append("}" + newline);
 				sb.append(newline);
 				
-				offset += bits;
+				offset += isArray ? bits * arrayLength : bits;
 			}
 			else if (element.getNodeName().equals("ByteArray"))
 			{
@@ -410,64 +407,18 @@ public class SourceCodeGeneratorE2P
 		return offset - startOffset;
 	}
 
+	/**
+	 * Return a string used in generated e2p and packet data access functions to represent the byte and bit position.
+	 * @param offset  The bit offset of the data value.
+	 * @param bits    The number of bits per value (relevant for arrays).
+	 * @param isArray The information if an array is accessed by using a variable "index".
+	 * @return A string like "68 + (uint16_t)index * 1, 0"
+	 */
 	private String calcAccessStr(int offset, int bits, boolean isArray)
 	{
-		return byteAccessStr(offset, bits, isArray) + ", " + bitAccessStr(offset, bits, isArray);
+		return Util.calcByteAccessStr("", offset, bits, isArray) + ", " + Util.calcBitAccessStr("", offset, bits, isArray);
 	}
-	
-	/**
-	 * Return a string used in functions to represent the byte position for e2p access.
-	 * @param offset
-	 * @param bits
-	 * @param isArray
-	 * @return
-	 */
-	private String byteAccessStr(int offset, int bits, boolean isArray)
-	{
-		if (isArray)
-		{
-			if ((bits % 8) == 0)
-			{
-				int bytesPerValue = bits / 8;
-				return (offset / 8) + " + (uint16_t)index * " + bytesPerValue;
-			}
-			else
-			{
-				return "(" + offset + " + (uint16_t)index * " + bits + ") / 8";
-			}
-		}
-		else
-		{
-			return "" + (offset / 8);
-		}
-	}
-	
-	/**
-	 * Return a string used in functions to represent the bit position for e2p access.
-	 * @param offset
-	 * @param bits
-	 * @param isArray
-	 * @return
-	 */
-	private String bitAccessStr(int offset, int bits, boolean isArray)
-	{
-		if (isArray)
-		{
-			if ((bits % 8) == 0)
-			{
-				return "" + (offset % 8);
-			}
-			else
-			{
-				return "(" + offset + " + (uint16_t)index * " + bits + ") % 8";
-			}
-		}
-		else
-		{
-			return "" + (offset % 8);
-		}
-	}
-	
+
 	/**
 	 * Get 8, 16 or 32 as used in c types, depending on the needed bits.
 	 * @param bits
