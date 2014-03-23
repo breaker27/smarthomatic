@@ -329,10 +329,8 @@ int main(void)
 	// read (saved) switch state from before the eventual powerloss
 	for (i = 0; i < SWITCH_COUNT; i++)
 	{
-		uint16_t u16 = eeprom_read_UIntValue16(EEPROM_SWITCHSTATE_BYTE + i * 2, EEPROM_SWITCHSTATE_BIT,
-			16, 0, 255);
-		switch_state[i] = (uint8_t)(u16 & 0b1);
-		switch_timeout[i] = u16 >> 1;
+		switch_state[i] = e2p_powerswitch_get_switchstate(i);
+		switch_timeout[i] = e2p_powerswitch_get_switchtimeout(i);
 	}
 
 	// read last received station packetcounter
