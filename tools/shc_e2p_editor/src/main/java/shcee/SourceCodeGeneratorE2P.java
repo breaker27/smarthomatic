@@ -422,13 +422,14 @@ public class SourceCodeGeneratorE2P
 	{
 		if (isArray)
 		{
-			if ((offset % 8) == 0)
+			if ((bits % 8) == 0)
 			{
-				return (offset / 8) + " + index";
+				int bytesPerValue = bits / 8;
+				return (offset / 8) + " + (uint16_t)index * " + bytesPerValue;
 			}
 			else
 			{
-				return "(" + offset + " + (uint16_t)index * 8) / 8";
+				return "(" + offset + " + (uint16_t)index * " + bits + ") / 8";
 			}
 		}
 		else
@@ -448,13 +449,13 @@ public class SourceCodeGeneratorE2P
 	{
 		if (isArray)
 		{
-			if ((offset % 8) == 0)
+			if ((bits % 8) == 0)
 			{
-				return (offset / 8) + " + index";
+				return "" + (offset % 8);
 			}
 			else
 			{
-				return "(" + offset + " + (uint16_t)index * 8) % 8";
+				return "(" + offset + " + (uint16_t)index * " + bits + ") % 8";
 			}
 		}
 		else
