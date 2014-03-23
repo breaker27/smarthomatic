@@ -46,12 +46,22 @@ static inline uint8_t e2p_basestation_get_aeskeycount(void)
   return eeprom_read_UIntValue8(64, 0, 8, 1, 16);
 }
 
-// AesKeys (ByteArray)
+// AesKey (ByteArray[16])
 // Description: These are all AES keys which can be used to encrypt or decrypt packages at the base station.
 
-#define EEPROM_AESKEYS_BYTE 65
-#define EEPROM_AESKEYS_BIT 0
-#define EEPROM_AESKEYS_LENGTH_BYTES 512
+// Set AesKey (ByteArray)
+// Byte offset: 65, bit offset: 0, length bits 256
+static inline void e2p_basestation_set_aeskey(uint8_t index, void *src)
+{
+  eeprom_write_block(src, (uint8_t *)(65 + (uint16_t)index * 32), 32);
+}
+
+// Get AesKey (ByteArray)
+// Byte offset: 65, bit offset: 0, length bits 256
+static inline void e2p_basestation_get_aeskey(uint8_t index, void *dst)
+{
+  eeprom_read_block(dst, (uint8_t *)(65 + (uint16_t)index * 32), 32);
+}
 
 // Reserved area with 3576 bits
 

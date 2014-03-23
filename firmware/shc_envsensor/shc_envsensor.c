@@ -42,11 +42,6 @@
 #include "util.h"
 #include "version.h"
 
-// check some assumptions at precompile time about flash layout
-#if (EEPROM_AESKEY_BIT != 0)
-	#error AES key does not start at a byte border. Not supported (maybe fix E2P layout?).
-#endif
-
 #define AVERAGE_COUNT 4 // Average over how many values before sending over RFM12?
 #define SEND_BATT_STATUS_CYCLE 30 // send battery status x times less than temp status
 #define SEND_VERSION_STATUS_CYCLE 200 // send version status x times less than temp status (~once per day)
@@ -98,7 +93,7 @@ int main(void)
 	UART_PUTF ("Brightness sensor type: %u\r\n", brightness_sensor_type);
 	
 	// init AES key
-	eeprom_read_block(aes_key, (uint8_t *)EEPROM_AESKEY_BYTE, 32);
+	e2p_generic_get_aeskey(aes_key);
 
 	adc_init();
 

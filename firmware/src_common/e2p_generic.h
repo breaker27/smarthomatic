@@ -70,9 +70,19 @@ static inline uint32_t e2p_generic_get_packetcounter(void)
 // AesKey (ByteArray)
 // Description: This key is used to encrypt packets before sending and also used as primary key to decrypt packets. Special devices may have additional keys in their device specific block.
 
-#define EEPROM_AESKEY_BYTE 32
-#define EEPROM_AESKEY_BIT 0
-#define EEPROM_AESKEY_LENGTH_BYTES 32
+// Set AesKey (ByteArray)
+// Byte offset: 32, bit offset: 0, length bits 256
+static inline void e2p_generic_set_aeskey(void *src)
+{
+  eeprom_write_block(src, (uint8_t *)(32), 32);
+}
+
+// Get AesKey (ByteArray)
+// Byte offset: 32, bit offset: 0, length bits 256
+static inline void e2p_generic_get_aeskey(void *dst)
+{
+  eeprom_read_block(dst, (uint8_t *)(32), 32);
+}
 
 
 #endif /* _E2P_GENERIC_H */

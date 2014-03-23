@@ -49,9 +49,19 @@ static inline uint32_t e2p_dimmer_get_basestationpacketcounter(void)
 // BrightnessTranslationTable (ByteArray)
 // Description: These are the target values (one byte each) for the input brightness of 0, 1, ... 100% to adapt the specific brightness curve of your lamps. Set first byte to FF to not use it.
 
-#define EEPROM_BRIGHTNESSTRANSLATIONTABLE_BYTE 67
-#define EEPROM_BRIGHTNESSTRANSLATIONTABLE_BIT 0
-#define EEPROM_BRIGHTNESSTRANSLATIONTABLE_LENGTH_BYTES 101
+// Set BrightnessTranslationTable (ByteArray)
+// Byte offset: 67, bit offset: 0, length bits 808
+static inline void e2p_dimmer_set_brightnesstranslationtable(void *src)
+{
+  eeprom_write_block(src, (uint8_t *)(67), 101);
+}
+
+// Get BrightnessTranslationTable (ByteArray)
+// Byte offset: 67, bit offset: 0, length bits 808
+static inline void e2p_dimmer_get_brightnesstranslationtable(void *dst)
+{
+  eeprom_read_block(dst, (uint8_t *)(67), 101);
+}
 
 // Reserved area with 6848 bits
 

@@ -319,12 +319,12 @@ public class SourceCodeGeneratorE2P
 			}
 			else if (element.getNodeName().equals("ByteArray"))
 			{
-				if (isArray)
-					throw new TransformerException("Arrays are not supported for ByteArray elements!");
+				if (offset % 8 != 0)
+					throw new TransformerException("ByteArray does not start at byte border! Please fix layout.");
 				
 				String ID = Util.getChildNodeValue(element, "ID");
 				
-				sb.append("// " + ID + " (ByteArray)" + newline);
+				sb.append("// " + ID + " (ByteArray" + arrayNameSuffix + ")" + newline);
 				
 				if (!description.equals(""))
 				{
@@ -333,13 +333,37 @@ public class SourceCodeGeneratorE2P
 				
 				sb.append(newline);
 				
-				ID = ID.toUpperCase();
-				String bytes = Util.getChildNodeValue(element, "Bytes");
-				sb.append("#define EEPROM_" + ID + "_BYTE " + (offset / 8) + newline);
-				sb.append("#define EEPROM_" + ID + "_BIT " + (offset % 8) + newline);
-				sb.append("#define EEPROM_" + ID + "_LENGTH_BYTES " + bytes + newline);
+				int bytes = Integer.parseInt(Util.getChildNodeValue(element, "Bytes"));
+				int bits = bytes * 8;
+				
+				String accessStr = Util.calcByteAccessStr("", offset, bytes * 8, isArray);
+				
+				// SET
+				
+				sb.append("// Set " + ID + " (ByteArray)" + newline);
+				sb.append("// Byte offset: " + (offset / 8) + ", bit offset: " + (offset % 8) + ", length bits " + bits + newline);
+				
+				sb.append("static inline void " + functionPrefix + "_set_" + ID.toLowerCase() + "(" + funcParam + "void *src)" + newline);
+				sb.append("{" + newline);
+				sb.append("  eeprom_write_block(src, (uint8_t *)(" + accessStr + "), " + bytes + ");" + newline);
+				sb.append("}" + newline);
 				sb.append(newline);
-				offset += Integer.parseInt(bytes) * 8;
+				
+				// GET
+				
+				sb.append("// Get " + ID + " (ByteArray)" + newline);
+				sb.append("// Byte offset: " + (offset / 8) + ", bit offset: " + (offset % 8) + ", length bits " + bits + newline);
+				
+				// TODO: Return minimal type uint8_t, ...
+				sb.append("static inline void " + functionPrefix + "_get_" + ID.toLowerCase() + "(" + funcParam + "void *dst)" + newline);
+				sb.append("{" + newline);
+				sb.append("  eeprom_read_block(dst, (uint8_t *)(" + accessStr + "), " + bytes + ");" + newline);
+				sb.append("}" + newline);
+				sb.append(newline);
+				
+				
+				
+				offset += isArray ? bytes * 8 * arrayLength : bytes * 8;
 			}
 			else if (element.getNodeName().equals("BoolValue"))
 			{

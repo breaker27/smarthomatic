@@ -82,11 +82,14 @@
 			<MinVal>1</MinVal>
 			<MaxVal>16</MaxVal>
 		</UIntValue>
-		<ByteArray>
-			<ID>AesKeys</ID>
-			<Description>These are all AES keys which can be used to encrypt or decrypt packages at the base station.</Description>
-			<Bytes>512</Bytes>
-		</ByteArray>
+		<Array>
+			<Length>16</Length>
+			<ByteArray>
+				<ID>AesKey</ID>
+				<Description>These are all AES keys which can be used to encrypt or decrypt packages at the base station.</Description>
+				<Bytes>32</Bytes>
+			</ByteArray>
+		</Array>
 		<Reserved>
 			<Bits>3576</Bits>
 		</Reserved>

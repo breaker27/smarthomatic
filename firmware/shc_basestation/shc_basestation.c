@@ -44,11 +44,6 @@
 #define LED_PORT PORTD
 #define LED_DDR DDRD
 
-// check some assumptions at precompile time about flash layout
-#if (EEPROM_AESKEYS_BIT != 0)
-	#error AES keys do not start at a byte border. Not supported by base station (maybe fix E2P layout?).
-#endif
-
 uint16_t device_id;
 uint8_t aes_key_count;
 
@@ -213,7 +208,7 @@ void send_packet(uint8_t aes_key_nr, uint8_t packet_len)
 		aes_key_nr = aes_key_count - 1;
 	}
 	
-	eeprom_read_block (aes_key, (uint8_t *)(EEPROM_AESKEYS_BYTE + aes_key_nr * 32), 32);
+	e2p_basestation_get_aeskey(aes_key_nr, aes_key);
 	
 	// show info
 	decode_data(packet_len);
@@ -324,12 +319,12 @@ int main(void)
 					/*if (aes_key_nr == 0)
 					{
 						UART_PUTS("Before decryption: ");
-						printbytearray(bufx, len);
+						print_bytearray(bufx, len);
 					}*/
 				
-					eeprom_read_block (aes_key, (uint8_t *)(EEPROM_AESKEYS_BYTE + aes_key_nr * 32), 32);
-					//UART_PUTS("Trying AES key ");
-					//printbytearray((uint8_t *)aes_key, 32);
+					e2p_basestation_get_aeskey(aes_key_nr, aes_key);
+					//UART_PUTS("Trying AES key 2 ");
+					//print_bytearray((uint8_t *)aes_key, 32);
 
 					aes256_decrypt_cbc(bufx, len);
 
