@@ -1,6 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013 Uwe Freese
+* Copyright (c) 2013..2014 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -70,14 +70,14 @@ static inline uint32_t e2p_powerswitch_get_basestationpacketcounter(void)
 // Byte offset: 68, bit offset: 0, length bits 8
 static inline void e2p_powerswitch_set_switchstate(uint8_t index, bool val)
 {
-  eeprom_write_UIntValue(68 + index, 68 + index, 8, val ? 1 : 0);
+  eeprom_write_UIntValue(68 + (uint16_t)index * 1, 0, 8, val ? 1 : 0);
 }
 
 // Get SwitchState (BoolValue)
 // Byte offset: 68, bit offset: 0, length bits 8
 static inline bool e2p_powerswitch_get_switchstate(uint8_t index)
 {
-  return eeprom_read_UIntValue8(68 + index, 68 + index, 8, 0, 1) == 1;
+  return eeprom_read_UIntValue8(68 + (uint16_t)index * 1, 0, 8, 0, 1) == 1;
 }
 
 // SwitchTimeout (UIntValue[8])
@@ -87,14 +87,14 @@ static inline bool e2p_powerswitch_get_switchstate(uint8_t index)
 // Byte offset: 76, bit offset: 0, length bits 16, min val 0, max val 65767
 static inline void e2p_powerswitch_set_switchtimeout(uint8_t index, uint16_t val)
 {
-  eeprom_write_UIntValue(76 + index, 76 + index, 16, val);
+  eeprom_write_UIntValue(76 + (uint16_t)index * 2, 0, 16, val);
 }
 
 // Get SwitchTimeout (UIntValue)
 // Byte offset: 76, bit offset: 0, length bits 16, min val 0, max val 65767
 static inline uint16_t e2p_powerswitch_get_switchtimeout(uint8_t index)
 {
-  return eeprom_read_UIntValue16(76 + index, 76 + index, 16, 0, 65767);
+  return eeprom_read_UIntValue16(76 + (uint16_t)index * 2, 0, 16, 0, 65767);
 }
 
 // Reserved area with 7456 bits
