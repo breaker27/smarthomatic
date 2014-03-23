@@ -360,9 +360,7 @@ public class SourceCodeGeneratorE2P
 				sb.append("  eeprom_read_block(dst, (uint8_t *)(" + accessStr + "), " + bytes + ");" + newline);
 				sb.append("}" + newline);
 				sb.append(newline);
-				
-				
-				
+
 				offset += isArray ? bytes * 8 * arrayLength : bytes * 8;
 			}
 			else if (element.getNodeName().equals("BoolValue"))

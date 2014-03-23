@@ -56,7 +56,7 @@ public class ArrayEditor extends AbstractEditor
 			else if (elementNode.getNodeName().equals("EnumValue"))
 				addElem(new EnumEditor(elementNode, this.getBackground(), i));
 			else if (elementNode.getNodeName().equals("ByteArray"))
-				addElem(new EnumEditor(elementNode, this.getBackground(), i));
+				addElem(new ByteArrayEditor(elementNode, this.getBackground(), i));
 		}
 		
 		if (length > 0)
