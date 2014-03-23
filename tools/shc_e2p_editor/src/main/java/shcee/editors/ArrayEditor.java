@@ -27,7 +27,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import shcee.LabelArea;
-import shcee.Util;
 
 public class ArrayEditor extends AbstractEditor
 {
@@ -57,8 +56,6 @@ public class ArrayEditor extends AbstractEditor
 			else if (elementNode.getNodeName().equals("EnumValue"))
 				addElem(new EnumEditor(elementNode, this.getBackground(), i));
 			else if (elementNode.getNodeName().equals("ByteArray"))
-				addElem(new EnumEditor(elementNode, this.getBackground(), i));
-			else if (elementNode.getNodeName().equals("Reserved"))
 				addElem(new EnumEditor(elementNode, this.getBackground(), i));
 		}
 		

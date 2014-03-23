@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
-	<xs:group name="SimpleDataValue">
+	<xs:group name="ArrayDataValue">
 		<xs:annotation>
-			<xs:documentation>A SimpleDataType is a simple value (no array of them).</xs:documentation>
+			<xs:documentation>An ArrayDataValue is a simple value which can be used in arrays.</xs:documentation>
 		</xs:annotation>
 		<xs:choice>
 			<xs:element ref="UIntValue"/>
@@ -10,12 +10,11 @@
 			<xs:element ref="BoolValue"/>
 			<xs:element ref="EnumValue"/>
 			<xs:element ref="ByteArray"/>
-			<xs:element ref="Reserved"/>
 		</xs:choice>
 	</xs:group>
-	<xs:group name="ComplexDataValue">
+	<xs:group name="DataValue">
 		<xs:annotation>
-			<xs:documentation>A ComplexDataValue is a simple value or an array (consisting of simple values itself).</xs:documentation>
+			<xs:documentation>A DataValue consists of one primitive data value or an array of one of them.</xs:documentation>
 		</xs:annotation>
 		<xs:choice>
 			<xs:element ref="UIntValue"/>
@@ -37,7 +36,7 @@
 						</xs:restriction>
 					</xs:simpleType>
 				</xs:element>
-				<xs:group ref="SimpleDataValue"/>
+				<xs:group ref="ArrayDataValue"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>

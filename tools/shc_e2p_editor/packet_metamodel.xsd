@@ -6,7 +6,7 @@
 			<xs:sequence>
 				<xs:element name="Header">
 					<xs:complexType>
-						<xs:group ref="SimpleDataValue" maxOccurs="unbounded"/>
+						<xs:group ref="DataValue" maxOccurs="unbounded"/>
 					</xs:complexType>
 				</xs:element>
 				<xs:element name="HeaderExtension" minOccurs="0" maxOccurs="unbounded">
@@ -20,7 +20,7 @@
 									<xs:restriction base="xs:int"/>
 								</xs:simpleType>
 							</xs:element>
-							<xs:group ref="SimpleDataValue" maxOccurs="unbounded"/>
+							<xs:group ref="DataValue" maxOccurs="unbounded"/>
 							<xs:element name="ContainsMessageData" type="xs:boolean"/>
 						</xs:sequence>
 					</xs:complexType>
@@ -69,7 +69,7 @@
 												</xs:restriction>
 											</xs:simpleType>
 										</xs:element>
-										<xs:group ref="SimpleDataValue" maxOccurs="unbounded"/>
+										<xs:group ref="DataValue" maxOccurs="unbounded"/>
 									</xs:sequence>
 								</xs:complexType>
 							</xs:element>
