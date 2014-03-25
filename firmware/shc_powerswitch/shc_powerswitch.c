@@ -56,7 +56,7 @@
 
 uint8_t device_id;
 uint32_t station_packetcounter;
-uint8_t switch_state[SWITCH_COUNT];
+bool switch_state[SWITCH_COUNT];
 uint16_t switch_timeout[SWITCH_COUNT];
 
 uint16_t send_status_timeout = 5;
@@ -100,7 +100,7 @@ void send_power_switch_status(void)
 	pkg_header_init_powerswitch_switchstate_status();
 	pkg_header_set_senderid(device_id);
 	pkg_header_set_packetcounter(packetcounter);
-	msg_powerswitch_switchstate_set_on(switch_state[0] & 1); // TODO: Support > 1 switch
+	msg_powerswitch_switchstate_set_on(switch_state[0]); // TODO: Support > 1 switch
 	msg_powerswitch_switchstate_set_timeoutsec(switch_timeout[0]); // TODO: Support > 1 switch
 	pkg_header_calc_crc32();
 
@@ -126,20 +126,36 @@ void send_version_status(void)
 	rfm12_send_bufx();
 }
 
-void switchRelais(int8_t num, uint8_t on)
+void switchRelais(int8_t num, bool on, uint16_t timeout)
 {
-	if (on)
+	UART_PUTF3("Switching relais %u to %u with timeout %us.\r\n", num + 1, on, timeout);
+
+	bool change_state = switch_state[num] != on;
+	bool change_timeout = switch_timeout[num] != timeout;
+			
+	if (change_state)
 	{
-		sbi(RELAIS_PORT, RELAIS_PIN_START + num);
-		switch_led(1);
+		switch_state[num] = on;
+		e2p_powerswitch_set_switchstate(num, on);
+		
+		if (on)
+		{
+			sbi(RELAIS_PORT, RELAIS_PIN_START + num);
+			switch_led(1);
+		}
+		else
+		{
+			cbi(RELAIS_PORT, RELAIS_PIN_START + num);
+			switch_led(0);
+		}
 	}
-	else
+	
+	if (change_timeout)
 	{
-		cbi(RELAIS_PORT, RELAIS_PIN_START + num);
-		switch_led(0);
+		switch_timeout[num] = timeout;
+		e2p_powerswitch_set_switchtimeout(num, timeout);
 	}
 }
-
 
 // React accordingly on the MessageType, MessageGroup and MessageID.
 void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint32_t messageid)
@@ -169,30 +185,11 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 
 		UART_PUTF("On:%u;", req_on);
 		UART_PUTF("TimeoutSec:%u;\r\n", req_timeout);
-		
-		// store the one bit in a bitmask, which can be used later for support of more than one switch
-		uint8_t switch_bitmask = req_on ? 1 : 0;
-		
+
 		// react on changed state (version for more than one switch...)
 		for (i = 0; i < SWITCH_COUNT; i++)
 		{
-			if (((switch_bitmask & (1 << i)) != switch_state[i]) || (req_timeout > 0)) // this switch is to be switched
-			{
-				UART_PUTF4("Switching relais %u from %u to %u with timeout %us.\r\n", i + 1, switch_state[i], req_on, req_timeout);
-
-				// switch relais
-				switchRelais(i, req_on);
-				
-				// write back switch state to EEPROM
-				switch_state[i] = req_on;
-				switch_timeout[i] = req_timeout;
-				
-				// FIXME - Not supported yet!
-				/*
-				eeprom_write_UIntValue(EEPROM_SWITCHSTATE_BYTE + i * 2, EEPROM_SWITCHSTATE_BYTE,
-					EEPROM_SWITCHSTATE_BYTE, u16);
-				*/
-			}
+			switchRelais(i, req_on, req_timeout);
 		}
 	}
 
@@ -324,15 +321,6 @@ int main(void)
 	packetcounter = e2p_generic_get_packetcounter() + PACKET_COUNTER_WRITE_CYCLE;
 	e2p_generic_set_packetcounter(packetcounter);
 
-	// read device specific config
-	
-	// read (saved) switch state from before the eventual powerloss
-	for (i = 0; i < SWITCH_COUNT; i++)
-	{
-		switch_state[i] = e2p_powerswitch_get_switchstate(i);
-		switch_timeout[i] = e2p_powerswitch_get_switchtimeout(i);
-	}
-
 	// read last received station packetcounter
 	station_packetcounter = e2p_powerswitch_get_basestationpacketcounter();
 	
@@ -357,10 +345,10 @@ int main(void)
 
 	led_blink(500, 500, 3);
 
-	// set initial switch state
+	// read (saved) switch state from before the eventual powerloss
 	for (i = 0; i < SWITCH_COUNT; i++)
 	{
-		switchRelais(i, switch_state[i]);
+		switchRelais(i, e2p_powerswitch_get_switchstate(i), e2p_powerswitch_get_switchtimeout(i));
 	}
 
 	rfm12_init();
@@ -433,13 +421,8 @@ int main(void)
 					
 					if (switch_timeout[i] == 0)
 					{
-						switch_state[i] = switch_state[i] ? 0 : 1;
-						
-						UART_PUTF2("Timeout! Switch %u to %u.\r\n", i + 1, switch_state[i]);
-						
-						// switch PIN for relais
-						switchRelais(i, switch_state[i]);
-						
+						UART_PUTS("Timeout! ");
+						switchRelais(i, !switch_state[i], 0);
 						send_status_timeout = 1; // immediately send the status update
 					}
 				}
@@ -485,13 +468,8 @@ int main(void)
 			
 			if (button) // on button press
 			{
-				switch_state[0] = !switch_state[0];
-				
-				UART_PUTF("Switch 0 to %u.\r\n", switch_state[0]);
-				
-				// switch PIN for relais
-				switchRelais(0, switch_state[0]);
-				
+				UART_PUTS("Button! ");
+				switchRelais(0, !switch_state[0], 0);
 				send_status_timeout = 15; // send status after 15s
 			}
 		}	
