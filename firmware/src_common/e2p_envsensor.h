@@ -74,6 +74,26 @@ static inline BrightnessSensorTypeEnum e2p_envsensor_get_brightnesssensortype(vo
   return eeprom_read_UIntValue8(65, 0, 8, 0, 255);
 }
 
+typedef enum {
+  BAROMETRICSENSORTYPE_NOSENSOR = 0,
+  BAROMETRICSENSORTYPE_BMP085 = 1
+} BarometricSensorTypeEnum;
+
+// Set BarometricSensorType (EnumValue)
+// Byte offset: 66, bit offset: 0, length bits 8
+static inline void e2p_envsensor_set_barometricsensortype(BarometricSensorTypeEnum val)
+{
+  eeprom_write_UIntValue(66, 0, 8, val);
+}
+
+// Get TemperatureSensorType (EnumValue)
+// Byte offset: 64, bit offset: 0, length bits 8
+static inline TemperatureSensorTypeEnum e2p_envsensor_get_barometricsensortype(void)
+{
+  return eeprom_read_UIntValue8(66, 0, 8, 0, 255);
+}
+
+
 // Reserved area with 7664 bits
 
 
