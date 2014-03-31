@@ -1,12 +1,7 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013 Stefan Baumann
+* Copyright (c) 2014 Stefan Baumann
 *
-* adapted from Linux/drivers/misc/bmp085.c
-* Copyright (c) 2010  Christoph Mair <christoph.mair@gmail.com>
-* Copyright (c) 2012  Bosch Sensortec GmbH
-* Copyright (c) 2012  Unixphere AB
-* 
 * smarthomatic is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
 * Free Software Foundation, either version 3 of the License, or (at your
