@@ -38,6 +38,7 @@
 #include "i2c.h"
 #include "lm75.h"
 #include "bmp085.h"
+#include "srf02.h"
 
 #include "aes256.h"
 #include "util.h"
@@ -50,6 +51,7 @@
 uint8_t temperature_sensor_type = 0;
 uint8_t brightness_sensor_type = 0;
 uint8_t barometric_sensor_type = 0;
+uint8_t ultrasonic_range_finder_type = 0;
 uint8_t batt_status_cycle = SEND_BATT_STATUS_CYCLE - 1; // send promptly after startup
 uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly after startup
 
@@ -80,6 +82,7 @@ int main(void)
 	temperature_sensor_type = e2p_envsensor_get_temperaturesensortype();
 	brightness_sensor_type = e2p_envsensor_get_brightnesssensortype();
 	barometric_sensor_type = e2p_envsensor_get_barometricsensortype();
+	ultrasonic_range_finder_type = e2p_envsensor_get_barometricsensortype();
 
 	// read device id
 	device_id = e2p_generic_get_deviceid();
@@ -96,6 +99,7 @@ int main(void)
 	UART_PUTF ("Temperature sensor type: %u\r\n", temperature_sensor_type);
 	UART_PUTF ("Brightness sensor type: %u\r\n", brightness_sensor_type);
 	UART_PUTF ("Barometric Sensor Type: %u\r\n", barometric_sensor_type);
+	UART_PUTF ("Ultrasonic Range Finder Type: %u\r\n", ultrasonic_range_finder_type);
 	
 	// init AES key
 	e2p_generic_get_aeskey(aes_key);
@@ -117,6 +121,12 @@ int main(void)
 		i2c_disable();
 	}
 
+	if (ultrasonic_range_finder_type == ULTRASONICRANGEFINDERTYPE_SRF02)
+	{
+		i2c_enable();
+		srf02_init();
+		i2c_disable();
+	}
 
 	led_blink(500, 500, 3);
 	
@@ -170,6 +180,11 @@ int main(void)
 			temp += bmp085_meas_temp();
 			i2c_disable();
 		}
+
+		if (ultrasonic_range_finder_type == ULTRASONICRANGEFINDERTYPE_SRF02)
+		{
+			i2c_enable();
+			hum += 10 * srf02_get_distance();
 			i2c_disable();
 		}
 
