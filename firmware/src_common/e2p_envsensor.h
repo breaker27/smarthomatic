@@ -93,6 +93,24 @@ static inline TemperatureSensorTypeEnum e2p_envsensor_get_barometricsensortype(v
   return eeprom_read_UIntValue8(66, 0, 8, 0, 255);
 }
 
+typedef enum {
+  ULTRASONICRANGEFINDERTYPE_NOSENSOR = 0,
+  ULTRASONICRANGEFINDERTYPE_SRF02 = 1
+} UltrasonicRangeFinderTypeEnum;
+
+static inline void e2p_envsensor_set_ultrasonicrangefindertype(UltrasonicRangeFinderTypeEnum val)
+{
+  eeprom_write_UIntValue(67, 0, 8, val);
+}
+
+// Get TemperatureSensorType (EnumValue)
+// Byte offset: 64, bit offset: 0, length bits 8
+static inline UltrasonicRangeFinderTypeEnum e2p_envsensor_get_ultrasonicrangefindertype(void)
+{
+  return eeprom_read_UIntValue8(67, 0, 8, 0, 255);
+}
+
+
 
 // Reserved area with 7664 bits
 

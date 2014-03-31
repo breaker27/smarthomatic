@@ -144,8 +144,21 @@
 				<Name>BMP085</Name>
 			</Element>
 		</EnumValue>
+		<EnumValue>
+			<ID>UltrasonicRangeFinderType</ID>
+			<Description>You can choose one of the supported ultrasonic range finders.</Description>
+			<Bits>8</Bits>
+			<Element>
+				<Value>0</Value>
+				<Name>NoSensor</Name>
+			</Element>
+			<Element>
+				<Value>1</Value>
+				<Name>SRF02</Name>
+			</Element>
+		</EnumValue>
 		<Reserved>
-			<Bits>7656</Bits>
+			<Bits>7648</Bits>
 		</Reserved>
 	</Block>
 	<Block>
