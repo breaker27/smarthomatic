@@ -112,17 +112,20 @@ int main(void)
 
 	if (barometric_sensor_type == BAROMETRICSENSORTYPE_BMP085)
 	{
+		i2c_enable();
 		bmp085_init();
+		i2c_disable();
 	}
+
 
 	led_blink(500, 500, 3);
 	
 	rfm12_init();
 	
-	//rfm12_set_wakeup_timer(0b11100110000);   // ~ 6s
+	rfm12_set_wakeup_timer(0b11100110000);   // ~ 6s
 	//rfm12_set_wakeup_timer(0b11111000000);   // ~ 24576ms
 	//rfm12_set_wakeup_timer(0b0100101110101); // ~ 59904ms
-	rfm12_set_wakeup_timer(0b101001100111); // ~ 105472ms  DEFAULT VALUE!!!
+	//rfm12_set_wakeup_timer(0b101001100111); // ~ 105472ms  DEFAULT VALUE!!!
 
 	sei();
 
@@ -166,7 +169,11 @@ int main(void)
 			baro += bmp085_meas_pressure();
 			temp += bmp085_meas_temp();
 			i2c_disable();
-		} 
+		}
+			i2c_disable();
+		}
+
+		avg++;
 		
 		if (avg >= AVERAGE_COUNT)
 		{
