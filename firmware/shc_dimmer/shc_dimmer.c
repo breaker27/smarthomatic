@@ -59,17 +59,21 @@
 // These are the PWM values for 0%..100% (AKA 1V..10V output),
 // calculated by measuring the output voltage and linear interpolation
 // of the measured voltages.
-static uint16_t pwm_lookup [] = { 40, 130, 205, 270, 325, 375, 417, 455, 490, 520, 550, 575, 598, 620, 640, 658,
-	674, 690, 704, 717, 730, 743, 753, 763, 773, 783, 792, 800, 808, 816, 823, 830, 836, 843, 849, 854,
-	860, 865, 870, 875, 879, 884, 888, 892, 896, 900, 904, 907, 911, 914, 917, 920, 923, 926, 929, 932,
-	935, 937, 940, 942, 944, 947, 949, 951, 953, 955, 957, 959, 961, 963, 965, 967, 968, 970, 972, 973,
-	975, 976, 978, 979, 980, 982, 983, 984, 986, 987, 988, 989, 990, 991, 992, 994, 995, 996, 997, 998,
-	999, 1000, 1001, 1002, 1003 };
+static uint16_t pwm_lookup [] = { 119, 199, 265, 325, 376, 421, 462, 498, 528, 559, 584, 607, 629, 650,
+	668, 683, 700, 714, 727, 740, 752, 763, 773, 783, 792, 801, 809, 817, 824, 831, 837, 844, 850, 856,
+	861, 866, 871, 876, 881, 885, 890, 894, 898, 902, 905, 909, 912, 916, 919, 922, 925, 928, 931, 933,
+	936, 938, 941, 943, 946, 948, 950, 952, 954, 956, 958, 960, 962, 964, 966, 967, 969, 971, 972, 974,
+	975, 977, 978, 980, 981, 982, 984, 985, 986, 988, 989, 990, 991, 992, 993, 995, 996, 997, 998, 999,
+	1000, 1001, 1002, 1003, 1004, 1004, 1005 };
 
 static uint8_t brightness_translation[101];
 
-#define ANIMATION_CYCLE_MS 32.768 // make one animation step every 32,768 ms, triggered by timer 0
-#define ANIMATION_UPDATE_MS 200   // update the brightness every ANIMATION_UPDATE_MS ms, done by the main loop
+#define ANIMATION_CYCLE_MS 32.768   // make one animation step every 32,768 ms, triggered by timer 0
+#define ANIMATION_UPDATE_MS 200     // update the brightness every ANIMATION_UPDATE_MS ms, done by the main loop
+
+#define SWITCH_OFF_TIMEOUT_MS 3000  // If 0% brightness is reached, switch off power (relais) with a delay to
+                                    // 1) dim down before switching off and to
+                                    // 2) avoid switching power off at manual dimming.
 
 // variables used for the animation
 uint8_t animation_mode;
@@ -82,7 +86,7 @@ float current_brightness = 0;
 uint8_t device_id;
 uint8_t use_pwm_translation = 1;
 uint32_t station_packetcounter;
-uint8_t switch_off_delay = 0; // If 0% brightness is reached, switch off power (relais) with a delay to 1) dim down before switching off and to 2) avoid switching power off at manual dimming.
+uint8_t switch_off_counter = 0;
 uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly after startup
 
 void switchRelais(uint8_t on)
@@ -137,9 +141,9 @@ void checkSwitchOff(void)
 {
 	if (current_brightness == 0)
 	{
-		if (switch_off_delay < 8)
+		if (switch_off_counter < (SWITCH_OFF_TIMEOUT_MS / ANIMATION_UPDATE_MS))
 		{
-			switch_off_delay++;
+			switch_off_counter++;
 		}
 		else
 		{
@@ -148,7 +152,7 @@ void checkSwitchOff(void)
 	}
 	else
 	{
-		switch_off_delay = 0;
+		switch_off_counter = 0;
 		switchRelais(1);
 	}
 }
@@ -473,6 +477,8 @@ void process_packet(uint8_t len)
 			UART_PUTS("\r\nERR: Unsupported MessageID.\r\n");
 			break;
 	}
+	
+	UART_PUTS("\r\n");
 }
 
 int main(void)
@@ -539,7 +545,7 @@ int main(void)
 	{
 		uint16_t i;
 		
-		for (i = 0; i <= 1024; i = i + 100)
+		for (i = 800; i <= 1024; i = i + 10)
 		{
 			UART_PUTF ("PWM value OCR1A: %u\r\n", i);
 			OCR1A = i;
