@@ -1,0 +1,198 @@
+# Copied from 36_PCA301.pm and adapted
+# $Id: 36_SHC_TEMP.pm 3934 2013-09-21 09:21:39Z justme1968 $
+#
+# TODO:
+
+package main;
+
+use strict;
+use warnings;
+use SetExtensions;
+
+sub SHC_TEMP_Parse($$);
+
+sub
+SHC_TEMP_Initialize($)
+{
+  my ($hash) = @_;
+
+  $hash->{Match}     = "^Sender ID=[0-9]";
+  $hash->{DefFn}     = "SHC_TEMP_Define";
+  $hash->{UndefFn}   = "SHC_TEMP_Undef";
+  $hash->{ParseFn}   = "SHC_TEMP_Parse";
+  $hash->{AttrList}  = "IODev"
+                       ." readonly:1"
+                       ." forceOn:1"
+                       ." $readingFnAttributes";
+}
+
+sub
+SHC_TEMP_Define($$)
+{
+  my ($hash, $def) = @_;
+  my @a = split("[ \t][ \t]*", $def);
+
+  if(@a != 3 ) {
+    my $msg = "wrong syntax: define <name> SHC_TEMP <id> ";
+    Log3 undef, 2, $msg;
+    return $msg;
+  }
+
+  $a[2] =~ m/^([2][0-9])$/i;	# TODO Whats the appropriate range for SHC
+  return "$a[2] is not a valid SHC_TEMP id" if( !defined($1) );
+
+  my $name = $a[0];
+  my $addr = $a[2];
+
+  return "SHC_TEMP device $addr already used for $modules{SHC_TEMP}{defptr}{$addr}->{NAME}." if( $modules{SHC_TEMP}{defptr}{$addr}
+                                                                                             && $modules{SHC_TEMP}{defptr}{$addr}->{NAME} ne $name );
+
+  $hash->{addr} = $addr;
+
+  $modules{SHC_TEMP}{defptr}{$addr} = $hash;
+
+  AssignIoPort($hash);
+  if(defined($hash->{IODev}->{NAME})) {
+    Log3 $name, 3, "$name: I/O device is " . $hash->{IODev}->{NAME};
+  } else {
+    Log3 $name, 1, "$name: no I/O device";
+  }
+
+  return undef;
+}
+
+#####################################
+sub
+SHC_TEMP_Undef($$)
+{
+  my ($hash, $arg) = @_;
+  my $name = $hash->{NAME};
+  my $addr = $hash->{addr};
+
+  delete( $modules{SHC_TEMP}{defptr}{$addr} );
+
+  return undef;
+}
+
+#####################################
+
+sub
+SHC_TEMP_Parse($$)
+{
+  my ($hash, $msg) = @_;
+  my $name = $hash->{NAME};
+  my ($id, $pktcnt, $cmd_id, $cmd_name);
+  my ($tmp, $hum, $brt, $bat);  # temperature, humidity, brightness, battery
+  # Sender ID=21;Packet Counter=24338;Command ID=10;Command Name=Temperature Sensor Status;Battery=80;Temperature=18.49;Humidity=56.91;Brightness=1
+
+  if ($msg =~ /^Sender ID=(\d*);Packet Counter=(\d*);Command ID=(\d*);Command Name=(.*?);Battery=(\d*);Temperature=([0-9\.]*);Humidity=([0-9\.]*);Brightness=(\d*)/)
+  {
+    $id = $1;
+    $pktcnt = $2;
+    $cmd_id = $3;
+    $cmd_name = $4;
+    $bat = $5;
+    $tmp = $6;
+    $hum = $7;
+    $brt = $8;
+  } else {
+    Log3 $hash, 4, "SHC_TEMP  ($msg) data error";
+    return "";
+  }
+
+  my $raddr = $id;
+  my $rhash = $modules{SHC_TEMP}{defptr}{$raddr};
+  my $rname = $rhash?$rhash->{NAME}:$raddr;
+
+   if( !$modules{SHC_TEMP}{defptr}{$raddr} ) {
+     Log3 $name, 3, "SHC_TEMP Unknown device $rname, please define it";
+
+     return "UNDEFINED SHC_TEMP_$rname SHC_TEMP $raddr";
+   }
+
+  my @list;
+  push(@list, $rname);
+
+  $rhash->{SHC_TEMP_lastRcv} = TimeNow();
+
+  my $readonly = AttrVal($rname, "readonly", "0" );
+
+  readingsBeginUpdate($rhash);
+  readingsBulkUpdate($rhash, "state", "T: $tmp  H: $hum  B:$brt");
+  readingsBulkUpdate($rhash, "battery", $bat);
+  readingsBulkUpdate($rhash, "temperature", $tmp);
+  readingsBulkUpdate($rhash, "humidity", $hum);
+  readingsBulkUpdate($rhash, "brightness", $brt);
+  readingsEndUpdate($rhash,1);    # Do triggers to update log file
+
+  return @list;
+}
+
+1;
+
+=pod
+=begin html
+
+<a name="SHC_TEMP"></a>
+<h3>SHC_TEMP</h3>
+<ul>
+
+  <tr><td>
+  The SHC_TEMP is a RF controlled AC mains plug with integrated power meter functionality from ELV.<br><br>
+
+  It can be integrated in to FHEM via a <a href="#JeeLink">JeeLink</a> as the IODevice.<br><br>
+
+  The JeeNode sketch required for this module can be found in .../contrib/arduino/36_SHC_TEMP-pcaSerial.zip.<br><br>
+
+  <a name="SHC_TEMPDefine"></a>
+  <b>Define</b>
+  <ul>
+    <code>define &lt;name&gt; SHC_TEMP &lt;addr&gt; &lt;channel&gt;</code> <br>
+    <br>
+    addr is a 6 digit hex number to identify the SHC_TEMP device.
+    channel is a 2 digit hex number to identify the SHC_TEMP device.<br><br>
+    Note: devices are autocreated on reception of the first message.<br>
+  </ul>
+  <br>
+
+  <a name="SHC_TEMP_Set"></a>
+  <b>Set</b>
+  <ul>
+    <li>on</li>
+    <li>off</li>
+    <li>identify<br>
+      Blink the status led for ~5 seconds.</li>
+    <li>reset<br>
+      Reset consumption counters</li>
+    <li>statusRequest<br>
+      Request device status update.</li>
+    <li><a href="#setExtensions"> set extensions</a> are supported.</li>
+  </ul><br>
+
+  <a name="SHC_TEMP_Get"></a>
+  <b>Get</b>
+  <ul>
+  </ul><br>
+
+  <a name="SHC_TEMP_Readings"></a>
+  <b>Readings</b>
+  <ul>
+    <li>power</li>
+    <li>consumption</li>
+    <li>consumptionTotal<br>
+      will be created as a default user reading to have a continous consumption value that is not influenced
+      by the regualar reset or overflow of the normal consumption reading</li>
+  </ul><br>
+
+  <a name="SHC_TEMP_Attr"></a>
+  <b>Attributes</b>
+  <ul>
+    <li>readonly<br>
+    if set to a value != 0 all switching commands (on, off, toggle, ...) will be disabled.</li>
+    <li>forceOn<br>
+    try to switch on the device whenever an off status is received.</li>
+  </ul><br>
+</ul>
+
+=end html
+=cut
