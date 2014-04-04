@@ -66,6 +66,8 @@ static uint16_t pwm_lookup [] = { 40, 130, 205, 270, 325, 375, 417, 455, 490, 52
 	975, 976, 978, 979, 980, 982, 983, 984, 986, 987, 988, 989, 990, 991, 992, 994, 995, 996, 997, 998,
 	999, 1000, 1001, 1002, 1003 };
 
+static uint8_t brightness_translation[101];
+
 #define ANIMATION_CYCLE_MS 32.768 // make one animation step every 32,768 ms, triggered by timer 0
 #define ANIMATION_UPDATE_MS 200   // update the brightness every ANIMATION_UPDATE_MS ms, done by the main loop
 
@@ -175,10 +177,8 @@ void setPWMDutyCyclePercent(float percent)
 		index2 = index >= 100 ? 100 : index + 1;
 		modulo = percent - index; // decimal places only, e.g. 0.12 when percent is 73.12
 		
-		uint8_t t1 = eeprom_read_UIntValue8(EEPROM_BRIGHTNESSTRANSLATIONTABLE_BYTE + index,
-			EEPROM_BRIGHTNESSTRANSLATIONTABLE_BIT, 8, 0, 0xFF);
-		uint8_t t2 = eeprom_read_UIntValue8(EEPROM_BRIGHTNESSTRANSLATIONTABLE_BYTE + index2,
-			EEPROM_BRIGHTNESSTRANSLATIONTABLE_BIT, 8, 0, 0xFF);
+		uint8_t t1 = brightness_translation[index];
+		uint8_t t2 = brightness_translation[index2];
 		
 		percent = linear_interpolate_f(modulo, 0.0, 1.0, t1, t2) * 100 / 255;
 		
@@ -497,8 +497,8 @@ int main(void)
 	device_id = e2p_generic_get_deviceid();
 
 	// pwm translation table is not used if first byte is 0xFF
-	use_pwm_translation = (0xFF != eeprom_read_UIntValue8(EEPROM_BRIGHTNESSTRANSLATIONTABLE_BYTE,
-		EEPROM_BRIGHTNESSTRANSLATIONTABLE_BIT, 8, 0, 0xFF));
+	e2p_dimmer_get_brightnesstranslationtable(brightness_translation);
+	use_pwm_translation = (0xFF != brightness_translation[0]);
 	
 	// TODO: read (saved) dimmer state from before the eventual powerloss
 	/*for (i = 0; i < SWITCH_COUNT; i++)
@@ -526,8 +526,8 @@ int main(void)
 	UART_PUTF ("Last received base station PacketCounter: %u\r\n\r\n", station_packetcounter);
 
 	// init AES key
-	eeprom_read_block (aes_key, (uint8_t *)EEPROM_AESKEY_BYTE, 32);
-
+	e2p_generic_get_aeskey(aes_key);
+	
 	rfm12_init();
 	PWM_init();
 	io_init();

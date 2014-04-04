@@ -18,7 +18,7 @@
 
 package shcee.editors;
 
-import shcee.LabelArea;
+import java.awt.Color;
 
 import org.w3c.dom.Node;
 
@@ -28,14 +28,13 @@ public class ReservedBits extends AbstractEditor
 
 	private int bits;
 	
-	public ReservedBits(Node root)
+	public ReservedBits(Node root, Color baseColor, int arrayIndex)
 	{
-		super(root);
+		super(root, baseColor, arrayIndex);
 		
 		// add label about format
-		LabelArea formatLabel = new LabelArea("Reserved area of " + bits + " bits ("
-				+ (bits / 8) + "  bytes)");
-		add(formatLabel);
+		format = "Reserved area of " + bits + " bits (" + (bits / 8) + "  bytes)";
+		addLabel(format);
 	}
 
 	@Override
