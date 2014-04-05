@@ -82,20 +82,17 @@ SHC_TEMP_Parse($$)
   my ($hash, $msg) = @_;
   my $name = $hash->{NAME};
   my ($id, $pktcnt, $msgtype, $msggroupid, $msgid, $msgdata);
-  my ($tmp, $hum, $brt, $bat);  # temperature, humidity, brightness, battery
-  my ($vmajor, $vminor, $vpatch, $vhash); # version information
-  my ($on, $timeout); # power switch status
-  
+
   # NEW smarthomatic v0.5.0
-  # 
+  #
   # SHC MESSAGES (Details in http://www.smarthomatic.org/basics/message_catalog.html):
   # Generic (MsgGroup=0):
   #   Version(1):
   #     Packet Data: SenderID=31;PacketCounter=809;MessageType=8;MessageGroupID=0;MessageID=1;MessageData=00000000000000000000000000000000000000000000;Major=0;Minor=0;Patch=0;Hash=00000000;
   #   Battery(5):
   #     Packet Data: SenderID=31;PacketCounter=102;MessageType=8;MessageGroupID=0;MessageID=5;MessageData=c20000000004;Percentage=97;
-  # EnvSensor (MsgGroup=20):
-  #   TempHumBriStatus:
+  # EnvSensor (MsgGroup=10):
+  #   TempHumBriStatus(1):
   #     Packet Data: SenderID=31;PacketCounter=677;MessageType=8;MessageGroupID=10;MessageID=1;MessageData=0960001f0001;Temperature=24.00;Humidity=0.0;Brightness=62;
   # PowerSwitch (MsgGroup=20):
   #   SwitchState(1)
@@ -137,7 +134,24 @@ SHC_TEMP_Parse($$)
   readingsBulkUpdate($rhash, "msgid", $msgid);
   readingsBulkUpdate($rhash, "msgdata", $msgdata);
 
-  if ($msg =~ /.*;Temperature=([0-9\.\-]*);Humidity=([0-9\.]*);Brightness=([0-9\.]*);/) {
+  if ($msg =~ /.*;Major=(\d*);Minor=(\d*);Patch=(\d*);Hash=([0-9a-zA-Z]*);/)
+  {
+    # Generic (MsgGroup=0): Version(1):
+    readingsBulkUpdate($rhash, "version_major", $1);
+    readingsBulkUpdate($rhash, "version_minor", $2);
+    readingsBulkUpdate($rhash, "version_patch", $3);
+    readingsBulkUpdate($rhash, "version_hash", $4);
+  }
+  elsif ($msg =~ /.*;Percentage=(\d*);/)
+  {
+    # Generic (MsgGroup=0): Battery(5):
+    readingsBulkUpdate($rhash, "battery", $1);
+  }
+  elsif ($msg =~ /.*;Temperature=([0-9\.\-]*);Humidity=([0-9\.]*);Brightness=([0-9\.]*);/)
+  {
+    # EnvSensor (MsgGroup=10): TempHumBriStatus(1):
+    my ($tmp, $hum, $brt);  # temperature, humidity, brightness
+
     $tmp = $1;
     $hum = $2;
     $brt = $3;
@@ -146,23 +160,12 @@ SHC_TEMP_Parse($$)
     readingsBulkUpdate($rhash, "temperature", $tmp);
     readingsBulkUpdate($rhash, "humidity", $hum);
     readingsBulkUpdate($rhash, "brightness", $brt);
+  }
+  elsif ($msg =~ /.*;On=(\d*);TimeoutSec=(\d*);/)
+  {
+    # PowerSwitch (MsgGroup=20): SwitchState(1)
+    my ($on, $timeout, $state); # power switch status
 
-  } elsif ($msg =~ /.*;Percentage=(\d*);/) {
-    $bat = $1;
-
-    readingsBulkUpdate($rhash, "battery", $bat);
-  } elsif ($msg =~ /.*;Major=(\d*);Minor=(\d*);Patch=(\d*);Hash=([0-9a-zA-Z]*);/) {
-    $vmajor = $1;
-    $vminor = $2;
-    $vpatch = $3;
-    $vhash = $4;
-
-    readingsBulkUpdate($rhash, "version_major", $vmajor);
-    readingsBulkUpdate($rhash, "version_minor", $vminor);
-    readingsBulkUpdate($rhash, "version_patch", $vpatch);
-    readingsBulkUpdate($rhash, "version_hash", $vhash);
-  } elsif ($msg =~ /.*;On=(\d*);TimeoutSec=(\d*);/) {
-    my $state = "";
     $on = $1;
     $timeout = $2;
     $state = $on==0?"off":"on";
@@ -170,8 +173,7 @@ SHC_TEMP_Parse($$)
     readingsBulkUpdate($rhash, "state", $state);
     readingsBulkUpdate($rhash, "on", $on);
     readingsBulkUpdate($rhash, "timeout", $timeout);
-  } 
-
+  }
 
   readingsEndUpdate($rhash,1);    # Do triggers to update log file
   return @list;
