@@ -16,7 +16,7 @@ SHC_TEMP_Initialize($)
 {
   my ($hash) = @_;
 
-  $hash->{Match}     = "^Sender ID=[0-9]";
+  $hash->{Match}     = "^Packet Data: SenderID=[0-9]";
   $hash->{DefFn}     = "SHC_TEMP_Define";
   $hash->{UndefFn}   = "SHC_TEMP_Undef";
   $hash->{ParseFn}   = "SHC_TEMP_Parse";
@@ -38,7 +38,7 @@ SHC_TEMP_Define($$)
     return $msg;
   }
 
-  $a[2] =~ m/^([2][0-9])$/i;	# TODO Whats the appropriate range for SHC
+  $a[2] =~ m/^([0-9][0-9])$/i;	# TODO Whats the appropriate range for SHC
   return "$a[2] is not a valid SHC_TEMP id" if( !defined($1) );
 
   my $name = $a[0];
@@ -81,20 +81,27 @@ SHC_TEMP_Parse($$)
 {
   my ($hash, $msg) = @_;
   my $name = $hash->{NAME};
-  my ($id, $pktcnt, $cmd_id, $cmd_name);
+  my ($id, $pktcnt, $msgtype, $msggroupid, $msgid, $msgdata);
   my ($tmp, $hum, $brt, $bat);  # temperature, humidity, brightness, battery
+  
+  # OLD smarthomatic v0.3.0
   # Sender ID=21;Packet Counter=24338;Command ID=10;Command Name=Temperature Sensor Status;Battery=80;Temperature=18.49;Humidity=56.91;Brightness=1
+  # NEW smarthomatic v0.5.0
+  # Packet Data: SenderID=31;PacketCounter=677;MessageType=8;MessageGroupID=10;MessageID=1;MessageData=0960001f0001;Temperature=24.00;Humidity=0.0;Brightness=62;
 
-  if ($msg =~ /^Sender ID=(\d*);Packet Counter=(\d*);Command ID=(\d*);Command Name=(.*?);Battery=(\d*);Temperature=([0-9\.]*);Humidity=([0-9\.]*);Brightness=(\d*)/)
+  #if ($msg =~ /^Packet Data: Sender ID=(\d*);Packet Counter=(\d*);MessageType=(\d*);MessageGroupID=(\d*);MessageID=(\d*);MessageData=([0-9a-f]*);Temperature=([0-9\.]*);Humidity=([0-9\.]*);Brightness=(\d*)/)
+
+  if ($msg =~ /^Packet Data: SenderID=(\d*);PacketCounter=(\d*);MessageType=(\d*);MessageGroupID=(\d*);MessageID=(\d*);MessageData=([0-9a-f]*);Temperature=([0-9\.\-]*);Humidity=([0-9\.]*);Brightness=([0-9\.]*);/)
   {
     $id = $1;
     $pktcnt = $2;
-    $cmd_id = $3;
-    $cmd_name = $4;
-    $bat = $5;
-    $tmp = $6;
-    $hum = $7;
-    $brt = $8;
+    $msgtype = $3;
+    $msggroupid = $4;
+    $msgid = $5;
+    $msgdata = $6;
+    $tmp = $7;
+    $hum = $8;
+    $brt = $9;
   } else {
     Log3 $hash, 4, "SHC_TEMP  ($msg) data error";
     return "";
@@ -119,7 +126,13 @@ SHC_TEMP_Parse($$)
 
   readingsBeginUpdate($rhash);
   readingsBulkUpdate($rhash, "state", "T: $tmp  H: $hum  B:$brt");
-  readingsBulkUpdate($rhash, "battery", $bat);
+  readingsBulkUpdate($rhash, "id", $id);
+  readingsBulkUpdate($rhash, "pktcnt", $pktcnt);
+  readingsBulkUpdate($rhash, "msgtype", $msgtype);
+  readingsBulkUpdate($rhash, "msggroupid", $msggroupid);
+  readingsBulkUpdate($rhash, "msgid", $msgid);
+  readingsBulkUpdate($rhash, "msgdata", $msgdata);
+  readingsBulkUpdate($rhash, "battery", $brt);
   readingsBulkUpdate($rhash, "temperature", $tmp);
   readingsBulkUpdate($rhash, "humidity", $hum);
   readingsBulkUpdate($rhash, "brightness", $brt);

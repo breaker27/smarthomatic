@@ -21,7 +21,7 @@ sub SHC_SimpleWrite(@);
 my $clientsSHC = ":SHC_TEMP:BASE:xxx:";
 
 my %matchListSHC = (
-    "1:SHC_TEMP" => "^Sender ID=[0-9]",
+    "1:SHC_TEMP" => "^Packet Data: SenderID=[0-9]",
     "2:xxx" => "^\\S+\\s+22",
     "3:xxx" => "^\\S+\\s+11",
     "4:xxx" => "^\\S+\\s+9 ",
@@ -393,10 +393,9 @@ SHC_Parse($$$$)
   my ($hash, $iohash, $name, $rmsg) = @_;
   my $dmsg = $rmsg;
   
-  # Ignore AES info message: "Received (AES key 0): 15 ..."
-  return if($dmsg =~ m/^Received \(AES key/ );
-  # Ignore Received garbage (CRC wrong after decryption)
-  return if($dmsg =~ m/^Received garbage/ );
+  next if(!$dmsg || length($dmsg) < 1);            # Bogus messages
+  return if($dmsg =~ m/^Received \(AES key/ );     # Ignore Received (AES kex x)
+  return if($dmsg =~ m/^Received garbage/ );       # Received garbage
   
   if($dmsg =~ m/^\[/ ) {
     $hash->{VERSION} = $dmsg;
