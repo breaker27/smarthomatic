@@ -37,6 +37,7 @@
 #include "sht11.h"
 #include "i2c.h"
 #include "lm75.h"
+#include "bmp085.h"
 
 #include "aes256.h"
 #include "util.h"
@@ -48,6 +49,7 @@
 
 uint8_t temperature_sensor_type = 0;
 uint8_t brightness_sensor_type = 0;
+uint8_t barometric_sensor_type = 0;
 uint8_t batt_status_cycle = SEND_BATT_STATUS_CYCLE - 1; // send promptly after startup
 uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly after startup
 
@@ -57,6 +59,7 @@ int main(void)
 	uint16_t vlight = 0;
 	int32_t temp = 0;
 	uint16_t hum = 0;
+	uint32_t baro = 0;
 	uint8_t device_id = 0;
 	uint8_t avg = 0;
 	uint8_t bat_p_val = 0;
@@ -76,6 +79,7 @@ int main(void)
 	// read device specific config
 	temperature_sensor_type = e2p_envsensor_get_temperaturesensortype();
 	brightness_sensor_type = e2p_envsensor_get_brightnesssensortype();
+	barometric_sensor_type = e2p_envsensor_get_barometricsensortype();
 
 	// read device id
 	device_id = e2p_generic_get_deviceid();
@@ -91,6 +95,7 @@ int main(void)
 	UART_PUTF ("Packet counter: %lu\r\n", packetcounter);
 	UART_PUTF ("Temperature sensor type: %u\r\n", temperature_sensor_type);
 	UART_PUTF ("Brightness sensor type: %u\r\n", brightness_sensor_type);
+	UART_PUTF ("Barometric sensor Type: %u\r\n", barometric_sensor_type);
 	
 	// init AES key
 	e2p_generic_get_aeskey(aes_key);
@@ -105,14 +110,21 @@ int main(void)
 	
 	UART_PUTF ("Min. battery voltage: %umV\r\n", vempty);
 
+	if (barometric_sensor_type == BAROMETRICSENSORTYPE_BMP085)
+	{
+		i2c_enable();
+		bmp085_init();
+		i2c_disable();
+	}
+
 	led_blink(500, 500, 3);
 	
 	rfm12_init();
 	
-	//rfm12_set_wakeup_timer(0b11100110000);   // ~ 6s
+	rfm12_set_wakeup_timer(0b11100110000);   // ~ 6s
 	//rfm12_set_wakeup_timer(0b11111000000);   // ~ 24576ms
 	//rfm12_set_wakeup_timer(0b0100101110101); // ~ 59904ms
-	rfm12_set_wakeup_timer(0b101001100111); // ~ 105472ms  DEFAULT VALUE!!!
+	//rfm12_set_wakeup_timer(0b101001100111); // ~ 105472ms  DEFAULT VALUE!!!
 
 	sei();
 
@@ -150,6 +162,14 @@ int main(void)
 			i2c_disable();
 		}
 
+		if (barometric_sensor_type == BAROMETRICSENSORTYPE_BMP085)
+		{
+			i2c_enable();
+			baro += bmp085_meas_pressure();
+			temp += bmp085_meas_temp();
+			i2c_disable();
+		}
+		
 		avg++;
 		
 		if (avg >= AVERAGE_COUNT)
@@ -158,6 +178,7 @@ int main(void)
 			vlight /= AVERAGE_COUNT;
 			temp /= AVERAGE_COUNT;
 			hum /= AVERAGE_COUNT * 10;
+			baro /= AVERAGE_COUNT;
 
 			inc_packetcounter();
 
@@ -172,7 +193,7 @@ int main(void)
 			{
 				msg_envsensor_temphumbristatus_set_brightness(100 - (int)((long)vlight * 100 / 1024));
 			}
-			
+
 			pkg_header_calc_crc32();
 			
 			bat_p_val = bat_percentage(vbat, vempty);
@@ -180,7 +201,7 @@ int main(void)
 			UART_PUTF("Battery: %u%%, Temperature: ", bat_p_val);
 			print_signed(temp);
 			UART_PUTF2(" deg.C, Humidity: %u.%u", hum / 10, hum % 10);
-			UART_PUTS("%\r\n");
+			UART_PUTF("%%, Barometric: %ld pascal\r\n", baro);
 
 			rfm12_send_bufx();
 			rfm12_tick(); // send packet, and then WAIT SOME TIME BEFORE GOING TO SLEEP (otherwise packet would not be sent)
@@ -189,7 +210,7 @@ int main(void)
 			_delay_ms(200);
 			switch_led(0);
 
-			vbat = temp = hum = vlight = avg = 0;
+			vbat = temp = baro = hum = vlight = avg = 0;
 			batt_status_cycle++;
 			version_status_cycle++;
 		}

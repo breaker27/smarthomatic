@@ -131,8 +131,21 @@
 				<Name>Photocell</Name>
 			</Element>
 		</EnumValue>
+		<EnumValue>
+			<ID>BarometricSensorType</ID>
+			<Description>You can choose one of the supported barometric pressure sensors.</Description>
+			<Bits>8</Bits>
+			<Element>
+				<Value>0</Value>
+				<Name>NoSensor</Name>
+			</Element>
+			<Element>
+				<Value>1</Value>
+				<Name>BMP085</Name>
+			</Element>
+		</EnumValue>
 		<Reserved>
-			<Bits>7664</Bits>
+			<Bits>7656</Bits>
 		</Reserved>
 	</Block>
 	<Block>

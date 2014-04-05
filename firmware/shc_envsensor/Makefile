@@ -30,6 +30,7 @@ TARGET = shc_envsensor
 #   C			*.c
 #   Assembler	*.S
 CSRC = $(TARGET).c rfm12.c util.c uart.c aes256.c sht11.c fuses.c lm75.c i2c.c
+CSRC = $(TARGET).c rfm12.c util.c uart.c aes256.c sht11.c fuses.c lm75.c i2c.c bmp085.c
 ASRC =
 FUSES = -U hfuse:w:hfuse.hex:i -U lfuse:w:lfuse.hex:i -U efuse:w:efuse.hex:i -u
 
