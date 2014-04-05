@@ -33,14 +33,23 @@ SHC_TEMP_Define($$)
   my ($hash, $def) = @_;
   my @a = split("[ \t][ \t]*", $def);
 
-  if(@a != 3 ) {
-    my $msg = "wrong syntax: define <name> SHC_TEMP <id> ";
+  if(@a < 3 || @a > 4) {
+    my $msg = "wrong syntax: define <name> SHC_TEMP <SenderID> [<AesKey>] ";
     Log3 undef, 2, $msg;
     return $msg;
   }
 
   $a[2] =~ m/^([0-9][0-9])$/i;	# TODO Whats the appropriate range for SHC
-  return "$a[2] is not a valid SHC_TEMP id" if( !defined($1) );
+  return "$a[2] is not a valid SHC_TEMP SenderID" if( !defined($1) );
+
+  my $aeskey;
+
+  if(@a eq 3){
+    $aeskey = 0;
+  } else {
+    return "$a[3] is not a valid SHC_TEMP AesKey" if($a[3] lt 0 || $a[3] gt 15);
+    $aeskey = $a[3]
+  }
 
   my $name = $a[0];
   my $addr = $a[2];
@@ -49,6 +58,7 @@ SHC_TEMP_Define($$)
                                                                                              && $modules{SHC_TEMP}{defptr}{$addr}->{NAME} ne $name );
 
   $hash->{addr} = $addr;
+  $hash->{aeskey} = $aeskey;
 
   $modules{SHC_TEMP}{defptr}{$addr} = $hash;
 
@@ -241,19 +251,12 @@ SHC_TEMP_Send($$@)
   # sKK09SSSSPPPPPPEE.........Ack
   # sKK0ASSSSPPPPPPEEGGMMDD...AckStatus
 
-  my $aeskey = "00";
   my $msggrp = "14";         # msggrp = 20 convert to hex = 14
   my $msgid = "01";
 
   $hash->{SHC_TEMP_lastSend} = TimeNow();
 
-  my $msg = sprintf( "s%s%s%04x%s%s%s\r", $aeskey, $cmd, $hash->{addr}, $msggrp, $msgid, $data );
-
-
-  #  hex($hash->{channel}),
-  #  $cmd,
-  #  hex(substr($hash->{addr},0,2)), hex(substr($hash->{addr},2,2)), hex(substr($hash->{addr},4,2)),
-  #  $data );
+  my $msg = sprintf( "s%02x%s%04x%s%s%s\r", $hash->{aeskey}, $cmd, $hash->{addr}, $msggrp, $msgid, $data );
 
   # DEBUG
   Log3 "SHC_TEMP_Send", 1, "SHC_TEMP_SEND: $msg";
@@ -271,19 +274,19 @@ SHC_TEMP_Send($$@)
 <ul>
 
   <tr><td>
-  The SHC_TEMP is a RF controlled AC mains plug with integrated power meter functionality from ELV.<br><br>
+  The SHC_TEMP A secure and extendable Open Source home automation system.<br><br>
+  
+  More info can be found in <a href="https://www.smarthomatic.org">Smarthomatic Website</a><br><br>
 
-  It can be integrated in to FHEM via a <a href="#JeeLink">JeeLink</a> as the IODevice.<br><br>
-
-  The JeeNode sketch required for this module can be found in .../contrib/arduino/36_SHC_TEMP-pcaSerial.zip.<br><br>
-
-  <a name="SHC_TEMPDefine"></a>
+  <a name="SHC_TEMP_Define"></a>
   <b>Define</b>
   <ul>
-    <code>define &lt;name&gt; SHC_TEMP &lt;addr&gt; &lt;channel&gt;</code> <br>
+    <code>define &lt;name&gt; SHC_TEMP &lt;SenderID&gt; [&lt;AesKey&gt;]</code> <br>
     <br>
-    addr is a 6 digit hex number to identify the SHC_TEMP device.
-    channel is a 2 digit hex number to identify the SHC_TEMP device.<br><br>
+    <li><code>&lt;SenderID<li><code>&lt; is a number ranging from 0 .. 4095 to identify the SHC_TEMP device.
+    <li>The optional <code>&lt;AesKey<li><code>&lt; is a number ranging from 0 .. 15 to select an encryption key.
+    It is required for the basestation to communicate with remote devides
+    The default value is 0.<br><br>
     Note: devices are autocreated on reception of the first message.<br>
   </ul>
   <br>
@@ -293,12 +296,8 @@ SHC_TEMP_Send($$@)
   <ul>
     <li>on</li>
     <li>off</li>
-    <li>identify<br>
-      Blink the status led for ~5 seconds.</li>
-    <li>reset<br>
-      Reset consumption counters</li>
     <li>statusRequest<br>
-      Request device status update.</li>
+      Not supported yes.</li>
     <li><a href="#setExtensions"> set extensions</a> are supported.</li>
   </ul><br>
 
@@ -310,11 +309,7 @@ SHC_TEMP_Send($$@)
   <a name="SHC_TEMP_Readings"></a>
   <b>Readings</b>
   <ul>
-    <li>power</li>
-    <li>consumption</li>
-    <li>consumptionTotal<br>
-      will be created as a default user reading to have a continous consumption value that is not influenced
-      by the regualar reset or overflow of the normal consumption reading</li>
+    <li>N/A</li>
   </ul><br>
 
   <a name="SHC_TEMP_Attr"></a>
