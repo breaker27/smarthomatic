@@ -84,16 +84,22 @@ SHC_TEMP_Parse($$)
   my ($id, $pktcnt, $msgtype, $msggroupid, $msgid, $msgdata);
   my ($tmp, $hum, $brt, $bat);  # temperature, humidity, brightness, battery
   my ($vmajor, $vminor, $vpatch, $vhash); # version information
+  my ($on, $timeout); # power switch status
   
   # NEW smarthomatic v0.5.0
-  # Data Message:
-  #   Packet Data: SenderID=31;PacketCounter=677;MessageType=8;MessageGroupID=10;MessageID=1;MessageData=0960001f0001;Temperature=24.00;Humidity=0.0;Brightness=62;
-  # Battery Status Message:
-  #   Packet Data: SenderID=31;PacketCounter=102;MessageType=8;MessageGroupID=0;MessageID=5;MessageData=c20000000004;Percentage=97;
-  # Version Status Message:
-  #   Packet Data: SenderID=31;PacketCounter=809;MessageType=8;MessageGroupID=0;MessageID=1;MessageData=00000000000000000000000000000000000000000000;Major=0;Minor=0;Patch=0;Hash=00000000;
-  
-  #if ($msg =~ /^Packet Data: SenderID=(\d*);PacketCounter=(\d*);MessageType=(\d*);MessageGroupID=(\d*);MessageID=(\d*);MessageData=([0-9a-f]*);Temperature=([0-9\.\-]*);Humidity=([0-9\.]*);Brightness=([0-9\.]*);/)
+  # 
+  # SHC MESSAGES (Details in http://www.smarthomatic.org/basics/message_catalog.html):
+  # Generic (MsgGroup=0):
+  #   Version(1):
+  #     Packet Data: SenderID=31;PacketCounter=809;MessageType=8;MessageGroupID=0;MessageID=1;MessageData=00000000000000000000000000000000000000000000;Major=0;Minor=0;Patch=0;Hash=00000000;
+  #   Battery(5):
+  #     Packet Data: SenderID=31;PacketCounter=102;MessageType=8;MessageGroupID=0;MessageID=5;MessageData=c20000000004;Percentage=97;
+  # EnvSensor (MsgGroup=20):
+  #   TempHumBriStatus:
+  #     Packet Data: SenderID=31;PacketCounter=677;MessageType=8;MessageGroupID=10;MessageID=1;MessageData=0960001f0001;Temperature=24.00;Humidity=0.0;Brightness=62;
+  # PowerSwitch (MsgGroup=20):
+  #   SwitchState(1)
+  #     Packet Data: SenderID=40;PacketCounter=6533;MessageType=8;MessageGroupID=20;MessageID=1;MessageData=ac8c80000000;On=1;TimeoutSec=22809;
   if ($msg =~ /^Packet Data: SenderID=(\d*);PacketCounter=(\d*);MessageType=(\d*);MessageGroupID=(\d*);MessageID=(\d*);MessageData=([0-9a-f]*)/) {
     $id = $1;
     $pktcnt = $2;
@@ -155,7 +161,16 @@ SHC_TEMP_Parse($$)
     readingsBulkUpdate($rhash, "version_minor", $vminor);
     readingsBulkUpdate($rhash, "version_patch", $vpatch);
     readingsBulkUpdate($rhash, "version_hash", $vhash);
-  }
+  } elsif ($msg =~ /.*;On=(\d*);TimeoutSec=(\d*);/) {
+    my $state = "";
+    $on = $1;
+    $timeout = $2;
+    $state = $on==0?"off":"on";
+
+    readingsBulkUpdate($rhash, "state", $state);
+    readingsBulkUpdate($rhash, "on", $on);
+    readingsBulkUpdate($rhash, "timeout", $timeout);
+  } 
 
 
   readingsEndUpdate($rhash,1);    # Do triggers to update log file
