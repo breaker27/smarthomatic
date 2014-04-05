@@ -197,8 +197,11 @@ SHC_TEMP_Set($@)
 
   my $readonly = AttrVal($name, "readonly", "0" );
 
-  my $list = "identify:noArg reset:noArg statusRequest:noArg";
+  my $list = "";
   $list .= " off:noArg on:noArg toggle:noArg" if( !$readonly );
+
+  # Timeout functionality for SHC_TEMP is not implemented, because FHEMs internal notification system 
+  # is able to do this as well. Even more it supports intervals, off-for-timer, off-till ...
 
   if( $cmd eq 'toggle' ) {
     $cmd = ReadingsVal($name,"state","on") eq "off" ? "on" :"off";
@@ -206,10 +209,10 @@ SHC_TEMP_Set($@)
 
   if( !$readonly && $cmd eq 'off' ) {
     readingsSingleUpdate($hash, "state", "set-$cmd", 1);
-    SHC_TEMP_Send( $hash, "01", "0000" );     # TODO convert "0000" to correct format
+    SHC_TEMP_Send( $hash, "01", "0000" );
   } elsif( !$readonly && $cmd eq 'on' ) {
     readingsSingleUpdate($hash, "state", "set-$cmd", 1);
-    SHC_TEMP_Send( $hash, "01", "ffff" );     # TODO convert "ffff" to correct format
+    SHC_TEMP_Send( $hash, "01", "8000" );
   } elsif( $cmd eq 'statusRequest' ) {
     readingsSingleUpdate($hash, "state", "set-$cmd", 1);
     SHC_TEMP_Send( $hash, "08", "" );
@@ -239,7 +242,6 @@ SHC_TEMP_Send($$@)
   # sKK0ASSSSPPPPPPEEGGMMDD...AckStatus
 
   my $aeskey = "00";
-  my $receiverID = "0028";   # id = 40 convert to hex = 0028
   my $msggrp = "14";         # msggrp = 20 convert to hex = 14
   my $msgid = "01";
 
