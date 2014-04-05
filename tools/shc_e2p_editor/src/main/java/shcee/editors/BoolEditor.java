@@ -26,7 +26,7 @@ import org.w3c.dom.Node;
 
 import shcee.Util;
 
-public class IntEditor extends AbstractEditor
+public class BoolEditor extends AbstractEditor
 {
 	private static final long serialVersionUID = -7593115068369714873L;
 
@@ -35,12 +35,16 @@ public class IntEditor extends AbstractEditor
 	private int bits;
 	private UIntTextArea input;
 	
-	public IntEditor(Node root, Color baseColor, int arrayIndex)
+	public BoolEditor(Node root, Color baseColor, int arrayIndex)
 	{
 		super(root, baseColor, arrayIndex);
 		
+		minVal = 0;
+		maxVal = 1;
+		bits = 8;
+		
 		// add label about format
-		format = "Int of " + bits + " bits in the range " + minVal + ".." + maxVal;
+		format = "Boolean of 8 bits";
 		addLabel(format);
 		
 		// add input
@@ -61,14 +65,7 @@ public class IntEditor extends AbstractEditor
 	@Override
 	public void setDefinitionParameter(Node n)
 	{
-		String name = n.getNodeName();
-		
-		if (name.equals("MinVal"))
-			minVal = Integer.parseInt(n.getFirstChild().getNodeValue());
-		else if (name.equals("MaxVal"))
-			maxVal = Integer.parseInt(n.getFirstChild().getNodeValue());
-		else if (name.equals("Bits"))
-			bits = Integer.parseInt(n.getFirstChild().getNodeValue());
+		// no parameters
 	}
 
 	@Override
@@ -83,7 +80,7 @@ public class IntEditor extends AbstractEditor
 		input.setText("" + data);
 		caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
 
-		return bits;
+		return 8;
 	}
 
 	@Override
@@ -91,7 +88,7 @@ public class IntEditor extends AbstractEditor
 	{
 		int value = Integer.parseInt(input.getText());		
 		Util.setIntInByteArray(value, eeprom, offsetBit, bits);
-		return bits;
+		return 8;
 	}
 
 	@Override

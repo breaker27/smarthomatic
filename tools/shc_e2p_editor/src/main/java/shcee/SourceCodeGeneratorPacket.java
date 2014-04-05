@@ -157,7 +157,7 @@ public class SourceCodeGeneratorPacket
 		StringBuilder funcDefsH = new StringBuilder();
 		ArrayList<String> dataFieldsH = new ArrayList<String>();
 	
-		int offsetHeader = generateDataFieldDefs(headerNode, false, 0, "pkg_header", funcDefsH, dataFieldsH);
+		int offsetHeader = generateDataFieldDefs(headerNode, false, 0, "pkg_header", funcDefsH, dataFieldsH, 0);
 		
 		outHeader.println(funcDefsH.toString());
 		outHeader.println("// overall length: " + offsetHeader + " bits");
@@ -354,7 +354,7 @@ public class SourceCodeGeneratorPacket
 				StringBuilder funcDefsHE = new StringBuilder();
 				ArrayList<String> dataFieldsHE = new ArrayList<String>();
 			
-				int offsetHeaderExt = generateDataFieldDefs(extensionNode, false, offset, "pkg_headerext_" + messageTypeName.toLowerCase(), funcDefsHE, dataFieldsHE);
+				int offsetHeaderExt = generateDataFieldDefs(extensionNode, false, offset, "pkg_headerext_" + messageTypeName.toLowerCase(), funcDefsHE, dataFieldsHE, 0);
 				
 				out.println(funcDefsHE.toString());
 				out.println("// overall length: " + offsetHeaderExt + " bits");
@@ -485,7 +485,7 @@ public class SourceCodeGeneratorPacket
 
 				StringBuilder funcDefs = new StringBuilder();
 
-				int offset2 = generateDataFieldDefs(msgNode, true, 0, "msg_" + fullMessageName, funcDefs, dataFields);
+				int offset2 = generateDataFieldDefs(msgNode, true, 0, "msg_" + fullMessageName, funcDefs, dataFields, 0);
 
 				out.println("");
 				
@@ -647,8 +647,14 @@ public class SourceCodeGeneratorPacket
 	 * @return
 	 * @throws TransformerException
 	 */
-	private int generateDataFieldDefs(Node dataNode, boolean useHeaderOffset, int offset, String functionPrefix, StringBuilder sb, ArrayList<String> dataFields) throws TransformerException
-	{	
+	private int generateDataFieldDefs(Node dataNode, boolean useHeaderOffset, int offset, String functionPrefix, StringBuilder sb, ArrayList<String> dataFields, int arrayLength) throws TransformerException
+	{
+		boolean isArray = arrayLength > 0;
+		
+		String arrayNameSuffix = isArray ? "[" + arrayLength + "]" : "";
+		String funcParam = isArray ? "uint8_t index, " : "";	
+		String funcParam2 = isArray ? "uint8_t index" : "void";	
+
 		NodeList childs = dataNode.getChildNodes();
 		
 		for (int e = 0; e < childs.getLength(); e++)
@@ -666,7 +672,7 @@ public class SourceCodeGeneratorPacket
 				// enum
 				NodeList enumElements = XPathAPI.selectNodeList(element, "Element");
 				
-				sb.append("// " + ID1 + " (EnumValue)" + newline);
+				sb.append("// " + ID1 + " (EnumValue" + arrayNameSuffix + ")" + newline);
 				
 				if (!description.equals(""))
 				{
@@ -690,13 +696,14 @@ public class SourceCodeGeneratorPacket
 	
 				sb.append("} " + ID1 + "Enum;" + newline + newline);
 				
+				String offsetStr = calcAccessStr(useHeaderOffset, offset, bits, isArray);
+
 				// SET
 				
 				sb.append("// Set " + ID1 + " (EnumValue)" + newline);
-				String offsetStr = generateOffsetString(useHeaderOffset, offset);
 				sb.append("// Offset: " + offsetStr + ", length bits " + bits + newline);			
 				
-				sb.append("static inline void " + functionPrefix + "_set_" + ID1.toLowerCase() + "(" + ID1 + "Enum val)" + newline);
+				sb.append("static inline void " + functionPrefix + "_set_" + ID1.toLowerCase() + "(" + funcParam + ID1 + "Enum val)" + newline);
 				sb.append("{" + newline);
 				sb.append("  array_write_UIntValue(" + offsetStr + ", " + bits + ", val, bufx);" + newline);				
 				sb.append("}" + newline);
@@ -707,24 +714,24 @@ public class SourceCodeGeneratorPacket
 				sb.append("// Get " + ID1 + " (EnumValue)" + newline);
 				sb.append("// Offset: " + offsetStr + ", length bits " + bits + newline);			
 				
-				sb.append("static inline " + ID1 + "Enum " + functionPrefix + "_get_" + ID1.toLowerCase() + "(void)" + newline);
+				sb.append("static inline " + ID1 + "Enum " + functionPrefix + "_get_" + ID1.toLowerCase() + "(" + funcParam2 + ")" + newline);
 				sb.append("{" + newline);
 				sb.append("  return array_read_UIntValue32(" + offsetStr + ", " + bits + ", 0, " + ((1 << bits) - 1) + ", bufx);" + newline);
 				sb.append("}" + newline);
 				sb.append(newline);
 				
-				offset += bits;
+				offset += isArray ? bits * arrayLength : bits;
 			}
 			else if (element.getNodeName().equals("UIntValue"))
 			{
 				String ID = Util.getChildNodeValue(element, "ID");
 				dataFields.add(ID);
 				
-				String bits = Util.getChildNodeValue(element, "Bits");
+				int bits = Integer.parseInt(Util.getChildNodeValue(element, "Bits"));
 				String minVal = Util.getChildNodeValue(element, "MinVal");
 				String maxVal = Util.getChildNodeValue(element, "MaxVal");
 				
-				sb.append("// " + ID + " (UIntValue)" + newline);
+				sb.append("// " + ID + " (UIntValue" + arrayNameSuffix + ")" + newline);
 				
 				if (!description.equals(""))
 				{
@@ -733,13 +740,14 @@ public class SourceCodeGeneratorPacket
 				
 				sb.append(newline);
 				
+				String offsetStr = calcAccessStr(useHeaderOffset, offset, bits, isArray);
+
 				// SET
 				
 				sb.append("// Set " + ID + " (UIntValue)" + newline);
-				String offsetStr = generateOffsetString(useHeaderOffset, offset);
 				sb.append("// Offset: " + offsetStr + ", length bits " + bits + ", min val " + minVal + ", max val " + maxVal + newline);
 				
-				sb.append("static inline void " + functionPrefix + "_set_" + ID.toLowerCase() + "(uint32_t val)" + newline);
+				sb.append("static inline void " + functionPrefix + "_set_" + ID.toLowerCase() + "(" + funcParam + "uint32_t val)" + newline);
 				sb.append("{" + newline);
 				sb.append("  array_write_UIntValue(" + offsetStr + ", " + bits + ", val, bufx);" + newline);
 				sb.append("}" + newline);
@@ -751,24 +759,25 @@ public class SourceCodeGeneratorPacket
 				sb.append("// Offset: " + offsetStr + ", length bits " + bits + ", min val " + minVal + ", max val " + maxVal + newline);
 				
 				// TODO: Return minimal type uint8_t, ...
-				sb.append("static inline uint32_t " + functionPrefix + "_get_" + ID.toLowerCase() + "(void)" + newline);
+				sb.append("static inline uint32_t " + functionPrefix + "_get_" + ID.toLowerCase() + "(" + funcParam2 + ")" + newline);
 				sb.append("{" + newline);
 				sb.append("  return array_read_UIntValue32(" + offsetStr + ", " + bits + ", " + minVal + ", " + maxVal + ", bufx);" + newline);
 				sb.append("}" + newline);
 				sb.append(newline);
 				
-				offset += Integer.parseInt(bits);
+				offset += isArray ? bits * arrayLength : bits;
+
 			}
 			else if (element.getNodeName().equals("IntValue"))
 			{
 				String ID = Util.getChildNodeValue(element, "ID");
 				dataFields.add(ID);
 				
-				String bits = Util.getChildNodeValue(element, "Bits");
+				int bits = Integer.parseInt(Util.getChildNodeValue(element, "Bits"));
 				String minVal = Util.getChildNodeValue(element, "MinVal");
 				String maxVal = Util.getChildNodeValue(element, "MaxVal");
 				
-				sb.append("// " + ID + " (IntValue)" + newline);
+				sb.append("// " + ID + " (IntValue" + arrayNameSuffix + ")" + newline);
 				
 				if (!description.equals(""))
 				{
@@ -777,13 +786,14 @@ public class SourceCodeGeneratorPacket
 				
 				sb.append(newline);
 				
+				String offsetStr = calcAccessStr(useHeaderOffset, offset, bits, isArray);
+
 				// SET
 				
 				sb.append("// Set " + ID + " (IntValue)" + newline);
-				String offsetStr = generateOffsetString(useHeaderOffset, offset);
 				sb.append("// Offset: " + offsetStr + ", length bits " + bits + ", min val " + minVal + ", max val " + maxVal + newline);
 				
-				sb.append("static inline void " + functionPrefix + "_set_" + ID.toLowerCase() + "(int32_t val)" + newline);
+				sb.append("static inline void " + functionPrefix + "_set_" + ID.toLowerCase() + "(" + funcParam + "int32_t val)" + newline);
 				sb.append("{" + newline);
 				sb.append("  array_write_IntValue(" + offsetStr + ", " + bits + ", val, bufx);" + newline);
 				sb.append("}" + newline);
@@ -795,21 +805,24 @@ public class SourceCodeGeneratorPacket
 				sb.append("// Offset: " + offsetStr + ", length bits " + bits + ", min val " + minVal + ", max val " + maxVal + newline);
 				
 				// TODO: Return minimal type uint8_t, ...
-				sb.append("static inline int32_t " + functionPrefix + "_get_" + ID.toLowerCase() + "(void)" + newline);
+				sb.append("static inline int32_t " + functionPrefix + "_get_" + ID.toLowerCase() + "(" + funcParam2 + ")" + newline);
 				sb.append("{" + newline);
 				sb.append("  return array_read_IntValue32(" + offsetStr + ", " + bits + ", " + minVal + ", " + maxVal + ", bufx);" + newline);
 				sb.append("}" + newline);
 				sb.append(newline);
 				
-				offset += Integer.parseInt(bits);
+				offset += isArray ? bits * arrayLength : bits;
 			}
 			else if (element.getNodeName().equals("ByteArray"))
 			{
+				if (isArray)
+					throw new TransformerException("Arrays are not supported for ByteArray elements!");
+				
 				String ID = Util.getChildNodeValue(element, "ID");
 				String bytes = Util.getChildNodeValue(element, "Bytes");
 				dataFields.add(ID);
 				
-				sb.append("// " + ID + " (ByteArray)" + newline);
+				sb.append("// " + ID + " (ByteArray" + arrayNameSuffix + ")" + newline);
 				
 				if (!description.equals(""))
 				{
@@ -817,9 +830,10 @@ public class SourceCodeGeneratorPacket
 				}
 				
 				sb.append(newline);
-				
+
+				String offsetStr = calcAccessStr(useHeaderOffset, offset, Integer.parseInt(bytes) * 8, isArray);
+
 				sb.append("// Set " + ID + " (ByteArray)" + newline);
-				String offsetStr = generateOffsetString(useHeaderOffset, offset);
 				sb.append("// Offset: " + offsetStr + ", length bytes " + bytes + newline);
 				
 				sb.append("static inline void " + functionPrefix + "_set_" + ID.toLowerCase() + "(array * val)" + newline);
@@ -834,8 +848,9 @@ public class SourceCodeGeneratorPacket
 			{
 				String ID = Util.getChildNodeValue(element, "ID");
 				dataFields.add(ID);
+				int bits = 1;
 				
-				sb.append("// " + ID + " (BoolValue)" + newline);
+				sb.append("// " + ID + " (BoolValue" + arrayNameSuffix + ")" + newline);
 				
 				if (!description.equals(""))
 				{
@@ -843,14 +858,15 @@ public class SourceCodeGeneratorPacket
 				}
 				
 				sb.append(newline);
-				
+
+				String offsetStr = calcAccessStr(useHeaderOffset, offset, 1, isArray);
+
 				// SET
 				
 				sb.append("// Set " + ID + " (BoolValue)" + newline);
-				String offsetStr = generateOffsetString(useHeaderOffset, offset);
 				sb.append("// Offset: " + offsetStr + ", length bits 1" + newline);
 				
-				sb.append("static inline void " + functionPrefix + "_set_" + ID.toLowerCase() + "(bool val)" + newline);
+				sb.append("static inline void " + functionPrefix + "_set_" + ID.toLowerCase() + "(" + funcParam + "bool val)" + newline);
 				sb.append("{" + newline);
 				sb.append("  array_write_UIntValue(" + offsetStr + ", " + 1 + ", val ? 1 : 0, bufx);" + newline);
 				sb.append("}" + newline);
@@ -862,13 +878,13 @@ public class SourceCodeGeneratorPacket
 				sb.append("// Offset: " + offsetStr + ", length bits 1" + newline);
 				
 				// TODO: Return minimal type uint8_t, ...
-				sb.append("static inline bool " + functionPrefix + "_get_" + ID.toLowerCase() + "(void)" + newline);
+				sb.append("static inline bool " + functionPrefix + "_get_" + ID.toLowerCase() + "(" + funcParam2 + ")" + newline);
 				sb.append("{" + newline);
 				sb.append("  return array_read_UIntValue8(" + offsetStr + ", 1, 0, 1, bufx) == 1;" + newline);
 				sb.append("}" + newline);
 				sb.append(newline);
 				
-				offset += 1;
+				offset += isArray ? bits * arrayLength : bits;
 			}
 			else if (element.getNodeName().equals("Reserved"))
 			{
@@ -877,29 +893,37 @@ public class SourceCodeGeneratorPacket
 				sb.append(newline);
 				offset += Integer.parseInt(bits);
 			}
+			else if (element.getNodeName().equals("Array"))
+			{
+				int length = Integer.parseInt(Util.getChildNodeValue(element, "Length"));
+				
+				offset += generateDataFieldDefs(element, useHeaderOffset, offset, functionPrefix, sb, dataFields, length);
+			}
 		}
 
 		return offset;
 	}
 	
-	private String generateOffsetString(boolean useHeaderOffset, int offset)
+	/**
+	 * Return a string used in generated e2p and packet data access functions to represent the byte and bit position.
+	 * @param useHeaderOffset  Tells if the additional "__HEADEROFFSETBITS" is to be used.
+	 * @param offset           The bit offset of the data value.
+	 * @param bits             The number of bits per value (relevant for arrays).
+	 * @param isArray          The information if an array is accessed by using a variable "index".
+	 * @return A string like "68 + (uint16_t)index * 1, 0"
+	 */
+	private String calcAccessStr(boolean useHeaderOffset, int offset, int bits, boolean isArray)
 	{
-		if (useHeaderOffset)
-		{
-			return "((uint16_t)__HEADEROFFSETBITS + " + offset + ") / 8, ((uint16_t)__HEADEROFFSETBITS + " + offset + ") % 8"; 
-		}
-		else
-		{
-			return (offset / 8) + ", " + (offset % 8);
-		}
-		 
+		String additionalOffsetPrefix = useHeaderOffset ? "(uint16_t)__HEADEROFFSETBITS + " : ""; 
+			
+		return Util.calcByteAccessStr(additionalOffsetPrefix, offset, bits, isArray) + ", " + Util.calcBitAccessStr(additionalOffsetPrefix, offset, bits, isArray);
 	}
-
+	
 	public static String genCopyrightNotice()
 	{
 		return "/*" + newline +
 				"* This file is part of smarthomatic, http://www.smarthomatic.org." + newline +
-				"* Copyright (c) 2013 Uwe Freese" + newline +
+				"* Copyright (c) 2013..2014 Uwe Freese" + newline +
 				"*" + newline +
 				"* smarthomatic is free software: you can redistribute it and/or modify it" + newline +
 				"* under the terms of the GNU General Public License as published by the" + newline +

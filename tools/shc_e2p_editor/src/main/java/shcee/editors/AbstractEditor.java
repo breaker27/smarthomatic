@@ -18,6 +18,7 @@
 
 package shcee.editors;
 
+import java.awt.Color;
 import java.awt.LayoutManager;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -30,6 +31,9 @@ import javax.swing.border.TitledBorder;
 
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
+import shcee.LabelArea;
+import shcee.Util;
 
 /**
  * Abstract superclass for GUI editor elements that are used to edit config values.
@@ -44,15 +48,21 @@ public abstract class AbstractEditor extends JPanel
 	private static final long serialVersionUID = -1309313960513732321L;
 
 	public String id;
+	public String description = null;
+	public String format = null;
+	protected TitledBorder border;
+	private int arrayIndex;
 
 	/**
 	 * Set common definition parameters acording XML subtree. Set up the layout,
 	 * color, border etc. of the panel.
 	 * @param n The XML node that contains the information about this EEPROM value.
 	 */
-	public AbstractEditor(Node root)
+	public AbstractEditor(Node root, Color baseColor, int arrayIndex)
 	{
 		super();
+		
+		this.arrayIndex = arrayIndex;
 		
 		LayoutManager layout = new BoxLayout(this, javax.swing.BoxLayout.Y_AXIS);
 		setLayout(layout);
@@ -70,11 +80,13 @@ public abstract class AbstractEditor extends JPanel
 		
 		if (null == id)
 		{
-			id = "Reserved";
+			id = root.getNodeName();
 		}
 		
+		String borderTitle =  arrayIndex == -1 ? id : id + "[" + arrayIndex + "]";
+		
 		// set border with title
-		TitledBorder border = BorderFactory.createTitledBorder(id);
+		border = BorderFactory.createTitledBorder(borderTitle);
 		border.setTitleFont(Block.getTitledBorderFont());
 		setBorder(border);
 
@@ -84,7 +96,23 @@ public abstract class AbstractEditor extends JPanel
 		    }
 		};
 
+		setBackground(Util.blendColor(baseColor, Color.white, 0.5));
+		
 		addComponentListener(resizeListener);
+	}
+	
+	/**
+	 * Add a text label, but only when this editor is not showing an array element.
+	 */
+	public void addLabel(String desc)
+	{
+		boolean isArray = arrayIndex != -1;
+		
+		if (!isArray)
+		{
+			LabelArea myLabel = new LabelArea(desc);
+			add(myLabel);
+		}
 	}
 	
 	private void onResize()

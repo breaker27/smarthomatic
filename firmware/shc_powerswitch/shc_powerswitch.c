@@ -329,10 +329,8 @@ int main(void)
 	// read (saved) switch state from before the eventual powerloss
 	for (i = 0; i < SWITCH_COUNT; i++)
 	{
-		uint16_t u16 = eeprom_read_UIntValue16(EEPROM_SWITCHSTATE_BYTE + i * 2, EEPROM_SWITCHSTATE_BIT,
-			16, 0, 255);
-		switch_state[i] = (uint8_t)(u16 & 0b1);
-		switch_timeout[i] = u16 >> 1;
+		switch_state[i] = e2p_powerswitch_get_switchstate(i);
+		switch_timeout[i] = e2p_powerswitch_get_switchtimeout(i);
 	}
 
 	// read last received station packetcounter
@@ -355,7 +353,7 @@ int main(void)
 	UART_PUTF ("Last received base station PacketCounter: %u\r\n\r\n", station_packetcounter);
 	
 	// init AES key
-	eeprom_read_block(aes_key, (uint8_t *)EEPROM_AESKEY_BYTE, 32);
+	e2p_generic_get_aeskey(aes_key);
 
 	led_blink(500, 500, 3);
 

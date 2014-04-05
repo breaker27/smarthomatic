@@ -1,18 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<xs:include schemaLocation="data_types.xsd"/>
 	<xs:element name="Packet">
 		<xs:complexType>
 			<xs:sequence>
 				<xs:element name="Header">
 					<xs:complexType>
-						<xs:choice maxOccurs="unbounded">
-							<xs:element ref="UIntValue"/>
-							<xs:element ref="IntValue"/>
-							<xs:element ref="BoolValue"/>
-							<xs:element ref="EnumValue"/>
-							<xs:element ref="ByteArray"/>
-							<xs:element ref="Reserved"/>
-						</xs:choice>
+						<xs:group ref="DataValue" maxOccurs="unbounded"/>
 					</xs:complexType>
 				</xs:element>
 				<xs:element name="HeaderExtension" minOccurs="0" maxOccurs="unbounded">
@@ -26,14 +20,7 @@
 									<xs:restriction base="xs:int"/>
 								</xs:simpleType>
 							</xs:element>
-							<xs:choice maxOccurs="unbounded">
-								<xs:element ref="UIntValue"/>
-								<xs:element ref="IntValue"/>
-								<xs:element ref="BoolValue"/>
-								<xs:element ref="EnumValue"/>
-								<xs:element ref="ByteArray"/>
-								<xs:element ref="Reserved"/>
-							</xs:choice>
+							<xs:group ref="DataValue" maxOccurs="unbounded"/>
 							<xs:element name="ContainsMessageData" type="xs:boolean"/>
 						</xs:sequence>
 					</xs:complexType>
@@ -82,126 +69,12 @@
 												</xs:restriction>
 											</xs:simpleType>
 										</xs:element>
-										<xs:choice maxOccurs="unbounded">
-											<xs:element ref="UIntValue"/>
-											<xs:element ref="IntValue"/>
-											<xs:element ref="BoolValue"/>
-											<xs:element ref="EnumValue"/>
-											<xs:element ref="ByteArray"/>
-											<xs:element ref="Reserved"/>
-										</xs:choice>
+										<xs:group ref="DataValue" maxOccurs="unbounded"/>
 									</xs:sequence>
 								</xs:complexType>
 							</xs:element>
 						</xs:sequence>
 					</xs:complexType>
-				</xs:element>
-			</xs:sequence>
-		</xs:complexType>
-	</xs:element>
-	<xs:element name="UIntValue">
-		<xs:annotation>
-			<xs:documentation>An unsigned integer value with 1 to 32 bits in size.</xs:documentation>
-		</xs:annotation>
-		<xs:complexType>
-			<xs:sequence>
-				<xs:element name="ID" type="xs:string"/>
-				<xs:element name="Description"/>
-				<xs:element name="Bits">
-					<xs:simpleType>
-						<xs:restriction base="xs:unsignedInt">
-							<xs:minInclusive value="1"/>
-							<xs:maxInclusive value="32"/>
-						</xs:restriction>
-					</xs:simpleType>
-				</xs:element>
-				<xs:element name="MinVal" type="xs:unsignedInt"/>
-				<xs:element name="MaxVal" type="xs:unsignedInt"/>
-			</xs:sequence>
-		</xs:complexType>
-	</xs:element>
-	<xs:element name="IntValue">
-		<xs:annotation>
-			<xs:documentation>A signed integer value with 1 to 32 bits in size.</xs:documentation>
-		</xs:annotation>
-		<xs:complexType>
-			<xs:sequence>
-				<xs:element name="ID" type="xs:string"/>
-				<xs:element name="Description"/>
-				<xs:element name="Bits">
-					<xs:simpleType>
-						<xs:restriction base="xs:unsignedInt">
-							<xs:minInclusive value="1"/>
-							<xs:maxInclusive value="32"/>
-						</xs:restriction>
-					</xs:simpleType>
-				</xs:element>
-				<xs:element name="MinVal" type="xs:int"/>
-				<xs:element name="MaxVal" type="xs:int"/>
-			</xs:sequence>
-		</xs:complexType>
-	</xs:element>
-	<xs:element name="BoolValue">
-		<xs:annotation>
-			<xs:documentation>A boolean value, stored as one bit being 0 (false) or 1 (true).</xs:documentation>
-		</xs:annotation>
-		<xs:complexType>
-			<xs:sequence>
-				<xs:element name="ID" type="xs:string"/>
-				<xs:element name="Description"/>
-			</xs:sequence>
-		</xs:complexType>
-	</xs:element>
-	<xs:element name="EnumValue">
-		<xs:annotation>
-			<xs:documentation>An integer value in EEPROM with an additional name describing the meaning.</xs:documentation>
-		</xs:annotation>
-		<xs:complexType>
-			<xs:sequence>
-				<xs:element name="ID" type="xs:string"/>
-				<xs:element name="Description" type="xs:string"/>
-				<xs:element name="Bits" type="xs:unsignedInt"/>
-				<xs:element name="Element" maxOccurs="unbounded">
-					<xs:complexType>
-						<xs:sequence>
-							<xs:element name="Value" type="xs:unsignedInt"/>
-							<xs:element name="Name" type="xs:string"/>
-						</xs:sequence>
-					</xs:complexType>
-				</xs:element>
-			</xs:sequence>
-		</xs:complexType>
-	</xs:element>
-	<xs:element name="ByteArray">
-		<xs:annotation>
-			<xs:documentation>A series of bytes with a given length.</xs:documentation>
-		</xs:annotation>
-		<xs:complexType>
-			<xs:sequence>
-				<xs:element name="ID" type="xs:string"/>
-				<xs:element name="Description" type="xs:string"/>
-				<xs:element name="Bytes">
-					<xs:simpleType>
-						<xs:restriction base="xs:unsignedInt">
-							<xs:minInclusive value="1"/>
-						</xs:restriction>
-					</xs:simpleType>
-				</xs:element>
-			</xs:sequence>
-		</xs:complexType>
-	</xs:element>
-	<xs:element name="Reserved">
-		<xs:annotation>
-			<xs:documentation>A series of bits with a given length blocking space for later use.</xs:documentation>
-		</xs:annotation>
-		<xs:complexType>
-			<xs:sequence>
-				<xs:element name="Bits">
-					<xs:simpleType>
-						<xs:restriction base="xs:unsignedInt">
-							<xs:minInclusive value="1"/>
-						</xs:restriction>
-					</xs:simpleType>
 				</xs:element>
 			</xs:sequence>
 		</xs:complexType>

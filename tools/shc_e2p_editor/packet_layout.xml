@@ -238,8 +238,8 @@
 		</Message>
 	</MessageGroup>
 	<MessageGroup>
-		<Name>TempSensor</Name>
-		<Description>This message group contains messages for a device that can measure temperature and humidity as well as a brightness value.</Description>
+		<Name>EnvSensor</Name>
+		<Description>This message group contains messages for an environment sensor device that can measure temperature, humidity and other environmental values.</Description>
 		<MessageGroupID>10</MessageGroupID>
 		<Message>
 			<Name>TempHumBriStatus</Name>
@@ -298,6 +298,35 @@
 				<MinVal>0</MinVal>
 				<MaxVal>65535</MaxVal>
 			</UIntValue>
+		</Message>
+		<Message>
+			<Name>SwitchStateExt</Name>
+			<Description>This is the state of up to 8 relais and its timeout values.</Description>
+			<MessageID>2</MessageID>
+			<MessageType>0</MessageType>
+			<MessageType>1</MessageType>
+			<MessageType>2</MessageType>
+			<MessageType>8</MessageType>
+			<MessageType>9</MessageType>
+			<MessageType>10</MessageType>
+			<Validity>test</Validity>
+			<Array>
+				<Length>8</Length>
+				<BoolValue>
+					<ID>On</ID>
+					<Description/>
+				</BoolValue>
+			</Array>
+			<Array>
+				<Length>8</Length>
+				<UIntValue>
+					<ID>TimeoutSec</ID>
+					<Description>The time after which the switch is automatically toggled again. Use 0 to disable this.</Description>
+					<Bits>16</Bits>
+					<MinVal>0</MinVal>
+					<MaxVal>65535</MaxVal>
+				</UIntValue>
+			</Array>
 		</Message>
 	</MessageGroup>
 	<MessageGroup>

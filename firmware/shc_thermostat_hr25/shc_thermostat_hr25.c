@@ -152,7 +152,7 @@ int main(void)
 	UART_PUTF ("Last received base station PacketCounter: %u\r\n\r\n", station_packetcounter);
 	
 	// init AES key
-	eeprom_read_block(aes_key, (uint8_t *)EEPROM_AESKEY_BYTE, 32);
+	e2p_generic_get_aeskey(aes_key);
 
 	led_blink(500, 500, 3);
 

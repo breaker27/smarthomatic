@@ -6,3 +6,6 @@ flash_tmp.cmd
 
 # Build files
 target/*
+
+# config file
+shc_e2p_editor.cfg

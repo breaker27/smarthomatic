@@ -462,4 +462,63 @@ public class Util {
 		
 		return out.toString();
 	}
+	
+	/**
+	 * Return a string used in functions to represent the byte position for e2p access.
+	 */
+	public static String calcByteAccessStr(String additionalOffsetPrefix, int offset, int bits, boolean isArray)
+	{
+		if (isArray)
+		{
+			if (((bits % 8) == 0) && additionalOffsetPrefix.equals(""))
+			{
+				int bytesPerValue = bits / 8;
+				return (offset / 8) + " + (uint16_t)index * " + bytesPerValue;
+			}
+			else
+			{
+				return "(" + additionalOffsetPrefix + offset + " + (uint16_t)index * " + bits + ") / 8";
+			}
+		}
+		else
+		{
+			if (additionalOffsetPrefix.equals(""))
+			{
+				return "" + offset / 8;
+			}
+			else
+			{
+				return "(" + additionalOffsetPrefix + offset + ") / 8";
+			}
+		}
+	}
+	
+	/**
+	 * Return a string used in functions to represent the bit position for e2p access.
+	 */
+	public static String calcBitAccessStr(String additionalOffsetPrefix, int offset, int bits, boolean isArray)
+	{
+		if (isArray)
+		{
+			if (((bits % 8) == 0) && additionalOffsetPrefix.equals(""))
+			{
+				return "" + (offset % 8);
+			}
+			else
+			{
+				return "(" + additionalOffsetPrefix + offset + " + (uint16_t)index * " + bits + ") % 8";
+			}
+		}
+		else
+		{
+			if (additionalOffsetPrefix.equals(""))
+			{
+				return "" + offset % 8;
+			}
+			else
+			{
+				return  "(" + additionalOffsetPrefix + offset + ") % 8";
+			}
+		}
+	}
 }
