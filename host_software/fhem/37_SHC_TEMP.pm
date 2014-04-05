@@ -245,7 +245,7 @@ SHC_TEMP_Send($$@)
 
   $hash->{SHC_TEMP_lastSend} = TimeNow();
 
-  my $msg = sprintf( "s%s%s%s%s%s%s\r", $aeskey, $cmd, $receiverID, $msggrp, $msgid, $data );
+  my $msg = sprintf( "s%s%s%04x%s%s%s\r", $aeskey, $cmd, $hash->{addr}, $msggrp, $msgid, $data );
 
 
   #  hex($hash->{channel}),
