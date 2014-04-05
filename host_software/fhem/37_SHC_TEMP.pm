@@ -17,6 +17,7 @@ SHC_TEMP_Initialize($)
   my ($hash) = @_;
 
   $hash->{Match}     = "^Packet Data: SenderID=[0-9]";
+  $hash->{SetFn}     = "SHC_TEMP_Set";
   $hash->{DefFn}     = "SHC_TEMP_Define";
   $hash->{UndefFn}   = "SHC_TEMP_Undef";
   $hash->{ParseFn}   = "SHC_TEMP_Parse";
@@ -177,6 +178,85 @@ SHC_TEMP_Parse($$)
 
   readingsEndUpdate($rhash,1);    # Do triggers to update log file
   return @list;
+}
+
+#####################################
+sub
+SHC_TEMP_Set($@)
+{
+  my ($hash, $name, @aa) = @_;
+
+  my $cnt = @aa;
+
+  return "\"set $name\" needs at least one parameter" if($cnt < 1);
+
+  my $cmd = $aa[0];
+  my $arg = $aa[1];
+  my $arg2 = $aa[2];
+  my $arg3 = $aa[3];
+
+  my $readonly = AttrVal($name, "readonly", "0" );
+
+  my $list = "identify:noArg reset:noArg statusRequest:noArg";
+  $list .= " off:noArg on:noArg toggle:noArg" if( !$readonly );
+
+  if( $cmd eq 'toggle' ) {
+    $cmd = ReadingsVal($name,"state","on") eq "off" ? "on" :"off";
+  }
+
+  if( !$readonly && $cmd eq 'off' ) {
+    readingsSingleUpdate($hash, "state", "set-$cmd", 1);
+    SHC_TEMP_Send( $hash, "01", "0000" );     # TODO convert "0000" to correct format
+  } elsif( !$readonly && $cmd eq 'on' ) {
+    readingsSingleUpdate($hash, "state", "set-$cmd", 1);
+    SHC_TEMP_Send( $hash, "01", "ffff" );     # TODO convert "ffff" to correct format
+  } elsif( $cmd eq 'statusRequest' ) {
+    readingsSingleUpdate($hash, "state", "set-$cmd", 1);
+    SHC_TEMP_Send( $hash, "08", "" );
+  } else {
+    return SetExtensions($hash, $list, $name, @aa);
+  }
+
+  return undef;
+}
+
+sub
+SHC_TEMP_Send($$@)
+{
+  my ($hash, $cmd, $data) = @_;
+
+  # sKK{T}{X}{D}...Use AES key KK to send a packet with MessageType T, followed
+  #                by all necessary extension header fields and message data.
+  #                Fields are: ReceiverID (RRRR), MessageGroup (GG), MessageID (MM)
+  #                AckSenderID (SSSS), AckPacketCounter (PPPPPP), Error (EE).
+  #                MessageData (DD) can be 0..17 bytes with bits moved to the left.
+  #                End data with ENTER. SenderID, PacketCounter and CRC are automatically added.
+  # sKK00RRRRGGMMDD...........Get
+  # sKK01RRRRGGMMDD...........Set
+  # sKK02RRRRGGMMDD...........SetGet
+  # sKK08GGMMDD...............Status
+  # sKK09SSSSPPPPPPEE.........Ack
+  # sKK0ASSSSPPPPPPEEGGMMDD...AckStatus
+
+  my $aeskey = "00";
+  my $receiverID = "0028";   # id = 40 convert to hex = 0028
+  my $msggrp = "14";         # msggrp = 20 convert to hex = 14
+  my $msgid = "01";
+
+  $hash->{SHC_TEMP_lastSend} = TimeNow();
+
+  my $msg = sprintf( "s%s%s%s%s%s%s\r", $aeskey, $cmd, $receiverID, $msggrp, $msgid, $data );
+
+
+  #  hex($hash->{channel}),
+  #  $cmd,
+  #  hex(substr($hash->{addr},0,2)), hex(substr($hash->{addr},2,2)), hex(substr($hash->{addr},4,2)),
+  #  $data );
+
+  # DEBUG
+  Log3 "SHC_TEMP_Send", 1, "SHC_TEMP_SEND: $msg";
+
+  IOWrite( $hash, $msg );
 }
 
 1;
