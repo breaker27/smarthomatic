@@ -13024,7 +13024,7 @@ Es handelt sich hierbei um AK500 in horizontaler Ausführung.&lt;p&gt;
 <plain>
 <frame x1="-81.28" y1="-104.14" x2="99.06" y2="91.44" columns="8" rows="5" layer="97"/>
 <text x="12.7" y="-76.2" size="3.81" layer="97">smarthomatic Dimmer</text>
-<text x="63.5" y="-81.28" size="2.1844" layer="97">Date: 27.03.2014</text>
+<text x="63.5" y="-81.28" size="2.1844" layer="97">Date: 05.04.2014</text>
 <text x="12.7" y="-81.28" size="2.1844" layer="97">Rev 1.0</text>
 <text x="12.7" y="-86.36" size="2.1844" layer="97">Copyright (c) Uwe Freese, www.smarthomatic.org</text>
 </plain>
