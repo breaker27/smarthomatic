@@ -117,6 +117,10 @@
 				<Value>2</Value>
 				<Name>DS7505</Name>
 			</Element>
+			<Element>
+				<Value>3</Value>
+				<Name>BMP085</Name>
+			</Element>
 		</EnumValue>
 		<EnumValue>
 			<ID>BrightnessSensorType</ID>

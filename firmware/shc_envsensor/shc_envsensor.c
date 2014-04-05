@@ -121,16 +121,16 @@ int main(void)
 	
 	rfm12_init();
 	
-	rfm12_set_wakeup_timer(0b11100110000);   // ~ 6s
+	//rfm12_set_wakeup_timer(0b11100110000);   // ~ 6s
 	//rfm12_set_wakeup_timer(0b11111000000);   // ~ 24576ms
 	//rfm12_set_wakeup_timer(0b0100101110101); // ~ 59904ms
-	//rfm12_set_wakeup_timer(0b101001100111); // ~ 105472ms  DEFAULT VALUE!!!
+	rfm12_set_wakeup_timer(0b101001100111); // ~ 105472ms  DEFAULT VALUE!!!
 
 	sei();
 
 	while (42)
 	{
-		// Measure voltage + brightness using ADCs
+		// measure voltage + brightness using ADCs
 		adc_on(true);
 
 		vbat += (int)((long)read_adc(0) * 34375 / 10000 / 2); // 1.1 * 480 Ohm / 150 Ohm / 1,024
@@ -142,7 +142,23 @@ int main(void)
 
 		adc_on(false);
 
-		// Measure temperature (+ humidity in case of SHT15)
+		// switch on i2c
+		bool needI2C = (temperature_sensor_type == TEMPERATURESENSORTYPE_DS7505)
+			|| (temperature_sensor_type == TEMPERATURESENSORTYPE_BMP085)
+			|| (barometric_sensor_type == BAROMETRICSENSORTYPE_BMP085);
+			
+		if (needI2C)
+		{
+			i2c_enable();
+		}
+
+		// measure barometric pressure
+		if (barometric_sensor_type == BAROMETRICSENSORTYPE_BMP085)
+		{
+			baro += bmp085_meas_pressure();
+		}
+
+		// measure temperature (+ humidity in case of SHT15)
 		if (temperature_sensor_type == TEMPERATURESENSORTYPE_SHT15)
 		{
 			sht11_start_measure();
@@ -154,19 +170,19 @@ int main(void)
 		}
 		else if (temperature_sensor_type == TEMPERATURESENSORTYPE_DS7505)
 		{
-			i2c_enable();
 			lm75_wakeup();
 			_delay_ms(lm75_get_meas_time_ms());
 			temp += lm75_get_tmp();
 			lm75_shutdown();
-			i2c_disable();
+		}
+		else if (temperature_sensor_type == TEMPERATURESENSORTYPE_BMP085)
+		{
+			temp += bmp085_meas_temp();
 		}
 
-		if (barometric_sensor_type == BAROMETRICSENSORTYPE_BMP085)
+		// switch off i2c
+		if (needI2C)
 		{
-			i2c_enable();
-			baro += bmp085_meas_pressure();
-			temp += bmp085_meas_temp();
 			i2c_disable();
 		}
 		
