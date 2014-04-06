@@ -168,6 +168,7 @@ SHC_TEMP_Parse($$)
     readingsBulkUpdate($rhash, "temperature", $tmp);
     readingsBulkUpdate($rhash, "humidity", $hum);
     readingsBulkUpdate($rhash, "brightness", $brt);
+    $rhash->{devtype} = "EnvSensor" if ( !defined($rhash->{devtype} ) );
   }
   elsif ($msg =~ /.*;On=(\d*);TimeoutSec=(\d*);/)
   {
@@ -184,6 +185,7 @@ SHC_TEMP_Parse($$)
     
     # After receiving this message we know for the first time that we are a 
     # power switch. Add according web commands
+    $rhash->{devtype} = "PowerSwitch" if ( !defined($rhash->{devtype}) );
     $attr{$rname}{devStateIcon} = 'on:on:toggle off:off:toggle set.*:light_question:off' if( !defined( $attr{$rname}{devStateIcon} ) );
     $attr{$rname}{webCmd} = 'on:off:toggle:statusRequest' if( !defined( $attr{$rname}{webCmd} ) );
   }
@@ -205,6 +207,8 @@ SHC_TEMP_Set($@)
 
   return "\"set $name\" needs at least one parameter" if($cnt < 1);
 
+  return undef if ( !defined( $hash->{devtype}) || $hash->{devtype} eq "EnvSensor" );
+
   my $cmd = $aa[0];
   my $arg = $aa[1];
   my $arg2 = $aa[2];
@@ -215,7 +219,7 @@ SHC_TEMP_Set($@)
   my $list = "statusRequest:noArg";
   $list .= " off:noArg on:noArg toggle:noArg" if( !$readonly );
 
-  # Timeout functionality for SHC_TEMP is not implemented, because FHEMs internal notification system 
+  # Timeout functionality for SHC_TEMP is not implemented, because FHEMs internal notification system
   # is able to do this as well. Even more it supports intervals, off-for-timer, off-till ...
 
   if( $cmd eq 'toggle' ) {
