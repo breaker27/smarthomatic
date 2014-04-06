@@ -21,7 +21,7 @@ sub SHC_SimpleWrite(@);
 my $clientsSHC = ":SHC_TEMP:BASE:xxx:";
 
 my %matchListSHC = (
-    "1:SHC_TEMP" => "^Sender ID=[0-9]",
+    "1:SHC_TEMP" => "^Packet Data: SenderID=[1-9]|0[1-9]|[1-9][0-9]|[0-9][0-9][0-9]|[0-3][0-9][0-9][0-9]|40[0-8][0-9]|409[0-6]", #1-4096 with leading zeros
     "2:xxx" => "^\\S+\\s+22",
     "3:xxx" => "^\\S+\\s+11",
     "4:xxx" => "^\\S+\\s+9 ",
@@ -393,10 +393,15 @@ SHC_Parse($$$$)
   my ($hash, $iohash, $name, $rmsg) = @_;
   my $dmsg = $rmsg;
   
-  # Ignore AES info message: "Received (AES key 0): 15 ..."
-  return if($dmsg =~ m/^Received \(AES key/ );
-  # Ignore Received garbage (CRC wrong after decryption)
-  return if($dmsg =~ m/^Received garbage/ );
+  next if(!$dmsg || length($dmsg) < 1);                 # Bogus messages
+  return if($dmsg =~ m/^Received \(AES key/ );          # Ignore Received (AES kex x)
+  return if($dmsg =~ m/^Received garbage/ );            # Received garbage
+  return if($dmsg =~ m/^\*\*\* Enter AES key nr/ );     # *** Enter AES key nr
+  return if($dmsg =~ m/^\*\*\* Received character/ );   # *** Received character
+  return if($dmsg =~ m/^Before encryption/ );           # Before encryption
+  return if($dmsg =~ m/^After encryption/ );            # After encryption
+  return if($dmsg =~ m/^Repeating request/ );           # Repeating request
+  return if($dmsg =~ m/^Request (Q|q)ueue/ );           # Request Queue
   
   if($dmsg =~ m/^\[/ ) {
     $hash->{VERSION} = $dmsg;
