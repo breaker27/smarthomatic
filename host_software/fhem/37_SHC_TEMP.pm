@@ -148,10 +148,7 @@ SHC_TEMP_Parse($$)
   if ($msg =~ /.*;Major=(\d*);Minor=(\d*);Patch=(\d*);Hash=([0-9a-zA-Z]*);/)
   {
     # Generic (MsgGroup=0): Version(1):
-    readingsBulkUpdate($rhash, "version_major", $1);
-    readingsBulkUpdate($rhash, "version_minor", $2);
-    readingsBulkUpdate($rhash, "version_patch", $3);
-    readingsBulkUpdate($rhash, "version_hash", $4);
+    readingsBulkUpdate($rhash, "version", "$1.$2.$3-$4");
   }
   elsif ($msg =~ /.*;Percentage=(\d*);/)
   {
@@ -184,7 +181,15 @@ SHC_TEMP_Parse($$)
     readingsBulkUpdate($rhash, "state", $state);
     readingsBulkUpdate($rhash, "on", $on);
     readingsBulkUpdate($rhash, "timeout", $timeout);
+    
+    # After receiving this message we know for the first time that we are a 
+    # power switch. Add according web commands
+    $attr{$rname}{devStateIcon} = 'on:on:toggle off:off:toggle set.*:light_question:off' if( !defined( $attr{$rname}{devStateIcon} ) );
+    $attr{$rname}{webCmd} = 'on:off:toggle:statusRequest' if( !defined( $attr{$rname}{webCmd} ) );
   }
+  
+  # TODO: How to handle ACK packets?
+  #   Packet Data: SenderID=40;PacketCounter=1105;MessageType=10;AckSenderID=0;AckPacketCounter=2895;Error=0;MessageGroupID=20;MessageID=1;MessageData=8000000000000000000000000000000000;On=1;TimeoutSec=0;
 
   readingsEndUpdate($rhash,1);    # Do triggers to update log file
   return @list;
@@ -296,14 +301,14 @@ SHC_TEMP_Send($$@)
   <ul>
     <li>on</li>
     <li>off</li>
-    <li>statusRequest<br>
-      Not supported yes.</li>
+    <li>statusRequest</li>
     <li><a href="#setExtensions"> set extensions</a> are supported.</li>
   </ul><br>
 
   <a name="SHC_TEMP_Get"></a>
   <b>Get</b>
   <ul>
+    <li>N/A</li>
   </ul><br>
 
   <a name="SHC_TEMP_Readings"></a>
