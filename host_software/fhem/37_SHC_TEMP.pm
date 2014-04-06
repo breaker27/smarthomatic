@@ -242,6 +242,7 @@ sub
 SHC_TEMP_Send($$@)
 {
   my ($hash, $cmd, $data) = @_;
+  my $name = $hash->{NAME};
 
   # sKK{T}{X}{D}...Use AES key KK to send a packet with MessageType T, followed
   #                by all necessary extension header fields and message data.
@@ -264,7 +265,7 @@ SHC_TEMP_Send($$@)
   my $msg = sprintf( "s%02x%s%04x%s%s%s\r", $hash->{aeskey}, $cmd, $hash->{addr}, $msggrp, $msgid, $data );
 
   # DEBUG
-  Log3 "SHC_TEMP_Send", 1, "SHC_TEMP_SEND: $msg";
+  Log3 $name, 3, "$name: Sending $msg";
 
   IOWrite( $hash, $msg );
 }

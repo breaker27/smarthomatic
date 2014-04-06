@@ -393,9 +393,15 @@ SHC_Parse($$$$)
   my ($hash, $iohash, $name, $rmsg) = @_;
   my $dmsg = $rmsg;
   
-  next if(!$dmsg || length($dmsg) < 1);            # Bogus messages
-  return if($dmsg =~ m/^Received \(AES key/ );     # Ignore Received (AES kex x)
-  return if($dmsg =~ m/^Received garbage/ );       # Received garbage
+  next if(!$dmsg || length($dmsg) < 1);                 # Bogus messages
+  return if($dmsg =~ m/^Received \(AES key/ );          # Ignore Received (AES kex x)
+  return if($dmsg =~ m/^Received garbage/ );            # Received garbage
+  return if($dmsg =~ m/^\*\*\* Enter AES key nr/ );     # *** Enter AES key nr
+  return if($dmsg =~ m/^\*\*\* Received character/ );   # *** Received character
+  return if($dmsg =~ m/^Before encryption/ );           # Before encryption
+  return if($dmsg =~ m/^After encryption/ );            # After encryption
+  return if($dmsg =~ m/^Repeating request/ );           # Repeating request
+  return if($dmsg =~ m/^Request (Q|q)ueue/ );           # Request Queue
   
   if($dmsg =~ m/^\[/ ) {
     $hash->{VERSION} = $dmsg;
