@@ -1,6 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013 Uwe Freese
+* Copyright (c) 2013..2014 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -21,11 +21,11 @@
 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 */
 
-#ifndef _E2P_TEMPSENSOR_H
-#define _E2P_TEMPSENSOR_H
+#ifndef _E2P_ENVSENSOR_H
+#define _E2P_ENVSENSOR_H
 
-// E2P Block "TempSensor"
-// ======================
+// E2P Block "EnvSensor"
+// =====================
 // Start offset (bit): 512
 // Overall block length: 7680 bits
 
@@ -34,19 +34,20 @@
 
 typedef enum {
   TEMPERATURESENSORTYPE_NOSENSOR = 0,
-  TEMPERATURESENSORTYPE_SHT15 = 1
+  TEMPERATURESENSORTYPE_SHT15 = 1,
+  TEMPERATURESENSORTYPE_DS7505 = 2
 } TemperatureSensorTypeEnum;
 
 // Set TemperatureSensorType (EnumValue)
 // Byte offset: 64, bit offset: 0, length bits 8
-static inline void e2p_tempsensor_set_temperaturesensortype(TemperatureSensorTypeEnum val)
+static inline void e2p_envsensor_set_temperaturesensortype(TemperatureSensorTypeEnum val)
 {
   eeprom_write_UIntValue(64, 0, 8, val);
 }
 
 // Get TemperatureSensorType (EnumValue)
 // Byte offset: 64, bit offset: 0, length bits 8
-static inline TemperatureSensorTypeEnum e2p_tempsensor_get_temperaturesensortype(void)
+static inline TemperatureSensorTypeEnum e2p_envsensor_get_temperaturesensortype(void)
 {
   return eeprom_read_UIntValue8(64, 0, 8, 0, 255);
 }
@@ -61,14 +62,14 @@ typedef enum {
 
 // Set BrightnessSensorType (EnumValue)
 // Byte offset: 65, bit offset: 0, length bits 8
-static inline void e2p_tempsensor_set_brightnesssensortype(BrightnessSensorTypeEnum val)
+static inline void e2p_envsensor_set_brightnesssensortype(BrightnessSensorTypeEnum val)
 {
   eeprom_write_UIntValue(65, 0, 8, val);
 }
 
 // Get BrightnessSensorType (EnumValue)
 // Byte offset: 65, bit offset: 0, length bits 8
-static inline BrightnessSensorTypeEnum e2p_tempsensor_get_brightnesssensortype(void)
+static inline BrightnessSensorTypeEnum e2p_envsensor_get_brightnesssensortype(void)
 {
   return eeprom_read_UIntValue8(65, 0, 8, 0, 255);
 }
@@ -76,4 +77,4 @@ static inline BrightnessSensorTypeEnum e2p_tempsensor_get_brightnesssensortype(v
 // Reserved area with 7664 bits
 
 
-#endif /* _E2P_TEMPSENSOR_H */
+#endif /* _E2P_ENVSENSOR_H */

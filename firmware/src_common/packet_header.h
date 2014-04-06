@@ -1,6 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013 Uwe Freese
+* Copyright (c) 2013..2014 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -43,7 +43,7 @@ uint8_t __MESSAGETYPE;
 // ENUM MessageGroupID
 typedef enum {
   MESSAGEGROUP_GENERIC = 0,
-  MESSAGEGROUP_TEMPSENSOR = 10,
+  MESSAGEGROUP_ENVSENSOR = 10,
   MESSAGEGROUP_POWERSWITCH = 20,
   MESSAGEGROUP_DIMMER = 60
 } MessageGroupIDEnum;

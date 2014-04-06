@@ -13,7 +13,7 @@
 			</Element>
 			<Element>
 				<Value>20</Value>
-				<Name>TempSensor</Name>
+				<Name>EnvSensor</Name>
 			</Element>
 			<Element>
 				<Value>40</Value>
@@ -82,18 +82,21 @@
 			<MinVal>1</MinVal>
 			<MaxVal>16</MaxVal>
 		</UIntValue>
-		<ByteArray>
-			<ID>AesKeys</ID>
-			<Description>These are all AES keys which can be used to encrypt or decrypt packages at the base station.</Description>
-			<Bytes>512</Bytes>
-		</ByteArray>
+		<Array>
+			<Length>16</Length>
+			<ByteArray>
+				<ID>AesKey</ID>
+				<Description>These are all AES keys which can be used to encrypt or decrypt packages at the base station.</Description>
+				<Bytes>32</Bytes>
+			</ByteArray>
+		</Array>
 		<Reserved>
 			<Bits>3576</Bits>
 		</Reserved>
 	</Block>
 	<Block>
-		<Name>TempSensor</Name>
-		<Description>This block contains the specific configuration data that only Temperature Sensor devices need.</Description>
+		<Name>EnvSensor</Name>
+		<Description>This block contains the specific configuration data that only Environment Sensor devices need.</Description>
 		<Restriction>
 			<RefID>DeviceType</RefID>
 			<Value>20</Value>
@@ -109,6 +112,10 @@
 			<Element>
 				<Value>1</Value>
 				<Name>SHT15</Name>
+			</Element>
+			<Element>
+				<Value>2</Value>
+				<Name>DS7505</Name>
 			</Element>
 		</EnumValue>
 		<EnumValue>
@@ -142,11 +149,6 @@
 			<MinVal>1</MinVal>
 			<MaxVal>1</MaxVal>
 		</UIntValue>
-		<ByteArray>
-			<ID>SwitchState</ID>
-			<Description>This field stores the last known switch state(s) for eight switches to allow restoring the same state after power loss. It contains also the remaining timeout value. Fill this with zeros when creating a e2p file!</Description>
-			<Bytes>16</Bytes>
-		</ByteArray>
 		<UIntValue>
 			<ID>BaseStationPacketCounter</ID>
 			<Description>This is the last remembered packet counter of a command from the base station. Packets with the same or lower number are ignored.</Description>
@@ -154,8 +156,25 @@
 			<MinVal>0</MinVal>
 			<MaxVal>16777215</MaxVal>
 		</UIntValue>
+		<Array>
+			<Length>8</Length>
+			<BoolValue>
+				<ID>SwitchState</ID>
+				<Description>This field stores the last known switch state(s) for eight switches to allow restoring the same state after power loss. It contains also the remaining timeout value. Fill this with zeros when creating a e2p file!</Description>
+			</BoolValue>
+		</Array>
+		<Array>
+			<Length>8</Length>
+			<UIntValue>
+				<ID>SwitchTimeout</ID>
+				<Description>This field stores the last known switch state(s) for eight switches to allow restoring the same state after power loss. It contains also the remaining timeout value. Fill this with zeros when creating a e2p file!</Description>
+				<Bits>16</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>65767</MaxVal>
+			</UIntValue>
+		</Array>
 		<Reserved>
-			<Bits>7520</Bits>
+			<Bits>7456</Bits>
 		</Reserved>
 	</Block>
 	<Block>
