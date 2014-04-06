@@ -207,7 +207,7 @@ SHC_TEMP_Set($@)
 
   my $readonly = AttrVal($name, "readonly", "0" );
 
-  my $list = "";
+  my $list = "statusRequest:noArg";
   $list .= " off:noArg on:noArg toggle:noArg" if( !$readonly );
 
   # Timeout functionality for SHC_TEMP is not implemented, because FHEMs internal notification system 
@@ -225,7 +225,7 @@ SHC_TEMP_Set($@)
     SHC_TEMP_Send( $hash, "01", "8000" );
   } elsif( $cmd eq 'statusRequest' ) {
     readingsSingleUpdate($hash, "state", "set-$cmd", 1);
-    SHC_TEMP_Send( $hash, "08", "" );
+    SHC_TEMP_Send( $hash, "00", "0000" );
   } else {
     return SetExtensions($hash, $list, $name, @aa);
   }
