@@ -16,7 +16,7 @@ SHC_TEMP_Initialize($)
 {
   my ($hash) = @_;
 
-  $hash->{Match}     = "^Packet Data: SenderID=[0-9]";
+  $hash->{Match}     = "^Packet Data: SenderID=[1-9]|0[1-9]|[1-9][0-9]|[0-9][0-9][0-9]|[0-3][0-9][0-9][0-9]|40[0-8][0-9]|409[0-6]";
   $hash->{SetFn}     = "SHC_TEMP_Set";
   $hash->{DefFn}     = "SHC_TEMP_Define";
   $hash->{UndefFn}   = "SHC_TEMP_Undef";
@@ -38,8 +38,8 @@ SHC_TEMP_Define($$)
     Log3 undef, 2, $msg;
     return $msg;
   }
-
-  $a[2] =~ m/^([0-9][0-9])$/i;	# TODO Whats the appropriate range for SHC
+  # Correct SenderID for SHC devices is from 1 - 4096 (leading zeros allowed)
+  $a[2] =~ m/^([1-9]|0[1-9]|[1-9][0-9]|[0-9][0-9][0-9]|[0-3][0-9][0-9][0-9]|40[0-8][0-9]|409[0-6])$/i;
   return "$a[2] is not a valid SHC_TEMP SenderID" if( !defined($1) );
 
   my $aeskey;

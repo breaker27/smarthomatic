@@ -21,7 +21,7 @@ sub SHC_SimpleWrite(@);
 my $clientsSHC = ":SHC_TEMP:BASE:xxx:";
 
 my %matchListSHC = (
-    "1:SHC_TEMP" => "^Packet Data: SenderID=[0-9]",
+    "1:SHC_TEMP" => "^Packet Data: SenderID=[1-9]|0[1-9]|[1-9][0-9]|[0-9][0-9][0-9]|[0-3][0-9][0-9][0-9]|40[0-8][0-9]|409[0-6]", #1-4096 with leading zeros
     "2:xxx" => "^\\S+\\s+22",
     "3:xxx" => "^\\S+\\s+11",
     "4:xxx" => "^\\S+\\s+9 ",
