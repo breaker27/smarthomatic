@@ -1,12 +1,12 @@
 #!/usr/bin/perl -w
 
-################################################################
+##########################################################################
 # This is a test program for the smarthomatic module for FHEM.
 #
 # Copyright (c) 2014 Uwe Freese
 #
 # You can find smarthomatic at www.smarthomatic.org.
-# You can find FHEM at ww.fhem.de.
+# You can find FHEM at www.fhem.de.
 #
 # This file is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -20,7 +20,7 @@
 #
 # You should have received a copy of the GNU General Public License along
 # with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
-################################################################
+##########################################################################
 
 
 use strict;
@@ -101,16 +101,13 @@ parser_test("Packet Data: SenderID=20;PacketCounter=19284;MessageType=8;MessageG
 parser_test("Packet Data: SenderID=40;PacketCounter=7401;MessageType=8;MessageGroupID=20;MessageID=1;MessageData=000000000000;On=0;TimeoutSec=0;");
 parser_test("Packet Data: SenderID=40;PacketCounter=7402;MessageType=8;MessageGroupID=0;MessageID=1;MessageData=00000000000000000000000000000000000000000000;Major=0;Minor=0;Patch=0;Hash=00000000;");
 
-#
-#
-#
-#
-#
-## Senden
-#
-#my $byteArray;
-#
-#$parser->setField($byteArray, "PowerSwitch", "SwitchState", "On", 1);
-#$parser->setField($byteArray, "PowerSwitch", "SwitchState", "TimeoutSec", 1);
-#
-#$parser->createSendString("Set", "PowerSwitch", "SwitchState", $byteArray);
+
+## Create message string for sending
+
+$parser->initPacket("PowerSwitch", "SwitchState", "Set");
+$parser->setField("PowerSwitch", "SwitchState", "TimeoutSec", 8);
+
+print "BaseStation command = " . $parser->getSendString(61) . "\n";
+
+$parser->setField("PowerSwitch", "SwitchState", "On", 1);
+print "BaseStation command = " . $parser->getSendString(61) . "\n";

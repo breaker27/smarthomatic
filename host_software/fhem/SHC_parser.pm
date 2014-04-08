@@ -1,12 +1,12 @@
 #!/usr/bin/perl -w
 
-################################################################
+##########################################################################
 # This file is part of the smarthomatic module for FHEM.
 #
 # Copyright (c) 2014 Uwe Freese
 #
 # You can find smarthomatic at www.smarthomatic.org.
-# You can find FHEM at ww.fhem.de.
+# You can find FHEM at www.fhem.de.
 #
 # This file is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -20,8 +20,32 @@
 #
 # You should have received a copy of the GNU General Public License along
 # with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
-################################################################
-
+##########################################################################
+# Usage:
+#
+# Init parser:
+# ------------
+# my $parser = new SHC_parser();
+#
+# Receiving packets:
+# ------------------
+# 1.) Receive string from base station (over UART).
+# 2.) Parse received string:
+#     $parser->parse("Packet Data: SenderID=22;...");
+# 3.) Get MessageGroupName: my $grp = $parser->getMessageGroupName();
+# 4.) Get MessageName: my $msg = $parser->getMessageName();
+# 5.) Get data fields depending on MessageGroupname and MessageName, e.g.
+#     $val = $parser->getField("Temperature");
+#
+# Sending packets:
+# ----------------
+# 1.) Init packet:
+#     $parser->initPacket("PowerSwitch", "SwitchState", "Set");
+# 2.) Set fields:
+#     $parser->setField("PowerSwitch", "SwitchState", "TimeoutSec", 8);
+# 3.) Get send string: $str = $parser->getSendString($receiverID);
+# 4.) Send string to base station (over UART).
+##########################################################################
 
 package SHC_parser;
 
@@ -43,6 +67,10 @@ my %messageGroupName2messageGroupID = ();
 my %messageID2messageName = ();
 my %messageName2messageID = ();
 
+# byte array to store data to send
+my @msgData = ();
+my $sendMode = 0;
+
 sub new
 {
     my $class = shift;
@@ -50,7 +78,7 @@ sub new
     my $self = {
         _senderID => 0,
 		_packetCounter => 0,
-		_messageType => 0,
+		_messageTypeID => 0,
 		_messageGroupID => 0,
 		_messageGroupName => "",
 		_messageID => 0,
@@ -61,10 +89,12 @@ sub new
     return $self;
 }
 
+# Read packet layout from XML file and remember the defined MessageGroups,
+# Messages and data fields (incl. positions, length).
 sub init_datafield_positions()
 {
-	my $x = XML::LibXML->new() or die "new failed";
-	my $d = $x->parse_file("packet_layout.xml") or die "parse failed";
+	my $x = XML::LibXML->new() or die "new on XML::LibXML failed";
+	my $d = $x->parse_file("packet_layout.xml") or die "parsing XML file failed";
 
 	for my $element ($d->findnodes("/Packet/Header/EnumValue[ID='MessageType']/Element"))
 	{
@@ -163,11 +193,13 @@ sub parse
 {
 	my ($self, $msg) = @_;
 
+	$sendMode = 0;
+
 	if ($msg =~ /^Packet Data: SenderID=(\d*);PacketCounter=(\d*);MessageType=(\d*);MessageGroupID=(.*?);MessageID=(\d*);MessageData=([^;]*);.*/)
 	{
 		$self->{_senderID} = $1;
 		$self->{_packetCounter} = $2;
-		$self->{_messageType} = $3;
+		$self->{_messageTypeID} = $3;
 		$self->{_messageGroupID} = $4;
 		$self->{_messageID} = $5;
 		$self->{_messageData} = $6;		
@@ -185,7 +217,7 @@ sub getSenderID
 sub getMessageTypeName
 {
 	my ($self) = @_;
-	return $messageTypeID2messageTypeName{$self->{_messageType}};
+	return $messageTypeID2messageTypeName{$self->{_messageTypeID}};
 }
 
 sub getMessageGroupName
@@ -203,17 +235,78 @@ sub getMessageName
 sub getMessageData
 {
 	my ($self) = @_;
-	return $self->{_messageData};
+	
+	if ($sendMode)
+	{
+		my $res = "";
+		
+		foreach (@msgData)
+		{
+			$res .= sprintf("%02X", $_);
+		}
+
+		return $res;
+	}
+	else
+	{
+		return $self->{_messageData};
+	}
 }
 
 sub getField
 {
-	my ( $self, $fieldName ) = @_;
+	my ($self, $fieldName) = @_;
     
     my $obj = $dataFields{$self->{_messageGroupID} . "-" . $self->{_messageID} . "-" . $fieldName};
-	my @dataArray = map hex("0x$_"), $self->{_messageData} =~ /(..)/g;
+	my @tmpArray = map hex("0x$_"), $self->{_messageData} =~ /(..)/g;
 
-    return $obj->getValue(\@dataArray);
+    return $obj->getValue(\@tmpArray);
+}
+
+sub initPacket
+{
+	my ($self, $messageGroupName, $messageName, $messageTypeName) = @_;
+
+   	@msgData = (0, 0, 0, 0, 0);
+	$sendMode = 1;
+	
+	$self->{_senderID} = 0; # base station SenderID
+	$self->{_messageTypeID} = $messageTypeName2messageTypeID{$messageTypeName};
+	$self->{_messageGroupID} = $messageGroupName2messageGroupID{$messageGroupName};
+	$self->{_messageID} = $messageName2messageID{$messageGroupName . "-" . $messageName};
+}
+
+sub setField
+{
+	my ($self, $messageGroupName, $messageName, $fieldName, $value) = @_;
+    
+    my $gID = $messageGroupName2messageGroupID{$messageGroupName};
+    my $mID = $messageName2messageID{$messageGroupName . "-" . $messageName};
+
+    my $obj = $dataFields{$gID . "-" . $mID . "-" . $fieldName};
+    
+	$obj->setValue(\@msgData, $value);
+}
+
+# sKK01RRRRGGMMDD
+# s0001003D3C0164 = SET    Dimmer Switch Brightness 50%
+sub getSendString
+{
+	my ($self, $receiverID) = @_;
+    
+    # TODO: Where to enter the AES key number? This is by device.
+    # Add lookup table device -> AES key?
+    # Automatically gather used AES key after reception from device?
+    
+    my $aesKeyNr = 0;
+    
+    my $s = "s"
+    	. sprintf("%02X", $aesKeyNr)
+    	. sprintf("%02X", $self->{_messageTypeID})
+    	. sprintf("%04X", $receiverID)
+    	. sprintf("%02X", $self->{_messageGroupID})
+    	. sprintf("%02X", $self->{_messageID})
+		. getMessageData();
 }
 
 1;
