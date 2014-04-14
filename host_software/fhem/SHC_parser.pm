@@ -204,7 +204,7 @@ sub parse
 		$self->{_messageID} = $5;
 		$self->{_messageData} = $6;		
 	} else {
-		#Log3 $hash, 4, "SHC_TEMP  ($msg) data error";
+		return undef;
 	}
 }
 

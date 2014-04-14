@@ -100,11 +100,10 @@ SHC_TEMP_Parse($$)
   my ($senderid, $pktcnt, $msgtypename, $msggroupname, $msgname, $msgdata);
 
 
-  $parser->parse($msg);
-
-  #  TODO: Add error handling
-  #    Log3 $hash, 4, "SHC_TEMP  ($msg) data error";
-  #    return "";
+  if( !$parser->parse($msg) ) {
+    Log3 $hash, 4, "SHC_TEMP  ($msg) data error";
+    return "";
+  }
 
   $senderid = $parser->getSenderID();
   $pktcnt = $parser->getPacketCounter();
