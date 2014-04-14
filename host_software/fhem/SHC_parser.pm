@@ -214,6 +214,12 @@ sub getSenderID
 	return $self->{_senderID};
 }
 
+sub getPacketCounter
+{
+	my ($self) = @_;
+	return $self->{_packetCounter};
+}
+
 sub getMessageTypeName
 {
 	my ($self) = @_;
