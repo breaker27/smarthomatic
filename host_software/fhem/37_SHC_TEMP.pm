@@ -97,7 +97,7 @@ SHC_TEMP_Parse($$)
 {
   my ($hash, $msg) = @_;
   my $name = $hash->{NAME};
-  my ($id, $pktcnt, $msgtype, $msggroupid, $msgid, $msgdata);
+  my ($senderid, $pktcnt, $msgtypename, $msggroupname, $msgname, $msgdata);
 
 
   $parser->parse($msg);
@@ -106,14 +106,14 @@ SHC_TEMP_Parse($$)
   #    Log3 $hash, 4, "SHC_TEMP  ($msg) data error";
   #    return "";
 
-  $id = $parser->getSenderID();
+  $senderid = $parser->getSenderID();
   $pktcnt = $parser->getPacketCounter();
-  $msgtype = $parser->getMessageTypeName();
-  $msggroupid = $parser->getMessageGroupName();
-  $msgid = $parser->getMessageName();
+  $msgtypename = $parser->getMessageTypeName();
+  $msggroupname = $parser->getMessageGroupName();
+  $msgname = $parser->getMessageName();
   $msgdata = $parser->getMessageData();
 
-  my $raddr = $id;
+  my $raddr = $senderid;
   my $rhash = $modules{SHC_TEMP}{defptr}{$raddr};
   my $rname = $rhash?$rhash->{NAME}:$raddr;
 
@@ -130,18 +130,18 @@ SHC_TEMP_Parse($$)
   my $readonly = AttrVal($rname, "readonly", "0" );
 
   readingsBeginUpdate($rhash);
-  readingsBulkUpdate($rhash, "id", $id);
+  readingsBulkUpdate($rhash, "senderid", $senderid);
   readingsBulkUpdate($rhash, "pktcnt", $pktcnt);
-  readingsBulkUpdate($rhash, "msgtype", $msgtype);
-  readingsBulkUpdate($rhash, "msggroupid", $msggroupid);
-  readingsBulkUpdate($rhash, "msgid", $msgid);
+  readingsBulkUpdate($rhash, "msgtypename", $msgtypename);
+  readingsBulkUpdate($rhash, "msggroupname", $msggroupname);
+  readingsBulkUpdate($rhash, "msgname", $msgname);
   readingsBulkUpdate($rhash, "msgdata", $msgdata);
 
-  given($msggroupid)
+  given($msggroupname)
   {
     when('Generic')
     {
-      given($msgid)
+      given($msgname)
       {
         when('BatteryStatus')
         {
@@ -160,7 +160,7 @@ SHC_TEMP_Parse($$)
     }
     when('EnvSensor')
     {
-      given($msgid)
+      given($msgname)
       {
         when('TempHumBriStatus')
         {
@@ -180,7 +180,7 @@ SHC_TEMP_Parse($$)
     }
     when('PowerSwitch')
     {
-      given($msgid)
+      given($msgname)
       {
         when('SwitchState')
         {
