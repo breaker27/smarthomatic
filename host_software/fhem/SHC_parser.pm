@@ -67,6 +67,8 @@ my %messageGroupName2messageGroupID = ();
 my %messageID2messageName = ();
 my %messageName2messageID = ();
 
+my %messageID2bits = ();
+
 # byte array to store data to send
 my @msgData = ();
 my $sendMode = 0;
@@ -185,6 +187,8 @@ sub init_datafield_positions()
 					}
 				}
 			}
+			
+			$messageID2bits{$messageGroupID . "-" . $messageID} = $offset;
 		}
 	}
 }
@@ -267,13 +271,16 @@ sub initPacket
 {
 	my ($self, $messageGroupName, $messageName, $messageTypeName) = @_;
 
-   	@msgData = (0, 0, 0, 0, 0);
-	$sendMode = 1;
-	
 	$self->{_senderID} = 0; # base station SenderID
 	$self->{_messageTypeID} = $messageTypeName2messageTypeID{$messageTypeName};
 	$self->{_messageGroupID} = $messageGroupName2messageGroupID{$messageGroupName};
 	$self->{_messageID} = $messageName2messageID{$messageGroupName . "-" . $messageName};
+
+	my $lenBytes = $messageID2bits{$self->{_messageGroupID} . "-" . $self->{_messageID}} / 8;
+
+   	@msgData = 0 x $lenBytes;
+   	
+	$sendMode = 1;
 }
 
 sub setField
