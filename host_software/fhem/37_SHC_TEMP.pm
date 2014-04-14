@@ -268,7 +268,7 @@ SHC_TEMP_Send($)
 
   $hash->{SHC_TEMP_lastSend} = TimeNow();
 
-  my $msg = $parser->getSendString($hash->{addr});
+  my $msg = $parser->getSendString( $hash->{addr}, $hash->{aeskey} );
 
   # WORKAROUND for bug in SHC_parser.pm
   $msg = substr($msg, 0, 17);

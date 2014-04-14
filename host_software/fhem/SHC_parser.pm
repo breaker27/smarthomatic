@@ -298,13 +298,14 @@ sub setField
 # s0001003D3C0164 = SET    Dimmer Switch Brightness 50%
 sub getSendString
 {
-	my ($self, $receiverID) = @_;
+	my ($self, $receiverID, $aesKeyNr) = @_;
     
+    # Right now the only way to set the AES key is by defining in in fhem.cfg
+    # "define SHC_TEMP_xx SHC_TEMP xx aa" where xx = deviceID, aa = AES key
+    #
     # TODO: Where to enter the AES key number? This is by device.
     # Add lookup table device -> AES key?
     # Automatically gather used AES key after reception from device?
-    
-    my $aesKeyNr = 0;
     
     my $s = "s"
     	. sprintf("%02X", $aesKeyNr)
