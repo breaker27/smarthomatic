@@ -6,8 +6,13 @@
 package main;
 
 use strict;
+use feature qw(switch);
 use warnings;
 use SetExtensions;
+
+use SHC_parser;
+
+my $parser = new SHC_parser();
 
 sub SHC_TEMP_Parse($$);
 
@@ -94,32 +99,19 @@ SHC_TEMP_Parse($$)
   my $name = $hash->{NAME};
   my ($id, $pktcnt, $msgtype, $msggroupid, $msgid, $msgdata);
 
-  # NEW smarthomatic v0.5.0
-  #
-  # SHC MESSAGES (Details in http://www.smarthomatic.org/basics/message_catalog.html):
-  # Generic (MsgGroup=0):
-  #   Version(1):
-  #     Packet Data: SenderID=31;PacketCounter=809;MessageType=8;MessageGroupID=0;MessageID=1;MessageData=00000000000000000000000000000000000000000000;Major=0;Minor=0;Patch=0;Hash=00000000;
-  #   Battery(5):
-  #     Packet Data: SenderID=31;PacketCounter=102;MessageType=8;MessageGroupID=0;MessageID=5;MessageData=c20000000004;Percentage=97;
-  # EnvSensor (MsgGroup=10):
-  #   TempHumBriStatus(1):
-  #     Packet Data: SenderID=31;PacketCounter=677;MessageType=8;MessageGroupID=10;MessageID=1;MessageData=0960001f0001;Temperature=24.00;Humidity=0.0;Brightness=62;
-  # PowerSwitch (MsgGroup=20):
-  #   SwitchState(1)
-  #     Packet Data: SenderID=40;PacketCounter=6533;MessageType=8;MessageGroupID=20;MessageID=1;MessageData=ac8c80000000;On=1;TimeoutSec=22809;
-  if ($msg =~ /^Packet Data: SenderID=(\d*);PacketCounter=(\d*);MessageType=(\d*);MessageGroupID=(\d*);MessageID=(\d*);MessageData=([0-9a-f]*)/) {
-    $id = $1;
-    $pktcnt = $2;
-    $msgtype = $3;
-    $msggroupid = $4;
-    $msgid = $5;
-    $msgdata = $6;
 
-  } else {
-    Log3 $hash, 4, "SHC_TEMP  ($msg) data error";
-    return "";
-  }
+  $parser->parse($msg);
+
+  #  TODO: Add error handling
+  #    Log3 $hash, 4, "SHC_TEMP  ($msg) data error";
+  #    return "";
+
+  $id = $parser->getSenderID();
+  $pktcnt = $parser->getPacketCounter();
+  $msgtype = $parser->getMessageTypeName();
+  $msggroupid = $parser->getMessageGroupName();
+  $msgid = $parser->getMessageName();
+  $msgdata = $parser->getMessageData();
 
   my $raddr = $id;
   my $rhash = $modules{SHC_TEMP}{defptr}{$raddr};
@@ -145,51 +137,71 @@ SHC_TEMP_Parse($$)
   readingsBulkUpdate($rhash, "msgid", $msgid);
   readingsBulkUpdate($rhash, "msgdata", $msgdata);
 
-  if ($msg =~ /.*;Major=(\d*);Minor=(\d*);Patch=(\d*);Hash=([0-9a-zA-Z]*);/)
+  given($msggroupid)
   {
-    # Generic (MsgGroup=0): Version(1):
-    readingsBulkUpdate($rhash, "version", "$1.$2.$3-$4");
-  }
-  elsif ($msg =~ /.*;Percentage=(\d*);/)
-  {
-    # Generic (MsgGroup=0): Battery(5):
-    readingsBulkUpdate($rhash, "battery", $1);
-  }
-  elsif ($msg =~ /.*;Temperature=([0-9\.\-]*);Humidity=([0-9\.]*);Brightness=([0-9\.]*);/)
-  {
-    # EnvSensor (MsgGroup=10): TempHumBriStatus(1):
-    my ($tmp, $hum, $brt);  # temperature, humidity, brightness
+    when('Generic')
+    {
+      given($msgid)
+      {
+        when('BatteryStatus')
+        {
+          readingsBulkUpdate($rhash, "battery", $parser->getField("Percentage"));
+        }
+        when('Version')
+        {
+          my $major = $parser->getField("Major");
+          my $minor = $parser->getField("Minor");
+          my $patch = $parser->getField("Patch");
+          my $vhash = $parser->getField("Hash");
 
-    $tmp = $1;
-    $hum = $2;
-    $brt = $3;
+          readingsBulkUpdate($rhash, "version", "$major.$minor.$patch-$vhash");
+        }
+      }
+    }
+    when('EnvSensor')
+    {
+      given($msgid)
+      {
+        when('TempHumBriStatus')
+        {
+          my $tmp = $parser->getField("Temperature") / 100; # parser returns centigrade
+          my $hum = $parser->getField("Humidity") / 100;    # parser returns 1/100 percent
+          my $brt = $parser->getField("Brightness");
 
-    readingsBulkUpdate($rhash, "state", "T: $tmp  H: $hum  B:$brt");
-    readingsBulkUpdate($rhash, "temperature", $tmp);
-    readingsBulkUpdate($rhash, "humidity", $hum);
-    readingsBulkUpdate($rhash, "brightness", $brt);
-    $rhash->{devtype} = "EnvSensor" if ( !defined($rhash->{devtype} ) );
+          readingsBulkUpdate($rhash, "state", "T: $tmp  H: $hum  B:$brt");
+          readingsBulkUpdate($rhash, "temperature", $tmp);
+          readingsBulkUpdate($rhash, "humidity", $hum);
+          readingsBulkUpdate($rhash, "brightness", $brt);
+          # After receiving this message we know for the first time that we are a 
+          # enviroment sonsor, so lets define our device type
+          $rhash->{devtype} = "EnvSensor" if ( !defined($rhash->{devtype} ) );
+        }
+      }
+    }
+    when('PowerSwitch')
+    {
+      given($msgid)
+      {
+        when('SwitchState')
+        {
+          my $on = $parser->getField("On");
+          my $timeout = $parser->getField("TimeoutSec");
+          my $state = $on==0?"off":"on";
+
+          readingsBulkUpdate($rhash, "state", $state);
+          readingsBulkUpdate($rhash, "on", $on);
+          readingsBulkUpdate($rhash, "timeout", $timeout);
+
+          # After receiving this message we know for the first time that we are a 
+          # power switch. Define device type and addd according web commands
+          $rhash->{devtype} = "PowerSwitch" if ( !defined($rhash->{devtype}) );
+          $attr{$rname}{devStateIcon} = 'on:on:toggle off:off:toggle set.*:light_question:off' if( !defined( $attr{$rname}{devStateIcon} ) );
+          $attr{$rname}{webCmd} = 'on:off:toggle:statusRequest' if( !defined( $attr{$rname}{webCmd} ) );
+        }
+      }
+    }
   }
-  elsif ($msg =~ /.*;On=(\d*);TimeoutSec=(\d*);/)
-  {
-    # PowerSwitch (MsgGroup=20): SwitchState(1)
-    my ($on, $timeout, $state); # power switch status
 
-    $on = $1;
-    $timeout = $2;
-    $state = $on==0?"off":"on";
-
-    readingsBulkUpdate($rhash, "state", $state);
-    readingsBulkUpdate($rhash, "on", $on);
-    readingsBulkUpdate($rhash, "timeout", $timeout);
-    
-    # After receiving this message we know for the first time that we are a 
-    # power switch. Add according web commands
-    $rhash->{devtype} = "PowerSwitch" if ( !defined($rhash->{devtype}) );
-    $attr{$rname}{devStateIcon} = 'on:on:toggle off:off:toggle set.*:light_question:off' if( !defined( $attr{$rname}{devStateIcon} ) );
-    $attr{$rname}{webCmd} = 'on:off:toggle:statusRequest' if( !defined( $attr{$rname}{webCmd} ) );
-  }
-  
   # TODO: How to handle ACK packets?
   #   Packet Data: SenderID=40;PacketCounter=1105;MessageType=10;AckSenderID=0;AckPacketCounter=2895;Error=0;MessageGroupID=20;MessageID=1;MessageData=8000000000000000000000000000000000;On=1;TimeoutSec=0;
 
