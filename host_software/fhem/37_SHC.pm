@@ -392,19 +392,29 @@ SHC_Parse($$$$)
 {
   my ($hash, $iohash, $name, $rmsg) = @_;
   my $dmsg = $rmsg;
-  
+
   next if(!$dmsg || length($dmsg) < 1);                 # Bogus messages
-  return if($dmsg =~ m/^Received \(AES key/ );          # Ignore Received (AES kex x)
-  return if($dmsg =~ m/^Received garbage/ );            # Received garbage
-  return if($dmsg =~ m/^\*\*\* Enter AES key nr/ );     # *** Enter AES key nr
-  return if($dmsg =~ m/^\*\*\* Received character/ );   # *** Received character
-  return if($dmsg =~ m/^Before encryption/ );           # Before encryption
-  return if($dmsg =~ m/^After encryption/ );            # After encryption
-  return if($dmsg =~ m/^Repeating request/ );           # Repeating request
-  return if($dmsg =~ m/^Request (Q|q)ueue/ );           # Request Queue
-  
-  if($dmsg =~ m/^\[/ ) {
-    $hash->{VERSION} = $dmsg;
+
+  if($dmsg !~ m/^Packet Data: SenderID=/) {
+
+    # -Verbosity level 5
+    if($dmsg =~ m/^\*\*\* Enter AES key nr/  ||
+        $dmsg =~ m/^\*\*\* Received character/) {
+      Log3 $name, 5, "$name: $dmsg";
+      return;
+    }
+
+    # -Verbosity level 4
+    if($dmsg =~ m/^Received \(AES key/  ||
+        $dmsg =~ m/^Received garbage/ ||
+        $dmsg =~ m/^Before encryption/ ||
+        $dmsg =~ m/^After encryption/ ) {
+      Log3 $name, 4, "$name: $dmsg";
+      return;
+    }
+
+    # Anything else in verbosity level 3
+    Log3 $name, 3, "$name: $dmsg";
     return;
   }
 
