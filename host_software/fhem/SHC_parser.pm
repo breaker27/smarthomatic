@@ -94,7 +94,7 @@ sub new
 sub init_datafield_positions()
 {
 	my $x = XML::LibXML->new() or die "new on XML::LibXML failed";
-	my $d = $x->parse_file("FHEM/packet_layout.xml") or die "parsing XML file failed;
+	my $d = $x->parse_file("FHEM/packet_layout.xml") or die "parsing XML file failed";
 
 	for my $element ($d->findnodes("/Packet/Header/EnumValue[ID='MessageType']/Element"))
 	{
