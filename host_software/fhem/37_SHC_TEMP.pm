@@ -234,19 +234,25 @@ SHC_TEMP_Set($@)
   # Timeout functionality for SHC_TEMP is not implemented, because FHEMs internal notification system
   # is able to do this as well. Even more it supports intervals, off-for-timer, off-till ...
 
+  $parser->initPacket("PowerSwitch", "SwitchState", "Set");
+  $parser->setField("PowerSwitch", "SwitchState", "TimeoutSec", 0);
+
   if( $cmd eq 'toggle' ) {
     $cmd = ReadingsVal($name,"state","on") eq "off" ? "on" :"off";
   }
 
   if( !$readonly && $cmd eq 'off' ) {
     readingsSingleUpdate($hash, "state", "set-$cmd", 1);
-    SHC_TEMP_Send( $hash, "01", "0000" );
+    $parser->setField("PowerSwitch", "SwitchState", "On", 0);
+    SHC_TEMP_Send($hash);
   } elsif( !$readonly && $cmd eq 'on' ) {
     readingsSingleUpdate($hash, "state", "set-$cmd", 1);
-    SHC_TEMP_Send( $hash, "01", "8000" );
+    $parser->setField("PowerSwitch", "SwitchState", "On", 1);
+    SHC_TEMP_Send($hash);
   } elsif( $cmd eq 'statusRequest' ) {
-    readingsSingleUpdate($hash, "state", "set-$cmd", 1);
-    SHC_TEMP_Send( $hash, "00", "0000" );
+    # TODO implement with Get command
+    # readingsSingleUpdate($hash, "state", "set-$cmd", 1);
+    # SHC_TEMP_Send( $hash, "00", "0000" );
   } else {
     return SetExtensions($hash, $list, $name, @aa);
   }
@@ -255,30 +261,18 @@ SHC_TEMP_Set($@)
 }
 
 sub
-SHC_TEMP_Send($$@)
+SHC_TEMP_Send($)
 {
-  my ($hash, $cmd, $data) = @_;
+  my ($hash) = @_;
   my $name = $hash->{NAME};
-
-  # sKK{T}{X}{D}...Use AES key KK to send a packet with MessageType T, followed
-  #                by all necessary extension header fields and message data.
-  #                Fields are: ReceiverID (RRRR), MessageGroup (GG), MessageID (MM)
-  #                AckSenderID (SSSS), AckPacketCounter (PPPPPP), Error (EE).
-  #                MessageData (DD) can be 0..17 bytes with bits moved to the left.
-  #                End data with ENTER. SenderID, PacketCounter and CRC are automatically added.
-  # sKK00RRRRGGMMDD...........Get
-  # sKK01RRRRGGMMDD...........Set
-  # sKK02RRRRGGMMDD...........SetGet
-  # sKK08GGMMDD...............Status
-  # sKK09SSSSPPPPPPEE.........Ack
-  # sKK0ASSSSPPPPPPEEGGMMDD...AckStatus
-
-  my $msggrp = "14";         # msggrp = 20 convert to hex = 14
-  my $msgid = "01";
 
   $hash->{SHC_TEMP_lastSend} = TimeNow();
 
-  my $msg = sprintf( "s%02x%s%04x%s%s%s\r", $hash->{aeskey}, $cmd, $hash->{addr}, $msggrp, $msgid, $data );
+  my $msg = $parser->getSendString($hash->{addr});
+
+  # WORKAROUND for bug in SHC_parser.pm
+  $msg = substr($msg, 0, 17);
+  $msg = "$msg\r";
 
   # DEBUG
   Log3 $name, 3, "$name: Sending $msg";
