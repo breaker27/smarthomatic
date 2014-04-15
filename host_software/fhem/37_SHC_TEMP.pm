@@ -243,6 +243,7 @@ SHC_TEMP_Set($@)
   my $arg = $aa[1];
   my $arg2 = $aa[2];
   my $arg3 = $aa[3];
+  my $arg4 = $aa[4];
 
   my $readonly = AttrVal( $name, "readonly", "0" );
 
@@ -283,7 +284,7 @@ SHC_TEMP_Set($@)
     when('Dimmer')
     {
       my $list = "statusRequest:noArg";
-      $list .= " pct:slider,0,1,100 off:noArg on:noArg" if( !$readonly );
+      $list .= " ani pct:slider,0,1,100 off:noArg on:noArg" if( !$readonly );
 
       # Timeout functionality for SHC_TEMP is not implemented, because FHEMs internal notification system
       # is able to do this as well. Even more it supports intervals, off-for-timer, off-till ...
@@ -297,7 +298,7 @@ SHC_TEMP_Set($@)
 
       if( !$readonly && $cmd eq 'off' ) {
         readingsSingleUpdate($hash, "state", "set-$cmd", 1);
-      $parser->setField("Dimmer", "Brightness", "Brightness", 0);
+        $parser->setField("Dimmer", "Brightness", "Brightness", 0);
         SHC_TEMP_Send($hash);
       } elsif( !$readonly && $cmd eq 'on' ) {
         readingsSingleUpdate($hash, "state", "set-$cmd", 1);
@@ -305,10 +306,23 @@ SHC_TEMP_Set($@)
         SHC_TEMP_Send($hash);
       } elsif( !$readonly && $cmd eq 'pct' ) {
         my $brightness = $arg;
+        #DEBUG
         Log3 $name, 3, "$name: Args: $arg, $arg2, $arg3, $brightness";
 
         readingsSingleUpdate($hash, "state", "set-pct:$brightness", 1);
         $parser->setField("Dimmer", "Brightness", "Brightness", $brightness);
+        SHC_TEMP_Send($hash);
+      } elsif( !$readonly && $cmd eq 'ani' ) {
+        #TODO Verify argument values
+        my $brightness = $arg;
+        #DEBUG
+        Log3 $name, 3, "$name: ani args: $arg, $arg2, $arg3, $arg4, $brightness";
+
+        readingsSingleUpdate($hash, "state", "set-ani", 1);
+        $parser->setField("Dimmer", "Animation", "AnimationMode", $arg);
+        $parser->setField("Dimmer", "Animation", "TimeoutSec", $arg2);
+        $parser->setField("Dimmer", "Animation", "StartBrightness", $arg3);
+        $parser->setField("Dimmer", "Animation", "EndBrightness", $arg4);
         SHC_TEMP_Send($hash);
       } elsif( $cmd eq 'statusRequest' ) {
         # TODO implement with Get command
@@ -319,7 +333,6 @@ SHC_TEMP_Set($@)
       }
     }
   }
-
 
   return undef;
 }
