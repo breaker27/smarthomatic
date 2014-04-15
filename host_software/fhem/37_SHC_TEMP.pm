@@ -273,7 +273,6 @@ SHC_TEMP_Send($)
   # $msg = substr($msg, 0, 17);
   $msg = "$msg\r";
 
-  # DEBUG
   Log3 $name, 3, "$name: Sending $msg";
 
   IOWrite( $hash, $msg );
