@@ -101,7 +101,7 @@ SHC_TEMP_Parse($$)
 
 
   if( !$parser->parse($msg) ) {
-    Log3 $hash, 4, "SHC_TEMP  ($msg) data error";
+    Log3 $hash, 4, "$name: parser error: $msg";
     return "";
   }
 
@@ -117,7 +117,7 @@ SHC_TEMP_Parse($$)
   my $rname = $rhash?$rhash->{NAME}:$raddr;
 
   if( !$modules{SHC_TEMP}{defptr}{$raddr} ) {
-     Log3 $name, 3, "SHC_TEMP Unknown device $rname, please define it";
+     Log3 $name, 3, "$name: Unknown device $rname, please define it";
 
      return "UNDEFINED SHC_TEMP_$rname SHC_TEMP $raddr";
   }

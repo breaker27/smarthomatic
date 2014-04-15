@@ -88,7 +88,7 @@ SHC_Undef($$)
        $defs{$d}{IODev} == $hash)
       {
         my $lev = ($reread_active ? 4 : 2);
-        Log3 $name, $lev, "deleting port for $d";
+        Log3 $name, $lev, "$name: deleting port for $d";
         delete $defs{$d}{IODev};
       }
   }
@@ -123,7 +123,7 @@ SHC_Set($@)
   if($cmd eq "raw") {
     #return "\"set SHC $cmd\" needs exactly one parameter" if(@_ != 4);
     #return "Expecting a even length hex number" if((length($arg)&1) == 1 || $arg !~ m/^[\dA-F]{12,}$/ );
-    Log3 $name, 4, "set $name $cmd $arg";
+    Log3 $name, 4, "$name: set $name $cmd $arg";
     SHC_SimpleWrite($hash, $arg);
 
   } else {
@@ -197,6 +197,7 @@ SHC_ReadAnswer($$$$)
   # TODO: Not adapted to SHC, copy from 36_JeeLink.pm
   my ($hash, $arg, $anydata, $regexp) = @_;
   my $type = $hash->{TYPE};
+  my $name = $hash->{NAME};
 
   return ("No FD", undef)
         if(!$hash || ($^O !~ /Win/ && !defined($hash->{FD})));
@@ -234,7 +235,7 @@ SHC_ReadAnswer($$$$)
     }
 
     if($buf) {
-      Log3 $hash->{NAME}, 5, "SHC/RAW (ReadAnswer): $buf";
+      Log3 $hash->{NAME}, 5, "$name: SHC/RAW (ReadAnswer): $buf";
       $mpandata .= $buf;
     }
 
@@ -267,7 +268,7 @@ SHC_XmitLimitCheck($$)
   if(@b > 163) {          # 163 comes from fs20. todo: verify if correct for SHC modulation
 
     my $name = $hash->{NAME};
-    Log3 $name, 2, "SHC TRANSMIT LIMIT EXCEEDED";
+    Log3 $name, 2, "$name: SHC TRANSMIT LIMIT EXCEEDED";
     DoTrigger($name, "TRANSMIT LIMIT EXCEEDED");
 
   } else {
@@ -287,7 +288,7 @@ SHC_Write($$)
   my ($hash,$msg) = @_;
   my $name = $hash->{NAME};
 
-  Log3 $name, 5, "$name sending $msg";
+  Log3 $name, 5, "$name: sending $msg";
 
   SHC_AddQueue($hash, $msg);
   #SHC_SimpleWrite($hash, $msg);
@@ -375,7 +376,7 @@ SHC_Read($)
   my $name = $hash->{NAME};
 
   my $pandata = $hash->{PARTIAL};
-  Log3 $name, 5, "SHC/RAW: $pandata/$buf";
+  Log3 $name, 5, "$name: SHC/RAW: $pandata/$buf";
   $pandata .= $buf;
 
   while($pandata =~ m/\n/) {
@@ -455,7 +456,7 @@ SHC_SimpleWrite(@)
   return if(!$hash);
 
   my $name = $hash->{NAME};
-  Log3 $name, 5, "SW: $msg";
+  Log3 $name, 5, "$name: SW: $msg";
 
   $msg .= "\n" unless($nocr);
 
