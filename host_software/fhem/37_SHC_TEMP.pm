@@ -192,8 +192,28 @@ SHC_TEMP_Parse($$)
           readingsBulkUpdate($rhash, "timeout", $timeout);
 
           # After receiving this message we know for the first time that we are a 
-          # power switch. Define device type and addd according web commands
+          # power switch. Define device type and add according web commands
           $rhash->{devtype} = "PowerSwitch" if ( !defined($rhash->{devtype}) );
+          $attr{$rname}{devStateIcon} = 'on:on:toggle off:off:toggle set.*:light_question:off' if( !defined( $attr{$rname}{devStateIcon} ) );
+          $attr{$rname}{webCmd} = 'on:off:toggle:statusRequest' if( !defined( $attr{$rname}{webCmd} ) );
+        }
+      }
+    }
+    when('Dimmer')
+    {
+      given($msgname)
+      {
+        when('Brightness')
+        {
+          my $brightness = $parser->getField("Brightness");
+          my $state = $brightness==0?"off":"on";
+
+          readingsBulkUpdate($rhash, "state", $state);
+          readingsBulkUpdate($rhash, "brightness", $brightness);
+
+          # After receiving this message we know for the first time that we are a 
+          # dimmer. Define device type and add according web commands
+          $rhash->{devtype} = "Dimmer" if ( !defined($rhash->{devtype}) );
           $attr{$rname}{devStateIcon} = 'on:on:toggle off:off:toggle set.*:light_question:off' if( !defined( $attr{$rname}{devStateIcon} ) );
           $attr{$rname}{webCmd} = 'on:off:toggle:statusRequest' if( !defined( $attr{$rname}{webCmd} ) );
         }
@@ -269,8 +289,6 @@ SHC_TEMP_Send($)
 
   my $msg = $parser->getSendString( $hash->{addr}, $hash->{aeskey} );
 
-  # WORKAROUND for bug in SHC_parser.pm
-  # $msg = substr($msg, 0, 17);
   $msg = "$msg\r";
 
   Log3 $name, 3, "$name: Sending $msg";
