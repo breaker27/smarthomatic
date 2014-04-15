@@ -461,14 +461,13 @@ SHC_Ready($)
 sub
 SHC_SimpleWrite(@)
 {
-  # TODO: Not adapted to SHC, copy from 36_JeeLink.pm
-  my ($hash, $msg, $nocr) = @_;
+  my ($hash, $msg) = @_;
   return if(!$hash);
 
   my $name = $hash->{NAME};
   Log3 $name, 5, "$name: SW: $msg";
 
-  $msg .= "\n" unless($nocr);
+  $msg .= "\r";
 
   $hash->{USBDev}->write($msg)    if($hash->{USBDev});
   syswrite($hash->{DIODev}, $msg) if($hash->{DIODev});

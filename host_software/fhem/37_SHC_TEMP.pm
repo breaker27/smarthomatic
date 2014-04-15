@@ -347,8 +347,6 @@ SHC_TEMP_Send($)
 
   my $msg = $parser->getSendString( $hash->{addr}, $hash->{aeskey} );
 
-  $msg = "$msg\r";
-
   Log3 $name, 3, "$name: Sending $msg";
 
   IOWrite( $hash, $msg );
