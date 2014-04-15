@@ -164,7 +164,7 @@ SHC_TEMP_Parse($$)
         when('TempHumBriStatus')
         {
           my $tmp = $parser->getField("Temperature") / 100; # parser returns centigrade
-          my $hum = $parser->getField("Humidity") / 100;    # parser returns 1/100 percent
+          my $hum = $parser->getField("Humidity") / 10;     # parser returns 1/10 percent
           my $brt = $parser->getField("Brightness");
 
           readingsBulkUpdate($rhash, "state", "T: $tmp  H: $hum  B:$brt");
@@ -270,7 +270,7 @@ SHC_TEMP_Send($)
   my $msg = $parser->getSendString( $hash->{addr}, $hash->{aeskey} );
 
   # WORKAROUND for bug in SHC_parser.pm
-  $msg = substr($msg, 0, 17);
+  # $msg = substr($msg, 0, 17);
   $msg = "$msg\r";
 
   # DEBUG
