@@ -398,18 +398,28 @@ SHC_Parse($$$$)
 
   if($dmsg !~ m/^Packet Data: SenderID=/) {
 
-    # -Verbosity level 5
+    # Messages just to dipose
     if($dmsg =~ m/^\*\*\* Enter AES key nr/  ||
         $dmsg =~ m/^\*\*\* Received character/) {
+      return;
+    }
+
+    # -Verbosity level 5
+    if($dmsg =~ m/^Received \(AES key/  ||
+        $dmsg =~ m/^Received garbage/ ||
+        $dmsg =~ m/^Before encryption/ ||
+        $dmsg =~ m/^After encryption/ ||
+        $dmsg =~ m/^Repeating request./ ||
+        $dmsg =~ m/^Request Queue empty/ ||
+        $dmsg =~ m/^Removing request from request buffer/ ) {
       Log3 $name, 5, "$name: $dmsg";
       return;
     }
 
     # -Verbosity level 4
-    if($dmsg =~ m/^Received \(AES key/  ||
-        $dmsg =~ m/^Received garbage/ ||
-        $dmsg =~ m/^Before encryption/ ||
-        $dmsg =~ m/^After encryption/ ) {
+    if($dmsg =~ m/^Request added to queue/  ||
+        $dmsg =~ m/^Request Buffer/ ||
+        $dmsg =~ m/^Request (q|Q)ueue/ ) {
       Log3 $name, 4, "$name: $dmsg";
       return;
     }
