@@ -101,7 +101,7 @@ SHC_TEMP_Parse($$)
 
 
   if( !$parser->parse($msg) ) {
-    Log3 $hash, 4, "SHC_TEMP  ($msg) data error";
+    Log3 $hash, 4, "$name: parser error: $msg";
     return "";
   }
 
@@ -117,7 +117,7 @@ SHC_TEMP_Parse($$)
   my $rname = $rhash?$rhash->{NAME}:$raddr;
 
   if( !$modules{SHC_TEMP}{defptr}{$raddr} ) {
-     Log3 $name, 3, "SHC_TEMP Unknown device $rname, please define it";
+     Log3 $name, 3, "$name: Unknown device $rname, please define it";
 
      return "UNDEFINED SHC_TEMP_$rname SHC_TEMP $raddr";
   }
@@ -164,7 +164,7 @@ SHC_TEMP_Parse($$)
         when('TempHumBriStatus')
         {
           my $tmp = $parser->getField("Temperature") / 100; # parser returns centigrade
-          my $hum = $parser->getField("Humidity") / 100;    # parser returns 1/100 percent
+          my $hum = $parser->getField("Humidity") / 10;     # parser returns 1/10 percent
           my $brt = $parser->getField("Brightness");
 
           readingsBulkUpdate($rhash, "state", "T: $tmp  H: $hum  B:$brt");
@@ -192,10 +192,30 @@ SHC_TEMP_Parse($$)
           readingsBulkUpdate($rhash, "timeout", $timeout);
 
           # After receiving this message we know for the first time that we are a 
-          # power switch. Define device type and addd according web commands
+          # power switch. Define device type and add according web commands
           $rhash->{devtype} = "PowerSwitch" if ( !defined($rhash->{devtype}) );
           $attr{$rname}{devStateIcon} = 'on:on:toggle off:off:toggle set.*:light_question:off' if( !defined( $attr{$rname}{devStateIcon} ) );
           $attr{$rname}{webCmd} = 'on:off:toggle:statusRequest' if( !defined( $attr{$rname}{webCmd} ) );
+        }
+      }
+    }
+    when('Dimmer')
+    {
+      given($msgname)
+      {
+        when('Brightness')
+        {
+          my $brightness = $parser->getField("Brightness");
+          my $state = $brightness==0?"off":"on";
+
+          readingsBulkUpdate($rhash, "state", $state);
+          readingsBulkUpdate($rhash, "brightness", $brightness);
+
+          # After receiving this message we know for the first time that we are a 
+          # dimmer. Define device type and add according web commands
+          $rhash->{devtype} = "Dimmer" if ( !defined($rhash->{devtype}) );
+          $attr{$rname}{devStateIcon} = 'on:on off:off set.*:light_question:off' if( !defined( $attr{$rname}{devStateIcon} ) );
+          $attr{$rname}{webCmd} = 'on:off:statusRequest' if( !defined( $attr{$rname}{webCmd} ) );
         }
       }
     }
@@ -213,7 +233,6 @@ sub
 SHC_TEMP_Set($@)
 {
   my ($hash, $name, @aa) = @_;
-
   my $cnt = @aa;
 
   return "\"set $name\" needs at least one parameter" if($cnt < 1);
@@ -224,36 +243,95 @@ SHC_TEMP_Set($@)
   my $arg = $aa[1];
   my $arg2 = $aa[2];
   my $arg3 = $aa[3];
+  my $arg4 = $aa[4];
 
-  my $readonly = AttrVal($name, "readonly", "0" );
+  my $readonly = AttrVal( $name, "readonly", "0" );
 
-  my $list = "statusRequest:noArg";
-  $list .= " off:noArg on:noArg toggle:noArg" if( !$readonly );
 
-  # Timeout functionality for SHC_TEMP is not implemented, because FHEMs internal notification system
-  # is able to do this as well. Even more it supports intervals, off-for-timer, off-till ...
+  given($hash->{devtype})
+  {
+    when('PowerSwitch')
+    {
+      my $list = "statusRequest:noArg";
+      $list .= " off:noArg on:noArg toggle:noArg" if( !$readonly );
 
-  $parser->initPacket("PowerSwitch", "SwitchState", "Set");
-  $parser->setField("PowerSwitch", "SwitchState", "TimeoutSec", 0);
+      # Timeout functionality for SHC_TEMP is not implemented, because FHEMs internal notification system
+      # is able to do this as well. Even more it supports intervals, off-for-timer, off-till ...
 
-  if( $cmd eq 'toggle' ) {
-    $cmd = ReadingsVal($name,"state","on") eq "off" ? "on" :"off";
-  }
+      $parser->initPacket("PowerSwitch", "SwitchState", "Set");
+      $parser->setField("PowerSwitch", "SwitchState", "TimeoutSec", 0);
 
-  if( !$readonly && $cmd eq 'off' ) {
-    readingsSingleUpdate($hash, "state", "set-$cmd", 1);
-    $parser->setField("PowerSwitch", "SwitchState", "On", 0);
-    SHC_TEMP_Send($hash);
-  } elsif( !$readonly && $cmd eq 'on' ) {
-    readingsSingleUpdate($hash, "state", "set-$cmd", 1);
-    $parser->setField("PowerSwitch", "SwitchState", "On", 1);
-    SHC_TEMP_Send($hash);
-  } elsif( $cmd eq 'statusRequest' ) {
-    # TODO implement with Get command
-    # readingsSingleUpdate($hash, "state", "set-$cmd", 1);
-    # SHC_TEMP_Send( $hash, "00", "0000" );
-  } else {
-    return SetExtensions($hash, $list, $name, @aa);
+      if( $cmd eq 'toggle' ) {
+        $cmd = ReadingsVal($name,"state","on") eq "off" ? "on" :"off";
+      }
+
+      if( !$readonly && $cmd eq 'off' ) {
+        readingsSingleUpdate($hash, "state", "set-$cmd", 1);
+        $parser->setField("PowerSwitch", "SwitchState", "On", 0);
+        SHC_TEMP_Send($hash);
+      } elsif( !$readonly && $cmd eq 'on' ) {
+        readingsSingleUpdate($hash, "state", "set-$cmd", 1);
+        $parser->setField("PowerSwitch", "SwitchState", "On", 1);
+        SHC_TEMP_Send($hash);
+      } elsif( $cmd eq 'statusRequest' ) {
+        # TODO implement with Get command
+        # readingsSingleUpdate($hash, "state", "set-$cmd", 1);
+        # SHC_TEMP_Send( $hash, "00", "0000" );
+      } else {
+        return SetExtensions($hash, $list, $name, @aa);
+      }
+    }
+    when('Dimmer')
+    {
+      my $list = "statusRequest:noArg";
+      $list .= " ani pct:slider,0,1,100 off:noArg on:noArg" if( !$readonly );
+
+      # Timeout functionality for SHC_TEMP is not implemented, because FHEMs internal notification system
+      # is able to do this as well. Even more it supports intervals, off-for-timer, off-till ...
+
+      $parser->initPacket("Dimmer", "Brightness", "Set");
+      $parser->setField("Dimmer", "Brightness", "Brightness", 0);
+
+      if( $cmd eq 'toggle' ) {
+        $cmd = ReadingsVal($name,"state","on") eq "off" ? "on" :"off";
+      }
+
+      if( !$readonly && $cmd eq 'off' ) {
+        readingsSingleUpdate($hash, "state", "set-$cmd", 1);
+        $parser->setField("Dimmer", "Brightness", "Brightness", 0);
+        SHC_TEMP_Send($hash);
+      } elsif( !$readonly && $cmd eq 'on' ) {
+        readingsSingleUpdate($hash, "state", "set-$cmd", 1);
+        $parser->setField("Dimmer", "Brightness", "Brightness", 100);
+        SHC_TEMP_Send($hash);
+      } elsif( !$readonly && $cmd eq 'pct' ) {
+        my $brightness = $arg;
+        #DEBUG
+        Log3 $name, 3, "$name: Args: $arg, $arg2, $arg3, $brightness";
+
+        readingsSingleUpdate($hash, "state", "set-pct:$brightness", 1);
+        $parser->setField("Dimmer", "Brightness", "Brightness", $brightness);
+        SHC_TEMP_Send($hash);
+      } elsif( !$readonly && $cmd eq 'ani' ) {
+        #TODO Verify argument values
+        my $brightness = $arg;
+        #DEBUG
+        Log3 $name, 3, "$name: ani args: $arg, $arg2, $arg3, $arg4, $brightness";
+
+        readingsSingleUpdate($hash, "state", "set-ani", 1);
+        $parser->setField("Dimmer", "Animation", "AnimationMode", $arg);
+        $parser->setField("Dimmer", "Animation", "TimeoutSec", $arg2);
+        $parser->setField("Dimmer", "Animation", "StartBrightness", $arg3);
+        $parser->setField("Dimmer", "Animation", "EndBrightness", $arg4);
+        SHC_TEMP_Send($hash);
+      } elsif( $cmd eq 'statusRequest' ) {
+        # TODO implement with Get command
+        # readingsSingleUpdate($hash, "state", "set-$cmd", 1);
+        # SHC_TEMP_Send( $hash, "00", "0000" );
+      } else {
+        return SetExtensions($hash, $list, $name, @aa);
+      }
+    }
   }
 
   return undef;
@@ -269,11 +347,6 @@ SHC_TEMP_Send($)
 
   my $msg = $parser->getSendString( $hash->{addr}, $hash->{aeskey} );
 
-  # WORKAROUND for bug in SHC_parser.pm
-  $msg = substr($msg, 0, 17);
-  $msg = "$msg\r";
-
-  # DEBUG
   Log3 $name, 3, "$name: Sending $msg";
 
   IOWrite( $hash, $msg );
