@@ -308,7 +308,7 @@ sub getSendString
 	my ($self, $receiverID, $aesKeyNr) = @_;
     
     # Right now the only way to set the AES key is by defining in in fhem.cfg
-    # "define SHC_TEMP_xx SHC_TEMP xx aa" where xx = deviceID, aa = AES key
+    # "define SHC_Dev_xx SHC_Dev xx aa" where xx = deviceID, aa = AES key
     #
     # TODO: Where to enter the AES key number? This is by device.
     # Add lookup table device -> AES key?

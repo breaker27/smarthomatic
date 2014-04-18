@@ -1,5 +1,5 @@
 # Copied from 36_PCA301.pm and adapted
-# $Id: 36_SHC_TEMP.pm 3934 2013-09-21 09:21:39Z justme1968 $
+# $Id: 36_SHC_Dev.pm 3934 2013-09-21 09:21:39Z justme1968 $
 #
 # TODO:
 
@@ -14,18 +14,18 @@ use SHC_parser;
 
 my $parser = new SHC_parser();
 
-sub SHC_TEMP_Parse($$);
+sub SHC_Dev_Parse($$);
 
 sub
-SHC_TEMP_Initialize($)
+SHC_Dev_Initialize($)
 {
   my ($hash) = @_;
 
   $hash->{Match}     = "^Packet Data: SenderID=[1-9]|0[1-9]|[1-9][0-9]|[0-9][0-9][0-9]|[0-3][0-9][0-9][0-9]|40[0-8][0-9]|409[0-6]";
-  $hash->{SetFn}     = "SHC_TEMP_Set";
-  $hash->{DefFn}     = "SHC_TEMP_Define";
-  $hash->{UndefFn}   = "SHC_TEMP_Undef";
-  $hash->{ParseFn}   = "SHC_TEMP_Parse";
+  $hash->{SetFn}     = "SHC_Dev_Set";
+  $hash->{DefFn}     = "SHC_Dev_Define";
+  $hash->{UndefFn}   = "SHC_Dev_Undef";
+  $hash->{ParseFn}   = "SHC_Dev_Parse";
   $hash->{AttrList}  = "IODev"
                        ." readonly:1"
                        ." forceOn:1"
@@ -33,39 +33,39 @@ SHC_TEMP_Initialize($)
 }
 
 sub
-SHC_TEMP_Define($$)
+SHC_Dev_Define($$)
 {
   my ($hash, $def) = @_;
   my @a = split("[ \t][ \t]*", $def);
 
   if(@a < 3 || @a > 4) {
-    my $msg = "wrong syntax: define <name> SHC_TEMP <SenderID> [<AesKey>] ";
+    my $msg = "wrong syntax: define <name> SHC_Dev <SenderID> [<AesKey>] ";
     Log3 undef, 2, $msg;
     return $msg;
   }
   # Correct SenderID for SHC devices is from 1 - 4096 (leading zeros allowed)
   $a[2] =~ m/^([1-9]|0[1-9]|[1-9][0-9]|[0-9][0-9][0-9]|[0-3][0-9][0-9][0-9]|40[0-8][0-9]|409[0-6])$/i;
-  return "$a[2] is not a valid SHC_TEMP SenderID" if( !defined($1) );
+  return "$a[2] is not a valid SHC_Dev SenderID" if( !defined($1) );
 
   my $aeskey;
 
   if(@a eq 3){
     $aeskey = 0;
   } else {
-    return "$a[3] is not a valid SHC_TEMP AesKey" if($a[3] lt 0 || $a[3] gt 15);
+    return "$a[3] is not a valid SHC_Dev AesKey" if($a[3] lt 0 || $a[3] gt 15);
     $aeskey = $a[3]
   }
 
   my $name = $a[0];
   my $addr = $a[2];
 
-  return "SHC_TEMP device $addr already used for $modules{SHC_TEMP}{defptr}{$addr}->{NAME}." if( $modules{SHC_TEMP}{defptr}{$addr}
-                                                                                             && $modules{SHC_TEMP}{defptr}{$addr}->{NAME} ne $name );
+  return "SHC_Dev device $addr already used for $modules{SHC_Dev}{defptr}{$addr}->{NAME}." if( $modules{SHC_Dev}{defptr}{$addr}
+                                                                                             && $modules{SHC_Dev}{defptr}{$addr}->{NAME} ne $name );
 
   $hash->{addr} = $addr;
   $hash->{aeskey} = $aeskey;
 
-  $modules{SHC_TEMP}{defptr}{$addr} = $hash;
+  $modules{SHC_Dev}{defptr}{$addr} = $hash;
 
   AssignIoPort($hash);
   if(defined($hash->{IODev}->{NAME})) {
@@ -79,13 +79,13 @@ SHC_TEMP_Define($$)
 
 #####################################
 sub
-SHC_TEMP_Undef($$)
+SHC_Dev_Undef($$)
 {
   my ($hash, $arg) = @_;
   my $name = $hash->{NAME};
   my $addr = $hash->{addr};
 
-  delete( $modules{SHC_TEMP}{defptr}{$addr} );
+  delete( $modules{SHC_Dev}{defptr}{$addr} );
 
   return undef;
 }
@@ -93,7 +93,7 @@ SHC_TEMP_Undef($$)
 #####################################
 
 sub
-SHC_TEMP_Parse($$)
+SHC_Dev_Parse($$)
 {
   my ($hash, $msg) = @_;
   my $name = $hash->{NAME};
@@ -113,18 +113,18 @@ SHC_TEMP_Parse($$)
   $msgdata = $parser->getMessageData();
 
   my $raddr = $senderid;
-  my $rhash = $modules{SHC_TEMP}{defptr}{$raddr};
+  my $rhash = $modules{SHC_Dev}{defptr}{$raddr};
   my $rname = $rhash?$rhash->{NAME}:$raddr;
 
-  if( !$modules{SHC_TEMP}{defptr}{$raddr} ) {
+  if( !$modules{SHC_Dev}{defptr}{$raddr} ) {
      Log3 $name, 3, "$name: Unknown device $rname, please define it";
 
-     return "UNDEFINED SHC_TEMP_$rname SHC_TEMP $raddr";
+     return "UNDEFINED SHC_Dev_$rname SHC_Dev $raddr";
   }
 
   my @list;
   push(@list, $rname);
-  $rhash->{SHC_TEMP_lastRcv} = TimeNow();
+  $rhash->{SHC_Dev_lastRcv} = TimeNow();
 
   my $readonly = AttrVal($rname, "readonly", "0" );
 
@@ -230,7 +230,7 @@ SHC_TEMP_Parse($$)
 
 #####################################
 sub
-SHC_TEMP_Set($@)
+SHC_Dev_Set($@)
 {
   my ($hash, $name, @aa) = @_;
   my $cnt = @aa;
@@ -255,7 +255,7 @@ SHC_TEMP_Set($@)
       my $list = "statusRequest:noArg";
       $list .= " off:noArg on:noArg toggle:noArg" if( !$readonly );
 
-      # Timeout functionality for SHC_TEMP is not implemented, because FHEMs internal notification system
+      # Timeout functionality for SHC_Dev is not implemented, because FHEMs internal notification system
       # is able to do this as well. Even more it supports intervals, off-for-timer, off-till ...
 
       $parser->initPacket("PowerSwitch", "SwitchState", "Set");
@@ -268,15 +268,15 @@ SHC_TEMP_Set($@)
       if( !$readonly && $cmd eq 'off' ) {
         readingsSingleUpdate($hash, "state", "set-$cmd", 1);
         $parser->setField("PowerSwitch", "SwitchState", "On", 0);
-        SHC_TEMP_Send($hash);
+        SHC_Dev_Send($hash);
       } elsif( !$readonly && $cmd eq 'on' ) {
         readingsSingleUpdate($hash, "state", "set-$cmd", 1);
         $parser->setField("PowerSwitch", "SwitchState", "On", 1);
-        SHC_TEMP_Send($hash);
+        SHC_Dev_Send($hash);
       } elsif( $cmd eq 'statusRequest' ) {
         # TODO implement with Get command
         # readingsSingleUpdate($hash, "state", "set-$cmd", 1);
-        # SHC_TEMP_Send( $hash, "00", "0000" );
+        # SHC_Dev_Send( $hash, "00", "0000" );
       } else {
         return SetExtensions($hash, $list, $name, @aa);
       }
@@ -286,7 +286,7 @@ SHC_TEMP_Set($@)
       my $list = "statusRequest:noArg";
       $list .= " ani pct:slider,0,1,100 off:noArg on:noArg" if( !$readonly );
 
-      # Timeout functionality for SHC_TEMP is not implemented, because FHEMs internal notification system
+      # Timeout functionality for SHC_Dev is not implemented, because FHEMs internal notification system
       # is able to do this as well. Even more it supports intervals, off-for-timer, off-till ...
 
       $parser->initPacket("Dimmer", "Brightness", "Set");
@@ -299,11 +299,11 @@ SHC_TEMP_Set($@)
       if( !$readonly && $cmd eq 'off' ) {
         readingsSingleUpdate($hash, "state", "set-$cmd", 1);
         $parser->setField("Dimmer", "Brightness", "Brightness", 0);
-        SHC_TEMP_Send($hash);
+        SHC_Dev_Send($hash);
       } elsif( !$readonly && $cmd eq 'on' ) {
         readingsSingleUpdate($hash, "state", "set-$cmd", 1);
         $parser->setField("Dimmer", "Brightness", "Brightness", 100);
-        SHC_TEMP_Send($hash);
+        SHC_Dev_Send($hash);
       } elsif( !$readonly && $cmd eq 'pct' ) {
         my $brightness = $arg;
         #DEBUG
@@ -311,7 +311,7 @@ SHC_TEMP_Set($@)
 
         readingsSingleUpdate($hash, "state", "set-pct:$brightness", 1);
         $parser->setField("Dimmer", "Brightness", "Brightness", $brightness);
-        SHC_TEMP_Send($hash);
+        SHC_Dev_Send($hash);
       } elsif( !$readonly && $cmd eq 'ani' ) {
         #TODO Verify argument values
         my $brightness = $arg;
@@ -323,11 +323,11 @@ SHC_TEMP_Set($@)
         $parser->setField("Dimmer", "Animation", "TimeoutSec", $arg2);
         $parser->setField("Dimmer", "Animation", "StartBrightness", $arg3);
         $parser->setField("Dimmer", "Animation", "EndBrightness", $arg4);
-        SHC_TEMP_Send($hash);
+        SHC_Dev_Send($hash);
       } elsif( $cmd eq 'statusRequest' ) {
         # TODO implement with Get command
         # readingsSingleUpdate($hash, "state", "set-$cmd", 1);
-        # SHC_TEMP_Send( $hash, "00", "0000" );
+        # SHC_Dev_Send( $hash, "00", "0000" );
       } else {
         return SetExtensions($hash, $list, $name, @aa);
       }
@@ -338,12 +338,12 @@ SHC_TEMP_Set($@)
 }
 
 sub
-SHC_TEMP_Send($)
+SHC_Dev_Send($)
 {
   my ($hash) = @_;
   my $name = $hash->{NAME};
 
-  $hash->{SHC_TEMP_lastSend} = TimeNow();
+  $hash->{SHC_Dev_lastSend} = TimeNow();
 
   my $msg = $parser->getSendString( $hash->{addr}, $hash->{aeskey} );
 
@@ -357,21 +357,21 @@ SHC_TEMP_Send($)
 =pod
 =begin html
 
-<a name="SHC_TEMP"></a>
-<h3>SHC_TEMP</h3>
+<a name="SHC_Dev"></a>
+<h3>SHC_Dev</h3>
 <ul>
 
   <tr><td>
-  The SHC_TEMP A secure and extendable Open Source home automation system.<br><br>
+  The SHC_Dev A secure and extendable Open Source home automation system.<br><br>
   
   More info can be found in <a href="https://www.smarthomatic.org">Smarthomatic Website</a><br><br>
 
-  <a name="SHC_TEMP_Define"></a>
+  <a name="SHC_Dev_Define"></a>
   <b>Define</b>
   <ul>
-    <code>define &lt;name&gt; SHC_TEMP &lt;SenderID&gt; [&lt;AesKey&gt;]</code> <br>
+    <code>define &lt;name&gt; SHC_Dev &lt;SenderID&gt; [&lt;AesKey&gt;]</code> <br>
     <br>
-    <li><code>&lt;SenderID<li><code>&lt; is a number ranging from 0 .. 4095 to identify the SHC_TEMP device.
+    <li><code>&lt;SenderID<li><code>&lt; is a number ranging from 0 .. 4095 to identify the SHC_Dev device.
     <li>The optional <code>&lt;AesKey<li><code>&lt; is a number ranging from 0 .. 15 to select an encryption key.
     It is required for the basestation to communicate with remote devides
     The default value is 0.<br><br>
@@ -379,7 +379,7 @@ SHC_TEMP_Send($)
   </ul>
   <br>
 
-  <a name="SHC_TEMP_Set"></a>
+  <a name="SHC_Dev_Set"></a>
   <b>Set</b>
   <ul>
     <li>on</li>
@@ -388,19 +388,19 @@ SHC_TEMP_Send($)
     <li><a href="#setExtensions"> set extensions</a> are supported.</li>
   </ul><br>
 
-  <a name="SHC_TEMP_Get"></a>
+  <a name="SHC_Dev_Get"></a>
   <b>Get</b>
   <ul>
     <li>N/A</li>
   </ul><br>
 
-  <a name="SHC_TEMP_Readings"></a>
+  <a name="SHC_Dev_Readings"></a>
   <b>Readings</b>
   <ul>
     <li>N/A</li>
   </ul><br>
 
-  <a name="SHC_TEMP_Attr"></a>
+  <a name="SHC_Dev_Attr"></a>
   <b>Attributes</b>
   <ul>
     <li>readonly<br>

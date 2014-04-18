@@ -18,10 +18,10 @@ sub SHC_Write($$);
 
 sub SHC_SimpleWrite(@);
 
-my $clientsSHC = ":SHC_TEMP:BASE:xxx:";
+my $clientsSHC = ":SHC_Dev:BASE:xxx:";
 
 my %matchListSHC = (
-    "1:SHC_TEMP" => "^Packet Data: SenderID=[1-9]|0[1-9]|[1-9][0-9]|[0-9][0-9][0-9]|[0-3][0-9][0-9][0-9]|40[0-8][0-9]|409[0-6]", #1-4096 with leading zeros
+    "1:SHC_Dev" => "^Packet Data: SenderID=[1-9]|0[1-9]|[1-9][0-9]|[0-9][0-9][0-9]|[0-3][0-9][0-9][0-9]|40[0-8][0-9]|409[0-6]", #1-4096 with leading zeros
     "2:xxx" => "^\\S+\\s+22",
     "3:xxx" => "^\\S+\\s+11",
     "4:xxx" => "^\\S+\\s+9 ",
@@ -494,7 +494,7 @@ SHC_Attr(@)
 <ul>
   The SHC is a family of RF devices avaible at  <a href="http://http://www.smarthomatic.org">www.smarthomatic.org</a>.
 
-  This module provides the IODevice for the <a href="#SHC_TEMP">SHC_TEMP</a> modules that implements the SHC_TEMP protocol.<br><br>
+  This module provides the IODevice for the <a href="#SHC_Dev">SHC_Dev</a> modules that implements the SHC_Dev protocol.<br><br>
 
   Note: this module may require the Device::SerialPort or Win32::SerialPort
   module if you attach the device via USB and the OS sets strange default
