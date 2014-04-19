@@ -199,7 +199,8 @@ sub parse
 
 	$sendMode = 0;
 
-	if ($msg =~ /^Packet Data: SenderID=(\d*);PacketCounter=(\d*);MessageType=(\d*);MessageGroupID=(.*?);MessageID=(\d*);MessageData=([^;]*);.*/)
+	if (($msg =~ /^Packet Data: SenderID=(\d*);PacketCounter=(\d*);MessageType=(\d*);MessageGroupID=(\d*);MessageID=(\d*);MessageData=([^;]*);.*/)
+		|| ($msg =~ /^Packet Data: SenderID=(\d*);PacketCounter=(\d*);MessageType=(\d*);AckSenderID=\d*;AckPacketCounter=\d*;Error=\d*;MessageGroupID=(\d*);MessageID=(\d*);MessageData=([^;]*);.*/))
 	{
 		$self->{_senderID} = $1;
 		$self->{_packetCounter} = $2;
@@ -207,7 +208,10 @@ sub parse
 		$self->{_messageGroupID} = $4;
 		$self->{_messageID} = $5;
 		$self->{_messageData} = $6;		
-	} else {
+	}
+	
+	else
+	{
 		return undef;
 	}
 }

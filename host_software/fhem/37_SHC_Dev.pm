@@ -111,7 +111,15 @@ SHC_Dev_Parse($$)
   $msggroupname = $parser->getMessageGroupName();
   $msgname = $parser->getMessageName();
   $msgdata = $parser->getMessageData();
-
+  
+  if (($msgtypename ne "Status") && ($msgtypename ne "AckStatus"))
+  {
+	Log3 $name, 3, "$name: Ignoring MessageType $msgtypename";
+	return "";
+  }
+  
+  Log3 $name, 4, "$name: MessageType is $msgtypename";
+  
   my $raddr = $senderid;
   my $rhash = $modules{SHC_Dev}{defptr}{$raddr};
   my $rname = $rhash?$rhash->{NAME}:$raddr;
@@ -258,7 +266,7 @@ SHC_Dev_Set($@)
       # Timeout functionality for SHC_Dev is not implemented, because FHEMs internal notification system
       # is able to do this as well. Even more it supports intervals, off-for-timer, off-till ...
 
-      $parser->initPacket("PowerSwitch", "SwitchState", "Set");
+      $parser->initPacket("PowerSwitch", "SwitchState", "SetGet");
       $parser->setField("PowerSwitch", "SwitchState", "TimeoutSec", 0);
 
       if( $cmd eq 'toggle' ) {
@@ -289,20 +297,19 @@ SHC_Dev_Set($@)
       # Timeout functionality for SHC_Dev is not implemented, because FHEMs internal notification system
       # is able to do this as well. Even more it supports intervals, off-for-timer, off-till ...
 
-      $parser->initPacket("Dimmer", "Brightness", "Set");
-      $parser->setField("Dimmer", "Brightness", "Brightness", 0);
-
       if( $cmd eq 'toggle' ) {
         $cmd = ReadingsVal($name,"state","on") eq "off" ? "on" :"off";
       }
 
       if( !$readonly && $cmd eq 'off' ) {
         readingsSingleUpdate($hash, "state", "set-$cmd", 1);
+        $parser->initPacket("Dimmer", "Brightness", "SetGet");
         $parser->setField("Dimmer", "Brightness", "Brightness", 0);
         SHC_Dev_Send($hash);
       } elsif( !$readonly && $cmd eq 'on' ) {
         readingsSingleUpdate($hash, "state", "set-$cmd", 1);
-        $parser->setField("Dimmer", "Brightness", "Brightness", 100);
+        $parser->initPacket("Dimmer", "Brightness", "SetGet");
+		$parser->setField("Dimmer", "Brightness", "Brightness", 100);
         SHC_Dev_Send($hash);
       } elsif( !$readonly && $cmd eq 'pct' ) {
         my $brightness = $arg;
@@ -310,7 +317,8 @@ SHC_Dev_Set($@)
         Log3 $name, 3, "$name: Args: $arg, $arg2, $arg3, $brightness";
 
         readingsSingleUpdate($hash, "state", "set-pct:$brightness", 1);
-        $parser->setField("Dimmer", "Brightness", "Brightness", $brightness);
+        $parser->initPacket("Dimmer", "Brightness", "SetGet");
+		$parser->setField("Dimmer", "Brightness", "Brightness", $brightness);
         SHC_Dev_Send($hash);
       } elsif( !$readonly && $cmd eq 'ani' ) {
         #TODO Verify argument values
@@ -319,6 +327,7 @@ SHC_Dev_Set($@)
         Log3 $name, 3, "$name: ani args: $arg, $arg2, $arg3, $arg4, $brightness";
 
         readingsSingleUpdate($hash, "state", "set-ani", 1);
+		$parser->initPacket("Dimmer", "Animation", "SetGet");
         $parser->setField("Dimmer", "Animation", "AnimationMode", $arg);
         $parser->setField("Dimmer", "Animation", "TimeoutSec", $arg2);
         $parser->setField("Dimmer", "Animation", "StartBrightness", $arg3);
