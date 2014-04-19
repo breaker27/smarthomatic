@@ -463,7 +463,7 @@ void process_packet(uint8_t len)
 		return;
 	}
 	
-	UART_PUTF("MessageID:%u;", messageid);
+	UART_PUTF("MessageID:%u;\r\n", messageid);
 
 	switch (messageid)
 	{
@@ -474,7 +474,7 @@ void process_packet(uint8_t len)
 			process_animation(messagetype);
 			break;
 		default:
-			UART_PUTS("\r\nERR: Unsupported MessageID.\r\n");
+			UART_PUTS("ERR: Unsupported MessageID.\r\n");
 			break;
 	}
 	
@@ -696,6 +696,7 @@ int main(void)
 				manual_dim_direction = !manual_dim_direction;
 			}
 			
+			send_status_timeout = 10;
 			button_state = 0;
 		}
 				
@@ -709,6 +710,7 @@ int main(void)
 			{
 				UART_PUTF("END Brightness %u%%, ", end_brightness);
 				setPWMDutyCyclePercent((float)end_brightness);
+				send_status_timeout = 10;
 				animation_length = 0;
 				animation_position = 0;
 			}
