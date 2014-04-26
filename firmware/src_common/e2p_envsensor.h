@@ -53,24 +53,24 @@ static inline TemperatureSensorTypeEnum e2p_envsensor_get_temperaturesensortype(
   return eeprom_read_UIntValue8(64, 0, 8, 0, 255);
 }
 
-// BrightnessSensorType (EnumValue)
-// Description: You can choose one of the supported light sensors. If set to 0, no sensor is used, but the device sends out packets for testing purposes.
+// HumiditySensorType (EnumValue)
+// Description: You can choose one of the supported air humidity sensors.
 
 typedef enum {
-  BRIGHTNESSSENSORTYPE_NOSENSOR = 0,
-  BRIGHTNESSSENSORTYPE_PHOTOCELL = 1
-} BrightnessSensorTypeEnum;
+  HUMIDITYSENSORTYPE_NOSENSOR = 0,
+  HUMIDITYSENSORTYPE_SHT15 = 1
+} HumiditySensorTypeEnum;
 
-// Set BrightnessSensorType (EnumValue)
+// Set HumiditySensorType (EnumValue)
 // Byte offset: 65, bit offset: 0, length bits 8
-static inline void e2p_envsensor_set_brightnesssensortype(BrightnessSensorTypeEnum val)
+static inline void e2p_envsensor_set_humiditysensortype(HumiditySensorTypeEnum val)
 {
   eeprom_write_UIntValue(65, 0, 8, val);
 }
 
-// Get BrightnessSensorType (EnumValue)
+// Get HumiditySensorType (EnumValue)
 // Byte offset: 65, bit offset: 0, length bits 8
-static inline BrightnessSensorTypeEnum e2p_envsensor_get_brightnesssensortype(void)
+static inline HumiditySensorTypeEnum e2p_envsensor_get_humiditysensortype(void)
 {
   return eeprom_read_UIntValue8(65, 0, 8, 0, 255);
 }
@@ -97,7 +97,50 @@ static inline BarometricSensorTypeEnum e2p_envsensor_get_barometricsensortype(vo
   return eeprom_read_UIntValue8(66, 0, 8, 0, 255);
 }
 
-// Reserved area with 7656 bits
+// BrightnessSensorType (EnumValue)
+// Description: You can choose one of the supported light sensors. If set to 0, no sensor is used, but the device sends out packets for testing purposes.
+
+typedef enum {
+  BRIGHTNESSSENSORTYPE_NOSENSOR = 0,
+  BRIGHTNESSSENSORTYPE_PHOTOCELL = 1
+} BrightnessSensorTypeEnum;
+
+// Set BrightnessSensorType (EnumValue)
+// Byte offset: 67, bit offset: 0, length bits 8
+static inline void e2p_envsensor_set_brightnesssensortype(BrightnessSensorTypeEnum val)
+{
+  eeprom_write_UIntValue(67, 0, 8, val);
+}
+
+// Get BrightnessSensorType (EnumValue)
+// Byte offset: 67, bit offset: 0, length bits 8
+static inline BrightnessSensorTypeEnum e2p_envsensor_get_brightnesssensortype(void)
+{
+  return eeprom_read_UIntValue8(67, 0, 8, 0, 255);
+}
+
+// DistanceSensorType (EnumValue)
+
+typedef enum {
+  DISTANCESENSORTYPE_NOSENSOR = 0,
+  DISTANCESENSORTYPE_SRF02 = 1
+} DistanceSensorTypeEnum;
+
+// Set DistanceSensorType (EnumValue)
+// Byte offset: 68, bit offset: 0, length bits 8
+static inline void e2p_envsensor_set_distancesensortype(DistanceSensorTypeEnum val)
+{
+  eeprom_write_UIntValue(68, 0, 8, val);
+}
+
+// Get DistanceSensorType (EnumValue)
+// Byte offset: 68, bit offset: 0, length bits 8
+static inline DistanceSensorTypeEnum e2p_envsensor_get_distancesensortype(void)
+{
+  return eeprom_read_UIntValue8(68, 0, 8, 0, 255);
+}
+
+// Reserved area with 7640 bits
 
 
 #endif /* _E2P_ENVSENSOR_H */
