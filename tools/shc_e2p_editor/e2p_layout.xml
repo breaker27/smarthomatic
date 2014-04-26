@@ -123,8 +123,8 @@
 			</Element>
 		</EnumValue>
 		<EnumValue>
-			<ID>BrightnessSensorType</ID>
-			<Description>You can choose one of the supported light sensors. If set to 0, no sensor is used, but the device sends out packets for testing purposes.</Description>
+			<ID>HumiditySensorType</ID>
+			<Description>You can choose one of the supported air humidity sensors.</Description>
 			<Bits>8</Bits>
 			<Element>
 				<Value>0</Value>
@@ -132,7 +132,7 @@
 			</Element>
 			<Element>
 				<Value>1</Value>
-				<Name>Photocell</Name>
+				<Name>SHT15</Name>
 			</Element>
 		</EnumValue>
 		<EnumValue>
@@ -146,6 +146,32 @@
 			<Element>
 				<Value>1</Value>
 				<Name>BMP085</Name>
+			</Element>
+		</EnumValue>
+		<EnumValue>
+			<ID>BrightnessSensorType</ID>
+			<Description>You can choose one of the supported light sensors. If set to 0, no sensor is used, but the device sends out packets for testing purposes.</Description>
+			<Bits>8</Bits>
+			<Element>
+				<Value>0</Value>
+				<Name>NoSensor</Name>
+			</Element>
+			<Element>
+				<Value>1</Value>
+				<Name>Photocell</Name>
+			</Element>
+		</EnumValue>
+		<EnumValue>
+			<ID>DistanceSensorType</ID>
+			<Description/>
+			<Bits>8</Bits>
+			<Element>
+				<Value>0</Value>
+				<Name>NoSensor</Name>
+			</Element>
+			<Element>
+				<Value>1</Value>
+				<Name>SRF02</Name>
 			</Element>
 		</EnumValue>
 		<Reserved>
