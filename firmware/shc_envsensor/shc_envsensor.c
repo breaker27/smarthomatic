@@ -64,14 +64,18 @@ struct measurement_t
 
 // ---------- functions to measure values from sensors ----------
 
+void sht11_measure_loop(void)
+{
+	sht11_start_measure();
+	_delay_ms(500);
+	while (!sht11_measure_finish());
+}
+
 void measure_temperature(void)
 {
 	if (temperature_sensor_type == TEMPERATURESENSORTYPE_SHT15)
 	{
-		sht11_start_measure();
-		_delay_ms(500);
-		while (!sht11_measure_finish());
-	
+		sht11_measure_loop();
 		temperature.val += sht11_get_tmp();
 		temperature.cnt++;
 	}
@@ -94,6 +98,12 @@ void measure_humidity(void)
 {
 	if (humidity_sensor_type == HUMIDITYSENSORTYPE_SHT15)
 	{
+		// actually measure if not done already while getting temperature
+		if (temperature_sensor_type != TEMPERATURESENSORTYPE_SHT15)
+		{
+			sht11_measure_loop();
+		}
+	
 		humidity.val += sht11_get_hum();
 		humidity.cnt++;
 	}
@@ -127,14 +137,14 @@ void measure_brightness(void)
 
 void prepare_humiditytemperature(void)
 {
-	humidity.val = humidity.val * 10 / humidity.avgThr;
+	humidity.val = humidity.val / humidity.avgThr; // in 100 * % rel.
 	temperature.val /= temperature.avgThr;
 
 	pkg_header_init_weather_humiditytemperature_status();
-	msg_weather_humiditytemperature_set_humidity(humidity.val);
+	msg_weather_humiditytemperature_set_humidity(humidity.val / 10); // in permill
 	msg_weather_humiditytemperature_set_temperature(temperature.val);
 	
-	UART_PUTF2("Send humidity: %u.%u%%, temperature: ", humidity.val / 10, humidity.val % 10);
+	UART_PUTF2("Send humidity: %u.%u%%, temperature: ", humidity.val / 100, humidity.val % 100);
 	print_signed(temperature.val);
 	UART_PUTS(" deg.C\r\n");
 
