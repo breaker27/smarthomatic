@@ -165,19 +165,55 @@ SHC_Dev_Parse($$)
         }
       }
     }
-    when('EnvSensor')
+    when('Weather')
     {
       given($msgname)
       {
-        when('TempHumBriStatus')
+        when('Temperature')
         {
           my $tmp = $parser->getField("Temperature") / 100; # parser returns centigrade
+
+          readingsBulkUpdate($rhash, "state", "T: $tmp");
+          readingsBulkUpdate($rhash, "temperature", $tmp);
+          # After receiving this message we know for the first time that we are a 
+          # enviroment sonsor, so lets define our device type
+          $rhash->{devtype} = "EnvSensor" if ( !defined($rhash->{devtype} ) );
+        }
+        when('HumidityTemperature')
+        {
           my $hum = $parser->getField("Humidity") / 10;     # parser returns 1/10 percent
+          my $tmp = $parser->getField("Temperature") / 100; # parser returns centigrade
+
+          readingsBulkUpdate($rhash, "state", "T: $tmp  H: $hum");
+          readingsBulkUpdate($rhash, "humidity", $hum);
+          readingsBulkUpdate($rhash, "temperature", $tmp);
+          # After receiving this message we know for the first time that we are a 
+          # enviroment sonsor, so lets define our device type
+          $rhash->{devtype} = "EnvSensor" if ( !defined($rhash->{devtype} ) );
+        }
+        when('BarometricPressureTemperature')
+        {
+          my $bar = $parser->getField("BarometricPressure") / 100; # parser returns pascal, use hPa
+          my $tmp = $parser->getField("Temperature") / 100; # parser returns centigrade
+
+          readingsBulkUpdate($rhash, "state", "T: $tmp  B: $bar");
+          readingsBulkUpdate($rhash, "barometric_pressure", $bar);
+          readingsBulkUpdate($rhash, "temperature", $tmp);
+          # After receiving this message we know for the first time that we are a 
+          # enviroment sonsor, so lets define our device type
+          $rhash->{devtype} = "EnvSensor" if ( !defined($rhash->{devtype} ) );
+        }
+      }
+    }
+    when('Environment')
+    {
+      given($msgname)
+      {
+        when('Brightness')
+        {
           my $brt = $parser->getField("Brightness");
 
-          readingsBulkUpdate($rhash, "state", "T: $tmp  H: $hum  B:$brt");
-          readingsBulkUpdate($rhash, "temperature", $tmp);
-          readingsBulkUpdate($rhash, "humidity", $hum);
+          readingsBulkUpdate($rhash, "state", "B: $brt");
           readingsBulkUpdate($rhash, "brightness", $brt);
           # After receiving this message we know for the first time that we are a 
           # enviroment sonsor, so lets define our device type
