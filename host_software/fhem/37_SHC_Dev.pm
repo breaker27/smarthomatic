@@ -97,33 +97,25 @@ SHC_Dev_Parse($$)
 {
   my ($hash, $msg) = @_;
   my $name = $hash->{NAME};
-  my ($senderid, $pktcnt, $msgtypename, $msggroupname, $msgname, $msgdata);
-
 
   if( !$parser->parse($msg) ) {
     Log3 $hash, 4, "SHC_TEMP: parser error: $msg";
     return "";
   }
 
-  $senderid = $parser->getSenderID();
-  $pktcnt = $parser->getPacketCounter();
-  $msgtypename = $parser->getMessageTypeName();
-  $msggroupname = $parser->getMessageGroupName();
-  $msgname = $parser->getMessageName();
-  $msgdata = $parser->getMessageData();
-  
-  my $raddr = $senderid;
+  my $msgtypename = $parser->getMessageTypeName();
+  my $msggroupname = $parser->getMessageGroupName();
+  my $msgname = $parser->getMessageName();
+  my $raddr = $parser->getSenderID();
   my $rhash = $modules{SHC_Dev}{defptr}{$raddr};
   my $rname = $rhash?$rhash->{NAME}:$raddr;
 
   if( !$modules{SHC_Dev}{defptr}{$raddr} ) {
      Log3 $name, 3, "SHC_TEMP: Unknown device $rname, please define it";
-
      return "UNDEFINED SHC_Dev_$rname SHC_Dev $raddr";
   }
 
-  if (($msgtypename ne "Status") && ($msgtypename ne "AckStatus"))
-  {
+  if ( ($msgtypename ne "Status") && ($msgtypename ne "AckStatus") ) {
     Log3 $name, 3, "$rname: Ignoring MessageType $msgtypename";
     return "";
   }
@@ -133,16 +125,13 @@ SHC_Dev_Parse($$)
   my @list;
   push(@list, $rname);
   $rhash->{SHC_Dev_lastRcv} = TimeNow();
+  $rhash->{SHC_Dev_pktcnt} = $parser->getPacketCounter();
+  $rhash->{SHC_Dev_msgdata} = $parser->getMessageData();
+  $rhash->{SHC_Dev_msgtype} = "$msggroupname : $msgname : $msgtypename";
 
-  my $readonly = AttrVal($rname, "readonly", "0" );
+  my $readonly = AttrVal( $rname, "readonly", "0" );
 
   readingsBeginUpdate($rhash);
-  readingsBulkUpdate($rhash, "senderid", $senderid);
-  readingsBulkUpdate($rhash, "pktcnt", $pktcnt);
-  readingsBulkUpdate($rhash, "msgtypename", $msgtypename);
-  readingsBulkUpdate($rhash, "msggroupname", $msggroupname);
-  readingsBulkUpdate($rhash, "msgname", $msgname);
-  readingsBulkUpdate($rhash, "msgdata", $msgdata);
 
   given($msggroupname)
   {
