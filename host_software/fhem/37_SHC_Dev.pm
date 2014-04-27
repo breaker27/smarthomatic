@@ -101,7 +101,7 @@ SHC_Dev_Parse($$)
 
 
   if( !$parser->parse($msg) ) {
-    Log3 $hash, 4, "$name: parser error: $msg";
+    Log3 $hash, 4, "SHC_TEMP: parser error: $msg";
     return "";
   }
 
@@ -112,23 +112,23 @@ SHC_Dev_Parse($$)
   $msgname = $parser->getMessageName();
   $msgdata = $parser->getMessageData();
   
-  if (($msgtypename ne "Status") && ($msgtypename ne "AckStatus"))
-  {
-	Log3 $name, 3, "$name: Ignoring MessageType $msgtypename";
-	return "";
-  }
-  
-  Log3 $name, 4, "$name: MessageType is $msgtypename";
-  
   my $raddr = $senderid;
   my $rhash = $modules{SHC_Dev}{defptr}{$raddr};
   my $rname = $rhash?$rhash->{NAME}:$raddr;
 
   if( !$modules{SHC_Dev}{defptr}{$raddr} ) {
-     Log3 $name, 3, "$name: Unknown device $rname, please define it";
+     Log3 $name, 3, "SHC_TEMP: Unknown device $rname, please define it";
 
      return "UNDEFINED SHC_Dev_$rname SHC_Dev $raddr";
   }
+
+  if (($msgtypename ne "Status") && ($msgtypename ne "AckStatus"))
+  {
+    Log3 $name, 3, "$rname: Ignoring MessageType $msgtypename";
+    return "";
+  }
+
+  Log3 $name, 4, "$rname: MessageType is $msgtypename";
 
   my @list;
   push(@list, $rname);
