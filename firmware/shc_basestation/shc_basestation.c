@@ -28,7 +28,7 @@
 #include "uart.h"
 
 #include "../src_common/msggrp_generic.h"
-#include "../src_common/msggrp_envsensor.h"
+#include "../src_common/msggrp_weather.h"
 #include "../src_common/msggrp_powerswitch.h"
 
 #include "../src_common/e2p_hardware.h"
@@ -52,7 +52,7 @@ uint8_t aes_key_count;
 // of all packets must be known at the PC program that's processing the data.
 void decode_data(uint8_t len)
 {
-	uint32_t messagegroupid, messageid;
+	uint32_t u32, messagegroupid, messageid;
 	uint16_t u16;
 	
 	pkg_header_adjust_offset();
@@ -143,16 +143,26 @@ void decode_data(uint8_t len)
 				
 				break;
 
-			case MESSAGEGROUP_ENVSENSOR:
+			case MESSAGEGROUP_WEATHER:
 				
 				switch (messageid)
 				{
-					case MESSAGEID_ENVSENSOR_TEMPHUMBRISTATUS:
+					case MESSAGEID_WEATHER_TEMPERATURE:
 						UART_PUTS("Temperature=");
-						print_signed(msg_envsensor_temphumbristatus_get_temperature());
-						u16 = msg_envsensor_temphumbristatus_get_humidity();
-						UART_PUTF2(";Humidity=%u.%u;", u16 / 10, u16 % 10);
-						UART_PUTF("Brightness=%u;", msg_envsensor_temphumbristatus_get_brightness());
+						print_signed(msg_weather_temperature_get_temperature());
+						UART_PUTS(";");
+						break;
+					case MESSAGEID_WEATHER_HUMIDITYTEMPERATURE:
+						u16 = msg_weather_humiditytemperature_get_humidity();
+						UART_PUTF2("Humidity=%u.%u;Temperature=", u16 / 10, u16 % 10);
+						print_signed(msg_weather_humiditytemperature_get_temperature());
+						UART_PUTS(";");
+						break;
+					case MESSAGEID_WEATHER_BAROMETRICPRESSURETEMPERATURE:
+						u32 = msg_weather_barometricpressuretemperature_get_barometricpressure();
+						UART_PUTF("Pressure=%ld;Temperature=", u32);
+						print_signed(msg_weather_barometricpressuretemperature_get_temperature());
+						UART_PUTS(";");
 						break;
 					default:
 						break;
