@@ -163,7 +163,6 @@ SHC_Dev_Parse($$)
         {
           my $tmp = $parser->getField("Temperature") / 100; # parser returns centigrade
 
-          readingsBulkUpdate($rhash, "state", "T: $tmp");
           readingsBulkUpdate($rhash, "temperature", $tmp);
           # After receiving this message we know for the first time that we are a 
           # enviroment sonsor, so lets define our device type
@@ -174,7 +173,6 @@ SHC_Dev_Parse($$)
           my $hum = $parser->getField("Humidity") / 10;     # parser returns 1/10 percent
           my $tmp = $parser->getField("Temperature") / 100; # parser returns centigrade
 
-          readingsBulkUpdate($rhash, "state", "T: $tmp  H: $hum");
           readingsBulkUpdate($rhash, "humidity", $hum);
           readingsBulkUpdate($rhash, "temperature", $tmp);
           # After receiving this message we know for the first time that we are a 
@@ -186,7 +184,6 @@ SHC_Dev_Parse($$)
           my $bar = $parser->getField("BarometricPressure") / 100; # parser returns pascal, use hPa
           my $tmp = $parser->getField("Temperature") / 100; # parser returns centigrade
 
-          readingsBulkUpdate($rhash, "state", "T: $tmp  B: $bar");
           readingsBulkUpdate($rhash, "barometric_pressure", $bar);
           readingsBulkUpdate($rhash, "temperature", $tmp);
           # After receiving this message we know for the first time that we are a 
@@ -203,7 +200,6 @@ SHC_Dev_Parse($$)
         {
           my $brt = $parser->getField("Brightness");
 
-          readingsBulkUpdate($rhash, "state", "B: $brt");
           readingsBulkUpdate($rhash, "brightness", $brt);
           # After receiving this message we know for the first time that we are a 
           # enviroment sonsor, so lets define our device type
@@ -254,6 +250,29 @@ SHC_Dev_Parse($$)
       }
     }
   }
+
+  # Assemble state string for EnvSensor from most recent readings
+  if ($rhash->{devtype} eq "EnvSensor") {
+    my $tmp_state = "";
+    if (defined($rhash->{READINGS}{temperature}{VAL})) {
+      my $temp = $rhash->{READINGS}{temperature}{VAL};
+      $tmp_state .= "T: $temp ";
+    }
+    if (defined($rhash->{READINGS}{humidity}{VAL})) {
+      my $hum = $rhash->{READINGS}{humidity}{VAL};
+      $tmp_state .= "H: $hum ";
+    }
+    if (defined($rhash->{READINGS}{barometric_pressure}{VAL})) {
+      my $baro = $rhash->{READINGS}{barometric_pressure}{VAL};
+      $tmp_state .= "Baro: $baro ";
+    }
+    if (defined($rhash->{READINGS}{brightness}{VAL})) {
+      my $bright = $rhash->{READINGS}{brightness}{VAL};
+      $tmp_state .= "B: $bright ";
+    }
+    readingsBulkUpdate($rhash, "state", $tmp_state);
+  }
+
 
   # TODO: How to handle ACK packets?
   #   Packet Data: SenderID=40;PacketCounter=1105;MessageType=10;AckSenderID=0;AckPacketCounter=2895;Error=0;MessageGroupID=20;MessageID=1;MessageData=8000000000000000000000000000000000;On=1;TimeoutSec=0;
