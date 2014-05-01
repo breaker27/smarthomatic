@@ -307,25 +307,25 @@ SHC_Dev_Set($@)
       # Timeout functionality for SHC_Dev is not implemented, because FHEMs internal notification system
       # is able to do this as well. Even more it supports intervals, off-for-timer, off-till ...
 
-      $parser->initPacket("PowerSwitch", "SwitchState", "SetGet");
-      $parser->setField("PowerSwitch", "SwitchState", "TimeoutSec", 0);
-
       if( $cmd eq 'toggle' ) {
         $cmd = ReadingsVal($name,"state","on") eq "off" ? "on" :"off";
       }
 
       if( !$readonly && $cmd eq 'off' ) {
         readingsSingleUpdate($hash, "state", "set-$cmd", 1);
+        $parser->initPacket("PowerSwitch", "SwitchState", "SetGet");
+        $parser->setField("PowerSwitch", "SwitchState", "TimeoutSec", 0);
         $parser->setField("PowerSwitch", "SwitchState", "On", 0);
         SHC_Dev_Send($hash);
       } elsif( !$readonly && $cmd eq 'on' ) {
         readingsSingleUpdate($hash, "state", "set-$cmd", 1);
+        $parser->initPacket("PowerSwitch", "SwitchState", "SetGet");
+        $parser->setField("PowerSwitch", "SwitchState", "TimeoutSec", 0);
         $parser->setField("PowerSwitch", "SwitchState", "On", 1);
         SHC_Dev_Send($hash);
       } elsif( $cmd eq 'statusRequest' ) {
-        # TODO implement with Get command
-        # readingsSingleUpdate($hash, "state", "set-$cmd", 1);
-        # SHC_Dev_Send( $hash, "00", "0000" );
+        $parser->initPacket("PowerSwitch", "SwitchState", "Get");
+        SHC_Dev_Send($hash);
       } else {
         return SetExtensions($hash, $list, $name, @aa);
       }
@@ -350,7 +350,7 @@ SHC_Dev_Set($@)
       } elsif( !$readonly && $cmd eq 'on' ) {
         readingsSingleUpdate($hash, "state", "set-$cmd", 1);
         $parser->initPacket("Dimmer", "Brightness", "SetGet");
-		$parser->setField("Dimmer", "Brightness", "Brightness", 100);
+        $parser->setField("Dimmer", "Brightness", "Brightness", 100);
         SHC_Dev_Send($hash);
       } elsif( !$readonly && $cmd eq 'pct' ) {
         my $brightness = $arg;
@@ -359,7 +359,7 @@ SHC_Dev_Set($@)
 
         readingsSingleUpdate($hash, "state", "set-pct:$brightness", 1);
         $parser->initPacket("Dimmer", "Brightness", "SetGet");
-		$parser->setField("Dimmer", "Brightness", "Brightness", $brightness);
+        $parser->setField("Dimmer", "Brightness", "Brightness", $brightness);
         SHC_Dev_Send($hash);
       } elsif( !$readonly && $cmd eq 'ani' ) {
         #TODO Verify argument values
@@ -368,16 +368,15 @@ SHC_Dev_Set($@)
         Log3 $name, 3, "$name: ani args: $arg, $arg2, $arg3, $arg4, $brightness";
 
         readingsSingleUpdate($hash, "state", "set-ani", 1);
-		$parser->initPacket("Dimmer", "Animation", "SetGet");
+        $parser->initPacket("Dimmer", "Animation", "SetGet");
         $parser->setField("Dimmer", "Animation", "AnimationMode", $arg);
         $parser->setField("Dimmer", "Animation", "TimeoutSec", $arg2);
         $parser->setField("Dimmer", "Animation", "StartBrightness", $arg3);
         $parser->setField("Dimmer", "Animation", "EndBrightness", $arg4);
         SHC_Dev_Send($hash);
       } elsif( $cmd eq 'statusRequest' ) {
-        # TODO implement with Get command
-        # readingsSingleUpdate($hash, "state", "set-$cmd", 1);
-        # SHC_Dev_Send( $hash, "00", "0000" );
+        $parser->initPacket("Dimmer", "Brightness", "Get");
+        SHC_Dev_Send($hash);
       } else {
         return SetExtensions($hash, $list, $name, @aa);
       }
