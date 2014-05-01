@@ -120,7 +120,8 @@ SHC_Dev_Parse($$)
     return "";
   }
 
-  Log3 $name, 4, "$rname: MessageType is $msgtypename";
+  Log3 $name, 4, "$rname: Msg: $msg";
+  Log3 $name, 4, "$rname: MsgType: $msgtypename, MsgGroupName: $msggroupname, MsgName: $msgname";
 
   my @list;
   push(@list, $rname);
