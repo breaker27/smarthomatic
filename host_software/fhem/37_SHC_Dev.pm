@@ -97,52 +97,42 @@ SHC_Dev_Parse($$)
 {
   my ($hash, $msg) = @_;
   my $name = $hash->{NAME};
-  my ($senderid, $pktcnt, $msgtypename, $msggroupname, $msgname, $msgdata);
-
 
   if( !$parser->parse($msg) ) {
-    Log3 $hash, 4, "$name: parser error: $msg";
+    Log3 $hash, 4, "SHC_TEMP: parser error: $msg";
     return "";
   }
 
-  $senderid = $parser->getSenderID();
-  $pktcnt = $parser->getPacketCounter();
-  $msgtypename = $parser->getMessageTypeName();
-  $msggroupname = $parser->getMessageGroupName();
-  $msgname = $parser->getMessageName();
-  $msgdata = $parser->getMessageData();
-  
-  if (($msgtypename ne "Status") && ($msgtypename ne "AckStatus"))
-  {
-	Log3 $name, 3, "$name: Ignoring MessageType $msgtypename";
-	return "";
-  }
-  
-  Log3 $name, 4, "$name: MessageType is $msgtypename";
-  
-  my $raddr = $senderid;
+  my $msgtypename = $parser->getMessageTypeName();
+  my $msggroupname = $parser->getMessageGroupName();
+  my $msgname = $parser->getMessageName();
+  my $raddr = $parser->getSenderID();
   my $rhash = $modules{SHC_Dev}{defptr}{$raddr};
   my $rname = $rhash?$rhash->{NAME}:$raddr;
 
   if( !$modules{SHC_Dev}{defptr}{$raddr} ) {
-     Log3 $name, 3, "$name: Unknown device $rname, please define it";
-
+     Log3 $name, 3, "SHC_TEMP: Unknown device $rname, please define it";
      return "UNDEFINED SHC_Dev_$rname SHC_Dev $raddr";
   }
+
+  if ( ($msgtypename ne "Status") && ($msgtypename ne "AckStatus") ) {
+    Log3 $name, 3, "$rname: Ignoring MessageType $msgtypename";
+    return "";
+  }
+
+  Log3 $name, 4, "$rname: Msg: $msg";
+  Log3 $name, 4, "$rname: MsgType: $msgtypename, MsgGroupName: $msggroupname, MsgName: $msgname";
 
   my @list;
   push(@list, $rname);
   $rhash->{SHC_Dev_lastRcv} = TimeNow();
+  $rhash->{SHC_Dev_pktcnt} = $parser->getPacketCounter();
+  $rhash->{SHC_Dev_msgdata} = $parser->getMessageData();
+  $rhash->{SHC_Dev_msgtype} = "$msggroupname : $msgname : $msgtypename";
 
-  my $readonly = AttrVal($rname, "readonly", "0" );
+  my $readonly = AttrVal( $rname, "readonly", "0" );
 
   readingsBeginUpdate($rhash);
-  readingsBulkUpdate($rhash, "senderid", $senderid);
-  readingsBulkUpdate($rhash, "pktcnt", $pktcnt);
-  readingsBulkUpdate($rhash, "msgtypename", $msgtypename);
-  readingsBulkUpdate($rhash, "msggroupname", $msggroupname);
-  readingsBulkUpdate($rhash, "msgname", $msgname);
-  readingsBulkUpdate($rhash, "msgdata", $msgdata);
 
   given($msggroupname)
   {
@@ -173,7 +163,6 @@ SHC_Dev_Parse($$)
         {
           my $tmp = $parser->getField("Temperature") / 100; # parser returns centigrade
 
-          readingsBulkUpdate($rhash, "state", "T: $tmp");
           readingsBulkUpdate($rhash, "temperature", $tmp);
           # After receiving this message we know for the first time that we are a 
           # enviroment sonsor, so lets define our device type
@@ -184,7 +173,6 @@ SHC_Dev_Parse($$)
           my $hum = $parser->getField("Humidity") / 10;     # parser returns 1/10 percent
           my $tmp = $parser->getField("Temperature") / 100; # parser returns centigrade
 
-          readingsBulkUpdate($rhash, "state", "T: $tmp  H: $hum");
           readingsBulkUpdate($rhash, "humidity", $hum);
           readingsBulkUpdate($rhash, "temperature", $tmp);
           # After receiving this message we know for the first time that we are a 
@@ -196,7 +184,6 @@ SHC_Dev_Parse($$)
           my $bar = $parser->getField("BarometricPressure") / 100; # parser returns pascal, use hPa
           my $tmp = $parser->getField("Temperature") / 100; # parser returns centigrade
 
-          readingsBulkUpdate($rhash, "state", "T: $tmp  B: $bar");
           readingsBulkUpdate($rhash, "barometric_pressure", $bar);
           readingsBulkUpdate($rhash, "temperature", $tmp);
           # After receiving this message we know for the first time that we are a 
@@ -213,7 +200,6 @@ SHC_Dev_Parse($$)
         {
           my $brt = $parser->getField("Brightness");
 
-          readingsBulkUpdate($rhash, "state", "B: $brt");
           readingsBulkUpdate($rhash, "brightness", $brt);
           # After receiving this message we know for the first time that we are a 
           # enviroment sonsor, so lets define our device type
@@ -265,8 +251,27 @@ SHC_Dev_Parse($$)
     }
   }
 
-  # TODO: How to handle ACK packets?
-  #   Packet Data: SenderID=40;PacketCounter=1105;MessageType=10;AckSenderID=0;AckPacketCounter=2895;Error=0;MessageGroupID=20;MessageID=1;MessageData=8000000000000000000000000000000000;On=1;TimeoutSec=0;
+  # Assemble state string for EnvSensor from most recent readings
+  if ($rhash->{devtype} eq "EnvSensor") {
+    my $tmp_state = "";
+    if (defined($rhash->{READINGS}{temperature}{VAL})) {
+      my $temp = $rhash->{READINGS}{temperature}{VAL};
+      $tmp_state .= "T: $temp ";
+    }
+    if (defined($rhash->{READINGS}{humidity}{VAL})) {
+      my $hum = $rhash->{READINGS}{humidity}{VAL};
+      $tmp_state .= "H: $hum ";
+    }
+    if (defined($rhash->{READINGS}{barometric_pressure}{VAL})) {
+      my $baro = $rhash->{READINGS}{barometric_pressure}{VAL};
+      $tmp_state .= "Baro: $baro ";
+    }
+    if (defined($rhash->{READINGS}{brightness}{VAL})) {
+      my $bright = $rhash->{READINGS}{brightness}{VAL};
+      $tmp_state .= "B: $bright ";
+    }
+    readingsBulkUpdate($rhash, "state", $tmp_state);
+  }
 
   readingsEndUpdate($rhash,1);    # Do triggers to update log file
   return @list;
@@ -302,25 +307,25 @@ SHC_Dev_Set($@)
       # Timeout functionality for SHC_Dev is not implemented, because FHEMs internal notification system
       # is able to do this as well. Even more it supports intervals, off-for-timer, off-till ...
 
-      $parser->initPacket("PowerSwitch", "SwitchState", "SetGet");
-      $parser->setField("PowerSwitch", "SwitchState", "TimeoutSec", 0);
-
       if( $cmd eq 'toggle' ) {
         $cmd = ReadingsVal($name,"state","on") eq "off" ? "on" :"off";
       }
 
       if( !$readonly && $cmd eq 'off' ) {
         readingsSingleUpdate($hash, "state", "set-$cmd", 1);
+        $parser->initPacket("PowerSwitch", "SwitchState", "SetGet");
+        $parser->setField("PowerSwitch", "SwitchState", "TimeoutSec", 0);
         $parser->setField("PowerSwitch", "SwitchState", "On", 0);
         SHC_Dev_Send($hash);
       } elsif( !$readonly && $cmd eq 'on' ) {
         readingsSingleUpdate($hash, "state", "set-$cmd", 1);
+        $parser->initPacket("PowerSwitch", "SwitchState", "SetGet");
+        $parser->setField("PowerSwitch", "SwitchState", "TimeoutSec", 0);
         $parser->setField("PowerSwitch", "SwitchState", "On", 1);
         SHC_Dev_Send($hash);
       } elsif( $cmd eq 'statusRequest' ) {
-        # TODO implement with Get command
-        # readingsSingleUpdate($hash, "state", "set-$cmd", 1);
-        # SHC_Dev_Send( $hash, "00", "0000" );
+        $parser->initPacket("PowerSwitch", "SwitchState", "Get");
+        SHC_Dev_Send($hash);
       } else {
         return SetExtensions($hash, $list, $name, @aa);
       }
@@ -345,7 +350,7 @@ SHC_Dev_Set($@)
       } elsif( !$readonly && $cmd eq 'on' ) {
         readingsSingleUpdate($hash, "state", "set-$cmd", 1);
         $parser->initPacket("Dimmer", "Brightness", "SetGet");
-		$parser->setField("Dimmer", "Brightness", "Brightness", 100);
+        $parser->setField("Dimmer", "Brightness", "Brightness", 100);
         SHC_Dev_Send($hash);
       } elsif( !$readonly && $cmd eq 'pct' ) {
         my $brightness = $arg;
@@ -354,7 +359,7 @@ SHC_Dev_Set($@)
 
         readingsSingleUpdate($hash, "state", "set-pct:$brightness", 1);
         $parser->initPacket("Dimmer", "Brightness", "SetGet");
-		$parser->setField("Dimmer", "Brightness", "Brightness", $brightness);
+        $parser->setField("Dimmer", "Brightness", "Brightness", $brightness);
         SHC_Dev_Send($hash);
       } elsif( !$readonly && $cmd eq 'ani' ) {
         #TODO Verify argument values
@@ -363,16 +368,15 @@ SHC_Dev_Set($@)
         Log3 $name, 3, "$name: ani args: $arg, $arg2, $arg3, $arg4, $brightness";
 
         readingsSingleUpdate($hash, "state", "set-ani", 1);
-		$parser->initPacket("Dimmer", "Animation", "SetGet");
+        $parser->initPacket("Dimmer", "Animation", "SetGet");
         $parser->setField("Dimmer", "Animation", "AnimationMode", $arg);
         $parser->setField("Dimmer", "Animation", "TimeoutSec", $arg2);
         $parser->setField("Dimmer", "Animation", "StartBrightness", $arg3);
         $parser->setField("Dimmer", "Animation", "EndBrightness", $arg4);
         SHC_Dev_Send($hash);
       } elsif( $cmd eq 'statusRequest' ) {
-        # TODO implement with Get command
-        # readingsSingleUpdate($hash, "state", "set-$cmd", 1);
-        # SHC_Dev_Send( $hash, "00", "0000" );
+        $parser->initPacket("Dimmer", "Brightness", "Get");
+        SHC_Dev_Send($hash);
       } else {
         return SetExtensions($hash, $list, $name, @aa);
       }
