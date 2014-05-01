@@ -273,10 +273,6 @@ SHC_Dev_Parse($$)
     readingsBulkUpdate($rhash, "state", $tmp_state);
   }
 
-
-  # TODO: How to handle ACK packets?
-  #   Packet Data: SenderID=40;PacketCounter=1105;MessageType=10;AckSenderID=0;AckPacketCounter=2895;Error=0;MessageGroupID=20;MessageID=1;MessageData=8000000000000000000000000000000000;On=1;TimeoutSec=0;
-
   readingsEndUpdate($rhash,1);    # Do triggers to update log file
   return @list;
 }
