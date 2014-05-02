@@ -28,147 +28,139 @@ package SHC_util;
 
 sub max($$)
 {
-	my ($x, $y) = @_;
-	return $x >= $y ? $x : $y;
+  my ($x, $y) = @_;
+  return $x >= $y ? $x : $y;
 }
 
 sub min($$)
 {
-	my ($x, $y) = @_;
-	return $x <= $y ? $x : $y;
+  my ($x, $y) = @_;
+  return $x <= $y ? $x : $y;
 }
 
 # clear some bits within a byte
 sub clear_bits($$$)
 {
-	my ($input, $bit, $bits_to_clear) = @_;
-	my $mask = (~((((1 << $bits_to_clear) - 1)) << (8 - $bits_to_clear - $bit)));
-	return ($input & $mask);
+  my ($input, $bit, $bits_to_clear) = @_;
+  my $mask = (~((((1 << $bits_to_clear) - 1)) << (8 - $bits_to_clear - $bit)));
+  return ($input & $mask);
 }
 
 # get some bits from a 32 bit value, counted from the left (MSB) side! The first bit is bit nr. 0.
 sub get_bits($$$)
 {
-	my ($input, $bit, $len) = @_;
-	return ($input >> (32 - $len - $bit)) & ((1 << $len) - 1);
+  my ($input, $bit, $len) = @_;
+  return ($input >> (32 - $len - $bit)) & ((1 << $len) - 1);
 }
 
 sub getUInt($$$)
 {
-	my ($byteArrayRef, $offset, $length_bits) = @_;
-	
-	my $byte = $offset / 8;
-	my $bit = $offset % 8;
-	
-	my $byres_read = 0;
-	my $val = 0;
-	my $shiftBits;
-	
-	# read the bytes one after another, shift them to the correct position and add them
-	while ($length_bits + $bit > $byres_read * 8)
-	{
-		$shiftBits = $length_bits + $bit - $byres_read * 8 - 8;
-		my $zz = @$byteArrayRef[$byte + $byres_read];
+  my ($byteArrayRef, $offset, $length_bits) = @_;
 
-		if ($shiftBits >= 0)
-		{
-			$val += $zz << $shiftBits;
-		}
-		else
-		{
-			$val += $zz >> - $shiftBits;
-		}
+  my $byte = $offset / 8;
+  my $bit  = $offset % 8;
 
-		$byres_read++;
-	}
+  my $byres_read = 0;
+  my $val        = 0;
+  my $shiftBits;
 
-	# filter out only the wanted bits and clear unwanted upper bits
-	if ($length_bits < 32)
-	{
-		$val = $val & ((1 << $length_bits) - 1);
-	}
+  # read the bytes one after another, shift them to the correct position and add them
+  while ($length_bits + $bit > $byres_read * 8) {
+    $shiftBits = $length_bits + $bit - $byres_read * 8 - 8;
+    my $zz = @$byteArrayRef[$byte + $byres_read];
 
-	return $val;
+    if ($shiftBits >= 0) {
+      $val += $zz << $shiftBits;
+    } else {
+      $val += $zz >> -$shiftBits;
+    }
+
+    $byres_read++;
+  }
+
+  # filter out only the wanted bits and clear unwanted upper bits
+  if ($length_bits < 32) {
+    $val = $val & ((1 << $length_bits) - 1);
+  }
+
+  return $val;
 }
 
 # write some bits to byte array only within one byte
 sub setUIntBits($$$$$)
 {
-	my ($byteArrayRef, $byte, $bit, $length_bits, $val8) = @_;
-	
-	my $b = 0;
-	
-	# if length is smaller than 8 bits, get the old value from array
-	if ($length_bits < 8)
-	{
-		$b = @$byteArrayRef[$byte];
-		$b = clear_bits($b, $bit, $length_bits);
-	}
-	
-	# set bits from given value
-	$b = $b | ($val8 << (8 - $length_bits - $bit));
+  my ($byteArrayRef, $byte, $bit, $length_bits, $val8) = @_;
 
-	@$byteArrayRef[$byte] = $b;
+  my $b = 0;
+
+  # if length is smaller than 8 bits, get the old value from array
+  if ($length_bits < 8) {
+    $b = @$byteArrayRef[$byte];
+    $b = clear_bits($b, $bit, $length_bits);
+  }
+
+  # set bits from given value
+  $b = $b | ($val8 << (8 - $length_bits - $bit));
+
+  @$byteArrayRef[$byte] = $b;
 }
 
 # Write UIntValue to data array
 sub setUInt($$$$)
 {
-	my ($byteArrayRef, $offset, $length_bits, $value) = @_;
-	
-	my $byte = $offset / 8;
-	my $bit = $offset % 8;
-	
-	# move bits to the left border
-	$value = $value << (32 - $length_bits);
+  my ($byteArrayRef, $offset, $length_bits, $value) = @_;
 
-	print "Moved left: val " . $value . "\r\n";
+  my $byte = $offset / 8;
+  my $bit  = $offset % 8;
 
-	# 1st byte
-	my $src_start = 0;
-	my $dst_start = $bit;
-	my $len = min($length_bits, 8 - $bit);
-	my $val8 = get_bits($value, $src_start, $len);
-	
-	print "   Write bits to byte " . $byte . ", dst_start " . $dst_start . ", len " . $len . ", val8 " . $val8 . "\r\n";
-	
-	setUIntBits($byteArrayRef, $byte, $dst_start, $len, $val8);
-	
-	$dst_start = 0;
-	$src_start = $len;
+  # move bits to the left border
+  $value = $value << (32 - $length_bits);
 
-	while ($src_start < $length_bits)
-	{
-		$len = min($length_bits - $src_start, 8);
-		$val8 = get_bits($value, $src_start, $len);
-		$byte++;
+  print "Moved left: val " . $value . "\r\n";
 
-		print "      Byte nr. " . $byte . ", src_start " . $src_start . ", len " . $len . ", val8 " . $val8 . "\r\n";
+  # 1st byte
+  my $src_start = 0;
+  my $dst_start = $bit;
+  my $len       = min($length_bits, 8 - $bit);
+  my $val8      = get_bits($value, $src_start, $len);
 
-		setUIntBits($byteArrayRef, $byte, $dst_start, $len, $val8);
-		
-		$src_start += $len;
-	}
+  print "   Write bits to byte " . $byte . ", dst_start " . $dst_start . ", len " . $len . ", val8 " . $val8 . "\r\n";
+
+  setUIntBits($byteArrayRef, $byte, $dst_start, $len, $val8);
+
+  $dst_start = 0;
+  $src_start = $len;
+
+  while ($src_start < $length_bits) {
+    $len = min($length_bits - $src_start, 8);
+    $val8 = get_bits($value, $src_start, $len);
+    $byte++;
+
+    print "      Byte nr. " . $byte . ", src_start " . $src_start . ", len " . $len . ", val8 " . $val8 . "\r\n";
+
+    setUIntBits($byteArrayRef, $byte, $dst_start, $len, $val8);
+
+    $src_start += $len;
+  }
 }
 
 sub getInt($$$)
 {
-	my ($byteArrayRef, $offset, $length_bits) = @_;
-	
-	# FIX ME! DOES NOT WORK WITH NEGATIVE VALUES!
-	
-	$x = getUInt($byteArrayRef, $offset, $length_bits);
-	
-	# If MSB is 1 (value is negative interpreted as signed int),
-	# set all higher bits also to 1.
-	if ((($x >> ($length_bits - 1)) & 1) == 1)
-	{
-		$x = $x | ~((1 << ($length_bits - 1)) - 1);
-	}
+  my ($byteArrayRef, $offset, $length_bits) = @_;
 
-	$y = $x;
-	
-	return $y;
+  # FIX ME! DOES NOT WORK WITH NEGATIVE VALUES!
+
+  $x = getUInt($byteArrayRef, $offset, $length_bits);
+
+  # If MSB is 1 (value is negative interpreted as signed int),
+  # set all higher bits also to 1.
+  if ((($x >> ($length_bits - 1)) & 1) == 1) {
+    $x = $x | ~((1 << ($length_bits - 1)) - 1);
+  }
+
+  $y = $x;
+
+  return $y;
 }
 
 # ----------- UIntValue class -----------
@@ -177,26 +169,28 @@ package UIntValue;
 
 sub new
 {
-    my $class = shift;
-    my $self = {
-        _id => shift,
-        _offset => shift,
-        _bits  => shift,
-    };
-    bless $self, $class;
-    return $self;
+  my $class = shift;
+  my $self  = {
+    _id     => shift,
+    _offset => shift,
+    _bits   => shift,
+  };
+  bless $self, $class;
+  return $self;
 }
 
-sub getValue {
-    my ($self, $byteArrayRef) = @_;
+sub getValue
+{
+  my ($self, $byteArrayRef) = @_;
 
-    return SHC_util::getUInt($byteArrayRef, $self->{_offset}, $self->{_bits});
+  return SHC_util::getUInt($byteArrayRef, $self->{_offset}, $self->{_bits});
 }
 
-sub setValue {
-    my ($self, $byteArrayRef, $value) = @_;
+sub setValue
+{
+  my ($self, $byteArrayRef, $value) = @_;
 
-    SHC_util::setUInt($byteArrayRef, $self->{_offset}, $self->{_bits}, $value);
+  SHC_util::setUInt($byteArrayRef, $self->{_offset}, $self->{_bits}, $value);
 }
 
 # ----------- IntValue class -----------
@@ -205,26 +199,28 @@ package IntValue;
 
 sub new
 {
-    my $class = shift;
-    my $self = {
-        _id => shift,
-        _offset => shift,
-        _bits  => shift,
-    };
-    bless $self, $class;
-    return $self;
+  my $class = shift;
+  my $self  = {
+    _id     => shift,
+    _offset => shift,
+    _bits   => shift,
+  };
+  bless $self, $class;
+  return $self;
 }
 
-sub getValue {
-    my ($self, $byteArrayRef) = @_;
+sub getValue
+{
+  my ($self, $byteArrayRef) = @_;
 
-    return SHC_util::getUInt($byteArrayRef, $self->{_offset}, $self->{_bits});
+  return SHC_util::getUInt($byteArrayRef, $self->{_offset}, $self->{_bits});
 }
 
-sub setValue {
-    my ($self, $byteArrayRef, $value) = @_;
+sub setValue
+{
+  my ($self, $byteArrayRef, $value) = @_;
 
-    SHC_util::setUInt($byteArrayRef, $self->{_offset}, $self->{_bits}, $value);
+  SHC_util::setUInt($byteArrayRef, $self->{_offset}, $self->{_bits}, $value);
 }
 
 # ----------- BoolValue class -----------
@@ -233,25 +229,27 @@ package BoolValue;
 
 sub new
 {
-    my $class = shift;
-    my $self = {
-        _id => shift,
-        _offset => shift,
-    };
-    bless $self, $class;
-    return $self;
+  my $class = shift;
+  my $self  = {
+    _id     => shift,
+    _offset => shift,
+  };
+  bless $self, $class;
+  return $self;
 }
 
-sub getValue {
-    my ($self, $byteArrayRef) = @_;
+sub getValue
+{
+  my ($self, $byteArrayRef) = @_;
 
-    return SHC_util::getUInt($byteArrayRef, $self->{_offset}, 1) == 1 ? 1 : 0;
+  return SHC_util::getUInt($byteArrayRef, $self->{_offset}, 1) == 1 ? 1 : 0;
 }
 
-sub setValue {
-    my ($self, $byteArrayRef, $value) = @_;
+sub setValue
+{
+  my ($self, $byteArrayRef, $value) = @_;
 
-    return SHC_util::setUInt($byteArrayRef, $self->{_offset}, 1, $value == 0 ? 0 : 1);
+  return SHC_util::setUInt($byteArrayRef, $self->{_offset}, 1, $value == 0 ? 0 : 1);
 }
 
 # ----------- EnumValue class -----------
@@ -263,35 +261,38 @@ my %value2name = ();
 
 sub new
 {
-    my $class = shift;
-    my $self = {
-        _id => shift,
-        _offset => shift,
-        _bits  => shift,
-    };
-    bless $self, $class;
-    return $self;
+  my $class = shift;
+  my $self  = {
+    _id     => shift,
+    _offset => shift,
+    _bits   => shift,
+  };
+  bless $self, $class;
+  return $self;
 }
 
-sub addValue {
-    my ( $self, $name, $value ) = @_;
-    
-    $name2value{$name} = $value;
-    $value2name{$value} = $name;
+sub addValue
+{
+  my ($self, $name, $value) = @_;
+
+  $name2value{$name}  = $value;
+  $value2name{$value} = $name;
 }
 
-sub getValue {
-    my ($self, $byteArrayRef) = @_;
-    
-    my $value = SHC_util::getUInt($byteArrayRef, $self->{_offset}, $self->{_bits});
-    return $value2name{$value};
+sub getValue
+{
+  my ($self, $byteArrayRef) = @_;
+
+  my $value = SHC_util::getUInt($byteArrayRef, $self->{_offset}, $self->{_bits});
+  return $value2name{$value};
 }
 
-sub setValue {
-    my ($self, $byteArrayRef, $name) = @_;
-    
-    my $value = $name2value{$name};
-    SHC_util::setUInt($byteArrayRef, $self->{_offset}, $self->{_bits}, $value);    
+sub setValue
+{
+  my ($self, $byteArrayRef, $name) = @_;
+
+  my $value = $name2value{$name};
+  SHC_util::setUInt($byteArrayRef, $self->{_offset}, $self->{_bits}, $value);
 }
 
 1;
