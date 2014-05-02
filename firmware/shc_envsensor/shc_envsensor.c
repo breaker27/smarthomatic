@@ -71,15 +71,9 @@ void sht11_measure_loop(void)
 	while (!sht11_measure_finish());
 }
 
-void measure_temperature(void)
+void measure_temperature_i2c(void)
 {
-	if (temperature_sensor_type == TEMPERATURESENSORTYPE_SHT15)
-	{
-		sht11_measure_loop();
-		temperature.val += sht11_get_tmp();
-		temperature.cnt++;
-	}
-	else if (temperature_sensor_type == TEMPERATURESENSORTYPE_DS7505)
+	if (temperature_sensor_type == TEMPERATURESENSORTYPE_DS7505)
 	{
 		lm75_wakeup();
 		_delay_ms(lm75_get_meas_time_ms());
@@ -90,6 +84,16 @@ void measure_temperature(void)
 	else if (temperature_sensor_type == TEMPERATURESENSORTYPE_BMP085)
 	{
 		temperature.val += bmp085_meas_temp();
+		temperature.cnt++;
+	}
+}
+
+void measure_temperature_other(void)
+{
+	if (temperature_sensor_type == TEMPERATURESENSORTYPE_SHT15)
+	{
+		sht11_measure_loop();
+		temperature.val += sht11_get_tmp();
 		temperature.cnt++;
 	}
 }
@@ -137,8 +141,8 @@ void measure_brightness(void)
 
 void prepare_humiditytemperature(void)
 {
-	humidity.val = humidity.val / humidity.avgThr; // in 100 * % rel.
-	temperature.val /= temperature.avgThr;
+	humidity.val = humidity.val / humidity.cnt; // in 100 * % rel.
+	temperature.val /= temperature.cnt;
 
 	pkg_header_init_weather_humiditytemperature_status();
 	msg_weather_humiditytemperature_set_humidity(humidity.val / 10); // in permill
@@ -153,8 +157,8 @@ void prepare_humiditytemperature(void)
 
 void prepare_barometricpressuretemperature(void)
 {
-	barometric_pressure.val /= barometric_pressure.avgThr;
-	temperature.val /= temperature.avgThr;
+	barometric_pressure.val /= barometric_pressure.cnt;
+	temperature.val /= temperature.cnt;
 
 	pkg_header_init_weather_barometricpressuretemperature_status();
 	msg_weather_barometricpressuretemperature_set_barometricpressure(barometric_pressure.val);
@@ -170,7 +174,7 @@ void prepare_barometricpressuretemperature(void)
 void prepare_temperature(void)
 {
 	pkg_header_init_weather_temperature_status();
-	msg_weather_temperature_set_temperature(temperature.val / temperature.avgThr);
+	msg_weather_temperature_set_temperature(temperature.val / temperature.cnt);
 	
 	UART_PUTS("Send temperature: ");
 	print_signed(temperature.val);
@@ -181,7 +185,7 @@ void prepare_temperature(void)
 
 void prepare_brightness(void)
 {
-	brightness.val /= brightness.avgThr;
+	brightness.val /= brightness.cnt;
 	brightness.val = 100 - (int)((long)brightness.val * 100 / 1024);
 
 	pkg_header_init_environment_brightness_status();
@@ -269,7 +273,8 @@ int main(void)
 
 	adc_init();
 
-	if (temperature_sensor_type == TEMPERATURESENSORTYPE_SHT15)
+	if ((temperature_sensor_type == TEMPERATURESENSORTYPE_SHT15)
+		|| (humidity_sensor_type == HUMIDITYSENSORTYPE_SHT15))
 	{
 	  sht11_init();
 	  vempty = 1200; // 1.2V * 2 cells = 2.4V = min. voltage for SHT15
@@ -313,14 +318,16 @@ int main(void)
 			i2c_enable();
 		}
 
-		measure_temperature();
-		measure_humidity();
+		measure_temperature_i2c();
 		measure_barometric_pressure();
 
 		if (needI2C)
 		{
 			i2c_disable();
 		}
+		
+		measure_temperature_other();
+		measure_humidity();
 		
 		version_status_cycle++;
 
