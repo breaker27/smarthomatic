@@ -14,6 +14,18 @@ use SHC_parser;
 
 my $parser = new SHC_parser();
 
+my %dev_state_icons = (
+  "PowerSwitch" => "on:on:toggle off:off:toggle set.*:light_question:off",
+  "Dimmer"      => "on:on off:off set.*:light_question:off",
+  "EnvSensor"   => undef
+);
+
+my %web_cmds = (
+  "PowerSwitch" => "on:off:toggle:statusRequest",
+  "Dimmer"      => "on:off:statusRequest",
+  "EnvSensor"   => undef
+);
+
 sub SHC_Dev_Parse($$);
 
 sub SHC_Dev_Initialize($)
@@ -153,10 +165,6 @@ sub SHC_Dev_Parse($$)
           my $tmp = $parser->getField("Temperature") / 100;    # parser returns centigrade
 
           readingsBulkUpdate($rhash, "temperature", $tmp);
-
-          # After receiving this message we know for the first time that we are a
-          # enviroment sonsor, so lets define our device type
-          $rhash->{devtype} = "EnvSensor" if (!defined($rhash->{devtype}));
         }
         when ('HumidityTemperature') {
           my $hum = $parser->getField("Humidity") / 10;        # parser returns 1/10 percent
@@ -164,10 +172,6 @@ sub SHC_Dev_Parse($$)
 
           readingsBulkUpdate($rhash, "humidity",    $hum);
           readingsBulkUpdate($rhash, "temperature", $tmp);
-
-          # After receiving this message we know for the first time that we are a
-          # enviroment sonsor, so lets define our device type
-          $rhash->{devtype} = "EnvSensor" if (!defined($rhash->{devtype}));
         }
         when ('BarometricPressureTemperature') {
           my $bar = $parser->getField("BarometricPressure") / 100;    # parser returns pascal, use hPa
@@ -175,12 +179,11 @@ sub SHC_Dev_Parse($$)
 
           readingsBulkUpdate($rhash, "barometric_pressure", $bar);
           readingsBulkUpdate($rhash, "temperature",         $tmp);
-
-          # After receiving this message we know for the first time that we are a
-          # enviroment sonsor, so lets define our device type
-          $rhash->{devtype} = "EnvSensor" if (!defined($rhash->{devtype}));
         }
       }
+
+      # After receiving a weather message we know for the first time that we are a EnvSensor
+      $rhash->{devtype} = "EnvSensor" if (!defined($rhash->{devtype}));
     }
     when ('Environment') {
       given ($msgname) {
@@ -189,8 +192,7 @@ sub SHC_Dev_Parse($$)
 
           readingsBulkUpdate($rhash, "brightness", $brt);
 
-          # After receiving this message we know for the first time that we are a
-          # enviroment sonsor, so lets define our device type
+          # After receiving this message we know for the first time that we are a EnvSensor
           $rhash->{devtype} = "EnvSensor" if (!defined($rhash->{devtype}));
         }
         when ('Distance') {
@@ -215,11 +217,8 @@ sub SHC_Dev_Parse($$)
           readingsBulkUpdate($rhash, "on",      $on);
           readingsBulkUpdate($rhash, "timeout", $timeout);
 
-          # After receiving this message we know for the first time that we are a
-          # power switch. Define device type and add according web commands
-          $rhash->{devtype}           = "PowerSwitch"                                          if (!defined($rhash->{devtype}));
-          $attr{$rname}{devStateIcon} = 'on:on:toggle off:off:toggle set.*:light_question:off' if (!defined($attr{$rname}{devStateIcon}));
-          $attr{$rname}{webCmd}       = 'on:off:toggle:statusRequest'                          if (!defined($attr{$rname}{webCmd}));
+          # After receiving this message we know for the first time that we are a power switch.
+          $rhash->{devtype} = "PowerSwitch" if (!defined($rhash->{devtype}));
         }
       }
     }
@@ -232,13 +231,20 @@ sub SHC_Dev_Parse($$)
           readingsBulkUpdate($rhash, "state",      $state);
           readingsBulkUpdate($rhash, "brightness", $brightness);
 
-          # After receiving this message we know for the first time that we are a
-          # dimmer. Define device type and add according web commands
-          $rhash->{devtype}           = "Dimmer"                                 if (!defined($rhash->{devtype}));
-          $attr{$rname}{devStateIcon} = 'on:on off:off set.*:light_question:off' if (!defined($attr{$rname}{devStateIcon}));
-          $attr{$rname}{webCmd}       = 'on:off:statusRequest'                   if (!defined($attr{$rname}{webCmd}));
+          # After receiving this message we know for the first time that we are a dimmer.
+          $rhash->{devtype} = "Dimmer" if (!defined($rhash->{devtype}));
         }
       }
+    }
+  }
+
+  # If the devtype is defined add, if not already done, the according webCmds and devStateIcons
+  if (defined($rhash->{devtype})) {
+    if ((!defined($attr{$rname}{devStateIcon})) && (defined($dev_state_icons{$rhash->{devtype}}))) {
+      $attr{$rname}{devStateIcon} = $dev_state_icons{$rhash->{devtype}};
+    }
+    if ((!defined($attr{$rname}{webCmd})) && (defined($web_cmds{$rhash->{devtype}}))) {
+      $attr{$rname}{webCmd} = $web_cmds{$rhash->{devtype}};
     }
   }
 
