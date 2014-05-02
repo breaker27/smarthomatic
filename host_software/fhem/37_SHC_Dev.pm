@@ -26,6 +26,20 @@ my %web_cmds = (
   "EnvSensor"   => undef
 );
 
+# Array format: [ reading1, str_format1, reading2, str_format2 ... ]
+# "on" reading translates 0 -> "off"
+#                         1 -> "on"
+my %dev_state_format = (
+  "PowerSwitch" => ["on", ""],
+  "Dimmer"      => ["on", "", "brightness", "B: "],
+  "EnvSensor" => [    # Results in "T: 23.4 H: 27.3 Baro: 978.34 B: 45"
+    "temperature",         "T: ",
+    "humidity",            "H: ",
+    "barometric_pressure", "Baro: ",
+    "brightness",          "B: "
+  ]
+);
+
 sub SHC_Dev_Parse($$);
 
 sub SHC_Dev_Initialize($)
@@ -211,9 +225,7 @@ sub SHC_Dev_Parse($$)
         when ('SwitchState') {
           my $on      = $parser->getField("On");
           my $timeout = $parser->getField("TimeoutSec");
-          my $state   = $on == 0 ? "off" : "on";
 
-          readingsBulkUpdate($rhash, "state",   $state);
           readingsBulkUpdate($rhash, "on",      $on);
           readingsBulkUpdate($rhash, "timeout", $timeout);
 
@@ -226,9 +238,9 @@ sub SHC_Dev_Parse($$)
       given ($msgname) {
         when ('Brightness') {
           my $brightness = $parser->getField("Brightness");
-          my $state = $brightness == 0 ? "off" : "on";
+          my $on = $brightness == 0 ? 0 : 1;
 
-          readingsBulkUpdate($rhash, "state",      $state);
+          readingsBulkUpdate($rhash, "on",         $on);
           readingsBulkUpdate($rhash, "brightness", $brightness);
 
           # After receiving this message we know for the first time that we are a dimmer.
@@ -240,34 +252,37 @@ sub SHC_Dev_Parse($$)
 
   # If the devtype is defined add, if not already done, the according webCmds and devStateIcons
   if (defined($rhash->{devtype})) {
-    if ((!defined($attr{$rname}{devStateIcon})) && (defined($dev_state_icons{$rhash->{devtype}}))) {
+    if (!defined($attr{$rname}{devStateIcon}) && defined($dev_state_icons{$rhash->{devtype}})) {
       $attr{$rname}{devStateIcon} = $dev_state_icons{$rhash->{devtype}};
     }
-    if ((!defined($attr{$rname}{webCmd})) && (defined($web_cmds{$rhash->{devtype}}))) {
+    if (!defined($attr{$rname}{webCmd}) && defined($web_cmds{$rhash->{devtype}})) {
       $attr{$rname}{webCmd} = $web_cmds{$rhash->{devtype}};
     }
   }
 
-  # Assemble state string for EnvSensor from most recent readings
-  if ($rhash->{devtype} eq "EnvSensor") {
-    my $tmp_state = "";
-    if (defined($rhash->{READINGS}{temperature}{VAL})) {
-      my $temp = $rhash->{READINGS}{temperature}{VAL};
-      $tmp_state .= "T: $temp ";
+  # Assemble state string according to %dev_state_format
+  if (defined($rhash->{devtype}) && defined($dev_state_format{$rhash->{devtype}})) {
+    my $state_format_arr = $dev_state_format{$rhash->{devtype}};
+
+    # Iterate over state_format array, if readings are available append it to the state string
+    my $state_str = "";
+    for (my $i = 0 ; $i < @$state_format_arr ; $i = $i + 2) {
+      if (defined($rhash->{READINGS}{$state_format_arr->[$i]}{VAL})) {
+        my $val = $rhash->{READINGS}{$state_format_arr->[$i]}{VAL};
+
+        # "on" reading requires a special treatment because 0 translates to off, 1 translates to on
+        if ($state_format_arr->[$i] eq "on") {
+          $state_str .= $val == 0 ? "off " : "on ";
+        } else {
+          $state_str .= $state_format_arr->[$i + 1] . $val . " ";
+        }
+
+        # DEBUG
+        # Log3 $name, 4, "$rname: $i " . $state_format_arr->[$i] . " " . $state_format_arr->[$i + 1] . " " . $val;
+      }
     }
-    if (defined($rhash->{READINGS}{humidity}{VAL})) {
-      my $hum = $rhash->{READINGS}{humidity}{VAL};
-      $tmp_state .= "H: $hum ";
-    }
-    if (defined($rhash->{READINGS}{barometric_pressure}{VAL})) {
-      my $baro = $rhash->{READINGS}{barometric_pressure}{VAL};
-      $tmp_state .= "Baro: $baro ";
-    }
-    if (defined($rhash->{READINGS}{brightness}{VAL})) {
-      my $bright = $rhash->{READINGS}{brightness}{VAL};
-      $tmp_state .= "B: $bright ";
-    }
-    readingsBulkUpdate($rhash, "state", $tmp_state);
+
+    readingsBulkUpdate($rhash, "state", $state_str);
   }
 
   readingsEndUpdate($rhash, 1);    # Do triggers to update log file
