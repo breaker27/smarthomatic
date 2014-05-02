@@ -70,261 +70,253 @@ my %messageName2messageID = ();
 my %messageID2bits = ();
 
 # byte array to store data to send
-my @msgData = ();
+my @msgData  = ();
 my $sendMode = 0;
 
 sub new
 {
-    my $class = shift;
-    init_datafield_positions();
-    my $self = {
-        _senderID => 0,
-		_packetCounter => 0,
-		_messageTypeID => 0,
-		_messageGroupID => 0,
-		_messageGroupName => "",
-		_messageID => 0,
-		_messageName => "",
-		_messageData => "",
-    };
-    bless $self, $class;
-    return $self;
+  my $class = shift;
+  init_datafield_positions();
+  my $self = {
+    _senderID         => 0,
+    _packetCounter    => 0,
+    _messageTypeID    => 0,
+    _messageGroupID   => 0,
+    _messageGroupName => "",
+    _messageID        => 0,
+    _messageName      => "",
+    _messageData      => "",
+  };
+  bless $self, $class;
+  return $self;
 }
 
 # Read packet layout from XML file and remember the defined MessageGroups,
 # Messages and data fields (incl. positions, length).
 sub init_datafield_positions()
 {
-	my $x = XML::LibXML->new() or die "new on XML::LibXML failed";
-	my $d = $x->parse_file("FHEM/packet_layout.xml") or die "parsing XML file failed";
+  my $x = XML::LibXML->new() or die "new on XML::LibXML failed";
+  my $d = $x->parse_file("FHEM/packet_layout.xml") or die "parsing XML file failed";
 
-	for my $element ($d->findnodes("/Packet/Header/EnumValue[ID='MessageType']/Element"))
-	{
-		my $value = ($element->findnodes("Value"))[0]->textContent;
-		my $name = ($element->findnodes("Name"))[0]->textContent;
-		
-		$messageTypeID2messageTypeName{$value} = $name;
-		$messageTypeName2messageTypeID{$name} = $value;
-	}
+  for my $element ($d->findnodes("/Packet/Header/EnumValue[ID='MessageType']/Element")) {
+    my $value = ($element->findnodes("Value"))[0]->textContent;
+    my $name  = ($element->findnodes("Name"))[0]->textContent;
 
-	for my $messageGroup ($d->findnodes("/Packet/MessageGroup"))
-	{
-		my $messageGroupName = ($messageGroup->findnodes("Name"))[0]->textContent;
-		my $messageGroupID = ($messageGroup->findnodes("MessageGroupID"))[0]->textContent;
-		
-		$messageGroupID2messageGroupName{$messageGroupID} = $messageGroupName;
-		$messageGroupName2messageGroupID{$messageGroupName} = $messageGroupID;
-		
-		for my $message ($messageGroup->findnodes("Message"))
-		{
-			my $messageName = ($message->findnodes("Name"))[0]->textContent;
-			my $messageID = ($message->findnodes("MessageID"))[0]->textContent;
+    $messageTypeID2messageTypeName{$value} = $name;
+    $messageTypeName2messageTypeID{$name}  = $value;
+  }
 
-			$messageID2messageName{$messageGroupID . "-" . $messageID} = $messageName;
-			$messageName2messageID{$messageGroupName . "-" . $messageName} = $messageID;
+  for my $messageGroup ($d->findnodes("/Packet/MessageGroup")) {
+    my $messageGroupName = ($messageGroup->findnodes("Name"))[0]->textContent;
+    my $messageGroupID   = ($messageGroup->findnodes("MessageGroupID"))[0]->textContent;
 
-			my $offset = 0;
-			
-			for my $field ($message->findnodes("UIntValue|IntValue|BoolValue|EnumValue"))
-			{
-				given($field->nodeName)
-				{
-					when('UIntValue')
-					{
-						my $id = ($field->findnodes("ID"))[0]->textContent;
-						my $bits = ($field->findnodes("Bits"))[0]->textContent;
-		
-						print "Data field " . $id . " starts at " . $offset . " with " . $bits . " bits.\n";
-		
-						$dataFields{$messageGroupID . "-" . $messageID . "-" . $id} = new UIntValue($id, $offset, $bits);
-		
-						$offset += $bits;
-					}
-		
-					when('IntValue')
-					{
-						my $id = ($field->findnodes("ID"))[0]->textContent;
-						my $bits = ($field->findnodes("Bits"))[0]->textContent;
-		
-						print "Data field " . $id . " starts at " . $offset . " with " . $bits . " bits.\n";
-		
-						$dataFields{$messageGroupID . "-" . $messageID . "-" . $id} = new IntValue($id, $offset, $bits);
-		
-						$offset += $bits;
-					}
-		
-					when('BoolValue')
-					{
-						my $id = ($field->findnodes("ID"))[0]->textContent;
-						my $bits = 1;
-		
-						print "Data field " . $id . " starts at " . $offset . " with " . $bits . " bits.\n";
-		
-						$dataFields{$messageGroupID . "-" . $messageID . "-" . $id} = new BoolValue($id, $offset);
-		
-						$offset += $bits;
-					}
-					
-					when('EnumValue')
-					{
-						my $id = ($field->findnodes("ID"))[0]->textContent;
-						my $bits = ($field->findnodes("Bits"))[0]->textContent;
-		
-						print "Data field " . $id . " starts at " . $offset . " with " . $bits . " bits.\n";
-		
-						my $object = new EnumValue($id, $offset, $bits);
-						$dataFields{$messageGroupID . "-" . $messageID . "-" . $id} = $object;
-		
-						for my $element ($field->findnodes("Element"))
-						{
-							my $value = ($element->findnodes("Value"))[0]->textContent;
-							my $name = ($element->findnodes("Name"))[0]->textContent;
-		
-							$object->addValue($name, $value);
-						}
-		
-						$offset += $bits;
-					}
-				}
-			}
-			
-			$messageID2bits{$messageGroupID . "-" . $messageID} = $offset;
-		}
-	}
+    $messageGroupID2messageGroupName{$messageGroupID}   = $messageGroupName;
+    $messageGroupName2messageGroupID{$messageGroupName} = $messageGroupID;
+
+    for my $message ($messageGroup->findnodes("Message")) {
+      my $messageName = ($message->findnodes("Name"))[0]->textContent;
+      my $messageID   = ($message->findnodes("MessageID"))[0]->textContent;
+
+      $messageID2messageName{$messageGroupID . "-" . $messageID}     = $messageName;
+      $messageName2messageID{$messageGroupName . "-" . $messageName} = $messageID;
+
+      my $offset = 0;
+
+      for my $field ($message->findnodes("UIntValue|IntValue|BoolValue|EnumValue")) {
+        given ($field->nodeName) {
+          when ('UIntValue') {
+            my $id   = ($field->findnodes("ID"))[0]->textContent;
+            my $bits = ($field->findnodes("Bits"))[0]->textContent;
+
+            print "Data field " . $id . " starts at " . $offset . " with " . $bits . " bits.\n";
+
+            $dataFields{$messageGroupID . "-" . $messageID . "-" . $id} = new UIntValue($id, $offset, $bits);
+
+            $offset += $bits;
+          }
+
+          when ('IntValue') {
+            my $id   = ($field->findnodes("ID"))[0]->textContent;
+            my $bits = ($field->findnodes("Bits"))[0]->textContent;
+
+            print "Data field " . $id . " starts at " . $offset . " with " . $bits . " bits.\n";
+
+            $dataFields{$messageGroupID . "-" . $messageID . "-" . $id} = new IntValue($id, $offset, $bits);
+
+            $offset += $bits;
+          }
+
+          when ('BoolValue') {
+            my $id   = ($field->findnodes("ID"))[0]->textContent;
+            my $bits = 1;
+
+            print "Data field " . $id . " starts at " . $offset . " with " . $bits . " bits.\n";
+
+            $dataFields{$messageGroupID . "-" . $messageID . "-" . $id} = new BoolValue($id, $offset);
+
+            $offset += $bits;
+          }
+
+          when ('EnumValue') {
+            my $id   = ($field->findnodes("ID"))[0]->textContent;
+            my $bits = ($field->findnodes("Bits"))[0]->textContent;
+
+            print "Data field " . $id . " starts at " . $offset . " with " . $bits . " bits.\n";
+
+            my $object = new EnumValue($id, $offset, $bits);
+            $dataFields{$messageGroupID . "-" . $messageID . "-" . $id} = $object;
+
+            for my $element ($field->findnodes("Element")) {
+              my $value = ($element->findnodes("Value"))[0]->textContent;
+              my $name  = ($element->findnodes("Name"))[0]->textContent;
+
+              $object->addValue($name, $value);
+            }
+
+            $offset += $bits;
+          }
+        }
+      }
+
+      $messageID2bits{$messageGroupID . "-" . $messageID} = $offset;
+    }
+  }
 }
 
 sub parse
 {
-	my ($self, $msg) = @_;
+  my ($self, $msg) = @_;
 
-	$sendMode = 0;
+  $sendMode = 0;
 
-	if (($msg =~ /^Packet Data: SenderID=(\d*);PacketCounter=(\d*);MessageType=(\d*);MessageGroupID=(\d*);MessageID=(\d*);MessageData=([^;]*);.*/)
-		|| ($msg =~ /^Packet Data: SenderID=(\d*);PacketCounter=(\d*);MessageType=(\d*);AckSenderID=\d*;AckPacketCounter=\d*;Error=\d*;MessageGroupID=(\d*);MessageID=(\d*);MessageData=([^;]*);.*/))
-	{
-		$self->{_senderID} = $1;
-		$self->{_packetCounter} = $2;
-		$self->{_messageTypeID} = $3;
-		$self->{_messageGroupID} = $4;
-		$self->{_messageID} = $5;
-		$self->{_messageData} = $6;		
-	}
-	
-	else
-	{
-		return undef;
-	}
+  if (
+    (
+      $msg =~
+/^Packet Data: SenderID=(\d*);PacketCounter=(\d*);MessageType=(\d*);MessageGroupID=(\d*);MessageID=(\d*);MessageData=([^;]*);.*/
+    )
+    || ($msg =~
+/^Packet Data: SenderID=(\d*);PacketCounter=(\d*);MessageType=(\d*);AckSenderID=\d*;AckPacketCounter=\d*;Error=\d*;MessageGroupID=(\d*);MessageID=(\d*);MessageData=([^;]*);.*/
+    )
+    )
+  {
+    $self->{_senderID}       = $1;
+    $self->{_packetCounter}  = $2;
+    $self->{_messageTypeID}  = $3;
+    $self->{_messageGroupID} = $4;
+    $self->{_messageID}      = $5;
+    $self->{_messageData}    = $6;
+  }
+
+  else {
+    return undef;
+  }
 }
 
 sub getSenderID
 {
-	my ($self) = @_;
-	return $self->{_senderID};
+  my ($self) = @_;
+  return $self->{_senderID};
 }
 
 sub getPacketCounter
 {
-	my ($self) = @_;
-	return $self->{_packetCounter};
+  my ($self) = @_;
+  return $self->{_packetCounter};
 }
 
 sub getMessageTypeName
 {
-	my ($self) = @_;
-	return $messageTypeID2messageTypeName{$self->{_messageTypeID}};
+  my ($self) = @_;
+  return $messageTypeID2messageTypeName{$self->{_messageTypeID}};
 }
 
 sub getMessageGroupName
 {
-	my ($self) = @_;
-	return $messageGroupID2messageGroupName{$self->{_messageGroupID}};
+  my ($self) = @_;
+  return $messageGroupID2messageGroupName{$self->{_messageGroupID}};
 }
 
 sub getMessageName
 {
-	my ($self) = @_;
-	return $messageID2messageName{$self->{_messageGroupID} . "-" . $self->{_messageID}};
+  my ($self) = @_;
+  return $messageID2messageName{$self->{_messageGroupID} . "-" . $self->{_messageID}};
 }
 
 sub getMessageData
 {
-	my ($self) = @_;
-	
-	if ($sendMode)
-	{
-		my $res = "";
-		
-		foreach (@msgData)
-		{
-			$res .= sprintf("%02X", $_);
-		}
+  my ($self) = @_;
 
-		return $res;
-	}
-	else
-	{
-		return $self->{_messageData};
-	}
+  if ($sendMode) {
+    my $res = "";
+
+    foreach (@msgData) {
+      $res .= sprintf("%02X", $_);
+    }
+
+    return $res;
+  } else {
+    return $self->{_messageData};
+  }
 }
 
 sub getField
 {
-	my ($self, $fieldName) = @_;
-    
-    my $obj = $dataFields{$self->{_messageGroupID} . "-" . $self->{_messageID} . "-" . $fieldName};
-	my @tmpArray = map hex("0x$_"), $self->{_messageData} =~ /(..)/g;
+  my ($self, $fieldName) = @_;
 
-    return $obj->getValue(\@tmpArray);
+  my $obj = $dataFields{$self->{_messageGroupID} . "-" . $self->{_messageID} . "-" . $fieldName};
+  my @tmpArray = map hex("0x$_"), $self->{_messageData} =~ /(..)/g;
+
+  return $obj->getValue(\@tmpArray);
 }
 
 sub initPacket
 {
-	my ($self, $messageGroupName, $messageName, $messageTypeName) = @_;
+  my ($self, $messageGroupName, $messageName, $messageTypeName) = @_;
 
-	$self->{_senderID} = 0; # base station SenderID
-	$self->{_messageTypeID} = $messageTypeName2messageTypeID{$messageTypeName};
-	$self->{_messageGroupID} = $messageGroupName2messageGroupID{$messageGroupName};
-	$self->{_messageID} = $messageName2messageID{$messageGroupName . "-" . $messageName};
+  $self->{_senderID}       = 0;                                                                # base station SenderID
+  $self->{_messageTypeID}  = $messageTypeName2messageTypeID{$messageTypeName};
+  $self->{_messageGroupID} = $messageGroupName2messageGroupID{$messageGroupName};
+  $self->{_messageID}      = $messageName2messageID{$messageGroupName . "-" . $messageName};
 
-	my $lenBytes = $messageID2bits{$self->{_messageGroupID} . "-" . $self->{_messageID}} / 8;
+  my $lenBytes = $messageID2bits{$self->{_messageGroupID} . "-" . $self->{_messageID}} / 8;
 
-   	@msgData = 0 x $lenBytes;
-   	
-	$sendMode = 1;
+  @msgData = 0 x $lenBytes;
+
+  $sendMode = 1;
 }
 
 sub setField
 {
-	my ($self, $messageGroupName, $messageName, $fieldName, $value) = @_;
-    
-    my $gID = $messageGroupName2messageGroupID{$messageGroupName};
-    my $mID = $messageName2messageID{$messageGroupName . "-" . $messageName};
+  my ($self, $messageGroupName, $messageName, $fieldName, $value) = @_;
 
-    my $obj = $dataFields{$gID . "-" . $mID . "-" . $fieldName};
-    
-	$obj->setValue(\@msgData, $value);
+  my $gID = $messageGroupName2messageGroupID{$messageGroupName};
+  my $mID = $messageName2messageID{$messageGroupName . "-" . $messageName};
+
+  my $obj = $dataFields{$gID . "-" . $mID . "-" . $fieldName};
+
+  $obj->setValue(\@msgData, $value);
 }
 
 # sKK01RRRRGGMMDD
 # s0001003D3C0164 = SET    Dimmer Switch Brightness 50%
 sub getSendString
 {
-	my ($self, $receiverID, $aesKeyNr) = @_;
-    
-    # Right now the only way to set the AES key is by defining in in fhem.cfg
-    # "define SHC_Dev_xx SHC_Dev xx aa" where xx = deviceID, aa = AES key
-    #
-    # TODO: Where to enter the AES key number? This is by device.
-    # Add lookup table device -> AES key?
-    # Automatically gather used AES key after reception from device?
-    
-    my $s = "s"
-    	. sprintf("%02X", $aesKeyNr)
-    	. sprintf("%02X", $self->{_messageTypeID})
-    	. sprintf("%04X", $receiverID)
-    	. sprintf("%02X", $self->{_messageGroupID})
-    	. sprintf("%02X", $self->{_messageID})
-		. getMessageData();
+  my ($self, $receiverID, $aesKeyNr) = @_;
+
+  # Right now the only way to set the AES key is by defining in in fhem.cfg
+  # "define SHC_Dev_xx SHC_Dev xx aa" where xx = deviceID, aa = AES key
+  #
+  # TODO: Where to enter the AES key number? This is by device.
+  # Add lookup table device -> AES key?
+  # Automatically gather used AES key after reception from device?
+
+  my $s = "s"
+    . sprintf("%02X", $aesKeyNr)
+    . sprintf("%02X", $self->{_messageTypeID})
+    . sprintf("%04X", $receiverID)
+    . sprintf("%02X", $self->{_messageGroupID})
+    . sprintf("%02X", $self->{_messageID})
+    . getMessageData();
 }
 
 1;
