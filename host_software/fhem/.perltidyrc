@@ -1,0 +1,11 @@
+# This is a simple of a .perltidyrc configuration file
+-se    # errors to standard error output
+-w     # show all warnings
+-i=2   # indentation = two spaces
+-ce    # cuddled elses
+-pt=2  # parens very tight
+-bt=2  # braces very tight
+-sbt=2 # square brackets very tight
+-bbt=2 # block braces very tight
+-sbl   # opening sub brace on new line
+-l=120 # do check line length at 120 chars
