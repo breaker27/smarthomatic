@@ -103,7 +103,7 @@
 		</Restriction>
 		<EnumValue>
 			<ID>TemperatureSensorType</ID>
-			<Description>You can choose one of the supported temperature / humidity sensors. If set to 0, no sensor is used, but the device sends out packets for testing purposes.</Description>
+			<Description>You can choose one of the supported temperature / humidity sensors.</Description>
 			<Bits>8</Bits>
 			<Element>
 				<Value>0</Value>
@@ -150,7 +150,7 @@
 		</EnumValue>
 		<EnumValue>
 			<ID>BrightnessSensorType</ID>
-			<Description>You can choose one of the supported light sensors. If set to 0, no sensor is used, but the device sends out packets for testing purposes.</Description>
+			<Description>You can choose one of the supported light sensors.</Description>
 			<Bits>8</Bits>
 			<Element>
 				<Value>0</Value>
@@ -163,7 +163,7 @@
 		</EnumValue>
 		<EnumValue>
 			<ID>DistanceSensorType</ID>
-			<Description/>
+			<Description>Choose one of the connected distance sensor types.</Description>
 			<Bits>8</Bits>
 			<Element>
 				<Value>0</Value>
