@@ -193,6 +193,15 @@ sub SHC_Dev_Parse($$)
           # enviroment sonsor, so lets define our device type
           $rhash->{devtype} = "EnvSensor" if (!defined($rhash->{devtype}));
         }
+        when ('Distance') {
+          my $brt = $parser->getField("Distance");
+
+          readingsBulkUpdate($rhash, "distance", $brt);
+
+          # After receiving this message we know for the first time that we are a
+          # enviroment sonsor, so lets define our device type
+          $rhash->{devtype} = "EnvSensor" if (!defined($rhash->{devtype}));
+        }
       }
     }
     when ('PowerSwitch') {
