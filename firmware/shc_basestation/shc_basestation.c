@@ -28,7 +28,7 @@
 #include "uart.h"
 
 #include "../src_common/msggrp_generic.h"
-#include "../src_common/msggrp_tempsensor.h"
+#include "../src_common/msggrp_weather.h"
 #include "../src_common/msggrp_powerswitch.h"
 
 #include "../src_common/e2p_hardware.h"
@@ -44,11 +44,6 @@
 #define LED_PORT PORTD
 #define LED_DDR DDRD
 
-// check some assumptions at precompile time about flash layout
-#if (EEPROM_AESKEYS_BIT != 0)
-	#error AES keys do not start at a byte border. Not supported by base station (maybe fix E2P layout?).
-#endif
-
 uint16_t device_id;
 uint8_t aes_key_count;
 
@@ -57,7 +52,7 @@ uint8_t aes_key_count;
 // of all packets must be known at the PC program that's processing the data.
 void decode_data(uint8_t len)
 {
-	uint32_t messagegroupid, messageid;
+	uint32_t u32, messagegroupid, messageid;
 	uint16_t u16;
 	
 	pkg_header_adjust_offset();
@@ -148,16 +143,26 @@ void decode_data(uint8_t len)
 				
 				break;
 
-			case MESSAGEGROUP_TEMPSENSOR:
+			case MESSAGEGROUP_WEATHER:
 				
 				switch (messageid)
 				{
-					case MESSAGEID_TEMPSENSOR_TEMPHUMBRISTATUS:
+					case MESSAGEID_WEATHER_TEMPERATURE:
 						UART_PUTS("Temperature=");
-						print_signed(msg_tempsensor_temphumbristatus_get_temperature());
-						u16 = msg_tempsensor_temphumbristatus_get_humidity();
-						UART_PUTF2(";Humidity=%u.%u;", u16 / 10, u16 % 10);
-						UART_PUTF("Brightness=%u;", msg_tempsensor_temphumbristatus_get_brightness());
+						print_signed(msg_weather_temperature_get_temperature());
+						UART_PUTS(";");
+						break;
+					case MESSAGEID_WEATHER_HUMIDITYTEMPERATURE:
+						u16 = msg_weather_humiditytemperature_get_humidity();
+						UART_PUTF2("Humidity=%u.%u;Temperature=", u16 / 10, u16 % 10);
+						print_signed(msg_weather_humiditytemperature_get_temperature());
+						UART_PUTS(";");
+						break;
+					case MESSAGEID_WEATHER_BAROMETRICPRESSURETEMPERATURE:
+						u32 = msg_weather_barometricpressuretemperature_get_barometricpressure();
+						UART_PUTF("Pressure=%ld;Temperature=", u32);
+						print_signed(msg_weather_barometricpressuretemperature_get_temperature());
+						UART_PUTS(";");
 						break;
 					default:
 						break;
@@ -213,7 +218,7 @@ void send_packet(uint8_t aes_key_nr, uint8_t packet_len)
 		aes_key_nr = aes_key_count - 1;
 	}
 	
-	eeprom_read_block (aes_key, (uint8_t *)(EEPROM_AESKEYS_BYTE + aes_key_nr * 32), 32);
+	e2p_basestation_get_aeskey(aes_key_nr, aes_key);
 	
 	// show info
 	decode_data(packet_len);
@@ -324,12 +329,12 @@ int main(void)
 					/*if (aes_key_nr == 0)
 					{
 						UART_PUTS("Before decryption: ");
-						printbytearray(bufx, len);
+						print_bytearray(bufx, len);
 					}*/
 				
-					eeprom_read_block (aes_key, (uint8_t *)(EEPROM_AESKEYS_BYTE + aes_key_nr * 32), 32);
-					//UART_PUTS("Trying AES key ");
-					//printbytearray((uint8_t *)aes_key, 32);
+					e2p_basestation_get_aeskey(aes_key_nr, aes_key);
+					//UART_PUTS("Trying AES key 2 ");
+					//print_bytearray((uint8_t *)aes_key, 32);
 
 					aes256_decrypt_cbc(bufx, len);
 

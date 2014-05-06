@@ -20,11 +20,10 @@
 
 FUSES = 
 { 
-	// value 0x62 - these should also be the default settings for ATMega168
+	// value 0x62 - these are also the default settings for ATMega328
 	.low = (FUSE_CKSEL0 & FUSE_CKSEL2 & FUSE_CKSEL3 & FUSE_SUT0 & FUSE_CKDIV8),
-	// value 0xD6 - set EESAVE, set BOD to 1.8V to prevent accidentially
-	// FLASH garbage, others are default
-	.high = (FUSE_EESAVE & FUSE_SPIEN & FUSE_BODLEVEL0),
-	// should be value F9 at ATMega168
-	.extended = EFUSE_DEFAULT, 
+	// value 0xD1 - set EESAVE, others are default for ATMega328
+	.high = (FUSE_SPIEN & FUSE_EESAVE & FUSE_BOOTSZ1 & FUSE_BOOTSZ0),
+	// value 0xFE - set BOD to 1.8V to prevent flashing garbage accidentally
+	.extended = FUSE_BODLEVEL0, 
 };

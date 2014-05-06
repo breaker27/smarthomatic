@@ -18,12 +18,13 @@
 
 package shcee.editors;
 
+import java.awt.Color;
+
 import javax.swing.text.DefaultCaret;
 
-import shcee.LabelArea;
-import shcee.Util;
-
 import org.w3c.dom.Node;
+
+import shcee.Util;
 
 public class UIntEditor extends AbstractEditor
 {
@@ -34,22 +35,21 @@ public class UIntEditor extends AbstractEditor
 	private int bits;
 	private UIntTextArea input;
 	
-	public UIntEditor(Node root)
+	public UIntEditor(Node root, Color baseColor, int arrayIndex)
 	{
-		super(root);
+		super(root, baseColor, arrayIndex);
 		
 		// add label about format
-		LabelArea formatLabel = new LabelArea("UInt of " + bits + " bits in the range " + minVal + ".." + maxVal);
-		add(formatLabel);
+		format = "UInt of " + bits + " bits in the range " + minVal + ".." + maxVal;
+		addLabel(format);
 		
 		// add input
 		input = new UIntTextArea(minVal, maxVal);
 		add(input);
 		
 		// add description
-		String blockDescription = Util.getChildNodeValue(root, "Description");
-		LabelArea descriptionLabel = new LabelArea(blockDescription);
-		add(descriptionLabel);
+		description = Util.getChildNodeValue(root, "Description");
+		addLabel(description);
 	}
 
 	@Override

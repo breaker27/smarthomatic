@@ -238,12 +238,12 @@
 		</Message>
 	</MessageGroup>
 	<MessageGroup>
-		<Name>TempSensor</Name>
-		<Description>This message group contains messages for a device that can measure temperature and humidity as well as a brightness value.</Description>
+		<Name>Weather</Name>
+		<Description>This message group contains messages for weather data.</Description>
 		<MessageGroupID>10</MessageGroupID>
 		<Message>
-			<Name>TempHumBriStatus</Name>
-			<Description>This is a message containing temperature, humidity and brightness.</Description>
+			<Name>Temperature</Name>
+			<Description>This is a message containing temperature only.</Description>
 			<MessageID>1</MessageID>
 			<MessageType>0</MessageType>
 			<MessageType>8</MessageType>
@@ -256,6 +256,15 @@
 				<MinVal>-32768</MinVal>
 				<MaxVal>32767</MaxVal>
 			</IntValue>
+		</Message>
+		<Message>
+			<Name>HumidityTemperature</Name>
+			<Description>This is a message containing humidity and temperature.</Description>
+			<MessageID>2</MessageID>
+			<MessageType>0</MessageType>
+			<MessageType>8</MessageType>
+			<MessageType>10</MessageType>
+			<Validity>test</Validity>
 			<UIntValue>
 				<ID>Humidity</ID>
 				<Description>relative humidity permill, 0..1000 (other values not defined)</Description>
@@ -263,12 +272,72 @@
 				<MinVal>0</MinVal>
 				<MaxVal>1000</MaxVal>
 			</UIntValue>
+			<IntValue>
+				<ID>Temperature</ID>
+				<Description>temperature [1/100 degree celsius], -50°C = -5000, 50°C = 5000</Description>
+				<Bits>16</Bits>
+				<MinVal>-32768</MinVal>
+				<MaxVal>32767</MaxVal>
+			</IntValue>
+		</Message>
+		<Message>
+			<Name>BarometricPressureTemperature</Name>
+			<Description>This is a message containing barometric pressure and temperature.</Description>
+			<MessageID>3</MessageID>
+			<MessageType>0</MessageType>
+			<MessageType>8</MessageType>
+			<MessageType>10</MessageType>
+			<Validity>test</Validity>
+			<UIntValue>
+				<ID>BarometricPressure</ID>
+				<Description>barometric pressure in pascal</Description>
+				<Bits>17</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>131071</MaxVal>
+			</UIntValue>
+			<IntValue>
+				<ID>Temperature</ID>
+				<Description>temperature [1/100 degree celsius], -50°C = -5000, 50°C = 5000</Description>
+				<Bits>16</Bits>
+				<MinVal>-32768</MinVal>
+				<MaxVal>32767</MaxVal>
+			</IntValue>
+		</Message>
+	</MessageGroup>
+	<MessageGroup>
+		<Name>Environment</Name>
+		<Description>This message group contains messages for environmental data except weather data.</Description>
+		<MessageGroupID>11</MessageGroupID>
+		<Message>
+			<Name>Brightness</Name>
+			<Description/>
+			<MessageID>1</MessageID>
+			<MessageType>0</MessageType>
+			<MessageType>8</MessageType>
+			<MessageType>10</MessageType>
+			<Validity>test</Validity>
 			<UIntValue>
 				<ID>Brightness</ID>
 				<Description>brightness in percent</Description>
 				<Bits>7</Bits>
 				<MinVal>0</MinVal>
 				<MaxVal>100</MaxVal>
+			</UIntValue>
+		</Message>
+		<Message>
+			<Name>Distance</Name>
+			<Description/>
+			<MessageID>2</MessageID>
+			<MessageType>0</MessageType>
+			<MessageType>8</MessageType>
+			<MessageType>10</MessageType>
+			<Validity>test</Validity>
+			<UIntValue>
+				<ID>Distance</ID>
+				<Description>distance in cm</Description>
+				<Bits>14</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>16383</MaxVal>
 			</UIntValue>
 		</Message>
 	</MessageGroup>
@@ -298,6 +367,35 @@
 				<MinVal>0</MinVal>
 				<MaxVal>65535</MaxVal>
 			</UIntValue>
+		</Message>
+		<Message>
+			<Name>SwitchStateExt</Name>
+			<Description>This is the state of up to 8 relais and its timeout values.</Description>
+			<MessageID>2</MessageID>
+			<MessageType>0</MessageType>
+			<MessageType>1</MessageType>
+			<MessageType>2</MessageType>
+			<MessageType>8</MessageType>
+			<MessageType>9</MessageType>
+			<MessageType>10</MessageType>
+			<Validity>test</Validity>
+			<Array>
+				<Length>8</Length>
+				<BoolValue>
+					<ID>On</ID>
+					<Description/>
+				</BoolValue>
+			</Array>
+			<Array>
+				<Length>8</Length>
+				<UIntValue>
+					<ID>TimeoutSec</ID>
+					<Description>The time after which the switch is automatically toggled again. Use 0 to disable this.</Description>
+					<Bits>16</Bits>
+					<MinVal>0</MinVal>
+					<MaxVal>65535</MaxVal>
+				</UIntValue>
+			</Array>
 		</Message>
 	</MessageGroup>
 	<MessageGroup>

@@ -148,42 +148,7 @@ public class ValueEditorPanel extends JPanel
 
 	protected void onButtonFlash()
 	{
-		String oldCmd = "avrdude.exe -p #DEVICE# -U eeprom:w:#FILENAME#:r";
-		
-		Object cmdLine = JOptionPane.showInputDialog(SHCEEMain.mySHCEEMain,
-				"<html><body><b>Enter command for flashing e2p file</b><br/><br/>" +
-				"#DEVICE# will be replaced by m328p or m168 according to e2p size<br/>" +
-				"#FILENAME# will be replaced by the e2p filename<br/><br/>" +
-				"Default is: avrdude.exe -p #DEVICE# -U eeprom:w:#FILENAME#:r</body></html>", "Flash e2p file to device", JOptionPane.PLAIN_MESSAGE, null, null, oldCmd);
-		
-		if (null != cmdLine)
-		{
-			String cmdLineS = (String)cmdLine;
-			
-			if (length > 4096)
-			{			
-				cmdLineS = cmdLineS.replace("#DEVICE#", "m328p");
-			}
-			else
-			{
-				cmdLineS = cmdLineS.replace("#DEVICE#", "m168");	
-			}
-			
-			cmdLineS = cmdLineS.replace("#FILENAME#", "\"" + filename + "\"");
-			
-			try
-			{
-				// TODO: Support linux by calling bash in a way that the user can see the output.
-				// The user could choose to run bash by prefixing the command line to enter with
-				// e.g. "LINUX", so we can live with the simple prompt consisting only
-				// of one line of text.
-				Util.execute(cmdLineS, false);
-			} catch (IOException e)
-			{
-				JOptionPane.showMessageDialog(SHCEEMain.mySHCEEMain, "Could not execute program.", "Error", JOptionPane.ERROR_MESSAGE);
-				e.printStackTrace();
-			}
-		}
+		new FlashDialog(length, filename);
 	}
 
 	protected void onButtonSave()

@@ -18,6 +18,7 @@
 
 package shcee.editors;
 
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -41,21 +42,20 @@ public class EnumEditor extends AbstractEditor
 	private HashMap<Integer, Integer> enumValue2itemIndex;
 	private JComboBox input;
 	
-	public EnumEditor(Node root)
+	public EnumEditor(Node root, Color baseColor, int arrayIndex)
 	{
-		super(root);
+		super(root, baseColor, arrayIndex);
 		
 		// add label about format
-		LabelArea formatLabel = new LabelArea("Enum value of " + bits + " bits");
-		add(formatLabel);
+		format = "Enum value of " + bits + " bits";
+		addLabel(format);
 		
 		// add input
 		add(input);
 		
 		// add description
-		String blockDescription = Util.getChildNodeValue(root, "Description");
-		LabelArea descriptionLabel = new LabelArea(blockDescription);
-		add(descriptionLabel);
+		description = Util.getChildNodeValue(root, "Description");
+		addLabel(description);
 		
 		// add listener for reacting on changed DeviceType (in case this editor is the one)
 		input.addActionListener (new ActionListener () {
