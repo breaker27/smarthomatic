@@ -40,6 +40,17 @@ my %dev_state_format = (
   ]
 );
 
+# Supported Set commands
+my %sets = (
+  "PowerSwitch" => ["on", "off", "toggle", "statusRequest",
+                    # Used from SetExtensions.pm
+                    "blink", "on-for-timer", "on-till", "off-for-timer", "off-till", "intervals"],
+  "Dimmer"      => ["on", "off", "toggle", "statusRequest", "pct", "ani",
+                    # Used from SetExtensions.pm
+                    "blink", "on-for-timer", "on-till", "off-for-timer", "off-till", "intervals"],
+  "EnvSensor"   => undef
+);
+
 sub SHC_Dev_Parse($$);
 
 sub SHC_Dev_Initialize($)
@@ -295,15 +306,36 @@ sub SHC_Dev_Set($@)
   my ($hash, $name, @aa) = @_;
   my $cnt = @aa;
 
+  my $cmd   = $aa[0];
+  my $arg   = $aa[1];
+  my $arg2  = $aa[2];
+  my $arg3  = $aa[3];
+  my $arg4  = $aa[4];
+
   return "\"set $name\" needs at least one parameter" if ($cnt < 1);
 
-  return undef if (!defined($hash->{devtype}) || $hash->{devtype} eq "EnvSensor");
+  if ($cmd eq "devtype") {
+    if (exists($sets{$arg})) {
+      $hash->{devtype} = $arg;
+      Log3 $name, 3, "$name: devtype set to \"$arg\"";
+      return undef;
+    } else {
+      return "devtype \"$arg\" not supported. Currently supported device types: " . join(", ", sort keys %sets);
+    }
+  }
 
-  my $cmd  = $aa[0];
-  my $arg  = $aa[1];
-  my $arg2 = $aa[2];
-  my $arg3 = $aa[3];
-  my $arg4 = $aa[4];
+  if (!defined($hash->{devtype})) {
+    return "\"devtype\" not yet specifed. Currently supported device types: " . join(", ", sort keys %sets);
+  }
+
+  if (!defined($sets{$hash->{devtype}})) {
+    return "No set commands supported for device type: " . $hash->{devtype};
+  }
+
+  # TODO:
+  # Currently the commands for every device type are defined in %sets but not used to verify the commands. Instead
+  # the SetExtension.pm modulesis used for this purpose.
+  # For more sophisticated device types this has to be revisited
 
   my $readonly = AttrVal($name, "readonly", "0");
 
@@ -440,10 +472,16 @@ sub SHC_Dev_Send($)
   <a name="SHC_Dev_Set"></a>
   <b>Set</b>
   <ul>
-    <li>on</li>
-    <li>off</li>
-    <li>statusRequest</li>
-    <li><a href="#setExtensions"> set extensions</a> are supported.</li>
+    <li>devtype</b>
+    The device type determines the command set, default web commands and the default devStateicon</b
+    Currently supported are: EnvSensor, Dimmer, PowerSwitch></li>
+    <li>on (Dimmer, PowerSwitch)</li>
+    <li>off (Dimmer, PowerSwitch)</li>
+    <li>pct <0..100>  Sets the brightness in percent (Dimmer)</li>
+    <li>ani <AnimationMode> <TimeoutSec> <StartBrightness> <EndBrightness> (Dimmer)</b>
+    Details in <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_Animation">Smarthomatic Website</a></li>
+    <li>statusRequest (Dimmer, PowerSwitch)</li>
+    <li><a href="#setExtensions"> set extensions</a> (Dimmer, PowerSwitch) are supported.</li>
   </ul><br>
 
   <a name="SHC_Dev_Get"></a>
