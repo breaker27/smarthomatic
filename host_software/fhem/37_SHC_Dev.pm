@@ -202,8 +202,13 @@ sub SHC_Dev_Parse($$)
           my $bar = $parser->getField("BarometricPressure") / 100;    # parser returns pascal, use hPa
           my $tmp = $parser->getField("Temperature") / 100;           # parser returns centigrade
 
+          # DEBUG for WORKAROUND
+          # Log3 $name, 2, "$rname: HELP HELP why am I here, starting to add barometric pressure";
           readingsBulkUpdate($rhash, "barometric_pressure", $bar);
           readingsBulkUpdate($rhash, "temperature",         $tmp);
+
+          # DEBUG for WORKAROUND
+          # Log3 $name, 2, "$rname: HELP HELP am I still here";
         }
       }
 
@@ -269,6 +274,20 @@ sub SHC_Dev_Parse($$)
     if (!defined($attr{$rname}{webCmd}) && defined($web_cmds{$rhash->{devtype}})) {
       $attr{$rname}{webCmd} = $web_cmds{$rhash->{devtype}};
     }
+  }
+
+  # TODO
+  # WORKAROUND
+  #
+  # After a fhem server restart it happens that a "barometric_pressure" reading gets added even if no
+  # BarometricPressureTemperature message was received. A closer look showed that the only code sequence
+  # that adds the baro reading is never executed, the reading still occurs.
+
+  if ((defined($rhash->{READINGS}{barometric_pressure}{VAL}))
+    && $rhash->{READINGS}{barometric_pressure}{VAL} == 0)
+  {
+    Log3 $name, 3, "$rname: WORKAROUND barometric_pressure defined, but value is invalid. Will be removed";
+    delete ($rhash->{READINGS}{barometric_pressure})
   }
 
   # Assemble state string according to %dev_state_format
