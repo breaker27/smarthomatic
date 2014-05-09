@@ -36,7 +36,8 @@ my %dev_state_format = (
     "temperature",         "T: ",
     "humidity",            "H: ",
     "barometric_pressure", "Baro: ",
-    "brightness",          "B: "
+    "brightness",          "B: ",
+    "distance",            "D: "
   ]
 );
 
