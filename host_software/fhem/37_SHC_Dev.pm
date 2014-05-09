@@ -49,7 +49,13 @@ my %sets = (
   "Dimmer"      => ["on", "off", "toggle", "statusRequest", "pct", "ani",
                     # Used from SetExtensions.pm
                     "blink", "on-for-timer", "on-till", "off-for-timer", "off-till", "intervals"],
-  "EnvSensor"   => undef
+  "EnvSensor"   => undef,
+  "Custom"      => [
+    "PowerSwitch.SwitchState",
+    "PowerSwitch.SwitchStateExt",
+    "Dimmer.Brightness",
+    "Dimmer.Animation"
+  ]
 );
 
 # Hashtable for automatic device type assignment
