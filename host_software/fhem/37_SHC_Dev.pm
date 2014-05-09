@@ -51,6 +51,19 @@ my %sets = (
   "EnvSensor"   => undef
 );
 
+# Hashtable for automatic device type assignment
+# Format:
+# "MessageGroupName:MessageName" => "Auto Device Type"
+my %auto_devtype = (
+  "Weather:Temperature"                   => "EnvSensor",
+  "Weather:HumidityTemperature"           => "EnvSensor",
+  "Weather:BarometricPressureTemperature" => "EnvSensor",
+  "Environment:Brightness"                => "EnvSensor",
+  "Environment:Distance"                  => "EnvSensor",
+  "PowerSwitch:SwitchState"               => "PowerSwitch",
+  "Dimmer:Brightness"                     => "Dimmer"
+);
+
 sub SHC_Dev_Parse($$);
 
 sub SHC_Dev_Initialize($)
@@ -211,28 +224,16 @@ sub SHC_Dev_Parse($$)
           # Log3 $name, 2, "$rname: HELP HELP am I still here";
         }
       }
-
-      # After receiving a weather message we know for the first time that we are a EnvSensor
-      $rhash->{devtype} = "EnvSensor" if (!defined($rhash->{devtype}));
     }
     when ('Environment') {
       given ($msgname) {
         when ('Brightness') {
           my $brt = $parser->getField("Brightness");
-
           readingsBulkUpdate($rhash, "brightness", $brt);
-
-          # After receiving this message we know for the first time that we are a EnvSensor
-          $rhash->{devtype} = "EnvSensor" if (!defined($rhash->{devtype}));
         }
         when ('Distance') {
           my $brt = $parser->getField("Distance");
-
           readingsBulkUpdate($rhash, "distance", $brt);
-
-          # After receiving this message we know for the first time that we are a
-          # enviroment sonsor, so lets define our device type
-          $rhash->{devtype} = "EnvSensor" if (!defined($rhash->{devtype}));
         }
       }
     }
@@ -244,9 +245,6 @@ sub SHC_Dev_Parse($$)
 
           readingsBulkUpdate($rhash, "on",      $on);
           readingsBulkUpdate($rhash, "timeout", $timeout);
-
-          # After receiving this message we know for the first time that we are a power switch.
-          $rhash->{devtype} = "PowerSwitch" if (!defined($rhash->{devtype}));
         }
       }
     }
@@ -258,12 +256,15 @@ sub SHC_Dev_Parse($$)
 
           readingsBulkUpdate($rhash, "on",         $on);
           readingsBulkUpdate($rhash, "brightness", $brightness);
-
-          # After receiving this message we know for the first time that we are a dimmer.
-          $rhash->{devtype} = "Dimmer" if (!defined($rhash->{devtype}));
         }
       }
     }
+  }
+
+  # Autoassign device type
+  if ((!defined($rhash->{devtype})) && (defined($auto_devtype{"$msggroupname:$msgname"}))) {
+    $rhash->{devtype} = $auto_devtype{"$msggroupname:$msgname"};
+    Log3 $name, 3, "$rname: Autoassign device type = " . $rhash->{devtype};
   }
 
   # If the devtype is defined add, if not already done, the according webCmds and devStateIcons
