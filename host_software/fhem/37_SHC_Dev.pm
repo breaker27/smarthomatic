@@ -208,10 +208,13 @@ sub SHC_Dev_Parse($$)
     when ('GPIO') {
       given ($msgname) {
         when ('DigitalPin') {
-			# TODO: read out all 8 pins and store them in a data array
-          my $on      = $parser->getField("On", 0);
-          
-          readingsBulkUpdate($rhash, "on", $on);
+          my $in = "";
+          for (my $i = 0 ; $i < 8 ; $i++) {
+            my $inx = $parser->getField("On", $i);
+            readingsBulkUpdate($rhash, "in" . $i, $inx);
+            $in .= $inx;
+          }
+          readingsBulkUpdate($rhash, "in", $in);
         }
       }
     }
