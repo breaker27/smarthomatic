@@ -139,6 +139,9 @@ void init_di_sensor(void)
 			{
 				setPullUp(di[i].port, di[i].pin);
 			}
+			
+			// remember to send out status after power up
+			di_change = true;
 		}
 	}
 }
