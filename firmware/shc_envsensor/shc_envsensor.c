@@ -28,6 +28,7 @@
 #include "uart.h"
 
 #include "../src_common/msggrp_generic.h"
+#include "../src_common/msggrp_gpio.h"
 #include "../src_common/msggrp_weather.h"
 #include "../src_common/msggrp_environment.h"
 
@@ -60,6 +61,7 @@ uint8_t brightness_sensor_type = 0;
 uint8_t distance_sensor_type = 0;
 uint16_t version_status_cycle = AVERAGE_COUNT_VERSION - 1; // send promptly after startup
 uint16_t vempty = 1100; // 1.1V * 2 cells = 2.2V = min. voltage for RFM2
+bool di_change = false;
 
 struct measurement_t
 {
@@ -68,7 +70,105 @@ struct measurement_t
 	uint8_t avgThr; // amount of measurements that are averaged into one value to send 
 } temperature, humidity, barometric_pressure, distance, battery_voltage, brightness;
 
+struct portpin_t
+{
+	uint8_t port;
+	uint8_t pin;
+	uint8_t mode;
+	struct measurement_t meas;
+};
+
+#define DI_UNUSED 255
+
+struct portpin_t di[8];
+
+// ---------- helper functions ----------
+
+uint8_t getPinStatus(uint8_t port_nr, uint8_t pin)
+{
+	uint8_t val;
+	
+	if (port_nr == 2)
+		val = PIND;
+	else if (port_nr == 1)
+		val = PINC;
+	else
+		val = PINB;
+		
+	return (val >> pin) & 1;
+}
+
+void setPullUp(uint8_t port_nr, uint8_t pin)
+{
+	if (port_nr == 2)
+		sbi(PIND, pin);
+	else if (port_nr == 1)
+		sbi(PINC, pin);
+	else
+		sbi(PINB, pin);
+}
+
+void init_di_sensor(void)
+{
+	uint8_t i;
+	
+	for (i = 0; i < 8; i++)
+	{
+		uint8_t pin = e2p_envsensor_get_digitalinputpins(i);
+		
+		if (pin == 0) // not used
+		{
+			di[i].port = DI_UNUSED;
+		}
+		else
+		{
+			bool pull_up = e2p_envsensor_get_digitalinputpullupresistor(i);
+			uint8_t mode = e2p_envsensor_get_digitalinputmode(i);
+
+			di[i].port = (pin - 1) / 8;
+			di[i].pin = (pin - 1) % 8;
+			di[i].mode = mode;
+			di[i].meas.cnt = 0;
+			di[i].meas.val = 0;
+			di[i].meas.avgThr = AVERAGE_COUNT;
+
+			UART_PUTF3("Using port %u pin %u as digital input pin %u ", di[i].port, di[i].pin, i);
+			UART_PUTF2("in mode %u with pull-up %s\r\n", mode, pull_up ? "ON" : "OFF");
+			
+			if (pull_up)
+			{
+				setPullUp(di[i].port, di[i].pin);
+			}
+		}
+	}
+}
+
 // ---------- functions to measure values from sensors ----------
+
+void measure_digital_input(void)
+{
+	uint8_t i;
+	
+	for (i = 0; i < 8; i++)
+	{
+		if (di[i].port != DI_UNUSED)
+		{
+			uint8_t stat = getPinStatus(di[i].port, di[i].pin);
+			
+			di[i].meas.cnt++;
+			
+			// if status changed or avgThr is reached, it is time to send
+			if (((di[i].mode == DIGITALINPUTMODE_ONCHANGE) && (di[i].meas.val != stat))
+				|| (di[i].meas.cnt >= di[i].meas.avgThr))
+			{
+				//UART_PUTS("Status change or vrgThr reached -> send\r\n");
+				di_change = true;
+			}
+			
+			di[i].meas.val = stat;
+		}
+	}
+}
 
 void sht11_measure_loop(void)
 {
@@ -174,6 +274,35 @@ void measure_brightness(void)
 }
 
 // ---------- functions to prepare a message filled with sensor data ----------
+
+void prepare_digitalpin(void)
+{
+	pkg_header_init_gpio_digitalpin_status();
+
+	UART_PUTS("Send GPIO: ");
+	
+	uint8_t i;
+	
+	for (i = 0; i < 8; i++)
+	{
+		
+		if (di[i].port != DI_UNUSED)
+		{
+			UART_PUTF("%u", di[i].meas.val);
+			di[i].meas.cnt = 0;
+			
+			msg_gpio_digitalpin_set_on(i, di[i].meas.val != 0);
+		}
+		else
+		{
+			UART_PUTS("-");
+		}
+	}
+	
+	UART_PUTS("\r\n");
+
+	di_change = false;
+}
 
 void prepare_humiditytemperature(void)
 {
@@ -310,7 +439,7 @@ int main(void)
 	UART_PUTF ("Brightness sensor type: %u\r\n", brightness_sensor_type);
 	UART_PUTF ("Distance sensor type: %u\r\n", distance_sensor_type);
 	
-	
+	init_di_sensor();
 	
 	// init AES key
 	e2p_generic_get_aeskey(aes_key);
@@ -374,6 +503,7 @@ int main(void)
 		measure_battery_voltage();
 		measure_brightness();
 		adc_on(false);
+		measure_digital_input();
 
 		// measure other values from I2C devices
 		if (measure_i2c)
@@ -410,7 +540,11 @@ int main(void)
 		// search for value to send with avgThr reached
 		bool send = true;
 		
-		if (humidity.cnt >= humidity.avgThr)
+		if (di_change)
+		{
+			prepare_digitalpin();
+		}
+		else if (humidity.cnt >= humidity.avgThr)
 		{
 			prepare_humiditytemperature();
 		}
