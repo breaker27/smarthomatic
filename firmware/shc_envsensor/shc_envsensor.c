@@ -130,7 +130,9 @@ void init_di_sensor(void)
 			di[i].mode = mode;
 			di[i].meas.cnt = 0;
 			di[i].meas.val = 0;
-			di[i].meas.avgThr = AVERAGE_COUNT;
+			
+			// Send every 7 min. in cycle mode. Send immediately in "OnChange" mode and after 28 min.
+			di[i].meas.avgThr = mode == DIGITALINPUTMODE_ONCHANGE ? AVERAGE_COUNT * 4 : AVERAGE_COUNT;
 
 			UART_PUTF3("Using port %u pin %u as digital input pin %u ", di[i].port, di[i].pin, i);
 			UART_PUTF2("in mode %u with pull-up %s\r\n", mode, pull_up ? "ON" : "OFF");
