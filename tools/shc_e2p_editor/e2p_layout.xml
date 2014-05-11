@@ -175,7 +175,97 @@
 			</Element>
 		</EnumValue>
 		<Reserved>
-			<Bits>7640</Bits>
+			<Bits>320</Bits>
+		</Reserved>
+		<Array>
+			<Length>8</Length>
+			<EnumValue>
+				<ID>DigitalInputPins</ID>
+				<Description>You can choose up to 8 GPIO pins as digital input. The enum values are couting through every pin from port B, C and D, leaving out the pins that are not accessible because otherwise used.</Description>
+				<Bits>8</Bits>
+				<Element>
+					<Value>0</Value>
+					<Name>Unused</Name>
+				</Element>
+				<Element>
+					<Value>2</Value>
+					<Name>PB1</Name>
+				</Element>
+				<Element>
+					<Value>3</Value>
+					<Name>PB2</Name>
+				</Element>
+				<Element>
+					<Value>7</Value>
+					<Name>PB6</Name>
+				</Element>
+				<Element>
+					<Value>8</Value>
+					<Name>PB7</Name>
+				</Element>
+				<Element>
+					<Value>10</Value>
+					<Name>PC1</Name>
+				</Element>
+				<Element>
+					<Value>11</Value>
+					<Name>PC2</Name>
+				</Element>
+				<Element>
+					<Value>12</Value>
+					<Name>PC3</Name>
+				</Element>
+				<Element>
+					<Value>13</Value>
+					<Name>PC4</Name>
+				</Element>
+				<Element>
+					<Value>14</Value>
+					<Name>PC5</Name>
+				</Element>
+				<Element>
+					<Value>20</Value>
+					<Name>PD3</Name>
+				</Element>
+				<Element>
+					<Value>21</Value>
+					<Name>PD4</Name>
+				</Element>
+				<Element>
+					<Value>22</Value>
+					<Name>PD5</Name>
+				</Element>
+				<Element>
+					<Value>23</Value>
+					<Name>PD6</Name>
+				</Element>
+			</EnumValue>
+		</Array>
+		<Array>
+			<Length>8</Length>
+			<BoolValue>
+				<ID>DigitalInputPullUpResistor</ID>
+				<Description>Decide if you want to switch on the pull-up resistor at each input pin you have chosen. (If you connect a simple switch connected to ground, you typically want this.)</Description>
+			</BoolValue>
+		</Array>
+		<Array>
+			<Length>8</Length>
+			<EnumValue>
+				<ID>DigitalInputMode</ID>
+				<Description>The mode decides how the device detects changes and when a new message is sent. OnChange means a status message is sent immediately after a change and only on after a larger time otherwise. Cyclic means the status is sent in the normal cycle time.</Description>
+				<Bits>8</Bits>
+				<Element>
+					<Value>0</Value>
+					<Name>OnChange</Name>
+				</Element>
+				<Element>
+					<Value>1</Value>
+					<Name>Cyclic</Name>
+				</Element>
+			</EnumValue>
+		</Array>
+		<Reserved>
+			<Bits>6288</Bits>
 		</Reserved>
 	</Block>
 	<Block>
