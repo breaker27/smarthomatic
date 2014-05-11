@@ -14,6 +14,63 @@ use SHC_parser;
 
 my $parser = new SHC_parser();
 
+my %dev_state_icons = (
+  "PowerSwitch" => "on:on:toggle off:off:toggle set.*:light_question:off",
+  "Dimmer"      => "on:on off:off set.*:light_question:off",
+  "EnvSensor"   => undef
+);
+
+my %web_cmds = (
+  "PowerSwitch" => "on:off:toggle:statusRequest",
+  "Dimmer"      => "on:off:statusRequest",
+  "EnvSensor"   => undef
+);
+
+# Array format: [ reading1, str_format1, reading2, str_format2 ... ]
+# "on" reading translates 0 -> "off"
+#                         1 -> "on"
+my %dev_state_format = (
+  "PowerSwitch" => ["on", ""],
+  "Dimmer"      => ["on", "", "brightness", "B: "],
+  "EnvSensor" => [    # Results in "T: 23.4 H: 27.3 Baro: 978.34 B: 45"
+    "temperature",         "T: ",
+    "humidity",            "H: ",
+    "barometric_pressure", "Baro: ",
+    "brightness",          "B: ",
+    "distance",            "D: "
+  ]
+);
+
+# Supported Set commands
+my %sets = (
+  "PowerSwitch" => ["on", "off", "toggle", "statusRequest",
+                    # Used from SetExtensions.pm
+                    "blink", "on-for-timer", "on-till", "off-for-timer", "off-till", "intervals"],
+  "Dimmer"      => ["on", "off", "toggle", "statusRequest", "pct", "ani",
+                    # Used from SetExtensions.pm
+                    "blink", "on-for-timer", "on-till", "off-for-timer", "off-till", "intervals"],
+  "EnvSensor"   => undef,
+  "Custom"      => [
+    "PowerSwitch.SwitchState",
+    "PowerSwitch.SwitchStateExt",
+    "Dimmer.Brightness",
+    "Dimmer.Animation"
+  ]
+);
+
+# Hashtable for automatic device type assignment
+# Format:
+# "MessageGroupName:MessageName" => "Auto Device Type"
+my %auto_devtype = (
+  "Weather.Temperature"                   => "EnvSensor",
+  "Weather.HumidityTemperature"           => "EnvSensor",
+  "Weather.BarometricPressureTemperature" => "EnvSensor",
+  "Environment.Brightness"                => "EnvSensor",
+  "Environment.Distance"                  => "EnvSensor",
+  "PowerSwitch.SwitchState"               => "PowerSwitch",
+  "Dimmer.Brightness"                     => "Dimmer"
+);
+
 sub SHC_Dev_Parse($$);
 
 sub SHC_Dev_Initialize($)
@@ -153,10 +210,6 @@ sub SHC_Dev_Parse($$)
           my $tmp = $parser->getField("Temperature") / 100;    # parser returns centigrade
 
           readingsBulkUpdate($rhash, "temperature", $tmp);
-
-          # After receiving this message we know for the first time that we are a
-          # enviroment sonsor, so lets define our device type
-          $rhash->{devtype} = "EnvSensor" if (!defined($rhash->{devtype}));
         }
         when ('HumidityTemperature') {
           my $hum = $parser->getField("Humidity") / 10;        # parser returns 1/10 percent
@@ -164,21 +217,18 @@ sub SHC_Dev_Parse($$)
 
           readingsBulkUpdate($rhash, "humidity",    $hum);
           readingsBulkUpdate($rhash, "temperature", $tmp);
-
-          # After receiving this message we know for the first time that we are a
-          # enviroment sonsor, so lets define our device type
-          $rhash->{devtype} = "EnvSensor" if (!defined($rhash->{devtype}));
         }
         when ('BarometricPressureTemperature') {
           my $bar = $parser->getField("BarometricPressure") / 100;    # parser returns pascal, use hPa
           my $tmp = $parser->getField("Temperature") / 100;           # parser returns centigrade
 
+          # DEBUG for WORKAROUND
+          # Log3 $name, 2, "$rname: HELP HELP why am I here, starting to add barometric pressure";
           readingsBulkUpdate($rhash, "barometric_pressure", $bar);
           readingsBulkUpdate($rhash, "temperature",         $tmp);
 
-          # After receiving this message we know for the first time that we are a
-          # enviroment sonsor, so lets define our device type
-          $rhash->{devtype} = "EnvSensor" if (!defined($rhash->{devtype}));
+          # DEBUG for WORKAROUND
+          # Log3 $name, 2, "$rname: HELP HELP am I still here";
         }
       }
     }
@@ -186,21 +236,11 @@ sub SHC_Dev_Parse($$)
       given ($msgname) {
         when ('Brightness') {
           my $brt = $parser->getField("Brightness");
-
           readingsBulkUpdate($rhash, "brightness", $brt);
-
-          # After receiving this message we know for the first time that we are a
-          # enviroment sonsor, so lets define our device type
-          $rhash->{devtype} = "EnvSensor" if (!defined($rhash->{devtype}));
         }
         when ('Distance') {
           my $brt = $parser->getField("Distance");
-
           readingsBulkUpdate($rhash, "distance", $brt);
-
-          # After receiving this message we know for the first time that we are a
-          # enviroment sonsor, so lets define our device type
-          $rhash->{devtype} = "EnvSensor" if (!defined($rhash->{devtype}));
         }
       }
     }
@@ -209,17 +249,9 @@ sub SHC_Dev_Parse($$)
         when ('SwitchState') {
           my $on      = $parser->getField("On");
           my $timeout = $parser->getField("TimeoutSec");
-          my $state   = $on == 0 ? "off" : "on";
 
-          readingsBulkUpdate($rhash, "state",   $state);
           readingsBulkUpdate($rhash, "on",      $on);
           readingsBulkUpdate($rhash, "timeout", $timeout);
-
-          # After receiving this message we know for the first time that we are a
-          # power switch. Define device type and add according web commands
-          $rhash->{devtype}           = "PowerSwitch"                                          if (!defined($rhash->{devtype}));
-          $attr{$rname}{devStateIcon} = 'on:on:toggle off:off:toggle set.*:light_question:off' if (!defined($attr{$rname}{devStateIcon}));
-          $attr{$rname}{webCmd}       = 'on:off:toggle:statusRequest'                          if (!defined($attr{$rname}{webCmd}));
         }
       }
     }
@@ -227,41 +259,68 @@ sub SHC_Dev_Parse($$)
       given ($msgname) {
         when ('Brightness') {
           my $brightness = $parser->getField("Brightness");
-          my $state = $brightness == 0 ? "off" : "on";
+          my $on = $brightness == 0 ? 0 : 1;
 
-          readingsBulkUpdate($rhash, "state",      $state);
+          readingsBulkUpdate($rhash, "on",         $on);
           readingsBulkUpdate($rhash, "brightness", $brightness);
-
-          # After receiving this message we know for the first time that we are a
-          # dimmer. Define device type and add according web commands
-          $rhash->{devtype}           = "Dimmer"                                 if (!defined($rhash->{devtype}));
-          $attr{$rname}{devStateIcon} = 'on:on off:off set.*:light_question:off' if (!defined($attr{$rname}{devStateIcon}));
-          $attr{$rname}{webCmd}       = 'on:off:statusRequest'                   if (!defined($attr{$rname}{webCmd}));
         }
       }
     }
   }
 
-  # Assemble state string for EnvSensor from most recent readings
-  if ($rhash->{devtype} eq "EnvSensor") {
-    my $tmp_state = "";
-    if (defined($rhash->{READINGS}{temperature}{VAL})) {
-      my $temp = $rhash->{READINGS}{temperature}{VAL};
-      $tmp_state .= "T: $temp ";
+  # Autoassign device type
+  if ((!defined($rhash->{devtype})) && (defined($auto_devtype{"$msggroupname.$msgname"}))) {
+    $rhash->{devtype} = $auto_devtype{"$msggroupname.$msgname"};
+    Log3 $name, 3, "$rname: Autoassign device type = " . $rhash->{devtype};
+  }
+
+  # If the devtype is defined add, if not already done, the according webCmds and devStateIcons
+  if (defined($rhash->{devtype})) {
+    if (!defined($attr{$rname}{devStateIcon}) && defined($dev_state_icons{$rhash->{devtype}})) {
+      $attr{$rname}{devStateIcon} = $dev_state_icons{$rhash->{devtype}};
     }
-    if (defined($rhash->{READINGS}{humidity}{VAL})) {
-      my $hum = $rhash->{READINGS}{humidity}{VAL};
-      $tmp_state .= "H: $hum ";
+    if (!defined($attr{$rname}{webCmd}) && defined($web_cmds{$rhash->{devtype}})) {
+      $attr{$rname}{webCmd} = $web_cmds{$rhash->{devtype}};
     }
-    if (defined($rhash->{READINGS}{barometric_pressure}{VAL})) {
-      my $baro = $rhash->{READINGS}{barometric_pressure}{VAL};
-      $tmp_state .= "Baro: $baro ";
+  }
+
+  # TODO
+  # WORKAROUND
+  #
+  # After a fhem server restart it happens that a "barometric_pressure" reading gets added even if no
+  # BarometricPressureTemperature message was received. A closer look showed that the only code sequence
+  # that adds the baro reading is never executed, the reading still occurs.
+
+  if ((defined($rhash->{READINGS}{barometric_pressure}{VAL}))
+    && $rhash->{READINGS}{barometric_pressure}{VAL} == 0)
+  {
+    Log3 $name, 3, "$rname: WORKAROUND barometric_pressure defined, but value is invalid. Will be removed";
+    delete ($rhash->{READINGS}{barometric_pressure})
+  }
+
+  # Assemble state string according to %dev_state_format
+  if (defined($rhash->{devtype}) && defined($dev_state_format{$rhash->{devtype}})) {
+    my $state_format_arr = $dev_state_format{$rhash->{devtype}};
+
+    # Iterate over state_format array, if readings are available append it to the state string
+    my $state_str = "";
+    for (my $i = 0 ; $i < @$state_format_arr ; $i = $i + 2) {
+      if (defined($rhash->{READINGS}{$state_format_arr->[$i]}{VAL})) {
+        my $val = $rhash->{READINGS}{$state_format_arr->[$i]}{VAL};
+
+        # "on" reading requires a special treatment because 0 translates to off, 1 translates to on
+        if ($state_format_arr->[$i] eq "on") {
+          $state_str .= $val == 0 ? "off " : "on ";
+        } else {
+          $state_str .= $state_format_arr->[$i + 1] . $val . " ";
+        }
+
+        # DEBUG
+        # Log3 $name, 4, "$rname: $i " . $state_format_arr->[$i] . " " . $state_format_arr->[$i + 1] . " " . $val;
+      }
     }
-    if (defined($rhash->{READINGS}{brightness}{VAL})) {
-      my $bright = $rhash->{READINGS}{brightness}{VAL};
-      $tmp_state .= "B: $bright ";
-    }
-    readingsBulkUpdate($rhash, "state", $tmp_state);
+
+    readingsBulkUpdate($rhash, "state", $state_str);
   }
 
   readingsEndUpdate($rhash, 1);    # Do triggers to update log file
@@ -274,15 +333,36 @@ sub SHC_Dev_Set($@)
   my ($hash, $name, @aa) = @_;
   my $cnt = @aa;
 
+  my $cmd   = $aa[0];
+  my $arg   = $aa[1];
+  my $arg2  = $aa[2];
+  my $arg3  = $aa[3];
+  my $arg4  = $aa[4];
+
   return "\"set $name\" needs at least one parameter" if ($cnt < 1);
 
-  return undef if (!defined($hash->{devtype}) || $hash->{devtype} eq "EnvSensor");
+  if ($cmd eq "devtype") {
+    if (exists($sets{$arg})) {
+      $hash->{devtype} = $arg;
+      Log3 $name, 3, "$name: devtype set to \"$arg\"";
+      return undef;
+    } else {
+      return "devtype \"$arg\" not supported. Currently supported device types: " . join(", ", sort keys %sets);
+    }
+  }
 
-  my $cmd  = $aa[0];
-  my $arg  = $aa[1];
-  my $arg2 = $aa[2];
-  my $arg3 = $aa[3];
-  my $arg4 = $aa[4];
+  if (!defined($hash->{devtype})) {
+    return "\"devtype\" not yet specifed. Currently supported device types: " . join(", ", sort keys %sets);
+  }
+
+  if (!defined($sets{$hash->{devtype}})) {
+    return "No set commands supported for device type: " . $hash->{devtype};
+  }
+
+  # TODO:
+  # Currently the commands for every device type are defined in %sets but not used to verify the commands. Instead
+  # the SetExtension.pm modulesis used for this purpose.
+  # For more sophisticated device types this has to be revisited
 
   my $readonly = AttrVal($name, "readonly", "0");
 
@@ -419,10 +499,16 @@ sub SHC_Dev_Send($)
   <a name="SHC_Dev_Set"></a>
   <b>Set</b>
   <ul>
-    <li>on</li>
-    <li>off</li>
-    <li>statusRequest</li>
-    <li><a href="#setExtensions"> set extensions</a> are supported.</li>
+    <li>devtype</b>
+    The device type determines the command set, default web commands and the default devStateicon</b
+    Currently supported are: EnvSensor, Dimmer, PowerSwitch></li>
+    <li>on (Dimmer, PowerSwitch)</li>
+    <li>off (Dimmer, PowerSwitch)</li>
+    <li>pct <0..100>  Sets the brightness in percent (Dimmer)</li>
+    <li>ani <AnimationMode> <TimeoutSec> <StartBrightness> <EndBrightness> (Dimmer)</b>
+    Details in <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_Animation">Smarthomatic Website</a></li>
+    <li>statusRequest (Dimmer, PowerSwitch)</li>
+    <li><a href="#setExtensions"> set extensions</a> (Dimmer, PowerSwitch) are supported.</li>
   </ul><br>
 
   <a name="SHC_Dev_Get"></a>
