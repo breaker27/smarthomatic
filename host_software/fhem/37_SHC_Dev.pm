@@ -67,6 +67,7 @@ my %auto_devtype = (
   "Weather.BarometricPressureTemperature" => "EnvSensor",
   "Environment.Brightness"                => "EnvSensor",
   "Environment.Distance"                  => "EnvSensor",
+  "GPIO.DigitalPin"                       => "EnvSensor",
   "PowerSwitch.SwitchState"               => "PowerSwitch",
   "Dimmer.Brightness"                     => "Dimmer"
 );
@@ -201,6 +202,16 @@ sub SHC_Dev_Parse($$)
           my $vhash = $parser->getField("Hash");
 
           readingsBulkUpdate($rhash, "version", "$major.$minor.$patch-$vhash");
+        }
+      }
+    }
+    when ('GPIO') {
+      given ($msgname) {
+        when ('DigitalPin') {
+			# TODO: read out all 8 pins and store them in a data array
+          my $on      = $parser->getField("On", 0);
+          
+          readingsBulkUpdate($rhash, "on", $on);
         }
       }
     }
