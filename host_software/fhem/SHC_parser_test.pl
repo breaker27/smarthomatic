@@ -70,6 +70,19 @@ sub parser_test($)
 				}
 			}
 		}
+		when('GPIO')
+		{
+			given($msg)
+			{
+				when('DigitalPin')
+				{
+					for (my $i = 0; $i < 8; $i++)
+					{
+						print "Pin " . $i . ": " . $parser->getField("On", $i) . "\n";
+					}
+				}
+			}
+		}
 		when('EnvSensor')
 		{
 			given($msg)
@@ -96,6 +109,7 @@ sub parser_test($)
 	}
 }
 
+parser_test("Packet Data: SenderID=27;PacketCounter=301;MessageType=8;MessageGroupID=1;MessageID=1;MessageData=800000000000;");
 parser_test("Packet Data: SenderID=22;PacketCounter=101;MessageType=8;MessageGroupID=0;MessageID=5;MessageData=b40000000000;Percentage=3321;");
 parser_test("Packet Data: SenderID=20;PacketCounter=19284;MessageType=8;MessageGroupID=10;MessageID=1;MessageData=085c79630000;Temperature=21.40;Humidity=48.5;Brightness=70;");
 parser_test("Packet Data: SenderID=40;PacketCounter=7401;MessageType=8;MessageGroupID=20;MessageID=1;MessageData=000000000000;On=0;TimeoutSec=0;");

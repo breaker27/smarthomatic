@@ -233,6 +233,7 @@ sub new
   my $self  = {
     _id     => shift,
     _offset => shift,
+    _length => shift,
   };
   bless $self, $class;
   return $self;
@@ -240,9 +241,9 @@ sub new
 
 sub getValue
 {
-  my ($self, $byteArrayRef) = @_;
+  my ($self, $byteArrayRef, $index) = @_;
 
-  return SHC_util::getUInt($byteArrayRef, $self->{_offset}, 1) == 1 ? 1 : 0;
+  return SHC_util::getUInt($byteArrayRef, $self->{_offset} + $index, 1) == 1 ? 1 : 0;
 }
 
 sub setValue
