@@ -59,6 +59,15 @@ my %sets = (
                    "Dimmer.Animation"
 );
 
+# Supported get commands
+# use syntax from set commands
+my %gets = (
+  "PowerSwitch" => "",
+  "Dimmer"      => "",
+  "EnvSensor"   => "input:all,1,2,3,4,5,6,7,8 ",
+  "Custom"      => ""
+);
+
 # Hashtable for automatic device type assignment
 # Format:
 # "MessageGroupName:MessageName" => "Auto Device Type"
@@ -75,12 +84,14 @@ my %auto_devtype = (
 
 sub SHC_Dev_Parse($$);
 
+#####################################
 sub SHC_Dev_Initialize($)
 {
   my ($hash) = @_;
 
   $hash->{Match}    = "^Packet Data: SenderID=[1-9]|0[1-9]|[1-9][0-9]|[0-9][0-9][0-9]|[0-3][0-9][0-9][0-9]|40[0-8][0-9]|409[0-6]";
   $hash->{SetFn}    = "SHC_Dev_Set";
+  $hash->{GetFn}    = "SHC_Dev_Get";
   $hash->{DefFn}    = "SHC_Dev_Define";
   $hash->{UndefFn}  = "SHC_Dev_Undef";
   $hash->{ParseFn}  = "SHC_Dev_Parse";
@@ -90,6 +101,7 @@ sub SHC_Dev_Initialize($)
                        ." $readingFnAttributes";
 }
 
+#####################################
 sub SHC_Dev_Define($$)
 {
   my ($hash, $def) = @_;
@@ -148,7 +160,6 @@ sub SHC_Dev_Undef($$)
 }
 
 #####################################
-
 sub SHC_Dev_Parse($$)
 {
   my ($hash, $msg) = @_;
@@ -212,10 +223,11 @@ sub SHC_Dev_Parse($$)
           my $in = "";
           for (my $i = 0 ; $i < 8 ; $i++) {
             my $inx = $parser->getField("On", $i);
-            readingsBulkUpdate($rhash, "in" . $i, $inx);
+            my $channel = $i + 1;
+            readingsBulkUpdate($rhash, "input" . $channel, $inx);
             $in .= $inx;
           }
-          readingsBulkUpdate($rhash, "in", $in);
+          readingsBulkUpdate($rhash, "input", $in);
         }
       }
     }
@@ -348,11 +360,11 @@ sub SHC_Dev_Set($@)
   my ($hash, $name, @aa) = @_;
   my $cnt = @aa;
 
-  my $cmd   = $aa[0];
-  my $arg   = $aa[1];
-  my $arg2  = $aa[2];
-  my $arg3  = $aa[3];
-  my $arg4  = $aa[4];
+  my $cmd  = $aa[0];
+  my $arg  = $aa[1];
+  my $arg2 = $aa[2];
+  my $arg3 = $aa[3];
+  my $arg4 = $aa[4];
 
   return "\"set $name\" needs at least one parameter" if ($cnt < 1);
 
@@ -478,6 +490,44 @@ sub SHC_Dev_Set($@)
   return undef;
 }
 
+#####################################
+sub SHC_Dev_Get($@)
+{
+  my ($hash, $name, @aa) = @_;
+  my $cnt = @aa;
+
+  my $cmd = $aa[0];
+  my $arg = $aa[1];
+
+  return "\"get $name\" needs at least one parameter" if ($cnt < 1);
+
+  if (!defined($hash->{devtype})) {
+    return "\"devtype\" not yet specifed. Currently supported device types are " . join(", ", sort keys %sets);
+  }
+
+  if (!defined($gets{$hash->{devtype}})) {
+    return "No get commands for $hash->{devtype} device type supported ";
+  }
+
+  given ($hash->{devtype}) {
+    when ('EnvSensor') {
+
+      if ($cmd eq 'input') {
+        if ($arg =~ /[1-8]/) {
+          my $channel = "in" . $arg;
+          return "$name.$channel => " . $hash->{READINGS}{$channel}{VAL};
+        }
+        return "$name.in => " . $hash->{READINGS}{in}{VAL};
+      }
+
+      # This return is required to provide the get commands in the web interface
+      return "Unknown argument $cmd, choose one of " . $gets{$hash->{devtype}};
+    }
+  }
+  return undef;
+}
+
+#####################################
 sub SHC_Dev_Send($)
 {
   my ($hash) = @_;
@@ -537,6 +587,9 @@ sub SHC_Dev_Send($)
   <a name="SHC_Dev_Get"></a>
   <b>Get</b>
   <ul>
+    <li>">
+          <code>get &lt;name&gt; input &lt;port&gt;</code></a>
+      <br />Returns the state of the specified port for port = 1..8, otherwise the state of all inputs.</li>
     <li>N/A</li>
   </ul><br>
 
