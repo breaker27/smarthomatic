@@ -41,21 +41,22 @@ my %dev_state_format = (
   ]
 );
 
-# Supported Set commands
+# Supported set commands
+# use "" if no set commands are available for device type
+# use "cmd_name:cmd_additional_info"
+#     cmd_additional_info: Description available at http://www.fhemwiki.de/wiki/DevelopmentModuleIntro#X_Set
 my %sets = (
-  "PowerSwitch" => ["on", "off", "toggle", "statusRequest",
-                    # Used from SetExtensions.pm
-                    "blink", "on-for-timer", "on-till", "off-for-timer", "off-till", "intervals"],
-  "Dimmer"      => ["on", "off", "toggle", "statusRequest", "pct", "ani",
-                    # Used from SetExtensions.pm
-                    "blink", "on-for-timer", "on-till", "off-for-timer", "off-till", "intervals"],
-  "EnvSensor"   => undef,
-  "Custom"      => [
-    "PowerSwitch.SwitchState",
-    "PowerSwitch.SwitchStateExt",
-    "Dimmer.Brightness",
-    "Dimmer.Animation"
-  ]
+  "PowerSwitch" => "on:noArg off:noArg toggle:noArg statusRequest:noArg " .
+                   # Used from SetExtensions.pm
+                   "blink on-for-timer on-till off-for-timer off-till intervals",
+  "Dimmer"      => "on:noArg off:noArg toggle:noArg statusRequest:noArg pct:slider,0,1,100 ani " .
+                   # Used from SetExtensions.pm
+                   "blink on-for-timer on-till off-for-timer off-till intervals",
+  "EnvSensor"   => "",
+  "Custom"      => "PowerSwitch.SwitchState " .
+                   "PowerSwitch.SwitchStateExt " .
+                   "Dimmer.Brightness " .
+                   "Dimmer.Animation"
 );
 
 # Hashtable for automatic device type assignment
@@ -355,22 +356,34 @@ sub SHC_Dev_Set($@)
 
   return "\"set $name\" needs at least one parameter" if ($cnt < 1);
 
+  # Return list of device-specific set-commands.
+  # This list is used to provide the set commands in the web interface
+  if ($cmd eq "?") {
+    if (!defined($hash->{devtype})) {
+
+      # If the device type isn't set yet, allow only set commands to set the device type
+      return "devtype:" . join(",", sort keys %sets);
+    } else {
+      return $sets{$hash->{devtype}};
+    }
+  }
+
   if ($cmd eq "devtype") {
     if (exists($sets{$arg})) {
       $hash->{devtype} = $arg;
       Log3 $name, 3, "$name: devtype set to \"$arg\"";
       return undef;
     } else {
-      return "devtype \"$arg\" not supported. Currently supported device types: " . join(", ", sort keys %sets);
+      return "devtype \"$arg\" not supported. Currently supported device types are " . join(", ", sort keys %sets);
     }
   }
 
   if (!defined($hash->{devtype})) {
-    return "\"devtype\" not yet specifed. Currently supported device types: " . join(", ", sort keys %sets);
+    return "\"devtype\" not yet specifed. Currently supported device types are " . join(", ", sort keys %sets);
   }
 
   if (!defined($sets{$hash->{devtype}})) {
-    return "No set commands supported for device type: " . $hash->{devtype};
+    return "No set commands for $hash->{devtype} device type supported ";
   }
 
   # TODO:
@@ -382,8 +395,6 @@ sub SHC_Dev_Set($@)
 
   given ($hash->{devtype}) {
     when ('PowerSwitch') {
-      my $list = "statusRequest:noArg";
-      $list .= " off:noArg on:noArg toggle:noArg" if (!$readonly);
 
       # Timeout functionality for SHC_Dev is not implemented, because FHEMs internal notification system
       # is able to do this as well. Even more it supports intervals, off-for-timer, off-till ...
@@ -408,12 +419,10 @@ sub SHC_Dev_Set($@)
         $parser->initPacket("PowerSwitch", "SwitchState", "Get");
         SHC_Dev_Send($hash);
       } else {
-        return SetExtensions($hash, $list, $name, @aa);
+        return SetExtensions($hash, "", $name, @aa);
       }
     }
     when ('Dimmer') {
-      my $list = "statusRequest:noArg";
-      $list .= " ani pct:slider,0,1,100 off:noArg on:noArg" if (!$readonly);
 
       # Timeout functionality for SHC_Dev is not implemented, because FHEMs internal notification system
       # is able to do this as well. Even more it supports intervals, off-for-timer, off-till ...
@@ -461,7 +470,7 @@ sub SHC_Dev_Set($@)
         $parser->initPacket("Dimmer", "Brightness", "Get");
         SHC_Dev_Send($hash);
       } else {
-        return SetExtensions($hash, $list, $name, @aa);
+        return SetExtensions($hash, "", $name, @aa);
       }
     }
   }
