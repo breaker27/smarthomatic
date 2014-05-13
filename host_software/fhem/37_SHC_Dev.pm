@@ -193,8 +193,6 @@ sub SHC_Dev_Parse($$)
   my @list;
   push(@list, $rname);
   $rhash->{SHC_Dev_lastRcv} = TimeNow();
-  $rhash->{SHC_Dev_pktcnt}  = $parser->getPacketCounter();
-  $rhash->{SHC_Dev_msgdata} = $parser->getMessageData();
   $rhash->{SHC_Dev_msgtype} = "$msggroupname : $msgname : $msgtypename";
 
   my $readonly = AttrVal($rname, "readonly", "0");
