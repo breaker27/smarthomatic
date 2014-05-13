@@ -220,14 +220,14 @@ sub SHC_Dev_Parse($$)
     when ('GPIO') {
       given ($msgname) {
         when ('DigitalPin') {
-          my $in = "";
+          my $pins = "";
           for (my $i = 0 ; $i < 8 ; $i++) {
-            my $inx = $parser->getField("On", $i);
+            my $pinx = $parser->getField("On", $i);
             my $channel = $i + 1;
-            readingsBulkUpdate($rhash, "input" . $channel, $inx);
-            $in .= $inx;
+            readingsBulkUpdate($rhash, "pin" . $channel, $pinx);
+            $pins .= $pinx;
           }
-          readingsBulkUpdate($rhash, "input", $in);
+          readingsBulkUpdate($rhash, "pins", $pins);
         }
       }
     }
@@ -514,10 +514,10 @@ sub SHC_Dev_Get($@)
 
       if ($cmd eq 'input') {
         if ($arg =~ /[1-8]/) {
-          my $channel = "in" . $arg;
+          my $channel = "pin" . $arg;
           return "$name.$channel => " . $hash->{READINGS}{$channel}{VAL};
         }
-        return "$name.in => " . $hash->{READINGS}{in}{VAL};
+        return "$name.pins => " . $hash->{READINGS}{in}{VAL};
       }
 
       # This return is required to provide the get commands in the web interface
@@ -588,8 +588,8 @@ sub SHC_Dev_Send($)
   <b>Get</b>
   <ul>
     <li>">
-          <code>get &lt;name&gt; input &lt;port&gt;</code></a>
-      <br />Returns the state of the specified port for port = 1..8, otherwise the state of all inputs.</li>
+          <code>get &lt;name&gt; input &lt;pin&gt;</code></a>
+      <br />Returns the state of the specified pin for pin = 1..8, otherwise the state of all inputs.</li>
     <li>N/A</li>
   </ul><br>
 
