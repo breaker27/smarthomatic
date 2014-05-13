@@ -1,5 +1,25 @@
-# Copied from 36_PCA301.pm and adapted
-# $Id: 36_SHC_Dev.pm 3934 2013-09-21 09:21:39Z justme1968 $
+##########################################################################
+# This file is part of the smarthomatic module for FHEM.
+#
+# Copyright (c) 2014 Stefan Baumann, Uwe Freese
+#
+# You can find smarthomatic at www.smarthomatic.org.
+# You can find FHEM at www.fhem.de.
+#
+# This file is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
+#
+# This file is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
+###########################################################################
+# $Id: 36_PCA301.pm 3934 2013-09-21 09:21:39Z justme1968 $
 #
 # TODO:
 
