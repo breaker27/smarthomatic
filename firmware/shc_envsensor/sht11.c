@@ -285,7 +285,7 @@ sht11_init(void)
 // User.
 void sht11_start_measure(void)
 {
-    if(sht11_state==SHT11_STATE_READY)
+    if (sht11_state==SHT11_STATE_READY)
     {
         sht11_state=SHT11_STATE_MEASURE_TMP;
     }
@@ -293,41 +293,41 @@ void sht11_start_measure(void)
 
 uint8_t sht11_measure(void)
 {
-    switch(sht11_state)
+    switch (sht11_state)
     {
         case SHT11_STATE_MEASURE_TMP:
         {
             sht11_start_temp();
             sht11_state = SHT11_STATE_CALC_TMP;
-        }break;
+        } break;
         case SHT11_STATE_CALC_TMP:
         {
             if(sht11_ready())
             {
-                sht11_tmp=sht11_result_temp();
+                sht11_tmp = sht11_result_temp();
                 sht11_state = SHT11_STATE_MEASURE_HUM;
             }
-        }break;
+        } break;
         case SHT11_STATE_MEASURE_HUM:
         {
             sht11_start_humid();
             sht11_state = SHT11_STATE_CALC_HUM;
-        }break;
+        } break;
         case SHT11_STATE_CALC_HUM:
         {
-            if(sht11_ready())
+            if (sht11_ready())
             {
-                sht11_hum=sht11_result_humid();
+                sht11_hum = sht11_result_humid();
                 sht11_state = SHT11_STATE_READY;
             }
-        }break;
+        } break;
     }    
     return sht11_state;
 }
 
 uint8_t sht11_measure_finish(void)
 {
-    if(sht11_measure()==SHT11_STATE_READY)
+    if (sht11_measure() == SHT11_STATE_READY)
     {
         return 1;
     }

@@ -1,6 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013 Uwe Freese
+* Copyright (c) 2013..2014 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -21,8 +21,8 @@
 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 */
 
-#ifndef _MSGGRP_TEMPSENSOR_H
-#define _MSGGRP_TEMPSENSOR_H
+#ifndef _MSGGRP_ENVSENSOR_H
+#define _MSGGRP_ENVSENSOR_H
 
 #include "packet_header.h"
 #include "packet_headerext_common.h"
@@ -34,19 +34,19 @@
 #include "packet_headerext_get.h"
 #include "e2p_access.h"
 
-// Message Group "tempsensor"
-// ==========================
+// Message Group "envsensor"
+// =========================
 // MessageGroupID: 10
-// Description: This message group contains messages for a device that can measure temperature and humidity as well as a brightness value.
+// Description: This message group contains messages for an environment sensor device that can measure temperature, humidity and other environmental values.
 
 // ENUM for MessageIDs of this MessageGroup
 typedef enum {
-  MESSAGEID_TEMPSENSOR_TEMPHUMBRISTATUS = 1
-} TEMPSENSOR_MessageIDEnum;
+  MESSAGEID_ENVSENSOR_TEMPHUMBRISTATUS = 1
+} ENVSENSOR_MessageIDEnum;
 
 
-// Message "tempsensor_temphumbristatus"
-// -------------------------------------
+// Message "envsensor_temphumbristatus"
+// ------------------------------------
 // MessageGroupID: 10
 // MessageID: 1
 // Possible MessageTypes: Get, Status, AckStatus
@@ -56,7 +56,7 @@ typedef enum {
 // Description: This is a message containing temperature, humidity and brightness.
 
 // Function to initialize header for the MessageType "Get".
-static inline void pkg_header_init_tempsensor_temphumbristatus_get(void)
+static inline void pkg_header_init_envsensor_temphumbristatus_get(void)
 {
   memset(&bufx[0], 0, sizeof(bufx));
   pkg_header_set_messagetype(0);
@@ -68,7 +68,7 @@ static inline void pkg_header_init_tempsensor_temphumbristatus_get(void)
 }
 
 // Function to initialize header for the MessageType "Status".
-static inline void pkg_header_init_tempsensor_temphumbristatus_status(void)
+static inline void pkg_header_init_envsensor_temphumbristatus_status(void)
 {
   memset(&bufx[0], 0, sizeof(bufx));
   pkg_header_set_messagetype(8);
@@ -80,7 +80,7 @@ static inline void pkg_header_init_tempsensor_temphumbristatus_status(void)
 }
 
 // Function to initialize header for the MessageType "AckStatus".
-static inline void pkg_header_init_tempsensor_temphumbristatus_ackstatus(void)
+static inline void pkg_header_init_envsensor_temphumbristatus_ackstatus(void)
 {
   memset(&bufx[0], 0, sizeof(bufx));
   pkg_header_set_messagetype(10);
@@ -96,14 +96,14 @@ static inline void pkg_header_init_tempsensor_temphumbristatus_ackstatus(void)
 
 // Set Temperature (IntValue)
 // Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 16, min val -32768, max val 32767
-static inline void msg_tempsensor_temphumbristatus_set_temperature(int32_t val)
+static inline void msg_envsensor_temphumbristatus_set_temperature(int32_t val)
 {
   array_write_IntValue(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 16, val, bufx);
 }
 
 // Get Temperature (IntValue)
 // Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 16, min val -32768, max val 32767
-static inline int32_t msg_tempsensor_temphumbristatus_get_temperature(void)
+static inline int32_t msg_envsensor_temphumbristatus_get_temperature(void)
 {
   return array_read_IntValue32(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 16, -32768, 32767, bufx);
 }
@@ -113,14 +113,14 @@ static inline int32_t msg_tempsensor_temphumbristatus_get_temperature(void)
 
 // Set Humidity (UIntValue)
 // Offset: ((uint16_t)__HEADEROFFSETBITS + 16) / 8, ((uint16_t)__HEADEROFFSETBITS + 16) % 8, length bits 10, min val 0, max val 1000
-static inline void msg_tempsensor_temphumbristatus_set_humidity(uint32_t val)
+static inline void msg_envsensor_temphumbristatus_set_humidity(uint32_t val)
 {
   array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 16) / 8, ((uint16_t)__HEADEROFFSETBITS + 16) % 8, 10, val, bufx);
 }
 
 // Get Humidity (UIntValue)
 // Offset: ((uint16_t)__HEADEROFFSETBITS + 16) / 8, ((uint16_t)__HEADEROFFSETBITS + 16) % 8, length bits 10, min val 0, max val 1000
-static inline uint32_t msg_tempsensor_temphumbristatus_get_humidity(void)
+static inline uint32_t msg_envsensor_temphumbristatus_get_humidity(void)
 {
   return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 16) / 8, ((uint16_t)__HEADEROFFSETBITS + 16) % 8, 10, 0, 1000, bufx);
 }
@@ -130,16 +130,16 @@ static inline uint32_t msg_tempsensor_temphumbristatus_get_humidity(void)
 
 // Set Brightness (UIntValue)
 // Offset: ((uint16_t)__HEADEROFFSETBITS + 26) / 8, ((uint16_t)__HEADEROFFSETBITS + 26) % 8, length bits 7, min val 0, max val 100
-static inline void msg_tempsensor_temphumbristatus_set_brightness(uint32_t val)
+static inline void msg_envsensor_temphumbristatus_set_brightness(uint32_t val)
 {
   array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 26) / 8, ((uint16_t)__HEADEROFFSETBITS + 26) % 8, 7, val, bufx);
 }
 
 // Get Brightness (UIntValue)
 // Offset: ((uint16_t)__HEADEROFFSETBITS + 26) / 8, ((uint16_t)__HEADEROFFSETBITS + 26) % 8, length bits 7, min val 0, max val 100
-static inline uint32_t msg_tempsensor_temphumbristatus_get_brightness(void)
+static inline uint32_t msg_envsensor_temphumbristatus_get_brightness(void)
 {
   return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 26) / 8, ((uint16_t)__HEADEROFFSETBITS + 26) % 8, 7, 0, 100, bufx);
 }
 
-#endif /* _MSGGRP_TEMPSENSOR_H */
+#endif /* _MSGGRP_ENVSENSOR_H */

@@ -1,6 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013 Uwe Freese
+* Copyright (c) 2013..2014 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -34,7 +34,7 @@
 
 typedef enum {
   DEVICETYPE_BASESTATION = 0,
-  DEVICETYPE_TEMPSENSOR = 20,
+  DEVICETYPE_ENVSENSOR = 20,
   DEVICETYPE_POWERSWITCH = 40,
   DEVICETYPE_DIMMER = 60,
   DEVICETYPE_THERMOSTAT = 80
