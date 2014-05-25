@@ -203,23 +203,25 @@ public class Util {
 	}
 	
 	/**
+	 * Return a value that tells if the program is run under Windows.
+	 * If it is not Windows, Linux is assumed.
+	 * @return
+	 */
+	public static boolean runsOnWindows()
+	{
+		return System.getProperty("os.name").toUpperCase().contains("WINDOWS");
+	}
+
+	/**
 	 * Run program after creating a tmp.cmd (Windows) or by using the bash (Linux).
 	 * Currently, only Windows is supported!!
 	 * TODO: Support Linux by calling bash in a way that the user can see the output.
 	 * @param cmdLine
 	 * @throws IOException 
 	 */
-	public static void execute(String cmdLine, boolean linuxBash) throws IOException
+	public static void execute(String cmdLine) throws IOException
 	{
-		if (linuxBash)
-		{
-			String[] cmd = new String[3];
-			cmd[0] = "/bin/bash";
-			cmd[1] = "-c";
-			cmd[2] = cmdLine;
-			Runtime.getRuntime().exec(cmd);
-		}
-		else
+		if (runsOnWindows())
 		{
 			Util.writeFile("flash_tmp.cmd",
 					"@echo off\r\n" + 
@@ -227,6 +229,12 @@ public class Util {
 					"pause\r\n" +
 					"exit\r\n");
 			Runtime.getRuntime().exec("cmd /c start flash_tmp.cmd");
+		}
+		else
+		{
+			cmdLine = cmdLine.replaceAll(" {2,}", " ");
+			String[] cmdArray = cmdLine.split(" ");
+			Runtime.getRuntime().exec(cmdArray);
 		}
 	}
 
