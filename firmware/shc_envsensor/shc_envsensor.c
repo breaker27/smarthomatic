@@ -481,6 +481,10 @@ int main(void)
 
 	adc_init();
 
+	// set DIDR for ADC channels, switch off digital input buffers to reduce ADC noise and to save power
+	sbi(DIDR0, 0);
+	sbi(DIDR0, 1);
+
 	if ((temperature_sensor_type == TEMPERATURESENSORTYPE_SHT15)
 		|| (humidity_sensor_type == HUMIDITYSENSORTYPE_SHT15))
 	{
