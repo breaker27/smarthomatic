@@ -75,6 +75,7 @@ struct portpin_t
 	uint8_t port;
 	uint8_t pin;
 	uint8_t mode;
+	bool pull_up;
 	struct measurement_t meas;
 };
 
@@ -108,6 +109,16 @@ void setPullUp(uint8_t port_nr, uint8_t pin)
 		sbi(PINB, pin);
 }
 
+void clearPullUp(uint8_t port_nr, uint8_t pin)
+{
+	if (port_nr == 2)
+		cbi(PIND, pin);
+	else if (port_nr == 1)
+		cbi(PINC, pin);
+	else
+		cbi(PINB, pin);
+}
+
 void init_di_sensor(void)
 {
 	uint8_t i;
@@ -119,10 +130,11 @@ void init_di_sensor(void)
 		if (pin == 0) // not used
 		{
 			di[i].port = DI_UNUSED;
+			di[i].pull_up = false;
 		}
 		else
 		{
-			bool pull_up = e2p_envsensor_get_digitalinputpullupresistor(i);
+			di[i].pull_up = e2p_envsensor_get_digitalinputpullupresistor(i);
 			uint8_t mode = e2p_envsensor_get_digitalinputmode(i);
 
 			di[i].port = (pin - 1) / 8;
@@ -135,12 +147,7 @@ void init_di_sensor(void)
 			di[i].meas.avgThr = mode == DIGITALINPUTMODE_ONCHANGE ? AVERAGE_COUNT * 4 : AVERAGE_COUNT;
 
 			UART_PUTF3("Using port %u pin %u as digital input pin %u ", di[i].port, di[i].pin, i);
-			UART_PUTF2("in mode %u with pull-up %s\r\n", mode, pull_up ? "ON" : "OFF");
-			
-			if (pull_up)
-			{
-				setPullUp(di[i].port, di[i].pin);
-			}
+			UART_PUTF2("in mode %u with pull-up %s\r\n", mode, di[i].pull_up ? "ON" : "OFF");
 			
 			// remember to send out status after power up
 			di_change = true;
@@ -154,6 +161,16 @@ void measure_digital_input(void)
 {
 	uint8_t i;
 	
+	for (i = 0; i < 8; i++)
+	{
+		if (di[i].pull_up)
+		{
+			setPullUp(di[i].port, di[i].pin);
+		}
+	}
+	
+	_delay_ms(50); // wait a little bit to let the voltage level settle down
+
 	for (i = 0; i < 8; i++)
 	{
 		if (di[i].port != DI_UNUSED)
@@ -171,6 +188,14 @@ void measure_digital_input(void)
 			}
 			
 			di[i].meas.val = stat;
+		}
+	}
+	
+	for (i = 0; i < 8; i++)
+	{
+		if (di[i].pull_up)
+		{
+			clearPullUp(di[i].port, di[i].pin);
 		}
 	}
 }
