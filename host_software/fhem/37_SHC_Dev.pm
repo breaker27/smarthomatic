@@ -353,15 +353,16 @@ sub SHC_Dev_Parse($$)
       if (defined($rhash->{READINGS}{$state_format_arr->[$i]}{VAL})) {
         my $val = $rhash->{READINGS}{$state_format_arr->[$i]}{VAL};
 
+        if ($state_str ne "") { 
+          $state_str .= " ";
+        }
+
         # "on" reading requires a special treatment because 0 translates to off, 1 translates to on
         if ($state_format_arr->[$i] eq "on") {
           $state_str .= $val == 0 ? "off" : "on";
         } else {
-          $state_str .= $state_format_arr->[$i + 1] . $val . " ";
+          $state_str .= $state_format_arr->[$i + 1] . $val;
         }
-
-        # DEBUG
-        # Log3 $name, 4, "$rname: $i " . $state_format_arr->[$i] . " " . $state_format_arr->[$i + 1] . " " . $val;
       }
     }
 
