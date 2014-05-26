@@ -41,21 +41,31 @@ my %dev_state_format = (
   ]
 );
 
-# Supported Set commands
+# Supported set commands
+# use "" if no set commands are available for device type
+# use "cmd_name:cmd_additional_info"
+#     cmd_additional_info: Description available at http://www.fhemwiki.de/wiki/DevelopmentModuleIntro#X_Set
 my %sets = (
-  "PowerSwitch" => ["on", "off", "toggle", "statusRequest",
-                    # Used from SetExtensions.pm
-                    "blink", "on-for-timer", "on-till", "off-for-timer", "off-till", "intervals"],
-  "Dimmer"      => ["on", "off", "toggle", "statusRequest", "pct", "ani",
-                    # Used from SetExtensions.pm
-                    "blink", "on-for-timer", "on-till", "off-for-timer", "off-till", "intervals"],
-  "EnvSensor"   => undef,
-  "Custom"      => [
-    "PowerSwitch.SwitchState",
-    "PowerSwitch.SwitchStateExt",
-    "Dimmer.Brightness",
-    "Dimmer.Animation"
-  ]
+  "PowerSwitch" => "on:noArg off:noArg toggle:noArg statusRequest:noArg " .
+                   # Used from SetExtensions.pm
+                   "blink on-for-timer on-till off-for-timer off-till intervals",
+  "Dimmer"      => "on:noArg off:noArg toggle:noArg statusRequest:noArg pct:slider,0,1,100 ani " .
+                   # Used from SetExtensions.pm
+                   "blink on-for-timer on-till off-for-timer off-till intervals",
+  "EnvSensor"   => "",
+  "Custom"      => "PowerSwitch.SwitchState " .
+                   "PowerSwitch.SwitchStateExt " .
+                   "Dimmer.Brightness " .
+                   "Dimmer.Animation"
+);
+
+# Supported get commands
+# use syntax from set commands
+my %gets = (
+  "PowerSwitch" => "",
+  "Dimmer"      => "",
+  "EnvSensor"   => "input:all,1,2,3,4,5,6,7,8 ",
+  "Custom"      => ""
 );
 
 # Hashtable for automatic device type assignment
@@ -74,12 +84,14 @@ my %auto_devtype = (
 
 sub SHC_Dev_Parse($$);
 
+#####################################
 sub SHC_Dev_Initialize($)
 {
   my ($hash) = @_;
 
   $hash->{Match}    = "^Packet Data: SenderID=[1-9]|0[1-9]|[1-9][0-9]|[0-9][0-9][0-9]|[0-3][0-9][0-9][0-9]|40[0-8][0-9]|409[0-6]";
   $hash->{SetFn}    = "SHC_Dev_Set";
+  $hash->{GetFn}    = "SHC_Dev_Get";
   $hash->{DefFn}    = "SHC_Dev_Define";
   $hash->{UndefFn}  = "SHC_Dev_Undef";
   $hash->{ParseFn}  = "SHC_Dev_Parse";
@@ -89,6 +101,7 @@ sub SHC_Dev_Initialize($)
                        ." $readingFnAttributes";
 }
 
+#####################################
 sub SHC_Dev_Define($$)
 {
   my ($hash, $def) = @_;
@@ -147,7 +160,6 @@ sub SHC_Dev_Undef($$)
 }
 
 #####################################
-
 sub SHC_Dev_Parse($$)
 {
   my ($hash, $msg) = @_;
@@ -208,10 +220,14 @@ sub SHC_Dev_Parse($$)
     when ('GPIO') {
       given ($msgname) {
         when ('DigitalPin') {
-			# TODO: read out all 8 pins and store them in a data array
-          my $on      = $parser->getField("On", 0);
-          
-          readingsBulkUpdate($rhash, "on", $on);
+          my $in = "";
+          for (my $i = 0 ; $i < 8 ; $i++) {
+            my $inx = $parser->getField("On", $i);
+            my $channel = $i + 1;
+            readingsBulkUpdate($rhash, "input" . $channel, $inx);
+            $in .= $inx;
+          }
+          readingsBulkUpdate($rhash, "input", $in);
         }
       }
     }
@@ -344,13 +360,25 @@ sub SHC_Dev_Set($@)
   my ($hash, $name, @aa) = @_;
   my $cnt = @aa;
 
-  my $cmd   = $aa[0];
-  my $arg   = $aa[1];
-  my $arg2  = $aa[2];
-  my $arg3  = $aa[3];
-  my $arg4  = $aa[4];
+  my $cmd  = $aa[0];
+  my $arg  = $aa[1];
+  my $arg2 = $aa[2];
+  my $arg3 = $aa[3];
+  my $arg4 = $aa[4];
 
   return "\"set $name\" needs at least one parameter" if ($cnt < 1);
+
+  # Return list of device-specific set-commands.
+  # This list is used to provide the set commands in the web interface
+  if ($cmd eq "?") {
+    if (!defined($hash->{devtype})) {
+
+      # If the device type isn't set yet, allow only set commands to set the device type
+      return "devtype:" . join(",", sort keys %sets);
+    } else {
+      return $sets{$hash->{devtype}};
+    }
+  }
 
   if ($cmd eq "devtype") {
     if (exists($sets{$arg})) {
@@ -358,16 +386,16 @@ sub SHC_Dev_Set($@)
       Log3 $name, 3, "$name: devtype set to \"$arg\"";
       return undef;
     } else {
-      return "devtype \"$arg\" not supported. Currently supported device types: " . join(", ", sort keys %sets);
+      return "devtype \"$arg\" not supported. Currently supported device types are " . join(", ", sort keys %sets);
     }
   }
 
   if (!defined($hash->{devtype})) {
-    return "\"devtype\" not yet specifed. Currently supported device types: " . join(", ", sort keys %sets);
+    return "\"devtype\" not yet specifed. Currently supported device types are " . join(", ", sort keys %sets);
   }
 
   if (!defined($sets{$hash->{devtype}})) {
-    return "No set commands supported for device type: " . $hash->{devtype};
+    return "No set commands for $hash->{devtype} device type supported ";
   }
 
   # TODO:
@@ -379,8 +407,6 @@ sub SHC_Dev_Set($@)
 
   given ($hash->{devtype}) {
     when ('PowerSwitch') {
-      my $list = "statusRequest:noArg";
-      $list .= " off:noArg on:noArg toggle:noArg" if (!$readonly);
 
       # Timeout functionality for SHC_Dev is not implemented, because FHEMs internal notification system
       # is able to do this as well. Even more it supports intervals, off-for-timer, off-till ...
@@ -405,12 +431,10 @@ sub SHC_Dev_Set($@)
         $parser->initPacket("PowerSwitch", "SwitchState", "Get");
         SHC_Dev_Send($hash);
       } else {
-        return SetExtensions($hash, $list, $name, @aa);
+        return SetExtensions($hash, "", $name, @aa);
       }
     }
     when ('Dimmer') {
-      my $list = "statusRequest:noArg";
-      $list .= " ani pct:slider,0,1,100 off:noArg on:noArg" if (!$readonly);
 
       # Timeout functionality for SHC_Dev is not implemented, because FHEMs internal notification system
       # is able to do this as well. Even more it supports intervals, off-for-timer, off-till ...
@@ -458,7 +482,7 @@ sub SHC_Dev_Set($@)
         $parser->initPacket("Dimmer", "Brightness", "Get");
         SHC_Dev_Send($hash);
       } else {
-        return SetExtensions($hash, $list, $name, @aa);
+        return SetExtensions($hash, "", $name, @aa);
       }
     }
   }
@@ -466,6 +490,44 @@ sub SHC_Dev_Set($@)
   return undef;
 }
 
+#####################################
+sub SHC_Dev_Get($@)
+{
+  my ($hash, $name, @aa) = @_;
+  my $cnt = @aa;
+
+  my $cmd = $aa[0];
+  my $arg = $aa[1];
+
+  return "\"get $name\" needs at least one parameter" if ($cnt < 1);
+
+  if (!defined($hash->{devtype})) {
+    return "\"devtype\" not yet specifed. Currently supported device types are " . join(", ", sort keys %sets);
+  }
+
+  if (!defined($gets{$hash->{devtype}})) {
+    return "No get commands for $hash->{devtype} device type supported ";
+  }
+
+  given ($hash->{devtype}) {
+    when ('EnvSensor') {
+
+      if ($cmd eq 'input') {
+        if ($arg =~ /[1-8]/) {
+          my $channel = "in" . $arg;
+          return "$name.$channel => " . $hash->{READINGS}{$channel}{VAL};
+        }
+        return "$name.in => " . $hash->{READINGS}{in}{VAL};
+      }
+
+      # This return is required to provide the get commands in the web interface
+      return "Unknown argument $cmd, choose one of " . $gets{$hash->{devtype}};
+    }
+  }
+  return undef;
+}
+
+#####################################
 sub SHC_Dev_Send($)
 {
   my ($hash) = @_;
@@ -525,6 +587,9 @@ sub SHC_Dev_Send($)
   <a name="SHC_Dev_Get"></a>
   <b>Get</b>
   <ul>
+    <li>">
+          <code>get &lt;name&gt; input &lt;port&gt;</code></a>
+      <br />Returns the state of the specified port for port = 1..8, otherwise the state of all inputs.</li>
     <li>N/A</li>
   </ul><br>
 
