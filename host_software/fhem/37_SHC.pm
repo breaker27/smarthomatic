@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License along
 # with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 ###########################################################################
-# $Id: 36_JeeLink.pm 3914 2013-09-16 13:35:50Z justme1968 $
+# $Id: 37_SHC.pm xxxx 2014-xx-xx xx:xx:xx rr2000 $
 #
 # TODO:
 
