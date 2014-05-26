@@ -1,5 +1,27 @@
-# Copied from 36_JeeLink.pm and adapted
-# $Id: 36_JeeLink.pm 3914 2013-09-16 13:35:50Z justme1968 $
+##########################################################################
+# This file is part of the smarthomatic module for FHEM.
+#
+# Copyright (c) 2014 Stefan Baumann
+#
+# You can find smarthomatic at www.smarthomatic.org.
+# You can find FHEM at www.fhem.de.
+#
+# This file is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
+#
+# This file is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
+###########################################################################
+# $Id: 37_SHC.pm xxxx 2014-xx-xx xx:xx:xx rr2000 $
+#
+# TODO:
 
 package main;
 
@@ -7,14 +29,10 @@ use strict;
 use warnings;
 use Time::HiRes qw(gettimeofday);
 
-sub SHC_Attr(@);
-sub SHC_Clear($);
-sub SHC_HandleWriteQueue($);
 sub SHC_Parse($$$$);
 sub SHC_Read($);
 sub SHC_ReadAnswer($$$$);
 sub SHC_Ready($);
-sub SHC_Write($$);
 
 sub SHC_SimpleWrite(@);
 
@@ -104,7 +122,6 @@ sub SHC_Shutdown($)
 #####################################
 sub SHC_Set($@)
 {
-  # TODO: Not adapted to SHC, copy from 36_JeeLink.pm
   my ($hash, @a) = @_;
 
   my $name = shift @a;
@@ -131,52 +148,21 @@ sub SHC_Set($@)
 #####################################
 sub SHC_Get($@)
 {
-  # TODO: Not adapted to SHC, copy from 36_JeeLink.pm
   my ($hash, $name, $cmd) = @_;
 
-  my $list = "devices:noArg initSHC:noArg";
-
-  if ($cmd eq "devices") {
-    SHC_SimpleWrite($hash, "l");
-  } elsif ($cmd eq "initSHC") {
-    SHC_SimpleWrite($hash, "0c");
-    SHC_SimpleWrite($hash, "2c");
-  } else {
-    return "Unknown argument $cmd, choose one of " . $list;
-  }
-
   return undef;
-}
-
-sub SHC_Clear($)
-{
-  my $hash = shift;
-
-  # Clear the pipe
-  $hash->{RA_Timeout} = 0.1;
-  for (; ;) {
-    my ($err, undef) = SHC_ReadAnswer($hash, "Clear", 0, undef);
-    last if ($err && $err =~ m/^Timeout/);
-  }
-  delete($hash->{RA_Timeout});
 }
 
 #####################################
 sub SHC_DoInit($)
 {
-  # TODO: Not adapted to SHC, copy from 36_JeeLink.pm
   my $hash = shift;
   my $name = $hash->{NAME};
   my $err;
   my $msg = undef;
 
-  my $val;
-
   $hash->{STATE} = "Initialized";
 
-  # Reset the counter
-  delete($hash->{XMIT_TIME});
-  delete($hash->{NR_CMD_LAST_H});
   return undef;
 }
 
@@ -241,38 +227,6 @@ sub SHC_ReadAnswer($$$$)
 }
 
 #####################################
-# Check if the 1% limit is reached and trigger notifies
-sub SHC_XmitLimitCheck($$)
-{
-  # TODO: Not adapted to SHC, copy from 36_JeeLink.pm
-  my ($hash, $fn) = @_;
-  my $now = time();
-
-  if (!$hash->{XMIT_TIME}) {
-    $hash->{XMIT_TIME}[0] = $now;
-    $hash->{NR_CMD_LAST_H} = 1;
-    return;
-  }
-
-  my $nowM1h = $now - 3600;
-  my @b = grep {$_ > $nowM1h} @{$hash->{XMIT_TIME}};
-
-  if (@b > 163) {    # 163 comes from fs20. todo: verify if correct for SHC modulation
-
-    my $name = $hash->{NAME};
-    Log3 $name, 2, "$name: SHC TRANSMIT LIMIT EXCEEDED";
-    DoTrigger($name, "TRANSMIT LIMIT EXCEEDED");
-
-  } else {
-
-    push(@b, $now);
-
-  }
-  $hash->{XMIT_TIME}     = \@b;
-  $hash->{NR_CMD_LAST_H} = int(@b);
-}
-
-#####################################
 sub SHC_Write($$)
 {
   # TODO: Not adapted to SHC, copy from 36_JeeLink.pm
@@ -281,81 +235,14 @@ sub SHC_Write($$)
 
   Log3 $name, 5, "$name: sending $msg";
 
-  SHC_AddQueue($hash, $msg);
-
-  #SHC_SimpleWrite($hash, $msg);
-}
-
-sub SHC_SendFromQueue($$)
-{
-  # TODO: Not adapted to SHC, copy from 36_JeeLink.pm
-  my ($hash, $bstring) = @_;
-  my $name = $hash->{NAME};
-  my $to   = 0.05;
-
-  if ($bstring ne "") {
-    my $sp = AttrVal($name, "sendpool", undef);
-    if ($sp) {    # Is one of the SHC-fellows sending data?
-      my @fellows = split(",", $sp);
-      foreach my $f (@fellows) {
-        if ( $f ne $name
-          && $defs{$f}
-          && $defs{$f}{QUEUE}
-          && $defs{$f}{QUEUE}->[0] ne "")
-        {
-          unshift(@{$hash->{QUEUE}}, "");
-          InternalTimer(gettimeofday() + $to, "SHC_HandleWriteQueue", $hash, 1);
-          return;
-        }
-      }
-    }
-
-    SHC_XmitLimitCheck($hash, $bstring);
-    SHC_SimpleWrite($hash, $bstring);
-  }
-
-  InternalTimer(gettimeofday() + $to, "SHC_HandleWriteQueue", $hash, 1);
-}
-
-sub SHC_AddQueue($$)
-{
-  # TODO: Not adapted to SHC, copy from 36_JeeLink.pm
-  my ($hash, $bstring) = @_;
-  if (!$hash->{QUEUE}) {
-    $hash->{QUEUE} = [$bstring];
-    SHC_SendFromQueue($hash, $bstring);
-
-  } else {
-    push(@{$hash->{QUEUE}}, $bstring);
-  }
-}
-
-#####################################
-sub SHC_HandleWriteQueue($)
-{
-  # TODO: Not adapted to SHC, copy from 36_JeeLink.pm
-  my $hash = shift;
-  my $arr  = $hash->{QUEUE};
-  if (defined($arr) && @{$arr} > 0) {
-    shift(@{$arr});
-    if (@{$arr} == 0) {
-      delete($hash->{QUEUE});
-      return;
-    }
-    my $bstring = $arr->[0];
-    if ($bstring eq "") {
-      SHC_HandleWriteQueue($hash);
-    } else {
-      SHC_SendFromQueue($hash, $bstring);
-    }
-  }
+  SHC_SimpleWrite($hash, $msg);
 }
 
 #####################################
 # called from the global loop, when the select for hash->{FD} reports data
 sub SHC_Read($)
 {
-  # TODO: Not adapted to SHC, copy from 36_JeeLink.pm
+  # TODO: Verify if partial data handling is required for SHC
   my ($hash) = @_;
 
   my $buf = DevIo_SimpleRead($hash);
@@ -376,6 +263,7 @@ sub SHC_Read($)
   $hash->{PARTIAL} = $pandata;
 }
 
+#####################################
 sub SHC_Parse($$$$)
 {
   my ($hash, $iohash, $name, $rmsg) = @_;
@@ -430,7 +318,6 @@ sub SHC_Parse($$$$)
 #####################################
 sub SHC_Ready($)
 {
-  # TODO: Not adapted to SHC, copy from 36_JeeLink.pm
   my ($hash) = @_;
 
   return DevIo_OpenDev($hash, 1, "SHC_DoInit")
@@ -461,13 +348,6 @@ sub SHC_SimpleWrite(@)
 
   # Some linux installations are broken with 0.001, T01 returns no answer
   select(undef, undef, undef, 0.01);
-}
-
-sub SHC_Attr(@)
-{
-  my @a = @_;
-
-  return undef;
 }
 
 1;
