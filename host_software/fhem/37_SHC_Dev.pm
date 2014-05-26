@@ -335,12 +335,15 @@ sub SHC_Dev_Parse($$)
   # After a fhem server restart it happens that a "barometric_pressure" reading gets added even if no
   # BarometricPressureTemperature message was received. A closer look showed that the only code sequence
   # that adds the baro reading is never executed, the reading still occurs.
-
-  if ((defined($rhash->{READINGS}{barometric_pressure}{VAL}))
-    && $rhash->{READINGS}{barometric_pressure}{VAL} == 0)
-  {
-    Log3 $name, 3, "$rname: WORKAROUND barometric_pressure defined, but value is invalid. Will be removed";
-    delete ($rhash->{READINGS}{barometric_pressure})
+  my @entries_to_correct = ("barometric_pressure", "temperature", "humidity", "distance");
+  foreach (@entries_to_correct) {
+    my $entry = $_;
+    if ((defined($rhash->{READINGS}{$entry}{VAL}))
+      && $rhash->{READINGS}{$entry}{VAL} == 0)
+    {
+      Log3 $name, 3, "$rname: WORKAROUND $entry defined, but value is invalid. Will be removed";
+      delete ($rhash->{READINGS}{$entry})
+    }
   }
 
   # Assemble state string according to %dev_state_format
