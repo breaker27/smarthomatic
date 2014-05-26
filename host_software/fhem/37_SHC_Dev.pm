@@ -1,5 +1,25 @@
-# Copied from 36_PCA301.pm and adapted
-# $Id: 36_SHC_Dev.pm 3934 2013-09-21 09:21:39Z justme1968 $
+##########################################################################
+# This file is part of the smarthomatic module for FHEM.
+#
+# Copyright (c) 2014 Stefan Baumann, Uwe Freese
+#
+# You can find smarthomatic at www.smarthomatic.org.
+# You can find FHEM at www.fhem.de.
+#
+# This file is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
+#
+# This file is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
+###########################################################################
+# $Id: 37_SHC_Dev.pm xxxx 2014-xx-xx xx:xx:xx rr2000 $
 #
 # TODO:
 
@@ -41,21 +61,31 @@ my %dev_state_format = (
   ]
 );
 
-# Supported Set commands
+# Supported set commands
+# use "" if no set commands are available for device type
+# use "cmd_name:cmd_additional_info"
+#     cmd_additional_info: Description available at http://www.fhemwiki.de/wiki/DevelopmentModuleIntro#X_Set
 my %sets = (
-  "PowerSwitch" => ["on", "off", "toggle", "statusRequest",
-                    # Used from SetExtensions.pm
-                    "blink", "on-for-timer", "on-till", "off-for-timer", "off-till", "intervals"],
-  "Dimmer"      => ["on", "off", "toggle", "statusRequest", "pct", "ani",
-                    # Used from SetExtensions.pm
-                    "blink", "on-for-timer", "on-till", "off-for-timer", "off-till", "intervals"],
-  "EnvSensor"   => undef,
-  "Custom"      => [
-    "PowerSwitch.SwitchState",
-    "PowerSwitch.SwitchStateExt",
-    "Dimmer.Brightness",
-    "Dimmer.Animation"
-  ]
+  "PowerSwitch" => "on:noArg off:noArg toggle:noArg statusRequest:noArg " .
+                   # Used from SetExtensions.pm
+                   "blink on-for-timer on-till off-for-timer off-till intervals",
+  "Dimmer"      => "on:noArg off:noArg toggle:noArg statusRequest:noArg pct:slider,0,1,100 ani " .
+                   # Used from SetExtensions.pm
+                   "blink on-for-timer on-till off-for-timer off-till intervals",
+  "EnvSensor"   => "",
+  "Custom"      => "PowerSwitch.SwitchState " .
+                   "PowerSwitch.SwitchStateExt " .
+                   "Dimmer.Brightness " .
+                   "Dimmer.Animation"
+);
+
+# Supported get commands
+# use syntax from set commands
+my %gets = (
+  "PowerSwitch" => "",
+  "Dimmer"      => "",
+  "EnvSensor"   => "input:all,1,2,3,4,5,6,7,8 ",
+  "Custom"      => ""
 );
 
 # Hashtable for automatic device type assignment
@@ -74,12 +104,14 @@ my %auto_devtype = (
 
 sub SHC_Dev_Parse($$);
 
+#####################################
 sub SHC_Dev_Initialize($)
 {
   my ($hash) = @_;
 
   $hash->{Match}    = "^Packet Data: SenderID=[1-9]|0[1-9]|[1-9][0-9]|[0-9][0-9][0-9]|[0-3][0-9][0-9][0-9]|40[0-8][0-9]|409[0-6]";
   $hash->{SetFn}    = "SHC_Dev_Set";
+  $hash->{GetFn}    = "SHC_Dev_Get";
   $hash->{DefFn}    = "SHC_Dev_Define";
   $hash->{UndefFn}  = "SHC_Dev_Undef";
   $hash->{ParseFn}  = "SHC_Dev_Parse";
@@ -89,6 +121,7 @@ sub SHC_Dev_Initialize($)
                        ." $readingFnAttributes";
 }
 
+#####################################
 sub SHC_Dev_Define($$)
 {
   my ($hash, $def) = @_;
@@ -147,7 +180,6 @@ sub SHC_Dev_Undef($$)
 }
 
 #####################################
-
 sub SHC_Dev_Parse($$)
 {
   my ($hash, $msg) = @_;
@@ -181,8 +213,6 @@ sub SHC_Dev_Parse($$)
   my @list;
   push(@list, $rname);
   $rhash->{SHC_Dev_lastRcv} = TimeNow();
-  $rhash->{SHC_Dev_pktcnt}  = $parser->getPacketCounter();
-  $rhash->{SHC_Dev_msgdata} = $parser->getMessageData();
   $rhash->{SHC_Dev_msgtype} = "$msggroupname : $msgname : $msgtypename";
 
   my $readonly = AttrVal($rname, "readonly", "0");
@@ -208,10 +238,14 @@ sub SHC_Dev_Parse($$)
     when ('GPIO') {
       given ($msgname) {
         when ('DigitalPin') {
-			# TODO: read out all 8 pins and store them in a data array
-          my $on      = $parser->getField("On", 0);
-          
-          readingsBulkUpdate($rhash, "on", $on);
+          my $pins = "";
+          for (my $i = 0 ; $i < 8 ; $i++) {
+            my $pinx = $parser->getField("On", $i);
+            my $channel = $i + 1;
+            readingsBulkUpdate($rhash, "pin" . $channel, $pinx);
+            $pins .= $pinx;
+          }
+          readingsBulkUpdate($rhash, "pins", $pins);
         }
       }
     }
@@ -301,12 +335,15 @@ sub SHC_Dev_Parse($$)
   # After a fhem server restart it happens that a "barometric_pressure" reading gets added even if no
   # BarometricPressureTemperature message was received. A closer look showed that the only code sequence
   # that adds the baro reading is never executed, the reading still occurs.
-
-  if ((defined($rhash->{READINGS}{barometric_pressure}{VAL}))
-    && $rhash->{READINGS}{barometric_pressure}{VAL} == 0)
-  {
-    Log3 $name, 3, "$rname: WORKAROUND barometric_pressure defined, but value is invalid. Will be removed";
-    delete ($rhash->{READINGS}{barometric_pressure})
+  my @entries_to_correct = ("barometric_pressure", "temperature", "humidity", "distance");
+  foreach (@entries_to_correct) {
+    my $entry = $_;
+    if ((defined($rhash->{READINGS}{$entry}{VAL}))
+      && $rhash->{READINGS}{$entry}{VAL} == 0)
+    {
+      Log3 $name, 3, "$rname: WORKAROUND $entry defined, but value is invalid. Will be removed";
+      delete ($rhash->{READINGS}{$entry})
+    }
   }
 
   # Assemble state string according to %dev_state_format
@@ -319,15 +356,16 @@ sub SHC_Dev_Parse($$)
       if (defined($rhash->{READINGS}{$state_format_arr->[$i]}{VAL})) {
         my $val = $rhash->{READINGS}{$state_format_arr->[$i]}{VAL};
 
-        # "on" reading requires a special treatment because 0 translates to off, 1 translates to on
-        if ($state_format_arr->[$i] eq "on") {
-          $state_str .= $val == 0 ? "off " : "on ";
-        } else {
-          $state_str .= $state_format_arr->[$i + 1] . $val . " ";
+        if ($state_str ne "") { 
+          $state_str .= " ";
         }
 
-        # DEBUG
-        # Log3 $name, 4, "$rname: $i " . $state_format_arr->[$i] . " " . $state_format_arr->[$i + 1] . " " . $val;
+        # "on" reading requires a special treatment because 0 translates to off, 1 translates to on
+        if ($state_format_arr->[$i] eq "on") {
+          $state_str .= $val == 0 ? "off" : "on";
+        } else {
+          $state_str .= $state_format_arr->[$i + 1] . $val;
+        }
       }
     }
 
@@ -344,13 +382,25 @@ sub SHC_Dev_Set($@)
   my ($hash, $name, @aa) = @_;
   my $cnt = @aa;
 
-  my $cmd   = $aa[0];
-  my $arg   = $aa[1];
-  my $arg2  = $aa[2];
-  my $arg3  = $aa[3];
-  my $arg4  = $aa[4];
+  my $cmd  = $aa[0];
+  my $arg  = $aa[1];
+  my $arg2 = $aa[2];
+  my $arg3 = $aa[3];
+  my $arg4 = $aa[4];
 
   return "\"set $name\" needs at least one parameter" if ($cnt < 1);
+
+  # Return list of device-specific set-commands.
+  # This list is used to provide the set commands in the web interface
+  if ($cmd eq "?") {
+    if (!defined($hash->{devtype})) {
+
+      # If the device type isn't set yet, allow only set commands to set the device type
+      return "devtype:" . join(",", sort keys %sets);
+    } else {
+      return $sets{$hash->{devtype}};
+    }
+  }
 
   if ($cmd eq "devtype") {
     if (exists($sets{$arg})) {
@@ -358,16 +408,16 @@ sub SHC_Dev_Set($@)
       Log3 $name, 3, "$name: devtype set to \"$arg\"";
       return undef;
     } else {
-      return "devtype \"$arg\" not supported. Currently supported device types: " . join(", ", sort keys %sets);
+      return "devtype \"$arg\" not supported. Currently supported device types are " . join(", ", sort keys %sets);
     }
   }
 
   if (!defined($hash->{devtype})) {
-    return "\"devtype\" not yet specifed. Currently supported device types: " . join(", ", sort keys %sets);
+    return "\"devtype\" not yet specifed. Currently supported device types are " . join(", ", sort keys %sets);
   }
 
   if (!defined($sets{$hash->{devtype}})) {
-    return "No set commands supported for device type: " . $hash->{devtype};
+    return "No set commands for $hash->{devtype} device type supported ";
   }
 
   # TODO:
@@ -379,8 +429,6 @@ sub SHC_Dev_Set($@)
 
   given ($hash->{devtype}) {
     when ('PowerSwitch') {
-      my $list = "statusRequest:noArg";
-      $list .= " off:noArg on:noArg toggle:noArg" if (!$readonly);
 
       # Timeout functionality for SHC_Dev is not implemented, because FHEMs internal notification system
       # is able to do this as well. Even more it supports intervals, off-for-timer, off-till ...
@@ -405,12 +453,10 @@ sub SHC_Dev_Set($@)
         $parser->initPacket("PowerSwitch", "SwitchState", "Get");
         SHC_Dev_Send($hash);
       } else {
-        return SetExtensions($hash, $list, $name, @aa);
+        return SetExtensions($hash, "", $name, @aa);
       }
     }
     when ('Dimmer') {
-      my $list = "statusRequest:noArg";
-      $list .= " ani pct:slider,0,1,100 off:noArg on:noArg" if (!$readonly);
 
       # Timeout functionality for SHC_Dev is not implemented, because FHEMs internal notification system
       # is able to do this as well. Even more it supports intervals, off-for-timer, off-till ...
@@ -458,7 +504,7 @@ sub SHC_Dev_Set($@)
         $parser->initPacket("Dimmer", "Brightness", "Get");
         SHC_Dev_Send($hash);
       } else {
-        return SetExtensions($hash, $list, $name, @aa);
+        return SetExtensions($hash, "", $name, @aa);
       }
     }
   }
@@ -466,6 +512,44 @@ sub SHC_Dev_Set($@)
   return undef;
 }
 
+#####################################
+sub SHC_Dev_Get($@)
+{
+  my ($hash, $name, @aa) = @_;
+  my $cnt = @aa;
+
+  my $cmd = $aa[0];
+  my $arg = $aa[1];
+
+  return "\"get $name\" needs at least one parameter" if ($cnt < 1);
+
+  if (!defined($hash->{devtype})) {
+    return "\"devtype\" not yet specifed. Currently supported device types are " . join(", ", sort keys %sets);
+  }
+
+  if (!defined($gets{$hash->{devtype}})) {
+    return "No get commands for $hash->{devtype} device type supported ";
+  }
+
+  given ($hash->{devtype}) {
+    when ('EnvSensor') {
+
+      if ($cmd eq 'input') {
+        if ($arg =~ /[1-8]/) {
+          my $channel = "pin" . $arg;
+          return "$name.$channel => " . $hash->{READINGS}{$channel}{VAL};
+        }
+        return "$name.pins => " . $hash->{READINGS}{pins}{VAL};
+      }
+
+      # This return is required to provide the get commands in the web interface
+      return "Unknown argument $cmd, choose one of " . $gets{$hash->{devtype}};
+    }
+  }
+  return undef;
+}
+
+#####################################
 sub SHC_Dev_Send($)
 {
   my ($hash) = @_;
@@ -488,21 +572,30 @@ sub SHC_Dev_Send($)
 <a name="SHC_Dev"></a>
 <h3>SHC_Dev</h3>
 <ul>
+  SHC is the device module that supports several device types available 
+  at <a href="http://http://www.smarthomatic.org">www.smarthomatic.org</a>.<br><br>
 
-  <tr><td>
-  The SHC_Dev A secure and extendable Open Source home automation system.<br><br>
-  
-  More info can be found in <a href="https://www.smarthomatic.org">Smarthomatic Website</a><br><br>
+  These device are connected to the FHEM server through the SHC base station (<a href="#SHC">SHC</a>).<br><br>
+  Currently supported are:<br>
+  <ul>
+    <li>EnvSensor</li>
+    <li>PowerSwitch</li>
+    <li>Dimmer</li>
+  </ul><br>
 
   <a name="SHC_Dev_Define"></a>
   <b>Define</b>
   <ul>
-    <code>define &lt;name&gt; SHC_Dev &lt;SenderID&gt; [&lt;AesKey&gt;]</code> <br>
+    <code>define &lt;name&gt; SHC_Dev &lt;SenderID&gt; [&lt;AesKey&gt;]</code><br>
     <br>
-    <li><code>&lt;SenderID<li><code>&lt; is a number ranging from 0 .. 4095 to identify the SHC_Dev device.
-    <li>The optional <code>&lt;AesKey<li><code>&lt; is a number ranging from 0 .. 15 to select an encryption key.
+    &lt;SenderID&gt;<br>
+    is a number ranging from 0 .. 4095 to identify the SHC_Dev device.<br><br>
+
+    &lt;AesKey&gt;<br>
+    is a optional number ranging from 0 .. 15 to select an encryption key.
     It is required for the basestation to communicate with remote devides
     The default value is 0.<br><br>
+
     Note: devices are autocreated on reception of the first message.<br>
   </ul>
   <br>
@@ -510,37 +603,54 @@ sub SHC_Dev_Send($)
   <a name="SHC_Dev_Set"></a>
   <b>Set</b>
   <ul>
-    <li>devtype</b>
-    The device type determines the command set, default web commands and the default devStateicon</b
-    Currently supported are: EnvSensor, Dimmer, PowerSwitch></li>
-    <li>on (Dimmer, PowerSwitch)</li>
-    <li>off (Dimmer, PowerSwitch)</li>
-    <li>pct <0..100>  Sets the brightness in percent (Dimmer)</li>
-    <li>ani <AnimationMode> <TimeoutSec> <StartBrightness> <EndBrightness> (Dimmer)</b>
-    Details in <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_Animation">Smarthomatic Website</a></li>
-    <li>statusRequest (Dimmer, PowerSwitch)</li>
-    <li><a href="#setExtensions"> set extensions</a> (Dimmer, PowerSwitch) are supported.</li>
+    <li>devtype<br>
+      The device type determines the command set, default web commands and the
+      default devStateicon. Currently supported are: EnvSensor, Dimmer, 
+      PowerSwitch.<br><br>
+
+      Note: If the device is not set manually, it well determined automatically
+      on reception of a device type specific message. For example: If a 
+      temperature message is received, the device type will be set to 
+      EnvSensor.
+    </li><br>
+    <li>on<br>
+        Supported by Dimmer and PowerSwitch.
+    </li><br>
+    <li>off<br>
+        Supported by Dimmer, PowerSwitch.
+    </li><br>
+    <li>pct &lt;0..100&gt;<br>
+        Sets the brightness in percent. Supported by Dimmer.
+    </li><br>
+    <li>ani &lt;AnimationMode&gt; &lt;TimeoutSec&gt; &lt;StartBrightness&gt; &lt;EndBrightness&gt;<br>
+        Description and details available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_Animation">www.smarthomatic.org</a>
+        Supported by Dimmer.
+    </li><br>
+    <li>statusRequest<br>
+        Supported by Dimmer and PowerSwitch.
+    </li><br>
+    <li><a href="#setExtensions"> set extensions</a><br>
+        Supported by Dimmer and PowerSwitch.</li>
   </ul><br>
 
   <a name="SHC_Dev_Get"></a>
   <b>Get</b>
   <ul>
-    <li>N/A</li>
-  </ul><br>
-
-  <a name="SHC_Dev_Readings"></a>
-  <b>Readings</b>
-  <ul>
-    <li>N/A</li>
+    <li>input &lt;pin&gt;<br>
+        Returns the state of the specified pin for pin = 1..8, otherwise the state of all inputs.
+        Supported by EnvSensor.
+    </li><br>
   </ul><br>
 
   <a name="SHC_Dev_Attr"></a>
   <b>Attributes</b>
   <ul>
     <li>readonly<br>
-    if set to a value != 0 all switching commands (on, off, toggle, ...) will be disabled.</li>
+        if set to a value != 0 all switching commands (on, off, toggle, ...) will be disabled.
+    </li><br>
     <li>forceOn<br>
-    try to switch on the device whenever an off status is received.</li>
+        try to switch on the device whenever an off status is received.
+    </li><br>
   </ul><br>
 </ul>
 
