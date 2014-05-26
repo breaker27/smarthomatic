@@ -358,64 +358,58 @@ sub SHC_SimpleWrite(@)
 <a name="SHC"></a>
 <h3>SHC</h3>
 <ul>
-  The SHC is a family of RF devices avaible at  <a href="http://http://www.smarthomatic.org">www.smarthomatic.org</a>.
+  SHC is the basestation module that supports a family of RF devices available 
+  at <a href="http://http://www.smarthomatic.org">www.smarthomatic.org</a>.
 
-  This module provides the IODevice for the <a href="#SHC_Dev">SHC_Dev</a> modules that implements the SHC_Dev protocol.<br><br>
+  This module provides the IODevice for the <a href="#SHC_Dev">SHC_Dev</a> 
+  modules that implement the SHC_Dev protocol.<br><br>
 
   Note: this module may require the Device::SerialPort or Win32::SerialPort
   module if you attach the device via USB and the OS sets strange default
-  parameters for serial devices.
-
-  <br><br>
+  parameters for serial devices.<br><br>
 
   <a name="SHC_Define"></a>
   <b>Define</b>
   <ul>
-    <code>define &lt;name&gt; SHC &lt;device&gt;</code> <br>
+    <code>define &lt;name&gt; SHC &lt;device&gt;</code><br>
     <br>
-    USB-connected devices:<br><ul>
       &lt;device&gt; specifies the serial port to communicate with the SHC.
       The name of the serial-device depends on your distribution, under
-      linux the cdc_acm kernel module is responsible, and usually a
-      /dev/ttyACM0 device will be created. If your distribution does not have a
-      cdc_acm module, you can force usbserial to handle the SHC by the
-      following command:<ul>modprobe usbserial vendor=0x0403
-      product=0x6001</ul>In this case the device is most probably
-      /dev/ttyUSB0.<br><br>
+      linux usually a /dev/ttyUSB0 device will be created.<br><br>
 
       You can also specify a baudrate if the device name contains the @
-      character, e.g.: /dev/ttyACM0@57600<br><br>
+      character, e.g.: /dev/ttyUSB0@57600. Please note that the default
+      baudrate for the SHC base station is 19200 baud.<br><br>
 
-      If the baudrate is "directio" (e.g.: /dev/ttyACM0@directio), then the
-      perl module Device::SerialPort is not needed, and fhem opens the device
-      with simple file io. This might work if the operating system uses sane
-      defaults for the serial parameters, e.g. some Linux distributions and
-      OSX.  <br><br>
-
-    </ul>
-    <br>
+      Example:<br>
+      <ul>
+        <code>define shc_base SHC /dev/ttyUSB0</code><br><br>
+      </ul>
   </ul>
-  <br>
 
   <a name="SHC_Set"></a>
   <b>Set</b>
   <ul>
-    <li>raw &lt;datar&gt;<br>
-        # TODO: Not adapted to SHC, copy from 36_JeeLink.pm
-        send &lt;data&gt; as a raw message to the SHC to be transmitted over the RF link.
-        </li><br>
+    <li>raw &lt;data&gt;<br>
+        not supported yet
+    </li><br>
   </ul>
 
   <a name="SHC_Get"></a>
   <b>Get</b>
   <ul>
+    <li>
+      N/A
+    </li><br>
   </ul>
 
   <a name="SHC_Attr"></a>
   <b>Attributes</b>
   <ul>
+    <li>
+      N/A
+    </li><br>
   </ul>
-  <br>
 </ul>
 
 =end html
