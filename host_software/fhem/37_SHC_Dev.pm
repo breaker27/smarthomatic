@@ -335,12 +335,15 @@ sub SHC_Dev_Parse($$)
   # After a fhem server restart it happens that a "barometric_pressure" reading gets added even if no
   # BarometricPressureTemperature message was received. A closer look showed that the only code sequence
   # that adds the baro reading is never executed, the reading still occurs.
-
-  if ((defined($rhash->{READINGS}{barometric_pressure}{VAL}))
-    && $rhash->{READINGS}{barometric_pressure}{VAL} == 0)
-  {
-    Log3 $name, 3, "$rname: WORKAROUND barometric_pressure defined, but value is invalid. Will be removed";
-    delete ($rhash->{READINGS}{barometric_pressure})
+  my @entries_to_correct = ("barometric_pressure", "temperature", "humidity", "distance");
+  foreach (@entries_to_correct) {
+    my $entry = $_;
+    if ((defined($rhash->{READINGS}{$entry}{VAL}))
+      && $rhash->{READINGS}{$entry}{VAL} == 0)
+    {
+      Log3 $name, 3, "$rname: WORKAROUND $entry defined, but value is invalid. Will be removed";
+      delete ($rhash->{READINGS}{$entry})
+    }
   }
 
   # Assemble state string according to %dev_state_format
@@ -353,15 +356,16 @@ sub SHC_Dev_Parse($$)
       if (defined($rhash->{READINGS}{$state_format_arr->[$i]}{VAL})) {
         my $val = $rhash->{READINGS}{$state_format_arr->[$i]}{VAL};
 
+        if ($state_str ne "") { 
+          $state_str .= " ";
+        }
+
         # "on" reading requires a special treatment because 0 translates to off, 1 translates to on
         if ($state_format_arr->[$i] eq "on") {
           $state_str .= $val == 0 ? "off" : "on";
         } else {
-          $state_str .= $state_format_arr->[$i + 1] . $val . " ";
+          $state_str .= $state_format_arr->[$i + 1] . $val;
         }
-
-        # DEBUG
-        # Log3 $name, 4, "$rname: $i " . $state_format_arr->[$i] . " " . $state_format_arr->[$i + 1] . " " . $val;
       }
     }
 
@@ -535,7 +539,7 @@ sub SHC_Dev_Get($@)
           my $channel = "pin" . $arg;
           return "$name.$channel => " . $hash->{READINGS}{$channel}{VAL};
         }
-        return "$name.pins => " . $hash->{READINGS}{in}{VAL};
+        return "$name.pins => " . $hash->{READINGS}{pins}{VAL};
       }
 
       # This return is required to provide the get commands in the web interface
@@ -568,21 +572,30 @@ sub SHC_Dev_Send($)
 <a name="SHC_Dev"></a>
 <h3>SHC_Dev</h3>
 <ul>
+  SHC is the device module that supports several device types available 
+  at <a href="http://http://www.smarthomatic.org">www.smarthomatic.org</a>.<br><br>
 
-  <tr><td>
-  The SHC_Dev A secure and extendable Open Source home automation system.<br><br>
-  
-  More info can be found in <a href="https://www.smarthomatic.org">Smarthomatic Website</a><br><br>
+  These device are connected to the FHEM server through the SHC base station (<a href="#SHC">SHC</a>).<br><br>
+  Currently supported are:<br>
+  <ul>
+    <li>EnvSensor</li>
+    <li>PowerSwitch</li>
+    <li>Dimmer</li>
+  </ul><br>
 
   <a name="SHC_Dev_Define"></a>
   <b>Define</b>
   <ul>
-    <code>define &lt;name&gt; SHC_Dev &lt;SenderID&gt; [&lt;AesKey&gt;]</code> <br>
+    <code>define &lt;name&gt; SHC_Dev &lt;SenderID&gt; [&lt;AesKey&gt;]</code><br>
     <br>
-    <li><code>&lt;SenderID<li><code>&lt; is a number ranging from 0 .. 4095 to identify the SHC_Dev device.
-    <li>The optional <code>&lt;AesKey<li><code>&lt; is a number ranging from 0 .. 15 to select an encryption key.
+    &lt;SenderID&gt;<br>
+    is a number ranging from 0 .. 4095 to identify the SHC_Dev device.<br><br>
+
+    &lt;AesKey&gt;<br>
+    is a optional number ranging from 0 .. 15 to select an encryption key.
     It is required for the basestation to communicate with remote devides
     The default value is 0.<br><br>
+
     Note: devices are autocreated on reception of the first message.<br>
   </ul>
   <br>
@@ -590,40 +603,54 @@ sub SHC_Dev_Send($)
   <a name="SHC_Dev_Set"></a>
   <b>Set</b>
   <ul>
-    <li>devtype</b>
-    The device type determines the command set, default web commands and the default devStateicon</b
-    Currently supported are: EnvSensor, Dimmer, PowerSwitch></li>
-    <li>on (Dimmer, PowerSwitch)</li>
-    <li>off (Dimmer, PowerSwitch)</li>
-    <li>pct <0..100>  Sets the brightness in percent (Dimmer)</li>
-    <li>ani <AnimationMode> <TimeoutSec> <StartBrightness> <EndBrightness> (Dimmer)</b>
-    Details in <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_Animation">Smarthomatic Website</a></li>
-    <li>statusRequest (Dimmer, PowerSwitch)</li>
-    <li><a href="#setExtensions"> set extensions</a> (Dimmer, PowerSwitch) are supported.</li>
+    <li>devtype<br>
+      The device type determines the command set, default web commands and the
+      default devStateicon. Currently supported are: EnvSensor, Dimmer, 
+      PowerSwitch.<br><br>
+
+      Note: If the device is not set manually, it well determined automatically
+      on reception of a device type specific message. For example: If a 
+      temperature message is received, the device type will be set to 
+      EnvSensor.
+    </li><br>
+    <li>on<br>
+        Supported by Dimmer and PowerSwitch.
+    </li><br>
+    <li>off<br>
+        Supported by Dimmer, PowerSwitch.
+    </li><br>
+    <li>pct &lt;0..100&gt;<br>
+        Sets the brightness in percent. Supported by Dimmer.
+    </li><br>
+    <li>ani &lt;AnimationMode&gt; &lt;TimeoutSec&gt; &lt;StartBrightness&gt; &lt;EndBrightness&gt;<br>
+        Description and details available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_Animation">www.smarthomatic.org</a>
+        Supported by Dimmer.
+    </li><br>
+    <li>statusRequest<br>
+        Supported by Dimmer and PowerSwitch.
+    </li><br>
+    <li><a href="#setExtensions"> set extensions</a><br>
+        Supported by Dimmer and PowerSwitch.</li>
   </ul><br>
 
   <a name="SHC_Dev_Get"></a>
   <b>Get</b>
   <ul>
-    <li>">
-          <code>get &lt;name&gt; input &lt;pin&gt;</code></a>
-      <br />Returns the state of the specified pin for pin = 1..8, otherwise the state of all inputs.</li>
-    <li>N/A</li>
-  </ul><br>
-
-  <a name="SHC_Dev_Readings"></a>
-  <b>Readings</b>
-  <ul>
-    <li>N/A</li>
+    <li>input &lt;pin&gt;<br>
+        Returns the state of the specified pin for pin = 1..8, otherwise the state of all inputs.
+        Supported by EnvSensor.
+    </li><br>
   </ul><br>
 
   <a name="SHC_Dev_Attr"></a>
   <b>Attributes</b>
   <ul>
     <li>readonly<br>
-    if set to a value != 0 all switching commands (on, off, toggle, ...) will be disabled.</li>
+        if set to a value != 0 all switching commands (on, off, toggle, ...) will be disabled.
+    </li><br>
     <li>forceOn<br>
-    try to switch on the device whenever an off status is received.</li>
+        try to switch on the device whenever an off status is received.
+    </li><br>
   </ul><br>
 </ul>
 
