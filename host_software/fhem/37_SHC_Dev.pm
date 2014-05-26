@@ -535,7 +535,7 @@ sub SHC_Dev_Get($@)
           my $channel = "pin" . $arg;
           return "$name.$channel => " . $hash->{READINGS}{$channel}{VAL};
         }
-        return "$name.pins => " . $hash->{READINGS}{in}{VAL};
+        return "$name.pins => " . $hash->{READINGS}{pins}{VAL};
       }
 
       # This return is required to provide the get commands in the web interface
