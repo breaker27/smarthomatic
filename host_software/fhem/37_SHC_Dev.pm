@@ -355,7 +355,7 @@ sub SHC_Dev_Parse($$)
 
         # "on" reading requires a special treatment because 0 translates to off, 1 translates to on
         if ($state_format_arr->[$i] eq "on") {
-          $state_str .= $val == 0 ? "off " : "on ";
+          $state_str .= $val == 0 ? "off" : "on";
         } else {
           $state_str .= $state_format_arr->[$i + 1] . $val . " ";
         }
