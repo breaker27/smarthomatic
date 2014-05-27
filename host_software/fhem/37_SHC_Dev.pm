@@ -457,8 +457,8 @@ sub SHC_Dev_Set($@)
       } elsif (!$readonly && $cmd eq 'pct') {
         my $brightness = $arg;
 
-        #DEBUG
-        Log3 $name, 3, "$name: Args: $arg, $arg2, $arg3, $brightness";
+        # DEBUG
+        # Log3 $name, 3, "$name: Args: $arg, $arg2, $arg3, $brightness";
 
         readingsSingleUpdate($hash, "state", "set-pct:$brightness", 1);
         $parser->initPacket("Dimmer", "Brightness", "SetGet");
@@ -469,8 +469,8 @@ sub SHC_Dev_Set($@)
         #TODO Verify argument values
         my $brightness = $arg;
 
-        #DEBUG
-        Log3 $name, 3, "$name: ani args: $arg, $arg2, $arg3, $arg4, $brightness";
+        # DEBUG
+        # Log3 $name, 3, "$name: ani args: $arg, $arg2, $arg3, $arg4, $brightness";
 
         readingsSingleUpdate($hash, "state", "set-ani", 1);
         $parser->initPacket("Dimmer", "Animation", "SetGet");

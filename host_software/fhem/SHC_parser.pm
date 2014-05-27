@@ -129,7 +129,7 @@ sub init_datafield_positions()
         # to the inner node for further processing.
         if ($field->nodeName eq 'Array') {
           $arrayLength = int(($field->findnodes("Length"))[0]->textContent);
-          print "Next field is an array with " . $arrayLength . " elements!\n";
+          # DEBUG print "Next field is an array with " . $arrayLength . " elements!\n";
 
           $field = ($field->findnodes("UIntValue|IntValue|BoolValue|EnumValue"))[0];
         }
@@ -139,7 +139,7 @@ sub init_datafield_positions()
             my $id   = ($field->findnodes("ID"))[0]->textContent;
             my $bits = ($field->findnodes("Bits"))[0]->textContent;
 
-            print "Data field " . $id . " starts at " . $offset . " with " . $bits . " bits.\n";
+            # DEBUG print "Data field " . $id . " starts at " . $offset . " with " . $bits . " bits.\n";
 
             $dataFields{$messageGroupID . "-" . $messageID . "-" . $id} = new UIntValue($id, $offset, $bits);
 
@@ -150,7 +150,7 @@ sub init_datafield_positions()
             my $id   = ($field->findnodes("ID"))[0]->textContent;
             my $bits = ($field->findnodes("Bits"))[0]->textContent;
 
-            print "Data field " . $id . " starts at " . $offset . " with " . $bits . " bits.\n";
+            # DEBUG print "Data field " . $id . " starts at " . $offset . " with " . $bits . " bits.\n";
 
             $dataFields{$messageGroupID . "-" . $messageID . "-" . $id} = new IntValue($id, $offset, $bits);
 
@@ -161,7 +161,7 @@ sub init_datafield_positions()
             my $id   = ($field->findnodes("ID"))[0]->textContent;
             my $bits = 1;
 
-            print "Data field " . $id . " starts at " . $offset . " with " . $bits . " bits.\n";
+            # DEBUG print "Data field " . $id . " starts at " . $offset . " with " . $bits . " bits.\n";
 
             $dataFields{$messageGroupID . "-" . $messageID . "-" . $id} = new BoolValue($id, $offset, $arrayLength);
 
@@ -172,7 +172,7 @@ sub init_datafield_positions()
             my $id   = ($field->findnodes("ID"))[0]->textContent;
             my $bits = ($field->findnodes("Bits"))[0]->textContent;
 
-            print "Data field " . $id . " starts at " . $offset . " with " . $bits . " bits.\n";
+            # DEBUG print "Data field " . $id . " starts at " . $offset . " with " . $bits . " bits.\n";
 
             my $object = new EnumValue($id, $offset, $bits);
             $dataFields{$messageGroupID . "-" . $messageID . "-" . $id} = $object;
