@@ -267,13 +267,8 @@ sub SHC_Dev_Parse($$)
           my $bar = $parser->getField("BarometricPressure") / 100;    # parser returns pascal, use hPa
           my $tmp = $parser->getField("Temperature") / 100;           # parser returns centigrade
 
-          # DEBUG for WORKAROUND
-          # Log3 $name, 2, "$rname: HELP HELP why am I here, starting to add barometric pressure";
           readingsBulkUpdate($rhash, "barometric_pressure", $bar);
           readingsBulkUpdate($rhash, "temperature",         $tmp);
-
-          # DEBUG for WORKAROUND
-          # Log3 $name, 2, "$rname: HELP HELP am I still here";
         }
       }
     }
@@ -329,23 +324,6 @@ sub SHC_Dev_Parse($$)
     }
   }
 
-  # TODO
-  # WORKAROUND
-  #
-  # After a fhem server restart it happens that a "barometric_pressure" reading gets added even if no
-  # BarometricPressureTemperature message was received. A closer look showed that the only code sequence
-  # that adds the baro reading is never executed, the reading still occurs.
-  my @entries_to_correct = ("barometric_pressure", "temperature", "humidity", "distance");
-  foreach (@entries_to_correct) {
-    my $entry = $_;
-    if ((defined($rhash->{READINGS}{$entry}{VAL}))
-      && $rhash->{READINGS}{$entry}{VAL} == 0)
-    {
-      Log3 $name, 3, "$rname: WORKAROUND $entry defined, but value is invalid. Will be removed";
-      delete ($rhash->{READINGS}{$entry})
-    }
-  }
-
   # Assemble state string according to %dev_state_format
   if (defined($rhash->{devtype}) && defined($dev_state_format{$rhash->{devtype}})) {
     my $state_format_arr = $dev_state_format{$rhash->{devtype}};
@@ -353,10 +331,12 @@ sub SHC_Dev_Parse($$)
     # Iterate over state_format array, if readings are available append it to the state string
     my $state_str = "";
     for (my $i = 0 ; $i < @$state_format_arr ; $i = $i + 2) {
-      if (defined($rhash->{READINGS}{$state_format_arr->[$i]}{VAL})) {
+      if ( defined($rhash->{READINGS}{$state_format_arr->[$i]})
+        && defined($rhash->{READINGS}{$state_format_arr->[$i]}{VAL}))
+      {
         my $val = $rhash->{READINGS}{$state_format_arr->[$i]}{VAL};
 
-        if ($state_str ne "") { 
+        if ($state_str ne "") {
           $state_str .= " ";
         }
 
@@ -368,7 +348,6 @@ sub SHC_Dev_Parse($$)
         }
       }
     }
-
     readingsBulkUpdate($rhash, "state", $state_str);
   }
 
