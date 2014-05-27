@@ -516,9 +516,22 @@ sub SHC_Dev_Get($@)
       if ($cmd eq 'input') {
         if ($arg =~ /[1-8]/) {
           my $channel = "pin" . $arg;
-          return "$name.$channel => " . $hash->{READINGS}{$channel}{VAL};
+          if ( defined($hash->{READINGS}{$channel})
+            && defined($hash->{READINGS}{$channel}{VAL}))
+          {
+            return "$name.$channel => " . $hash->{READINGS}{$channel}{VAL};
+          }
+          return "Error: \"input " . $channel . "\" readings not yet available or not supported by device";
         }
-        return "$name.pins => " . $hash->{READINGS}{pins}{VAL};
+        elsif ($arg eq "all")
+        {
+          if ( defined($hash->{READINGS}{pins})
+            && defined($hash->{READINGS}{pins}{VAL}))
+          {
+            return "$name.pins => " . $hash->{READINGS}{pins}{VAL};
+          }
+          return "Error: \"input all\" readings not yet available or not supported by device";
+        }
       }
 
       # This return is required to provide the get commands in the web interface
@@ -616,7 +629,7 @@ sub SHC_Dev_Send($)
   <b>Get</b>
   <ul>
     <li>input &lt;pin&gt;<br>
-        Returns the state of the specified pin for pin = 1..8, otherwise the state of all inputs.
+        Returns the state of the specified pin for pin = 1..8 or the state of all pins for pin = all.
         Supported by EnvSensor.
     </li><br>
   </ul><br>
