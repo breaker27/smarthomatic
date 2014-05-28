@@ -109,6 +109,25 @@ void setPullUp(uint8_t port_nr, uint8_t pin)
 		sbi(PINB, pin);
 }
 
+void enablePCI(uint8_t port_nr, uint8_t pin)
+// enable the corresponding Pin Change Interrupt and mask the pin at the correct Pin Change Mask register
+{
+	if (port_nr == 2){
+		PCICR |= (1<<PCIE2);
+		PCMSK2 |= (1<<pin);
+	}else if (port_nr == 1){
+		PCICR |= (1<<PCIE1);
+		PCMSK1 |= (1<<pin);
+	}else{
+		PCICR |= (1<<PCIE0);
+		PCMSK0 |= (1<<pin);
+	}
+}
+
+ISR (PCINT0_vect){};	// no code here, Pin Change Interrupt needed to wake up uC
+ISR (PCINT1_vect){};
+ISR (PCINT2_vect){};
+
 void clearPullUp(uint8_t port_nr, uint8_t pin)
 {
 	if (port_nr == 2)
@@ -148,7 +167,11 @@ void init_di_sensor(void)
 
 			UART_PUTF3("Using port %u pin %u as digital input pin %u ", di[i].port, di[i].pin, i);
 			UART_PUTF2("in mode %u with pull-up %s\r\n", mode, di[i].pull_up ? "ON" : "OFF");
-			
+
+			if (di[i].mode==DIGITALINPUTMODE_ONCHANGE){
+				enablePCI(di[i].port,di[i].pin);	// enable Pin Change Interrupt
+			}
+
 			// remember to send out status after power up
 			di_change = true;
 		}
