@@ -27,10 +27,10 @@
 // E2P Block "EnvSensor"
 // =====================
 // Start offset (bit): 512
-// Overall block length: 7680 bits
+// Overall block length: 6840 bits
 
 // TemperatureSensorType (EnumValue)
-// Description: You can choose one of the supported temperature / humidity sensors. If set to 0, no sensor is used, but the device sends out packets for testing purposes.
+// Description: You can choose one of the supported temperature / humidity sensors.
 
 typedef enum {
   TEMPERATURESENSORTYPE_NOSENSOR = 0,
@@ -98,7 +98,7 @@ static inline BarometricSensorTypeEnum e2p_envsensor_get_barometricsensortype(vo
 }
 
 // BrightnessSensorType (EnumValue)
-// Description: You can choose one of the supported light sensors. If set to 0, no sensor is used, but the device sends out packets for testing purposes.
+// Description: You can choose one of the supported light sensors.
 
 typedef enum {
   BRIGHTNESSSENSORTYPE_NOSENSOR = 0,
@@ -120,6 +120,7 @@ static inline BrightnessSensorTypeEnum e2p_envsensor_get_brightnesssensortype(vo
 }
 
 // DistanceSensorType (EnumValue)
+// Description: Choose one of the connected distance sensor types.
 
 typedef enum {
   DISTANCESENSORTYPE_NOSENSOR = 0,
@@ -140,7 +141,82 @@ static inline DistanceSensorTypeEnum e2p_envsensor_get_distancesensortype(void)
   return eeprom_read_UIntValue8(68, 0, 8, 0, 255);
 }
 
-// Reserved area with 7640 bits
+// Reserved area with 320 bits
+
+// DigitalInputPins (EnumValue[8])
+// Description: You can choose up to 8 GPIO pins as digital input. The enum values are couting through every pin from port B, C and D, leaving out the pins that are not accessible because otherwise used.
+
+typedef enum {
+  DIGITALINPUTPINS_UNUSED = 0,
+  DIGITALINPUTPINS_PB1 = 2,
+  DIGITALINPUTPINS_PB2 = 3,
+  DIGITALINPUTPINS_PB6 = 7,
+  DIGITALINPUTPINS_PB7 = 8,
+  DIGITALINPUTPINS_PC1 = 10,
+  DIGITALINPUTPINS_PC2 = 11,
+  DIGITALINPUTPINS_PC3 = 12,
+  DIGITALINPUTPINS_PC4 = 13,
+  DIGITALINPUTPINS_PC5 = 14,
+  DIGITALINPUTPINS_PD3 = 20,
+  DIGITALINPUTPINS_PD4 = 21,
+  DIGITALINPUTPINS_PD5 = 22,
+  DIGITALINPUTPINS_PD6 = 23
+} DigitalInputPinsEnum;
+
+// Set DigitalInputPins (EnumValue)
+// Byte offset: 109, bit offset: 0, length bits 8
+static inline void e2p_envsensor_set_digitalinputpins(uint8_t index, DigitalInputPinsEnum val)
+{
+  eeprom_write_UIntValue(109 + (uint16_t)index * 1, 0, 8, val);
+}
+
+// Get DigitalInputPins (EnumValue)
+// Byte offset: 109, bit offset: 0, length bits 8
+static inline DigitalInputPinsEnum e2p_envsensor_get_digitalinputpins(uint8_t index)
+{
+  return eeprom_read_UIntValue8(109 + (uint16_t)index * 1, 0, 8, 0, 255);
+}
+
+// DigitalInputPullUpResistor (BoolValue[8])
+// Description: Decide if you want to switch on the pull-up resistor at each input pin you have chosen. (If you connect a simple switch connected to ground, you typically want this.)
+
+// Set DigitalInputPullUpResistor (BoolValue)
+// Byte offset: 117, bit offset: 0, length bits 8
+static inline void e2p_envsensor_set_digitalinputpullupresistor(uint8_t index, bool val)
+{
+  eeprom_write_UIntValue(117 + (uint16_t)index * 1, 0, 8, val ? 1 : 0);
+}
+
+// Get DigitalInputPullUpResistor (BoolValue)
+// Byte offset: 117, bit offset: 0, length bits 8
+static inline bool e2p_envsensor_get_digitalinputpullupresistor(uint8_t index)
+{
+  return eeprom_read_UIntValue8(117 + (uint16_t)index * 1, 0, 8, 0, 1) == 1;
+}
+
+// DigitalInputMode (EnumValue[8])
+// Description: The mode decides how the device detects changes and when a new message is sent. OnChange means a status message is sent immediately after a change and only on after a larger time otherwise. Cyclic means the status is sent in the normal cycle time.
+
+typedef enum {
+  DIGITALINPUTMODE_ONCHANGE = 0,
+  DIGITALINPUTMODE_CYCLIC = 1
+} DigitalInputModeEnum;
+
+// Set DigitalInputMode (EnumValue)
+// Byte offset: 125, bit offset: 0, length bits 8
+static inline void e2p_envsensor_set_digitalinputmode(uint8_t index, DigitalInputModeEnum val)
+{
+  eeprom_write_UIntValue(125 + (uint16_t)index * 1, 0, 8, val);
+}
+
+// Get DigitalInputMode (EnumValue)
+// Byte offset: 125, bit offset: 0, length bits 8
+static inline DigitalInputModeEnum e2p_envsensor_get_digitalinputmode(uint8_t index)
+{
+  return eeprom_read_UIntValue8(125 + (uint16_t)index * 1, 0, 8, 0, 255);
+}
+
+// Reserved area with 6288 bits
 
 
 #endif /* _E2P_ENVSENSOR_H */

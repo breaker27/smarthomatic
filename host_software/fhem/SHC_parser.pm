@@ -96,7 +96,7 @@ sub new
 sub init_datafield_positions()
 {
   my $x = XML::LibXML->new() or die "new on XML::LibXML failed";
-  my $d = $x->parse_file("FHEM/packet_layout.xml") or die "parsing XML file failed";
+  my $d = $x->parse_file("FHEM/SHC_packet_layout.xml") or die "parsing XML file failed";
 
   for my $element ($d->findnodes("/Packet/Header/EnumValue[ID='MessageType']/Element")) {
     my $value = ($element->findnodes("Value"))[0]->textContent;
@@ -120,9 +120,20 @@ sub init_datafield_positions()
       $messageID2messageName{$messageGroupID . "-" . $messageID}     = $messageName;
       $messageName2messageID{$messageGroupName . "-" . $messageName} = $messageID;
 
-      my $offset = 0;
+      my $offset      = 0;
+      my $arrayLength = 1;
 
-      for my $field ($message->findnodes("UIntValue|IntValue|BoolValue|EnumValue")) {
+      for my $field ($message->findnodes("Array|UIntValue|IntValue|BoolValue|EnumValue")) {
+
+        # When an array is detected, remember the array length and change the current field node
+        # to the inner node for further processing.
+        if ($field->nodeName eq 'Array') {
+          $arrayLength = int(($field->findnodes("Length"))[0]->textContent);
+          print "Next field is an array with " . $arrayLength . " elements!\n";
+
+          $field = ($field->findnodes("UIntValue|IntValue|BoolValue|EnumValue"))[0];
+        }
+
         given ($field->nodeName) {
           when ('UIntValue') {
             my $id   = ($field->findnodes("ID"))[0]->textContent;
@@ -132,7 +143,7 @@ sub init_datafield_positions()
 
             $dataFields{$messageGroupID . "-" . $messageID . "-" . $id} = new UIntValue($id, $offset, $bits);
 
-            $offset += $bits;
+            $offset += $bits * $arrayLength;
           }
 
           when ('IntValue') {
@@ -143,7 +154,7 @@ sub init_datafield_positions()
 
             $dataFields{$messageGroupID . "-" . $messageID . "-" . $id} = new IntValue($id, $offset, $bits);
 
-            $offset += $bits;
+            $offset += $bits * $arrayLength;
           }
 
           when ('BoolValue') {
@@ -152,9 +163,9 @@ sub init_datafield_positions()
 
             print "Data field " . $id . " starts at " . $offset . " with " . $bits . " bits.\n";
 
-            $dataFields{$messageGroupID . "-" . $messageID . "-" . $id} = new BoolValue($id, $offset);
+            $dataFields{$messageGroupID . "-" . $messageID . "-" . $id} = new BoolValue($id, $offset, $arrayLength);
 
-            $offset += $bits;
+            $offset += $bits * $arrayLength;
           }
 
           when ('EnumValue') {
@@ -173,7 +184,7 @@ sub init_datafield_positions()
               $object->addValue($name, $value);
             }
 
-            $offset += $bits;
+            $offset += $bits * $arrayLength;
           }
         }
       }
@@ -261,12 +272,12 @@ sub getMessageData
 
 sub getField
 {
-  my ($self, $fieldName) = @_;
+  my ($self, $fieldName, $index) = @_;
 
   my $obj = $dataFields{$self->{_messageGroupID} . "-" . $self->{_messageID} . "-" . $fieldName};
   my @tmpArray = map hex("0x$_"), $self->{_messageData} =~ /(..)/g;
 
-  return $obj->getValue(\@tmpArray);
+  return $obj->getValue(\@tmpArray, $index);
 }
 
 sub initPacket

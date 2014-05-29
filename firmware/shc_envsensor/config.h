@@ -35,7 +35,7 @@
 #define SHT11_RESOLUTION    SHT11_RES_HIGH
 
 #define SHT11_PORT	        C
-#define SHT11_SCL	        (1<<PC4)
+#define SHT11_SCL	        (1<<PC2) // was: PC4!
 #define SHT11_SDA	        (1<<PC3)
 #define SHT11_LOWRES	    SHT11_RESOLUTION	
 

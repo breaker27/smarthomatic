@@ -28,6 +28,7 @@
 #include "uart.h"
 
 #include "../src_common/msggrp_generic.h"
+#include "../src_common/msggrp_gpio.h"
 #include "../src_common/msggrp_weather.h"
 #include "../src_common/msggrp_environment.h"
 
@@ -39,6 +40,7 @@
 #include "i2c.h"
 #include "lm75.h"
 #include "bmp085.h"
+#include "srf02.h"
 
 #include "aes256.h"
 #include "util.h"
@@ -48,27 +50,199 @@
 #define AVERAGE_COUNT_BATT 120
 #define AVERAGE_COUNT_VERSION 800
 
+#define SRF02_POWER_PORT PORTD
+#define SRF02_POWER_DDR DDRD
+#define SRF02_POWER_PIN 5
+
 uint8_t temperature_sensor_type = 0;
 uint8_t humidity_sensor_type = 0;
 uint8_t barometric_sensor_type = 0;
 uint8_t brightness_sensor_type = 0;
+uint8_t distance_sensor_type = 0;
 uint16_t version_status_cycle = AVERAGE_COUNT_VERSION - 1; // send promptly after startup
 uint16_t vempty = 1100; // 1.1V * 2 cells = 2.2V = min. voltage for RFM2
+bool di_change = false;
 
 struct measurement_t
 {
 	int32_t val; // stores the accumulated value
 	uint8_t cnt; // amount of single measurements
 	uint8_t avgThr; // amount of measurements that are averaged into one value to send 
-} temperature, humidity, barometric_pressure, battery_voltage, brightness;
+} temperature, humidity, barometric_pressure, distance, battery_voltage, brightness;
+
+struct portpin_t
+{
+	uint8_t port;
+	uint8_t pin;
+	uint8_t mode;
+	bool pull_up;
+	struct measurement_t meas;
+};
+
+#define DI_UNUSED 255
+
+struct portpin_t di[8];
+
+// ---------- helper functions ----------
+
+uint8_t getPinStatus(uint8_t port_nr, uint8_t pin)
+{
+	uint8_t val;
+	
+	if (port_nr == 2)
+		val = PIND;
+	else if (port_nr == 1)
+		val = PINC;
+	else
+		val = PINB;
+		
+	return (val >> pin) & 1;
+}
+
+void setPullUp(uint8_t port_nr, uint8_t pin)
+{
+	if (port_nr == 2)
+		sbi(PIND, pin);
+	else if (port_nr == 1)
+		sbi(PINC, pin);
+	else
+		sbi(PINB, pin);
+}
+
+void enablePCI(uint8_t port_nr, uint8_t pin)
+// enable the corresponding Pin Change Interrupt and mask the pin at the correct Pin Change Mask register
+{
+	if (port_nr == 2){
+		PCICR |= (1<<PCIE2);
+		PCMSK2 |= (1<<pin);
+	}else if (port_nr == 1){
+		PCICR |= (1<<PCIE1);
+		PCMSK1 |= (1<<pin);
+	}else{
+		PCICR |= (1<<PCIE0);
+		PCMSK0 |= (1<<pin);
+	}
+}
+
+ISR (PCINT0_vect){};	// no code here, Pin Change Interrupt needed to wake up uC
+ISR (PCINT1_vect){};
+ISR (PCINT2_vect){};
+
+void clearPullUp(uint8_t port_nr, uint8_t pin)
+{
+	if (port_nr == 2)
+		cbi(PIND, pin);
+	else if (port_nr == 1)
+		cbi(PINC, pin);
+	else
+		cbi(PINB, pin);
+}
+
+void init_di_sensor(void)
+{
+	uint8_t i;
+	
+	for (i = 0; i < 8; i++)
+	{
+		uint8_t pin = e2p_envsensor_get_digitalinputpins(i);
+		
+		if (pin == 0) // not used
+		{
+			di[i].port = DI_UNUSED;
+			di[i].pull_up = false;
+		}
+		else
+		{
+			di[i].pull_up = e2p_envsensor_get_digitalinputpullupresistor(i);
+			uint8_t mode = e2p_envsensor_get_digitalinputmode(i);
+
+			di[i].port = (pin - 1) / 8;
+			di[i].pin = (pin - 1) % 8;
+			di[i].mode = mode;
+			di[i].meas.cnt = 0;
+			di[i].meas.val = 0;
+			
+			// Send every 7 min. in cycle mode. Send immediately in "OnChange" mode and after 28 min.
+			di[i].meas.avgThr = mode == DIGITALINPUTMODE_ONCHANGE ? AVERAGE_COUNT * 4 : AVERAGE_COUNT;
+
+			UART_PUTF3("Using port %u pin %u as digital input pin %u ", di[i].port, di[i].pin, i);
+			UART_PUTF2("in mode %u with pull-up %s\r\n", mode, di[i].pull_up ? "ON" : "OFF");
+
+			if (di[i].mode==DIGITALINPUTMODE_ONCHANGE){
+				enablePCI(di[i].port,di[i].pin);	// enable Pin Change Interrupt
+			}
+
+			// remember to send out status after power up
+			di_change = true;
+		}
+	}
+}
 
 // ---------- functions to measure values from sensors ----------
+
+void measure_digital_input(void)
+{
+	uint8_t i;
+	
+	for (i = 0; i < 8; i++)
+	{
+		if (di[i].pull_up)
+		{
+			setPullUp(di[i].port, di[i].pin);
+		}
+	}
+	
+	_delay_ms(50); // wait a little bit to let the voltage level settle down
+
+	for (i = 0; i < 8; i++)
+	{
+		if (di[i].port != DI_UNUSED)
+		{
+			uint8_t stat = getPinStatus(di[i].port, di[i].pin);
+			
+			di[i].meas.cnt++;
+			
+			// if status changed or avgThr is reached, it is time to send
+			if (((di[i].mode == DIGITALINPUTMODE_ONCHANGE) && (di[i].meas.val != stat))
+				|| (di[i].meas.cnt >= di[i].meas.avgThr))
+			{
+				//UART_PUTS("Status change or vrgThr reached -> send\r\n");
+				di_change = true;
+			}
+			
+			di[i].meas.val = stat;
+		}
+	}
+	
+	for (i = 0; i < 8; i++)
+	{
+		if (di[i].pull_up)
+		{
+			clearPullUp(di[i].port, di[i].pin);
+		}
+	}
+}
 
 void sht11_measure_loop(void)
 {
 	sht11_start_measure();
-	_delay_ms(500);
-	while (!sht11_measure_finish());
+	_delay_ms(200);
+	
+	uint8_t i = 0;
+	
+	while (i < 100) // Abort at 1200ms. Measurement takes typically 420ms.
+	{
+		i++;
+		_delay_ms(10);
+		
+		if (sht11_measure_finish())
+		{
+			//UART_PUTF("SHT15 measurement took %dms\r\n", 200 + i * 10);
+			return;
+		}
+	}
+	
+	UART_PUTS("SHT15 measurement error.\r\n");
 }
 
 void measure_temperature_i2c(void)
@@ -98,7 +272,7 @@ void measure_temperature_other(void)
 	}
 }
 
-void measure_humidity(void)
+void measure_humidity_other(void)
 {
 	if (humidity_sensor_type == HUMIDITYSENSORTYPE_SHT15)
 	{
@@ -113,12 +287,27 @@ void measure_humidity(void)
 	}
 }
 
-void measure_barometric_pressure(void)
+void measure_barometric_pressure_i2c(void)
 {
 	if (barometric_sensor_type == BAROMETRICSENSORTYPE_BMP085)
 	{
 		barometric_pressure.val += bmp085_meas_pressure();
 		barometric_pressure.cnt++;
+	}
+}
+
+void measure_distance_i2c(void)
+{
+	if (distance_sensor_type == DISTANCESENSORTYPE_SRF02)
+	{
+		distance.cnt++;
+		
+		// distance is measured only once (no averaging)
+		if (distance.cnt == distance.avgThr)
+		{
+			distance.val = srf02_get_distance();
+			//UART_PUTF("Dist = %d cm\r\n", distance.val);
+		}
 	}
 }
 
@@ -138,6 +327,35 @@ void measure_brightness(void)
 }
 
 // ---------- functions to prepare a message filled with sensor data ----------
+
+void prepare_digitalpin(void)
+{
+	pkg_header_init_gpio_digitalpin_status();
+
+	UART_PUTS("Send GPIO: ");
+	
+	uint8_t i;
+	
+	for (i = 0; i < 8; i++)
+	{
+		
+		if (di[i].port != DI_UNUSED)
+		{
+			UART_PUTF("%u", di[i].meas.val);
+			di[i].meas.cnt = 0;
+			
+			msg_gpio_digitalpin_set_on(i, di[i].meas.val != 0);
+		}
+		else
+		{
+			UART_PUTS("-");
+		}
+	}
+	
+	UART_PUTS("\r\n");
+
+	di_change = false;
+}
 
 void prepare_humiditytemperature(void)
 {
@@ -183,6 +401,15 @@ void prepare_temperature(void)
 	temperature.val = temperature.cnt = 0;
 }
 
+void prepare_distance(void)
+{
+	pkg_header_init_environment_distance_status();
+	msg_environment_distance_set_distance(distance.val);
+	
+	UART_PUTF("Send distance: %d\r\n", distance.val);
+	
+	distance.val = distance.cnt = 0;
+}
 void prepare_brightness(void)
 {
 	brightness.val /= brightness.cnt;
@@ -245,6 +472,7 @@ int main(void)
 	humidity_sensor_type = e2p_envsensor_get_humiditysensortype();
 	barometric_sensor_type = e2p_envsensor_get_barometricsensortype();
 	brightness_sensor_type = e2p_envsensor_get_brightnesssensortype();
+	distance_sensor_type = e2p_envsensor_get_distancesensortype();
 
 	// read device id
 	device_id = e2p_generic_get_deviceid();
@@ -259,19 +487,26 @@ int main(void)
 	UART_PUTF ("Device ID: %u\r\n", device_id);
 	UART_PUTF ("Packet counter: %lu\r\n", packetcounter);
 	UART_PUTF ("Temperature sensor type: %u\r\n", temperature_sensor_type);
-	UART_PUTF ("Humidity sensor Type: %u\r\n", humidity_sensor_type);
-	UART_PUTF ("Barometric sensor Type: %u\r\n", barometric_sensor_type);
+	UART_PUTF ("Humidity sensor type: %u\r\n", humidity_sensor_type);
+	UART_PUTF ("Barometric sensor type: %u\r\n", barometric_sensor_type);
 	UART_PUTF ("Brightness sensor type: %u\r\n", brightness_sensor_type);
+	UART_PUTF ("Distance sensor type: %u\r\n", distance_sensor_type);
+	
+	init_di_sensor();
 	
 	// init AES key
 	e2p_generic_get_aeskey(aes_key);
 
 	// Different average counts per measurement would be possible.
 	// For now, use the same fixed value for all measurements.
-	temperature.avgThr = humidity.avgThr = barometric_pressure.avgThr = brightness.avgThr = AVERAGE_COUNT;
+	temperature.avgThr = humidity.avgThr = barometric_pressure.avgThr = brightness.avgThr = distance.avgThr = AVERAGE_COUNT;
 	battery_voltage.avgThr = AVERAGE_COUNT_BATT;
 
 	adc_init();
+
+	// set DIDR for ADC channels, switch off digital input buffers to reduce ADC noise and to save power
+	sbi(DIDR0, 0);
+	sbi(DIDR0, 1);
 
 	if ((temperature_sensor_type == TEMPERATURESENSORTYPE_SHT15)
 		|| (humidity_sensor_type == HUMIDITYSENSORTYPE_SHT15))
@@ -289,6 +524,11 @@ int main(void)
 		i2c_disable();
 	}
 
+	if (distance_sensor_type == DISTANCESENSORTYPE_SRF02)
+	{
+		sbi(SRF02_POWER_DDR, SRF02_POWER_PIN);
+	}
+
 	led_blink(500, 500, 3);
 	
 	rfm12_init();
@@ -300,41 +540,68 @@ int main(void)
 
 	sei();
 
-	bool needI2C = (temperature_sensor_type == TEMPERATURESENSORTYPE_DS7505)
+	// If a SRF02 is connected, it is assumed that it is powered by a step up voltage converter,
+	// which produces 5V out of the ~3V battery power. It has to be switched on to activate
+	// the SRF02 and also make it possible to communicate to other I2C devices.
+
+	bool srf02_connected = distance_sensor_type == DISTANCESENSORTYPE_SRF02;
+	bool measure_other_i2c = (temperature_sensor_type == TEMPERATURESENSORTYPE_DS7505)
 		|| (temperature_sensor_type == TEMPERATURESENSORTYPE_BMP085)
 		|| (barometric_sensor_type == BAROMETRICSENSORTYPE_BMP085);
 
 	while (42)
 	{
+		bool measure_srf02 = srf02_connected && (distance.cnt + 1 == distance.avgThr); // SRF02 only measures every avgThr cycles!
+		bool measure_i2c = measure_srf02 || measure_other_i2c;
+		bool needs_power = measure_srf02 || (measure_other_i2c && srf02_connected);
+
 		// measure ADC dependant values
 		adc_on(true);
 		measure_battery_voltage();
 		measure_brightness();
 		adc_on(false);
+		measure_digital_input();
 
-		// measure other values, possibly I2C dependant
-		if (needI2C)
+		// measure other values from I2C devices
+		if (measure_i2c)
 		{
+			if (needs_power)
+			{
+				sbi(SRF02_POWER_PORT, SRF02_POWER_PIN);
+				_delay_ms(1000); // ~500ms are needed to make the output voltage of the regulator stable
+			}
+
 			i2c_enable();
-		}
-
-		measure_temperature_i2c();
-		measure_barometric_pressure();
-
-		if (needI2C)
-		{
+			measure_temperature_i2c();
+			measure_barometric_pressure_i2c();
+			measure_distance_i2c();
 			i2c_disable();
+
+			if (needs_power)
+			{
+				cbi(SRF02_POWER_PORT, SRF02_POWER_PIN);
+			}
 		}
 		
+		if (srf02_connected && !measure_srf02)
+		{
+			distance.cnt++; // increase distance counter, because measure_distance_i2c() was not called
+		}
+		
+		// measure other values, non-I2C devices
 		measure_temperature_other();
-		measure_humidity();
+		measure_humidity_other();
 		
 		version_status_cycle++;
 
 		// search for value to send with avgThr reached
 		bool send = true;
 		
-		if (humidity.cnt >= humidity.avgThr)
+		if (di_change)
+		{
+			prepare_digitalpin();
+		}
+		else if (humidity.cnt >= humidity.avgThr)
 		{
 			prepare_humiditytemperature();
 		}
@@ -345,6 +612,10 @@ int main(void)
 		else if (temperature.cnt >= temperature.avgThr)
 		{
 			prepare_temperature();
+		}
+		else if (distance.cnt >= distance.avgThr)
+		{
+			prepare_distance();
 		}
 		else if (brightness.cnt >= brightness.avgThr)
 		{
