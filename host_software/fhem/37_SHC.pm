@@ -20,8 +20,6 @@
 # with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 ###########################################################################
 # $Id: 37_SHC.pm xxxx 2014-xx-xx xx:xx:xx rr2000 $
-#
-# TODO:
 
 package main;
 
