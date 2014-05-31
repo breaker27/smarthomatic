@@ -282,40 +282,39 @@ void remove_request(uint16_t sender_id, uint16_t request_sender_id, uint32_t pac
 				// Because we use a fifo queue, the first buffered element has to be the one that is acknowledged.
 				// We don't need to check the others.
 				uint8_t rb_slot = request_queue[rq_slot][1];
+				
+				if (request_buffer[rb_slot].packet_counter == packet_counter)
 				{
-					if (request_buffer[rb_slot].packet_counter == packet_counter)
+					uint8_t i;
+					
+					UART_PUTF("Removing request from request buffer slot %u.\r\n", rb_slot);
+					
+					// remove from request buffer
+					request_buffer[rb_slot].message_type = MESSAGETYPE_UNUSED;
+					
+					// remove from request queue
+					for (i = 1; i < REQUEST_QUEUE_PACKETS; i++)
 					{
-						uint8_t i;
-						
-						UART_PUTF("Removing request from request buffer slot %u.\r\n", rb_slot);
-						
-						// remove from request buffer
-						request_buffer[rb_slot].message_type = MESSAGETYPE_UNUSED;
-						
-						// remove from request queue
-						for (i = 1; i < REQUEST_QUEUE_PACKETS; i++)
-						{
-							request_queue[rq_slot][i] = request_queue[rq_slot][i + 1];
-						}
-						
-						request_queue[rq_slot][REQUEST_QUEUE_PACKETS] = SLOT_UNUSED;
-						
-						// delete request queue entry if no more packets in this queue_request
-						if (request_queue[rq_slot][1] == SLOT_UNUSED)
-						{
-							UART_PUTF("Request queue %u is now empty.\r\n", rq_slot);
-							request_queue[rq_slot][0] = SLOT_UNUSED;
-						}
-						
-						print_request_queue();
-					}
-					else
-					{
-						UART_PUTS("Warning: SenderID from ack found in queue, but PacketCounter does not match.\r\n");
+						request_queue[rq_slot][i] = request_queue[rq_slot][i + 1];
 					}
 					
-					return;
+					request_queue[rq_slot][REQUEST_QUEUE_PACKETS] = SLOT_UNUSED;
+					
+					// delete request queue entry if no more packets in this queue_request
+					if (request_queue[rq_slot][1] == SLOT_UNUSED)
+					{
+						UART_PUTF("Request queue %u is now empty.\r\n", rq_slot);
+						request_queue[rq_slot][0] = SLOT_UNUSED;
+					}
+					
+					print_request_queue();
 				}
+				else
+				{
+					UART_PUTS("Warning: SenderID from ack found in queue, but PacketCounter does not match.\r\n");
+				}
+				
+				return;
 			}
 		}
 		
