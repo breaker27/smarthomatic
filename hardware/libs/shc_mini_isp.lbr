@@ -57,19 +57,21 @@
 <library>
 <packages>
 <package name="PINHD_1X5_1.27">
-<pad name="RESET" x="0" y="2.54" drill="0.6" shape="octagon"/>
-<pad name="MOSI" x="0" y="1.27" drill="0.6" shape="octagon"/>
-<pad name="MISO" x="0" y="0" drill="0.6" shape="octagon"/>
-<pad name="SCK" x="0" y="-1.27" drill="0.6" shape="octagon"/>
-<pad name="GND" x="0" y="-2.54" drill="0.6" shape="octagon"/>
+<pad name="RESET" x="0" y="2.54" drill="0.5" shape="octagon"/>
+<pad name="MOSI" x="0" y="1.27" drill="0.5" shape="octagon"/>
+<pad name="MISO" x="0" y="0" drill="0.5" shape="octagon"/>
+<pad name="SCK" x="0" y="-1.27" drill="0.5" shape="octagon"/>
+<pad name="GND" x="0" y="-2.54" drill="0.5" shape="octagon"/>
 <text x="-1.27" y="4.445" size="1.27" layer="25">&gt;NAME</text>
 <text x="-1.27" y="-5.715" size="1.27" layer="27">&gt;VALUE</text>
 <wire x1="-1.27" y1="3.81" x2="1.27" y2="3.81" width="0.127" layer="21"/>
-<wire x1="1.27" y1="3.81" x2="1.27" y2="-3.81" width="0.127" layer="21"/>
+<wire x1="1.27" y1="3.81" x2="1.27" y2="1.27" width="0.127" layer="21"/>
+<wire x1="1.27" y1="1.27" x2="1.27" y2="-3.81" width="0.127" layer="21"/>
 <wire x1="1.27" y1="-3.81" x2="-1.27" y2="-3.81" width="0.127" layer="21"/>
-<wire x1="-1.27" y1="-3.81" x2="-1.27" y2="3.81" width="0.127" layer="21"/>
+<wire x1="-1.27" y1="-3.81" x2="-1.27" y2="1.27" width="0.127" layer="21"/>
 <text x="-1.5875" y="-2.8575" size="1.016" layer="21" rot="R90">1</text>
 <rectangle x1="-1.27" y1="-3.81" x2="1.27" y2="-1.905" layer="21"/>
+<wire x1="-1.27" y1="1.27" x2="-1.27" y2="3.81" width="0.127" layer="21"/>
 </package>
 <package name="PINHD1_1.27">
 <pad name="P$1" x="0" y="0" drill="0.6" shape="octagon"/>
