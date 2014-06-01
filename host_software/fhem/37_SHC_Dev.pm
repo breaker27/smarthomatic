@@ -20,8 +20,6 @@
 # with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 ###########################################################################
 # $Id: 37_SHC_Dev.pm xxxx 2014-xx-xx xx:xx:xx rr2000 $
-#
-# TODO:
 
 package main;
 
@@ -267,13 +265,8 @@ sub SHC_Dev_Parse($$)
           my $bar = $parser->getField("BarometricPressure") / 100;    # parser returns pascal, use hPa
           my $tmp = $parser->getField("Temperature") / 100;           # parser returns centigrade
 
-          # DEBUG for WORKAROUND
-          # Log3 $name, 2, "$rname: HELP HELP why am I here, starting to add barometric pressure";
           readingsBulkUpdate($rhash, "barometric_pressure", $bar);
           readingsBulkUpdate($rhash, "temperature",         $tmp);
-
-          # DEBUG for WORKAROUND
-          # Log3 $name, 2, "$rname: HELP HELP am I still here";
         }
       }
     }
@@ -329,23 +322,6 @@ sub SHC_Dev_Parse($$)
     }
   }
 
-  # TODO
-  # WORKAROUND
-  #
-  # After a fhem server restart it happens that a "barometric_pressure" reading gets added even if no
-  # BarometricPressureTemperature message was received. A closer look showed that the only code sequence
-  # that adds the baro reading is never executed, the reading still occurs.
-  my @entries_to_correct = ("barometric_pressure", "temperature", "humidity", "distance");
-  foreach (@entries_to_correct) {
-    my $entry = $_;
-    if ((defined($rhash->{READINGS}{$entry}{VAL}))
-      && $rhash->{READINGS}{$entry}{VAL} == 0)
-    {
-      Log3 $name, 3, "$rname: WORKAROUND $entry defined, but value is invalid. Will be removed";
-      delete ($rhash->{READINGS}{$entry})
-    }
-  }
-
   # Assemble state string according to %dev_state_format
   if (defined($rhash->{devtype}) && defined($dev_state_format{$rhash->{devtype}})) {
     my $state_format_arr = $dev_state_format{$rhash->{devtype}};
@@ -353,10 +329,12 @@ sub SHC_Dev_Parse($$)
     # Iterate over state_format array, if readings are available append it to the state string
     my $state_str = "";
     for (my $i = 0 ; $i < @$state_format_arr ; $i = $i + 2) {
-      if (defined($rhash->{READINGS}{$state_format_arr->[$i]}{VAL})) {
+      if ( defined($rhash->{READINGS}{$state_format_arr->[$i]})
+        && defined($rhash->{READINGS}{$state_format_arr->[$i]}{VAL}))
+      {
         my $val = $rhash->{READINGS}{$state_format_arr->[$i]}{VAL};
 
-        if ($state_str ne "") { 
+        if ($state_str ne "") {
           $state_str .= " ";
         }
 
@@ -368,7 +346,6 @@ sub SHC_Dev_Parse($$)
         }
       }
     }
-
     readingsBulkUpdate($rhash, "state", $state_str);
   }
 
@@ -478,8 +455,8 @@ sub SHC_Dev_Set($@)
       } elsif (!$readonly && $cmd eq 'pct') {
         my $brightness = $arg;
 
-        #DEBUG
-        Log3 $name, 3, "$name: Args: $arg, $arg2, $arg3, $brightness";
+        # DEBUG
+        # Log3 $name, 3, "$name: Args: $arg, $arg2, $arg3, $brightness";
 
         readingsSingleUpdate($hash, "state", "set-pct:$brightness", 1);
         $parser->initPacket("Dimmer", "Brightness", "SetGet");
@@ -490,8 +467,8 @@ sub SHC_Dev_Set($@)
         #TODO Verify argument values
         my $brightness = $arg;
 
-        #DEBUG
-        Log3 $name, 3, "$name: ani args: $arg, $arg2, $arg3, $arg4, $brightness";
+        # DEBUG
+        # Log3 $name, 3, "$name: ani args: $arg, $arg2, $arg3, $arg4, $brightness";
 
         readingsSingleUpdate($hash, "state", "set-ani", 1);
         $parser->initPacket("Dimmer", "Animation", "SetGet");
@@ -537,9 +514,22 @@ sub SHC_Dev_Get($@)
       if ($cmd eq 'input') {
         if ($arg =~ /[1-8]/) {
           my $channel = "pin" . $arg;
-          return "$name.$channel => " . $hash->{READINGS}{$channel}{VAL};
+          if ( defined($hash->{READINGS}{$channel})
+            && defined($hash->{READINGS}{$channel}{VAL}))
+          {
+            return "$name.$channel => " . $hash->{READINGS}{$channel}{VAL};
+          }
+          return "Error: \"input " . $channel . "\" readings not yet available or not supported by device";
         }
-        return "$name.pins => " . $hash->{READINGS}{pins}{VAL};
+        elsif ($arg eq "all")
+        {
+          if ( defined($hash->{READINGS}{pins})
+            && defined($hash->{READINGS}{pins}{VAL}))
+          {
+            return "$name.pins => " . $hash->{READINGS}{pins}{VAL};
+          }
+          return "Error: \"input all\" readings not yet available or not supported by device";
+        }
       }
 
       # This return is required to provide the get commands in the web interface
@@ -637,7 +627,7 @@ sub SHC_Dev_Send($)
   <b>Get</b>
   <ul>
     <li>input &lt;pin&gt;<br>
-        Returns the state of the specified pin for pin = 1..8, otherwise the state of all inputs.
+        Returns the state of the specified pin for pin = 1..8 or the state of all pins for pin = all.
         Supported by EnvSensor.
     </li><br>
   </ul><br>
