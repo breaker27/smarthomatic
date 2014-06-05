@@ -62,6 +62,7 @@ uint8_t distance_sensor_type = 0;
 uint16_t version_status_cycle = AVERAGE_COUNT_VERSION - 1; // send promptly after startup
 uint16_t vempty = 1100; // 1.1V * 2 cells = 2.2V = min. voltage for RFM2
 bool di_change = false;
+bool pin_wakeup = false; // remember if wakeup was done by pin change (or by RFM12B)
 
 struct measurement_t
 {
@@ -85,20 +86,37 @@ struct portpin_t di[8];
 
 // ---------- helper functions ----------
 
-ISR (PCINT0_vect){};	// no code here, Pin Change Interrupt needed to wake up uC
-ISR (PCINT1_vect){};
-ISR (PCINT2_vect){};
-
-void enablePCI(uint8_t port_nr, uint8_t pin)
-// enable the corresponding Pin Change Interrupt and mask the pin at the correct Pin Change Mask register
+ISR (PCINT0_vect)
 {
-	if (port_nr == 2){
+	pin_wakeup = true;
+}
+
+ISR (PCINT1_vect)
+{
+	pin_wakeup = true;
+}
+
+ISR (PCINT2_vect)
+{
+	pin_wakeup = true;
+}
+
+// enable the corresponding Pin Change Interrupt and mask the pin at the correct Pin Change Mask register
+void enablePCI(uint8_t port_nr, uint8_t pin)
+{
+	if (port_nr == 2)
+	{
+		//sbi(PCICR, PCIE2);
 		PCICR |= (1<<PCIE2);
 		PCMSK2 |= (1<<pin);
-	}else if (port_nr == 1){
+	}
+	else if (port_nr == 1)
+	{
 		PCICR |= (1<<PCIE1);
 		PCMSK1 |= (1<<pin);
-	}else{
+	}
+	else
+	{
 		PCICR |= (1<<PCIE0);
 		PCMSK0 |= (1<<pin);
 	}
@@ -162,10 +180,13 @@ void init_di_sensor(void)
 			di[i].meas.cnt = 0;
 			di[i].meas.val = 0;
 			
-			if (di[i].mode==DIGITALINPUTMODE_ONCHANGE){
-				enablePCI(di[i].port,di[i].pin);	// enable Pin Change Interrupt
-				if (di[i].pull_up){
-					setPullUp(di[i].port, di[i].pin);	// when using PCI, pullups should be active
+			if (di[i].mode == DIGITALINPUTMODE_ONCHANGE)
+			{
+				enablePCI(di[i].port, di[i].pin); // enable Pin Change Interrupt
+				
+				if (di[i].pull_up)
+				{
+					setPullUp(di[i].port, di[i].pin); // when using PCI, pullups should be active
 				}
 			}
 
@@ -554,48 +575,55 @@ int main(void)
 
 	while (42)
 	{
-		bool measure_srf02 = srf02_connected && (distance.cnt + 1 == distance.avgThr); // SRF02 only measures every avgThr cycles!
-		bool measure_i2c = measure_srf02 || measure_other_i2c;
-		bool needs_power = measure_srf02 || (measure_other_i2c && srf02_connected);
-
-		// measure ADC dependant values
-		adc_on(true);
-		measure_battery_voltage();
-		measure_brightness();
-		adc_on(false);
-		measure_digital_input();
-
-		// measure other values from I2C devices
-		if (measure_i2c)
+		if (pin_wakeup)
 		{
-			if (needs_power)
-			{
-				sbi(SRF02_POWER_PORT, SRF02_POWER_PIN);
-				_delay_ms(1000); // ~500ms are needed to make the output voltage of the regulator stable
-			}
-
-			i2c_enable();
-			measure_temperature_i2c();
-			measure_barometric_pressure_i2c();
-			measure_distance_i2c();
-			i2c_disable();
-
-			if (needs_power)
-			{
-				cbi(SRF02_POWER_PORT, SRF02_POWER_PIN);
-			}
+			measure_digital_input();
 		}
-		
-		if (srf02_connected && !measure_srf02)
+		else // wakeup by RFM12B -> measure everything
 		{
-			distance.cnt++; // increase distance counter, because measure_distance_i2c() was not called
+			bool measure_srf02 = srf02_connected && (distance.cnt + 1 == distance.avgThr); // SRF02 only measures every avgThr cycles!
+			bool measure_i2c = measure_srf02 || measure_other_i2c;
+			bool needs_power = measure_srf02 || (measure_other_i2c && srf02_connected);
+
+			// measure ADC dependant values
+			adc_on(true);
+			measure_battery_voltage();
+			measure_brightness();
+			adc_on(false);
+			measure_digital_input();
+
+			// measure other values from I2C devices
+			if (measure_i2c)
+			{
+				if (needs_power)
+				{
+					sbi(SRF02_POWER_PORT, SRF02_POWER_PIN);
+					_delay_ms(1000); // ~500ms are needed to make the output voltage of the regulator stable
+				}
+
+				i2c_enable();
+				measure_temperature_i2c();
+				measure_barometric_pressure_i2c();
+				measure_distance_i2c();
+				i2c_disable();
+
+				if (needs_power)
+				{
+					cbi(SRF02_POWER_PORT, SRF02_POWER_PIN);
+				}
+			}
+			
+			if (srf02_connected && !measure_srf02)
+			{
+				distance.cnt++; // increase distance counter, because measure_distance_i2c() was not called
+			}
+			
+			// measure other values, non-I2C devices
+			measure_temperature_other();
+			measure_humidity_other();
+			
+			version_status_cycle++;
 		}
-		
-		// measure other values, non-I2C devices
-		measure_temperature_other();
-		measure_humidity_other();
-		
-		version_status_cycle++;
 
 		// search for value to send with avgThr reached
 		bool send = true;
@@ -653,6 +681,7 @@ int main(void)
 		}
 
 		// go to sleep. Wakeup by RFM12 wakeup-interrupt
+		pin_wakeup = false;
 		set_sleep_mode(SLEEP_MODE_PWR_DOWN);
         sleep_mode();
 	}
