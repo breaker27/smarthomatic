@@ -106,19 +106,18 @@ void enablePCI(uint8_t port_nr, uint8_t pin)
 {
 	if (port_nr == 2)
 	{
-		//sbi(PCICR, PCIE2);
-		PCICR |= (1<<PCIE2);
-		PCMSK2 |= (1<<pin);
+		sbi(PCICR, PCIE2);
+		sbi(PCMSK2, pin);
 	}
 	else if (port_nr == 1)
 	{
-		PCICR |= (1<<PCIE1);
-		PCMSK1 |= (1<<pin);
+		sbi(PCICR, PCIE1);
+		sbi(PCMSK1, pin);
 	}
 	else
 	{
-		PCICR |= (1<<PCIE0);
-		PCMSK0 |= (1<<pin);
+		sbi(PCICR, PCIE0);
+		sbi(PCMSK0, pin);
 	}
 }
 
@@ -680,7 +679,7 @@ int main(void)
 			inc_packetcounter();
 		}
 
-		// go to sleep. Wakeup by RFM12 wakeup-interrupt
+		// Go to sleep. Wakeup by RFM12 wakeup-interrupt or pin change (if configured).
 		pin_wakeup = false;
 		set_sleep_mode(SLEEP_MODE_PWR_DOWN);
         sleep_mode();
