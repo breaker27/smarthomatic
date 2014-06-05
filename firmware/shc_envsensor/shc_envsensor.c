@@ -206,17 +206,23 @@ void init_di_sensor(void)
 void measure_digital_input(void)
 {
 	uint8_t i;
+	bool wait_pullups = false;
 	
 	for (i = 0; i < 8; i++)
 	{
-		if ((di[i].pull_up)&&(di[i].mode!=DIGITALINPUTMODE_ONCHANGE))
+		if ((di[i].pull_up) && (di[i].mode != DIGITALINPUTMODE_ONCHANGE))
 		{
 			setPullUp(di[i].port, di[i].pin);
+			wait_pullups = true;
 		}
 	}
 	
-	_delay_ms(50); // wait a little bit to let the voltage level settle down
-
+	// wait a little bit to let the voltage level settle down in case pullups were just switched on
+	if (wait_pullups)
+	{
+		_delay_ms(10);
+	}
+	
 	for (i = 0; i < 8; i++)
 	{
 		if (di[i].port != DI_UNUSED)
@@ -239,7 +245,7 @@ void measure_digital_input(void)
 	
 	for (i = 0; i < 8; i++)
 	{
-		if ((di[i].pull_up)&&(di[i].mode!=DIGITALINPUTMODE_ONCHANGE))
+		if ((di[i].pull_up) && (di[i].mode != DIGITALINPUTMODE_ONCHANGE))
 		{
 			clearPullUp(di[i].port, di[i].pin);
 		}
