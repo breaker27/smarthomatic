@@ -85,6 +85,25 @@ struct portpin_t di[8];
 
 // ---------- helper functions ----------
 
+ISR (PCINT0_vect){};	// no code here, Pin Change Interrupt needed to wake up uC
+ISR (PCINT1_vect){};
+ISR (PCINT2_vect){};
+
+void enablePCI(uint8_t port_nr, uint8_t pin)
+// enable the corresponding Pin Change Interrupt and mask the pin at the correct Pin Change Mask register
+{
+	if (port_nr == 2){
+		PCICR |= (1<<PCIE2);
+		PCMSK2 |= (1<<pin);
+	}else if (port_nr == 1){
+		PCICR |= (1<<PCIE1);
+		PCMSK1 |= (1<<pin);
+	}else{
+		PCICR |= (1<<PCIE0);
+		PCMSK0 |= (1<<pin);
+	}
+}
+
 uint8_t getPinStatus(uint8_t port_nr, uint8_t pin)
 {
 	uint8_t val;
@@ -143,6 +162,13 @@ void init_di_sensor(void)
 			di[i].meas.cnt = 0;
 			di[i].meas.val = 0;
 			
+			if (di[i].mode==DIGITALINPUTMODE_ONCHANGE){
+				enablePCI(di[i].port,di[i].pin);	// enable Pin Change Interrupt
+				if (di[i].pull_up){
+					setPullUp(di[i].port, di[i].pin);	// when using PCI, pullups should be active
+				}
+			}
+
 			// Send every 7 min. in cycle mode. Send immediately in "OnChange" mode and after 28 min.
 			di[i].meas.avgThr = mode == DIGITALINPUTMODE_ONCHANGE ? AVERAGE_COUNT * 4 : AVERAGE_COUNT;
 
@@ -163,7 +189,7 @@ void measure_digital_input(void)
 	
 	for (i = 0; i < 8; i++)
 	{
-		if (di[i].pull_up)
+		if ((di[i].pull_up)&&(di[i].mode!=DIGITALINPUTMODE_ONCHANGE))
 		{
 			setPullUp(di[i].port, di[i].pin);
 		}
@@ -193,7 +219,7 @@ void measure_digital_input(void)
 	
 	for (i = 0; i < 8; i++)
 	{
-		if (di[i].pull_up)
+		if ((di[i].pull_up)&&(di[i].mode!=DIGITALINPUTMODE_ONCHANGE))
 		{
 			clearPullUp(di[i].port, di[i].pin);
 		}
