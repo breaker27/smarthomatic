@@ -179,10 +179,10 @@ void print_request_queue(void)
 // This function has to be called once a second, because the timeout values represent the amount of seconds.
 //
 // TODO (optimization): Change the behaviour so that a new packet can be sent out of the queue without a delay (currently, we have ~0.5s delay in average).
-// So check the queue for "timeout 0" packets more often, but don't reduce the timeout  in this case.
+// So check the queue for "timeout 0" packets more often, but don't reduce the timeout in this case.
 request_t * find_request_to_repeat(uint32_t packet_counter)
 {
-	uint8_t i, j;
+	uint8_t i;
 	uint8_t slot;
 	request_t * res = 0;
 
@@ -190,27 +190,15 @@ request_t * find_request_to_repeat(uint32_t packet_counter)
 	{
 		if (request_queue[i][0] != SLOT_UNUSED)
 		{
-			for (j = 0; j < REQUEST_QUEUE_PACKETS; j++)
+			// count down timeout from first element per queue
+			slot = request_queue[i][1];
+			
+			if (request_buffer[slot].timeout > 0)
 			{
-				slot = request_queue[i][j + 1];
-				
-				if (slot == SLOT_UNUSED)
-				{
-					break;
-				}
-				else
-				{
-					// count down ALL timeouts
-					if (request_buffer[slot].timeout)
-					{
-						request_buffer[slot].timeout--;
-					}
-				}
+				request_buffer[slot].timeout--;
 			}
 			
 			// set bufx to the request to retry, if timeout is reached
-			slot = request_queue[i][1];
-			
 			if ((request_buffer[slot].timeout == 0) && (res == 0))
 			{
 				res = &request_buffer[slot];
