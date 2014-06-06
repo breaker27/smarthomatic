@@ -226,7 +226,7 @@ request_t * find_request_to_repeat(uint32_t packet_counter)
 
 					uint8_t x;
 					
-					for (x = 1; x < REQUEST_QUEUE_PACKETS - 1; x++)
+					for (x = 1; x < REQUEST_QUEUE_PACKETS; x++)
 					{
 						request_queue[i][x] = request_queue[i][x + 1];
 					}
