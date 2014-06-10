@@ -20,9 +20,7 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 #include <string.h>
-#include <avr/wdt.h>
 #include <avr/sleep.h>
-#include <avr/eeprom.h>
 
 #include "rfm12.h"
 #include "uart.h"
