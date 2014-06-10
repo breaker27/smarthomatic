@@ -24,6 +24,8 @@
 #ifndef _E2P_THERMOSTAT_H
 #define _E2P_THERMOSTAT_H
 
+#include "e2p_access.h"
+
 // E2P Block "Thermostat"
 // ======================
 // Start offset (bit): 512

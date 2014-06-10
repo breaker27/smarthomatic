@@ -117,6 +117,8 @@ public class SourceCodeGeneratorE2P
 		out.println("#ifndef _E2P_" + blockName.toUpperCase() + "_H");
 		out.println("#define _E2P_" + blockName.toUpperCase() + "_H");
 		out.println("");
+		out.println("#include \"e2p_access.h\"");
+		out.println("");
 
 		Node hwConfigBlock = XPathAPI.selectSingleNode(xmlRoot, "Block[Name='" + blockName + "']");
 		

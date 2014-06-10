@@ -24,6 +24,8 @@
 #ifndef _E2P_BASESTATION_H
 #define _E2P_BASESTATION_H
 
+#include "e2p_access.h"
+
 // E2P Block "BaseStation"
 // =======================
 // Start offset (bit): 512

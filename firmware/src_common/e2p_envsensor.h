@@ -24,6 +24,8 @@
 #ifndef _E2P_ENVSENSOR_H
 #define _E2P_ENVSENSOR_H
 
+#include "e2p_access.h"
+
 // E2P Block "EnvSensor"
 // =====================
 // Start offset (bit): 512
