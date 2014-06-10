@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <avr/pgmspace.h>
+#include "e2p_hardware.h"
 
 #define sbi(ADDRESS,BIT) ((ADDRESS) |= (1<<(BIT)))
 #define cbi(ADDRESS,BIT) ((ADDRESS) &= ~(1<<(BIT)))
@@ -48,7 +49,7 @@ uint16_t read_adc(uint8_t adc_input);
 void util_init(void);
 void switch_led(bool b_on);
 void led_blink(uint16_t on, uint16_t off, uint8_t times);
-void check_eeprom_compatibility(uint8_t deviceType);
+void check_eeprom_compatibility(DeviceTypeEnum deviceType);
 void osccal_info(void);
 void osccal_init(void);
 void inc_packetcounter(void);
