@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License along
 # with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 ###########################################################################
-# $Id: 37_SHC_Dev.pm xxxx 2014-xx-xx xx:xx:xx rr2000 $
+# $Id: 37_SHCdev.pm xxxx 2014-xx-xx xx:xx:xx rr2000 $
 
 package main;
 
@@ -100,19 +100,19 @@ my %auto_devtype = (
   "Dimmer.Brightness"                     => "Dimmer"
 );
 
-sub SHC_Dev_Parse($$);
+sub SHCdev_Parse($$);
 
 #####################################
-sub SHC_Dev_Initialize($)
+sub SHCdev_Initialize($)
 {
   my ($hash) = @_;
 
   $hash->{Match}    = "^Packet Data: SenderID=[1-9]|0[1-9]|[1-9][0-9]|[0-9][0-9][0-9]|[0-3][0-9][0-9][0-9]|40[0-8][0-9]|409[0-6]";
-  $hash->{SetFn}    = "SHC_Dev_Set";
-  $hash->{GetFn}    = "SHC_Dev_Get";
-  $hash->{DefFn}    = "SHC_Dev_Define";
-  $hash->{UndefFn}  = "SHC_Dev_Undef";
-  $hash->{ParseFn}  = "SHC_Dev_Parse";
+  $hash->{SetFn}    = "SHCdev_Set";
+  $hash->{GetFn}    = "SHCdev_Get";
+  $hash->{DefFn}    = "SHCdev_Define";
+  $hash->{UndefFn}  = "SHCdev_Undef";
+  $hash->{ParseFn}  = "SHCdev_Parse";
   $hash->{AttrList} = "IODev" 
                        ." readonly:1"
                        ." forceOn:1"
@@ -120,40 +120,40 @@ sub SHC_Dev_Initialize($)
 }
 
 #####################################
-sub SHC_Dev_Define($$)
+sub SHCdev_Define($$)
 {
   my ($hash, $def) = @_;
   my @a = split("[ \t][ \t]*", $def);
 
   if (@a < 3 || @a > 4) {
-    my $msg = "wrong syntax: define <name> SHC_Dev <SenderID> [<AesKey>] ";
+    my $msg = "wrong syntax: define <name> SHCdev <SenderID> [<AesKey>] ";
     Log3 undef, 2, $msg;
     return $msg;
   }
 
   # Correct SenderID for SHC devices is from 1 - 4096 (leading zeros allowed)
   $a[2] =~ m/^([1-9]|0[1-9]|[1-9][0-9]|[0-9][0-9][0-9]|[0-3][0-9][0-9][0-9]|40[0-8][0-9]|409[0-6])$/i;
-  return "$a[2] is not a valid SHC_Dev SenderID" if (!defined($1));
+  return "$a[2] is not a valid SHCdev SenderID" if (!defined($1));
 
   my $aeskey;
 
   if (@a == 3) {
     $aeskey = 0;
   } else {
-    return "$a[3] is not a valid SHC_Dev AesKey" if ($a[3] lt 0 || $a[3] gt 15);
+    return "$a[3] is not a valid SHCdev AesKey" if ($a[3] lt 0 || $a[3] gt 15);
     $aeskey = $a[3];
   }
 
   my $name = $a[0];
   my $addr = $a[2];
 
-  return "SHC_Dev device $addr already used for $modules{SHC_Dev}{defptr}{$addr}->{NAME}." if ($modules{SHC_Dev}{defptr}{$addr}
-    && $modules{SHC_Dev}{defptr}{$addr}->{NAME} ne $name);
+  return "SHCdev device $addr already used for $modules{SHCdev}{defptr}{$addr}->{NAME}." if ($modules{SHCdev}{defptr}{$addr}
+    && $modules{SHCdev}{defptr}{$addr}->{NAME} ne $name);
 
   $hash->{addr}   = $addr;
   $hash->{aeskey} = $aeskey;
 
-  $modules{SHC_Dev}{defptr}{$addr} = $hash;
+  $modules{SHCdev}{defptr}{$addr} = $hash;
 
   AssignIoPort($hash);
   if (defined($hash->{IODev}->{NAME})) {
@@ -166,19 +166,19 @@ sub SHC_Dev_Define($$)
 }
 
 #####################################
-sub SHC_Dev_Undef($$)
+sub SHCdev_Undef($$)
 {
   my ($hash, $arg) = @_;
   my $name = $hash->{NAME};
   my $addr = $hash->{addr};
 
-  delete($modules{SHC_Dev}{defptr}{$addr});
+  delete($modules{SHCdev}{defptr}{$addr});
 
   return undef;
 }
 
 #####################################
-sub SHC_Dev_Parse($$)
+sub SHCdev_Parse($$)
 {
   my ($hash, $msg) = @_;
   my $name = $hash->{NAME};
@@ -192,12 +192,12 @@ sub SHC_Dev_Parse($$)
   my $msggroupname = $parser->getMessageGroupName();
   my $msgname      = $parser->getMessageName();
   my $raddr        = $parser->getSenderID();
-  my $rhash        = $modules{SHC_Dev}{defptr}{$raddr};
+  my $rhash        = $modules{SHCdev}{defptr}{$raddr};
   my $rname        = $rhash ? $rhash->{NAME} : $raddr;
 
-  if (!$modules{SHC_Dev}{defptr}{$raddr}) {
+  if (!$modules{SHCdev}{defptr}{$raddr}) {
     Log3 $name, 3, "SHC_TEMP: Unknown device $rname, please define it";
-    return "UNDEFINED SHC_Dev_$rname SHC_Dev $raddr";
+    return "UNDEFINED SHCdev_$rname SHCdev $raddr";
   }
 
   if (($msgtypename ne "Status") && ($msgtypename ne "AckStatus")) {
@@ -210,8 +210,8 @@ sub SHC_Dev_Parse($$)
 
   my @list;
   push(@list, $rname);
-  $rhash->{SHC_Dev_lastRcv} = TimeNow();
-  $rhash->{SHC_Dev_msgtype} = "$msggroupname : $msgname : $msgtypename";
+  $rhash->{SHCdev_lastRcv} = TimeNow();
+  $rhash->{SHCdev_msgtype} = "$msggroupname : $msgname : $msgtypename";
 
   my $readonly = AttrVal($rname, "readonly", "0");
 
@@ -350,11 +350,12 @@ sub SHC_Dev_Parse($$)
   }
 
   readingsEndUpdate($rhash, 1);    # Do triggers to update log file
+
   return @list;
 }
 
 #####################################
-sub SHC_Dev_Set($@)
+sub SHCdev_Set($@)
 {
   my ($hash, $name, @aa) = @_;
   my $cnt = @aa;
@@ -407,7 +408,7 @@ sub SHC_Dev_Set($@)
   given ($hash->{devtype}) {
     when ('PowerSwitch') {
 
-      # Timeout functionality for SHC_Dev is not implemented, because FHEMs internal notification system
+      # Timeout functionality for SHCdev is not implemented, because FHEMs internal notification system
       # is able to do this as well. Even more it supports intervals, off-for-timer, off-till ...
 
       if ($cmd eq 'toggle') {
@@ -419,23 +420,23 @@ sub SHC_Dev_Set($@)
         $parser->initPacket("PowerSwitch", "SwitchState", "SetGet");
         $parser->setField("PowerSwitch", "SwitchState", "TimeoutSec", 0);
         $parser->setField("PowerSwitch", "SwitchState", "On",         0);
-        SHC_Dev_Send($hash);
+        SHCdev_Send($hash);
       } elsif (!$readonly && $cmd eq 'on') {
         readingsSingleUpdate($hash, "state", "set-$cmd", 1);
         $parser->initPacket("PowerSwitch", "SwitchState", "SetGet");
         $parser->setField("PowerSwitch", "SwitchState", "TimeoutSec", 0);
         $parser->setField("PowerSwitch", "SwitchState", "On",         1);
-        SHC_Dev_Send($hash);
+        SHCdev_Send($hash);
       } elsif ($cmd eq 'statusRequest') {
         $parser->initPacket("PowerSwitch", "SwitchState", "Get");
-        SHC_Dev_Send($hash);
+        SHCdev_Send($hash);
       } else {
         return SetExtensions($hash, "", $name, @aa);
       }
     }
     when ('Dimmer') {
 
-      # Timeout functionality for SHC_Dev is not implemented, because FHEMs internal notification system
+      # Timeout functionality for SHCdev is not implemented, because FHEMs internal notification system
       # is able to do this as well. Even more it supports intervals, off-for-timer, off-till ...
 
       if ($cmd eq 'toggle') {
@@ -446,12 +447,12 @@ sub SHC_Dev_Set($@)
         readingsSingleUpdate($hash, "state", "set-$cmd", 1);
         $parser->initPacket("Dimmer", "Brightness", "SetGet");
         $parser->setField("Dimmer", "Brightness", "Brightness", 0);
-        SHC_Dev_Send($hash);
+        SHCdev_Send($hash);
       } elsif (!$readonly && $cmd eq 'on') {
         readingsSingleUpdate($hash, "state", "set-$cmd", 1);
         $parser->initPacket("Dimmer", "Brightness", "SetGet");
         $parser->setField("Dimmer", "Brightness", "Brightness", 100);
-        SHC_Dev_Send($hash);
+        SHCdev_Send($hash);
       } elsif (!$readonly && $cmd eq 'pct') {
         my $brightness = $arg;
 
@@ -461,7 +462,7 @@ sub SHC_Dev_Set($@)
         readingsSingleUpdate($hash, "state", "set-pct:$brightness", 1);
         $parser->initPacket("Dimmer", "Brightness", "SetGet");
         $parser->setField("Dimmer", "Brightness", "Brightness", $brightness);
-        SHC_Dev_Send($hash);
+        SHCdev_Send($hash);
       } elsif (!$readonly && $cmd eq 'ani') {
 
         #TODO Verify argument values
@@ -476,10 +477,10 @@ sub SHC_Dev_Set($@)
         $parser->setField("Dimmer", "Animation", "TimeoutSec",      $arg2);
         $parser->setField("Dimmer", "Animation", "StartBrightness", $arg3);
         $parser->setField("Dimmer", "Animation", "EndBrightness",   $arg4);
-        SHC_Dev_Send($hash);
+        SHCdev_Send($hash);
       } elsif ($cmd eq 'statusRequest') {
         $parser->initPacket("Dimmer", "Brightness", "Get");
-        SHC_Dev_Send($hash);
+        SHCdev_Send($hash);
       } else {
         return SetExtensions($hash, "", $name, @aa);
       }
@@ -490,7 +491,7 @@ sub SHC_Dev_Set($@)
 }
 
 #####################################
-sub SHC_Dev_Get($@)
+sub SHCdev_Get($@)
 {
   my ($hash, $name, @aa) = @_;
   my $cnt = @aa;
@@ -540,12 +541,12 @@ sub SHC_Dev_Get($@)
 }
 
 #####################################
-sub SHC_Dev_Send($)
+sub SHCdev_Send($)
 {
   my ($hash) = @_;
   my $name = $hash->{NAME};
 
-  $hash->{SHC_Dev_lastSend} = TimeNow();
+  $hash->{SHCdev_lastSend} = TimeNow();
 
   my $msg = $parser->getSendString($hash->{addr}, $hash->{aeskey});
 
@@ -559,8 +560,8 @@ sub SHC_Dev_Send($)
 =pod
 =begin html
 
-<a name="SHC_Dev"></a>
-<h3>SHC_Dev</h3>
+<a name="SHCdev"></a>
+<h3>SHCdev</h3>
 <ul>
   SHC is the device module that supports several device types available 
   at <a href="http://http://www.smarthomatic.org">www.smarthomatic.org</a>.<br><br>
@@ -573,13 +574,13 @@ sub SHC_Dev_Send($)
     <li>Dimmer</li>
   </ul><br>
 
-  <a name="SHC_Dev_Define"></a>
+  <a name="SHCdev_Define"></a>
   <b>Define</b>
   <ul>
-    <code>define &lt;name&gt; SHC_Dev &lt;SenderID&gt; [&lt;AesKey&gt;]</code><br>
+    <code>define &lt;name&gt; SHCdev &lt;SenderID&gt; [&lt;AesKey&gt;]</code><br>
     <br>
     &lt;SenderID&gt;<br>
-    is a number ranging from 0 .. 4095 to identify the SHC_Dev device.<br><br>
+    is a number ranging from 0 .. 4095 to identify the SHCdev device.<br><br>
 
     &lt;AesKey&gt;<br>
     is a optional number ranging from 0 .. 15 to select an encryption key.
@@ -590,7 +591,7 @@ sub SHC_Dev_Send($)
   </ul>
   <br>
 
-  <a name="SHC_Dev_Set"></a>
+  <a name="SHCdev_Set"></a>
   <b>Set</b>
   <ul>
     <li>devtype<br>
@@ -623,7 +624,7 @@ sub SHC_Dev_Send($)
         Supported by Dimmer and PowerSwitch.</li>
   </ul><br>
 
-  <a name="SHC_Dev_Get"></a>
+  <a name="SHCdev_Get"></a>
   <b>Get</b>
   <ul>
     <li>input &lt;pin&gt;<br>
@@ -632,7 +633,7 @@ sub SHC_Dev_Send($)
     </li><br>
   </ul><br>
 
-  <a name="SHC_Dev_Attr"></a>
+  <a name="SHCdev_Attr"></a>
   <b>Attributes</b>
   <ul>
     <li>readonly<br>
