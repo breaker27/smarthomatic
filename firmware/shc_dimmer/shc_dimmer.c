@@ -80,7 +80,7 @@ uint8_t start_brightness = 0;
 uint8_t end_brightness = 0;
 float current_brightness = 0;
 
-uint8_t device_id;
+uint16_t device_id;
 uint8_t use_pwm_translation = 1;
 uint32_t station_packetcounter;
 uint8_t switch_off_counter = 0;

@@ -36,7 +36,7 @@
 
 #define SEND_STATUS_EVERY_SEC 1800 // how often should a status be sent?
 
-uint8_t device_id;
+uint16_t device_id;
 uint32_t station_packetcounter;
 
 uint16_t send_status_timeout = 5;

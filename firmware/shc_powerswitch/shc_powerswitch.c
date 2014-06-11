@@ -51,7 +51,7 @@
 #define SEND_STATUS_EVERY_SEC 1800 // how often should a status be sent?
 #define SEND_VERSION_STATUS_CYCLE 50 // send version status x times less than switch status (~once per day)
 
-uint8_t device_id;
+uint16_t device_id;
 uint32_t station_packetcounter;
 bool switch_state[SWITCH_COUNT];
 uint16_t switch_timeout[SWITCH_COUNT];

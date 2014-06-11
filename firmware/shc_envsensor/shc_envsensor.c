@@ -481,7 +481,7 @@ void prepare_version(void)
 
 int main(void)
 {
-	uint8_t device_id = 0;
+	uint16_t device_id = 0;
 
 	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
 	_delay_ms(1000);
@@ -489,6 +489,9 @@ int main(void)
 	util_init();
 
 	check_eeprom_compatibility(DEVICETYPE_ENVSENSOR);
+
+	osccal_init();
+	uart_init();
 
 	// read packetcounter, increase by cycle and write back
 	packetcounter = e2p_generic_get_packetcounter() + PACKET_COUNTER_WRITE_CYCLE;
@@ -504,9 +507,6 @@ int main(void)
 	// read device id
 	device_id = e2p_generic_get_deviceid();
 	
-	osccal_init();
-	
-	uart_init();
 	UART_PUTS ("\r\n");
 	UART_PUTF4("smarthomatic EnvSensor v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
 	UART_PUTS("(c) 2012..2014 Uwe Freese, www.smarthomatic.org\r\n");
