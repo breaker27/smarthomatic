@@ -116,7 +116,8 @@ sub SHCdev_Initialize($)
   $hash->{AttrList} = "IODev" 
                        ." readonly:1"
                        ." forceOn:1"
-                       ." $readingFnAttributes";
+                       ." $readingFnAttributes"
+                       ." devtype:EnvSensor,Dimmer,PowerSwitch";
 }
 
 #####################################
@@ -307,24 +308,27 @@ sub SHCdev_Parse($$)
   }
 
   # Autoassign device type
-  if ((!defined($rhash->{devtype})) && (defined($auto_devtype{"$msggroupname.$msgname"}))) {
-    $rhash->{devtype} = $auto_devtype{"$msggroupname.$msgname"};
-    Log3 $name, 3, "$rname: Autoassign device type = " . $rhash->{devtype};
+  my $devtype = AttrVal( $rname, "devtype", undef );
+  if (!defined($devtype) && (defined($auto_devtype{"$msggroupname.$msgname"}))) {
+    $attr{$rname}{devtype} = $auto_devtype{"$msggroupname.$msgname"};
+    Log3 $name, 3, "$rname: Autoassign device type = " . $attr{$rname}{devtype};
   }
 
   # If the devtype is defined add, if not already done, the according webCmds and devStateIcons
-  if (defined($rhash->{devtype})) {
-    if (!defined($attr{$rname}{devStateIcon}) && defined($dev_state_icons{$rhash->{devtype}})) {
-      $attr{$rname}{devStateIcon} = $dev_state_icons{$rhash->{devtype}};
+  my $devtype2 = AttrVal( $rname, "devtype", undef );
+  if (defined($devtype2)) {
+    if (!defined($attr{$rname}{devStateIcon}) && defined($dev_state_icons{$devtype2})) {
+      $attr{$rname}{devStateIcon} = $dev_state_icons{$devtype2};
     }
-    if (!defined($attr{$rname}{webCmd}) && defined($web_cmds{$rhash->{devtype}})) {
-      $attr{$rname}{webCmd} = $web_cmds{$rhash->{devtype}};
+    if (!defined($attr{$rname}{webCmd}) && defined($web_cmds{$devtype2})) {
+      $attr{$rname}{webCmd} = $web_cmds{$devtype2};
     }
   }
 
   # Assemble state string according to %dev_state_format
-  if (defined($rhash->{devtype}) && defined($dev_state_format{$rhash->{devtype}})) {
-    my $state_format_arr = $dev_state_format{$rhash->{devtype}};
+  my $devtype3 = AttrVal( $rname, "devtype", undef );
+  if (defined($devtype3) && defined($dev_state_format{$devtype3})) {
+    my $state_format_arr = $dev_state_format{$devtype3};
 
     # Iterate over state_format array, if readings are available append it to the state string
     my $state_str = "";
@@ -370,32 +374,21 @@ sub SHCdev_Set($@)
 
   # Return list of device-specific set-commands.
   # This list is used to provide the set commands in the web interface
+  my $devtype = AttrVal( $name, "devtype", undef );
   if ($cmd eq "?") {
-    if (!defined($hash->{devtype})) {
-
-      # If the device type isn't set yet, allow only set commands to set the device type
-      return "devtype:" . join(",", sort keys %sets);
+    if (!defined($devtype)) {
+      return;
     } else {
-      return $sets{$hash->{devtype}};
+      return $sets{$devtype};
     }
   }
 
-  if ($cmd eq "devtype") {
-    if (exists($sets{$arg})) {
-      $hash->{devtype} = $arg;
-      Log3 $name, 3, "$name: devtype set to \"$arg\"";
-      return undef;
-    } else {
-      return "devtype \"$arg\" not supported. Currently supported device types are " . join(", ", sort keys %sets);
-    }
+  if (!defined($devtype)) {
+    return "devtype not yet specifed. Currently supported device types are " . join(", ", sort keys %sets);
   }
 
-  if (!defined($hash->{devtype})) {
-    return "\"devtype\" not yet specifed. Currently supported device types are " . join(", ", sort keys %sets);
-  }
-
-  if (!defined($sets{$hash->{devtype}})) {
-    return "No set commands for $hash->{devtype} device type supported ";
+  if (!defined($sets{$devtype})) {
+    return "No set commands for " . $devtype . "device type supported ";
   }
 
   # TODO:
@@ -405,7 +398,7 @@ sub SHCdev_Set($@)
 
   my $readonly = AttrVal($name, "readonly", "0");
 
-  given ($hash->{devtype}) {
+  given ($devtype) {
     when ('PowerSwitch') {
 
       # Timeout functionality for SHCdev is not implemented, because FHEMs internal notification system
@@ -501,17 +494,17 @@ sub SHCdev_Get($@)
 
   return "\"get $name\" needs at least one parameter" if ($cnt < 1);
 
-  if (!defined($hash->{devtype})) {
+  my $devtype = AttrVal( $name, "devtype", undef );
+  if (!defined($devtype)) {
     return "\"devtype\" not yet specifed. Currently supported device types are " . join(", ", sort keys %sets);
   }
 
-  if (!defined($gets{$hash->{devtype}})) {
-    return "No get commands for $hash->{devtype} device type supported ";
+  if (!defined($gets{$devtype})) {
+    return "No get commands for " . $devtype . " device type supported ";
   }
 
-  given ($hash->{devtype}) {
+  given ($devtype) {
     when ('EnvSensor') {
-
       if ($cmd eq 'input') {
         if ($arg =~ /[1-8]/) {
           my $channel = "pin" . $arg;
@@ -534,7 +527,7 @@ sub SHCdev_Get($@)
       }
 
       # This return is required to provide the get commands in the web interface
-      return "Unknown argument $cmd, choose one of " . $gets{$hash->{devtype}};
+      return "Unknown argument $cmd, choose one of " . $gets{$devtype};
     }
   }
   return undef;
@@ -594,16 +587,6 @@ sub SHCdev_Send($)
   <a name="SHCdev_Set"></a>
   <b>Set</b>
   <ul>
-    <li>devtype<br>
-      The device type determines the command set, default web commands and the
-      default devStateicon. Currently supported are: EnvSensor, Dimmer, 
-      PowerSwitch.<br><br>
-
-      Note: If the device is not set manually, it well determined automatically
-      on reception of a device type specific message. For example: If a 
-      temperature message is received, the device type will be set to 
-      EnvSensor.
-    </li><br>
     <li>on<br>
         Supported by Dimmer and PowerSwitch.
     </li><br>
@@ -636,6 +619,14 @@ sub SHCdev_Send($)
   <a name="SHCdev_Attr"></a>
   <b>Attributes</b>
   <ul>
+    <li>devtype<br>
+      The device type determines the command set, default web commands and the
+      default devStateicon. Currently supported are: EnvSensor, Dimmer, PowerSwitch.<br><br>
+
+      Note: If the device is not set manually, it will be determined automatically
+      on reception of a device type specific message. For example: If a
+      temperature message is received, the device type will be set to EnvSensor.
+    </li><br>
     <li>readonly<br>
         if set to a value != 0 all switching commands (on, off, toggle, ...) will be disabled.
     </li><br>
