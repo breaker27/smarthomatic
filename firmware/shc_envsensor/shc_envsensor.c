@@ -143,16 +143,6 @@ void setPullUp(uint8_t port_nr, uint8_t pin)
 		sbi(PINB, pin);
 }
 
-void clearPullUp(uint8_t port_nr, uint8_t pin)
-{
-	if (port_nr == 2)
-		cbi(PIND, pin);
-	else if (port_nr == 1)
-		cbi(PINC, pin);
-	else
-		cbi(PINB, pin);
-}
-
 void init_di_sensor(void)
 {
 	uint8_t i;
@@ -176,15 +166,15 @@ void init_di_sensor(void)
 			di[i].mode = mode;
 			di[i].meas.cnt = 0;
 			di[i].meas.val = 0;
-			
+
+			if (di[i].pull_up)
+			{
+				setPullUp(di[i].port, di[i].pin);
+			}
+
 			if (di[i].mode == DIGITALINPUTMODE_ONCHANGE)
 			{
 				enablePCI(di[i].port, di[i].pin); // enable Pin Change Interrupt
-				
-				if (di[i].pull_up)
-				{
-					setPullUp(di[i].port, di[i].pin); // when using PCI, pullups should be active
-				}
 			}
 
 			// Send every 7 min. in cycle mode. Send immediately in "OnChange" mode and after 28 min.
@@ -204,23 +194,7 @@ void init_di_sensor(void)
 void measure_digital_input(void)
 {
 	uint8_t i;
-	bool wait_pullups = false;
-	
-	for (i = 0; i < 8; i++)
-	{
-		if ((di[i].pull_up) && (di[i].mode != DIGITALINPUTMODE_ONCHANGE))
-		{
-			setPullUp(di[i].port, di[i].pin);
-			wait_pullups = true;
-		}
-	}
-	
-	// wait a little bit to let the voltage level settle down in case pullups were just switched on
-	if (wait_pullups)
-	{
-		_delay_ms(10);
-	}
-	
+
 	for (i = 0; i < 8; i++)
 	{
 		if (di[i].port != DI_UNUSED)
@@ -238,14 +212,6 @@ void measure_digital_input(void)
 			}
 			
 			di[i].meas.val = stat;
-		}
-	}
-	
-	for (i = 0; i < 8; i++)
-	{
-		if ((di[i].pull_up) && (di[i].mode != DIGITALINPUTMODE_ONCHANGE))
-		{
-			clearPullUp(di[i].port, di[i].pin);
 		}
 	}
 }
