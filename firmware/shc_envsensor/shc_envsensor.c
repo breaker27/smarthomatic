@@ -199,6 +199,45 @@ void init_di_sensor(void)
 	}
 }
 
+	/*
+	01111111010 // ~2000ms
+	10011111010 // ~4000ms
+	b11100110000 // ~6s
+	10111111010 // ~8000ms
+	11010011100 // ~9984ms
+	11011101010 // ~14976ms
+	11110011100 // ~19968ms
+	b11111000000 // ~24576ms
+	11111101011 // ~30080ms
+	100010110000 // ~45056ms
+	0100101110101 // ~59904ms
+	100110010010 // ~74752ms
+	100110110000 // ~90112ms
+	100111001101 // ~104960ms
+	100111101010 // ~119808ms
+	101010110000 // ~180224ms = 3m
+	101011101010 // ~239616ms = 4m
+	101110010010 // ~299008ms = 5m
+	101111101010 // ~479232ms = 8m
+	110010110000 // ~720896ms = 12m
+	110011011100 // ~901120ms = 15m
+	110110010010 // ~1196032ms = 20m
+	*/
+
+void init_wakeup(void)
+{
+	uint16_t interval = e2p_envsensor_get_wakeupinterval();
+	
+	if (interval == 0) // misconficuration in E2P
+	{
+		interval = WAKEUPINTERVAL_105S;
+	}
+	
+	UART_PUTF("Wake-up interval: %u\r\n", interval);
+	
+	rfm12_set_wakeup_timer(interval);
+}
+
 // ---------- functions to measure values from sensors ----------
 
 void measure_digital_input(void)
@@ -556,36 +595,11 @@ int main(void)
 		sbi(SRF02_POWER_DDR, SRF02_POWER_PIN);
 	}
 
+	rfm12_init();
+	init_wakeup();
+
 	led_blink(500, 500, 3);
 	
-	rfm12_init();
-	
-	rfm12_set_wakeup_timer(0b100111001101); // ~ 104960ms  DEFAULT VALUE!!!
-	/*
-	01111111010 // ~2000ms
-	10011111010 // ~4000ms
-	b11100110000 // ~ 6s
-	10111111010 // ~8000ms
-	11010011100 // ~9984ms
-	11011101010 // ~14976ms
-	11110011100 // ~19968ms
-	b11111000000 // ~24576ms
-	11111101011 // ~30080ms
-	100010110000 // ~45056ms
-	0100101110101 // ~ 59904ms
-	100110010010 // ~74752ms
-	100110110000 // ~90112ms
-	100111001101 // ~104960ms
-	100111101010 // ~119808ms
-	101010110000 // ~180224ms = 3m
-	101011101010 // ~239616ms = 4m
-	101110010010 // ~299008ms = 5m
-	101111101010 // ~479232ms = 8m
-	110010110000 // ~720896ms = 12m
-	110011011100 // ~901120ms = 15m
-	110110010010 // ~1196032ms = 20m
-	*/
-
 	sei();
 
 	// If a SRF02 is connected, it is assumed that it is powered by a step up voltage converter,

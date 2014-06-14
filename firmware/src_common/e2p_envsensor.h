@@ -183,7 +183,7 @@ static inline void e2p_envsensor_set_wakeupinterval(WakeupIntervalEnum val)
 // Byte offset: 128, bit offset: 0, length bits 16
 static inline WakeupIntervalEnum e2p_envsensor_get_wakeupinterval(void)
 {
-  return eeprom_read_UIntValue16(128, 0, 8, 0, 65535);
+  return eeprom_read_UIntValue16(128, 0, 16, 0, 65535);
 }
 
 // TemperatureMeasureInterval (UIntValue)
