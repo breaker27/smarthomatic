@@ -56,6 +56,7 @@ uint8_t distance_sensor_type = 0;
 uint32_t version_measInt;
 uint32_t version_cnt;
 uint16_t vempty = 1100; // 1.1V * 2 cells = 2.2V = min. voltage for RFM2
+bool di_sensor_used = false;
 bool di_change = false;
 bool pin_wakeup = false; // remember if wakeup was done by pin change (or by RFM12B)
 
@@ -193,12 +194,14 @@ void init_di_sensor(void)
 			UART_PUTF3("Using port %u pin %u as digital input pin %u ", di[i].port, di[i].pin, i);
 			UART_PUTF2("in mode %u with pull-up %s\r\n", mode, di[i].pull_up ? "ON" : "OFF");
 			
+			di_sensor_used = true;
+
 			// remember to send out status after power up
 			di_change = true;
 		}
 	}
 
-	if (di_change)
+	if (di_sensor_used)
 	{
 		UART_PUTF2("(MeasInt %u, AvgCnt %u)\r\n\r\n", measInt, avgCnt);
 	}
@@ -267,6 +270,9 @@ uint16_t init_wakeup(void)
 
 void measure_digital_input(void)
 {
+	if (!di_sensor_used)
+		return;
+
 	if (!pin_wakeup)
 	{
 		di[0].meas.cnt++; // only use pin1 cnt, measInt and avgThr for all pins
@@ -345,6 +351,9 @@ void sht11_measure_loop(void)
 
 void measure_temperature_i2c(void)
 {
+	if (temperature_sensor_type == TEMPERATURESENSORTYPE_NOSENSOR)
+		return;
+
 	temperature.cnt++;
 
 	if ((temperature.cnt % temperature.measInt) != 0)
@@ -365,6 +374,9 @@ void measure_temperature_i2c(void)
 
 void measure_temperature_other(void)
 {
+	if (temperature_sensor_type == TEMPERATURESENSORTYPE_NOSENSOR)
+		return;
+
 	temperature.cnt++;
 
 	if ((temperature.cnt % temperature.measInt) != 0)
@@ -379,6 +391,9 @@ void measure_temperature_other(void)
 
 void measure_humidity_other(void)
 {
+	if (humidity_sensor_type == HUMIDITYSENSORTYPE_NOSENSOR)
+		return;
+
 	humidity.cnt++;
 
 	if ((humidity.cnt % humidity.measInt) != 0)
@@ -398,6 +413,9 @@ void measure_humidity_other(void)
 
 void measure_barometric_pressure_i2c(void)
 {
+	if (barometric_sensor_type == BAROMETRICSENSORTYPE_NOSENSOR)
+		return;
+
 	barometric_pressure.cnt++;
 
 	if ((barometric_pressure.cnt % barometric_pressure.measInt) != 0)
@@ -411,6 +429,9 @@ void measure_barometric_pressure_i2c(void)
 
 void measure_distance_i2c(void)
 {
+	if (distance_sensor_type == DISTANCESENSORTYPE_NOSENSOR)
+		return;
+
 	distance.cnt++;
 
 	if ((distance.cnt % distance.measInt) != 0)
@@ -418,8 +439,8 @@ void measure_distance_i2c(void)
 
 	if (distance_sensor_type == DISTANCESENSORTYPE_SRF02)
 	{
-		distance.val = srf02_get_distance();
-		//UART_PUTF("Dist = %d cm\r\n", distance.val);
+		distance.val += srf02_get_distance();
+		UART_PUTF("Dist sum = %u cm\r\n", distance.val);
 	}
 }
 
@@ -435,6 +456,9 @@ void measure_battery_voltage(void)
 
 void measure_brightness(void)
 {
+	if (brightness_sensor_type == BRIGHTNESSSENSORTYPE_NOSENSOR)
+		return;
+
 	brightness.cnt++;
 
 	if ((brightness.cnt % brightness.measInt) != 0)
@@ -479,8 +503,8 @@ void prepare_digitalpin(void)
 
 void prepare_humiditytemperature(void)
 {
-	humidity.val = humidity.val / humidity.cnt; // in 100 * % rel.
-	temperature.val /= temperature.cnt;
+	humidity.val /= (humidity.cnt / humidity.measInt); // in 100 * % rel.
+	temperature.val /= (temperature.cnt / temperature.measInt);
 
 	pkg_header_init_weather_humiditytemperature_status();
 	msg_weather_humiditytemperature_set_humidity(humidity.val / 10); // in permill
@@ -495,8 +519,8 @@ void prepare_humiditytemperature(void)
 
 void prepare_barometricpressuretemperature(void)
 {
-	barometric_pressure.val /= barometric_pressure.cnt;
-	temperature.val /= temperature.cnt;
+	barometric_pressure.val /= (barometric_pressure.cnt / barometric_pressure.measInt);
+	temperature.val /= (temperature.cnt / temperature.measInt);
 
 	pkg_header_init_weather_barometricpressuretemperature_status();
 	msg_weather_barometricpressuretemperature_set_barometricpressure(barometric_pressure.val);
@@ -511,8 +535,10 @@ void prepare_barometricpressuretemperature(void)
 
 void prepare_temperature(void)
 {
+	temperature.val /= (temperature.cnt / temperature.measInt);
+	
 	pkg_header_init_weather_temperature_status();
-	msg_weather_temperature_set_temperature(temperature.val / temperature.cnt);
+	msg_weather_temperature_set_temperature(temperature.val);
 	
 	UART_PUTS("Send temperature: ");
 	print_signed(temperature.val);
@@ -523,6 +549,8 @@ void prepare_temperature(void)
 
 void prepare_distance(void)
 {
+	distance.val /= (distance.cnt / distance.measInt);
+
 	pkg_header_init_environment_distance_status();
 	msg_environment_distance_set_distance(distance.val);
 	
@@ -532,7 +560,7 @@ void prepare_distance(void)
 }
 void prepare_brightness(void)
 {
-	brightness.val /= brightness.cnt;
+	brightness.val /= (brightness.cnt / brightness.measInt);
 	brightness.val = 100 - (int)((long)brightness.val * 100 / 1024);
 
 	pkg_header_init_environment_brightness_status();
@@ -545,7 +573,7 @@ void prepare_brightness(void)
 
 void prepare_battery_voltage(void)
 {
-	battery_voltage.val /= battery_voltage.cnt;
+	battery_voltage.val /= (battery_voltage.cnt / battery_voltage.measInt);
 	battery_voltage.val = bat_percentage(battery_voltage.val, vempty);
 
 	pkg_header_init_generic_batterystatus_status();
@@ -687,7 +715,7 @@ int main(void)
 		}
 		else // wakeup by RFM12B -> measure everything
 		{
-			bool measure_srf02 = srf02_connected && (distance.cnt + 1 == distance.avgCnt); // SRF02 only measures every avgCnt cycles!
+			bool measure_srf02 = srf02_connected && (distance.cnt + 1 % distance.measInt == 0);
 			bool measure_i2c = measure_srf02 || measure_other_i2c;
 			bool needs_power = measure_srf02 || (measure_other_i2c && srf02_connected);
 
