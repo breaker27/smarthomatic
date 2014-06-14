@@ -44,10 +44,6 @@
 #include "util.h"
 #include "version.h"
 
-#define AVERAGE_COUNT 4 // Average over how many values before sending over RFM12?
-#define AVERAGE_COUNT_BATT 120
-#define AVERAGE_COUNT_VERSION 800
-
 #define SRF02_POWER_PORT PORTD
 #define SRF02_POWER_DDR DDRD
 #define SRF02_POWER_PIN 5
@@ -57,16 +53,18 @@ uint8_t humidity_sensor_type = 0;
 uint8_t barometric_sensor_type = 0;
 uint8_t brightness_sensor_type = 0;
 uint8_t distance_sensor_type = 0;
-uint16_t version_status_cycle = AVERAGE_COUNT_VERSION - 1; // send promptly after startup
+uint32_t version_measInt;
+uint32_t version_cnt;
 uint16_t vempty = 1100; // 1.1V * 2 cells = 2.2V = min. voltage for RFM2
 bool di_change = false;
 bool pin_wakeup = false; // remember if wakeup was done by pin change (or by RFM12B)
 
 struct measurement_t
 {
-	int32_t val; // stores the accumulated value
-	uint8_t cnt; // amount of single measurements
-	uint8_t avgThr; // amount of measurements that are averaged into one value to send 
+	int32_t val;      // stores the accumulated value
+	uint16_t cnt;      // Amount of wake-up cycles counting from the last time a measurement was done.
+	uint16_t measInt; // The number of times the device wakes up before this value is measured.
+	uint8_t avgCnt;   // The number of values whose average is calculated before sending.
 } temperature, humidity, barometric_pressure, distance, battery_voltage, brightness;
 
 struct portpin_t
@@ -156,6 +154,8 @@ void clearPullUp(uint8_t port_nr, uint8_t pin)
 void init_di_sensor(void)
 {
 	uint8_t i;
+	uint8_t measInt = e2p_envsensor_get_digitalinputmeasureinterval();
+	uint8_t avgCnt = e2p_envsensor_get_digitalinputaveragingcount();
 	
 	for (i = 0; i < 8; i++)
 	{
@@ -187,8 +187,8 @@ void init_di_sensor(void)
 				}
 			}
 
-			// Send every 7 min. in cycle mode. Send immediately in "OnChange" mode and after 28 min.
-			di[i].meas.avgThr = mode == DIGITALINPUTMODE_ONCHANGE ? AVERAGE_COUNT * 4 : AVERAGE_COUNT;
+			di[i].meas.measInt = measInt;
+			di[i].meas.avgCnt = avgCnt;
 
 			UART_PUTF3("Using port %u pin %u as digital input pin %u ", di[i].port, di[i].pin, i);
 			UART_PUTF2("in mode %u with pull-up %s\r\n", mode, di[i].pull_up ? "ON" : "OFF");
@@ -197,6 +197,25 @@ void init_di_sensor(void)
 			di_change = true;
 		}
 	}
+
+	if (di_change)
+	{
+		UART_PUTF2("(MeasInt %u, AvgCnt %u)\r\n\r\n", measInt, avgCnt);
+	}
+}
+
+// calculate x^y
+uint32_t power(uint32_t x, uint32_t y)
+{
+	uint32_t result = 1;
+
+	while (y > 0)
+	{
+		result *= x;
+		y--;
+	}
+
+	return result;
 }
 
 	/*
@@ -224,7 +243,9 @@ void init_di_sensor(void)
 	110110010010 // ~1196032ms = 20m
 	*/
 
-void init_wakeup(void)
+// Read wakeup timer value from e2p, config rfm12 and
+// return the value (in seconds).
+uint16_t init_wakeup(void)
 {
 	uint16_t interval = e2p_envsensor_get_wakeupinterval();
 	
@@ -233,15 +254,27 @@ void init_wakeup(void)
 		interval = WAKEUPINTERVAL_105S;
 	}
 	
-	UART_PUTF("Wake-up interval: %u\r\n", interval);
-	
 	rfm12_set_wakeup_timer(interval);
+	
+	// calculate wake up time in seconds according RFM12B datasheet, round the value to seconds
+	uint16_t sec = (uint16_t)(((interval & 0xff) * power(2, (interval >> 8) & 0b11111) + 500) / 1000);
+	UART_PUTF("Wake-up interval: %us\r\n", sec);
+	
+	return sec;
 }
 
 // ---------- functions to measure values from sensors ----------
 
 void measure_digital_input(void)
 {
+	if (!pin_wakeup)
+	{
+		di[0].meas.cnt++; // only use pin1 cnt, measInt and avgThr for all pins
+
+		if ((di[0].meas.cnt % di[0].meas.measInt) != 0)
+			return;
+	}
+
 	uint8_t i;
 	bool wait_pullups = false;
 	
@@ -268,15 +301,14 @@ void measure_digital_input(void)
 			
 			di[i].meas.cnt++;
 			
-			// if status changed or avgThr is reached, it is time to send
-			if (((di[i].mode == DIGITALINPUTMODE_ONCHANGE) && (di[i].meas.val != stat))
-				|| (di[i].meas.cnt >= di[i].meas.avgThr))
+			// if status changed in OnChange mode, remember to send immediately
+			if ((di[i].mode == DIGITALINPUTMODE_ONCHANGE) && (di[i].meas.val != stat))
 			{
-				//UART_PUTS("Status change or vrgThr reached -> send\r\n");
+				//UART_PUTS("Status change -> send\r\n");
 				di_change = true;
 			}
 			
-			di[i].meas.val = stat;
+			di[i].meas.val = stat; // TODO: Add averaging feature?
 		}
 	}
 	
@@ -313,33 +345,45 @@ void sht11_measure_loop(void)
 
 void measure_temperature_i2c(void)
 {
+	temperature.cnt++;
+
+	if ((temperature.cnt % temperature.measInt) != 0)
+		return;
+
 	if (temperature_sensor_type == TEMPERATURESENSORTYPE_DS7505)
 	{
 		lm75_wakeup();
 		_delay_ms(lm75_get_meas_time_ms());
 		temperature.val += lm75_get_tmp();
-		temperature.cnt++;
 		lm75_shutdown();
 	}
 	else if (temperature_sensor_type == TEMPERATURESENSORTYPE_BMP085)
 	{
 		temperature.val += bmp085_meas_temp();
-		temperature.cnt++;
 	}
 }
 
 void measure_temperature_other(void)
 {
+	temperature.cnt++;
+
+	if ((temperature.cnt % temperature.measInt) != 0)
+		return;
+
 	if (temperature_sensor_type == TEMPERATURESENSORTYPE_SHT15)
 	{
 		sht11_measure_loop();
 		temperature.val += sht11_get_tmp();
-		temperature.cnt++;
 	}
 }
 
 void measure_humidity_other(void)
 {
+	humidity.cnt++;
+
+	if ((humidity.cnt % humidity.measInt) != 0)
+		return;
+
 	if (humidity_sensor_type == HUMIDITYSENSORTYPE_SHT15)
 	{
 		// actually measure if not done already while getting temperature
@@ -349,46 +393,56 @@ void measure_humidity_other(void)
 		}
 	
 		humidity.val += sht11_get_hum();
-		humidity.cnt++;
 	}
 }
 
 void measure_barometric_pressure_i2c(void)
 {
+	barometric_pressure.cnt++;
+
+	if ((barometric_pressure.cnt % barometric_pressure.measInt) != 0)
+		return;
+
 	if (barometric_sensor_type == BAROMETRICSENSORTYPE_BMP085)
 	{
 		barometric_pressure.val += bmp085_meas_pressure();
-		barometric_pressure.cnt++;
 	}
 }
 
 void measure_distance_i2c(void)
 {
+	distance.cnt++;
+
+	if ((distance.cnt % distance.measInt) != 0)
+		return;
+
 	if (distance_sensor_type == DISTANCESENSORTYPE_SRF02)
 	{
-		distance.cnt++;
-		
-		// distance is measured only once (no averaging)
-		if (distance.cnt == distance.avgThr)
-		{
-			distance.val = srf02_get_distance();
-			//UART_PUTF("Dist = %d cm\r\n", distance.val);
-		}
+		distance.val = srf02_get_distance();
+		//UART_PUTF("Dist = %d cm\r\n", distance.val);
 	}
 }
 
 void measure_battery_voltage(void)
 {
-	battery_voltage.val += (int)((long)read_adc(0) * 34375 / 10000 / 2); // 1.1 * 480 Ohm / 150 Ohm / 1,024
 	battery_voltage.cnt++;
+
+	if ((battery_voltage.cnt % battery_voltage.measInt) != 0)
+		return;
+
+	battery_voltage.val += (int)((long)read_adc(0) * 34375 / 10000 / 2); // 1.1 * 480 Ohm / 150 Ohm / 1,024
 }
 
 void measure_brightness(void)
 {
+	brightness.cnt++;
+
+	if ((brightness.cnt % brightness.measInt) != 0)
+		return;
+
 	if (brightness_sensor_type == BRIGHTNESSSENSORTYPE_PHOTOCELL)
 	{
 		brightness.val += read_adc(1);
-		brightness.cnt++;
 	}
 }
 
@@ -513,7 +567,7 @@ void prepare_version(void)
 
 	UART_PUTF4("Send version: v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
 	
-	version_status_cycle = 0;
+	version_cnt = 0;
 }
 
 // ---------- main loop ----------
@@ -521,6 +575,7 @@ void prepare_version(void)
 int main(void)
 {
 	uint16_t device_id = 0;
+	uint16_t wakeup_sec;
 
 	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
 	_delay_ms(1000);
@@ -552,21 +607,37 @@ int main(void)
 	osccal_info();
 	UART_PUTF ("Device ID: %u\r\n", device_id);
 	UART_PUTF ("Packet counter: %lu\r\n", packetcounter);
-	UART_PUTF ("Temperature sensor type: %u\r\n", temperature_sensor_type);
-	UART_PUTF ("Humidity sensor type: %u\r\n", humidity_sensor_type);
-	UART_PUTF ("Barometric sensor type: %u\r\n", barometric_sensor_type);
-	UART_PUTF ("Brightness sensor type: %u\r\n", brightness_sensor_type);
-	UART_PUTF ("Distance sensor type: %u\r\n", distance_sensor_type);
 	
 	init_di_sensor();
 	
 	// init AES key
 	e2p_generic_get_aeskey(aes_key);
 
-	// Different average counts per measurement would be possible.
-	// For now, use the same fixed value for all measurements.
-	temperature.avgThr = humidity.avgThr = barometric_pressure.avgThr = brightness.avgThr = distance.avgThr = AVERAGE_COUNT;
-	battery_voltage.avgThr = AVERAGE_COUNT_BATT;
+	rfm12_init();
+	wakeup_sec = init_wakeup();
+
+	// Configure measurement and averaging intervals.
+	temperature.measInt = e2p_envsensor_get_temperaturemeasureinterval();
+	humidity.measInt = e2p_envsensor_get_humiditymeasureinterval();
+	barometric_pressure.measInt = e2p_envsensor_get_barometricmeasureinterval();
+	brightness.measInt = e2p_envsensor_get_brightnessmeasureinterval();
+	distance.measInt = e2p_envsensor_get_distancemeasureinterval();
+	battery_voltage.measInt = 12000 / wakeup_sec;
+	version_measInt = 85000 / wakeup_sec;
+	version_cnt = version_measInt - 1; // send right after startup
+	
+	temperature.avgCnt = e2p_envsensor_get_temperatureaveragingcount();
+	humidity.avgCnt = e2p_envsensor_get_humidityaveragingcount();
+	barometric_pressure.avgCnt = e2p_envsensor_get_barometricaveragingcount();
+	brightness.avgCnt = e2p_envsensor_get_brightnessaveragingcount();
+	distance.avgCnt = e2p_envsensor_get_distanceaveragingcount();
+	battery_voltage.avgCnt = 8;
+
+	UART_PUTF3("Temperature sensor type: %u (MeasInt %u, AvgCnt %u)\r\n", temperature_sensor_type, temperature.measInt, temperature.avgCnt);
+	UART_PUTF3("Humidity sensor type: %u (MeasInt %u, AvgCnt %u)\r\n", humidity_sensor_type, humidity.measInt, humidity.avgCnt);
+	UART_PUTF3("Barometric sensor type: %u (MeasInt %u, AvgCnt %u)\r\n", barometric_sensor_type, barometric_pressure.measInt, barometric_pressure.avgCnt);
+	UART_PUTF3("Brightness sensor type: %u (MeasInt %u, AvgCnt %u)\r\n", brightness_sensor_type, brightness.measInt, brightness.avgCnt);
+	UART_PUTF3("Distance sensor type: %u (MeasInt %u, AvgCnt %u)\r\n", distance_sensor_type, distance.measInt, distance.avgCnt);
 
 	adc_init();
 
@@ -581,7 +652,7 @@ int main(void)
 	  vempty = 1200; // 1.2V * 2 cells = 2.4V = min. voltage for SHT15
 	}
 	
-	UART_PUTF ("Min. battery voltage: %umV\r\n", vempty);
+	UART_PUTF3("Min. battery voltage: %umV (MeasInt %u, AvgCnt %u)\r\n", vempty, battery_voltage.measInt, battery_voltage.avgCnt);
 
 	if (barometric_sensor_type == BAROMETRICSENSORTYPE_BMP085)
 	{
@@ -594,9 +665,6 @@ int main(void)
 	{
 		sbi(SRF02_POWER_DDR, SRF02_POWER_PIN);
 	}
-
-	rfm12_init();
-	init_wakeup();
 
 	led_blink(500, 500, 3);
 	
@@ -619,7 +687,7 @@ int main(void)
 		}
 		else // wakeup by RFM12B -> measure everything
 		{
-			bool measure_srf02 = srf02_connected && (distance.cnt + 1 == distance.avgThr); // SRF02 only measures every avgThr cycles!
+			bool measure_srf02 = srf02_connected && (distance.cnt + 1 == distance.avgCnt); // SRF02 only measures every avgCnt cycles!
 			bool measure_i2c = measure_srf02 || measure_other_i2c;
 			bool needs_power = measure_srf02 || (measure_other_i2c && srf02_connected);
 
@@ -660,41 +728,41 @@ int main(void)
 			measure_temperature_other();
 			measure_humidity_other();
 			
-			version_status_cycle++;
+			version_cnt++;
 		}
 
-		// search for value to send with avgThr reached
+		// search for value to send with avgCnt reached
 		bool send = true;
 		
 		if (di_change)
 		{
 			prepare_digitalpin();
 		}
-		else if (humidity.cnt >= humidity.avgThr)
+		else if (humidity.cnt >= humidity.measInt * humidity.avgCnt)
 		{
 			prepare_humiditytemperature();
 		}
-		else if (barometric_pressure.cnt >= barometric_pressure.avgThr)
+		else if (barometric_pressure.cnt >= barometric_pressure.measInt * barometric_pressure.avgCnt)
 		{
 			prepare_barometricpressuretemperature();
 		}
-		else if (temperature.cnt >= temperature.avgThr)
+		else if (temperature.cnt >= temperature.measInt * temperature.avgCnt)
 		{
 			prepare_temperature();
 		}
-		else if (distance.cnt >= distance.avgThr)
+		else if (distance.cnt >= distance.measInt * distance.avgCnt)
 		{
 			prepare_distance();
 		}
-		else if (brightness.cnt >= brightness.avgThr)
+		else if (brightness.cnt >= brightness.measInt * brightness.avgCnt)
 		{
 			prepare_brightness();
 		}
-		else if (battery_voltage.cnt >= battery_voltage.avgThr)
+		else if (battery_voltage.cnt >= battery_voltage.measInt * battery_voltage.avgCnt)
 		{
 			prepare_battery_voltage();
 		}
-		else if (version_status_cycle >= AVERAGE_COUNT_VERSION)
+		else if (version_cnt >= version_measInt)
 		{
 			prepare_version();
 		}
