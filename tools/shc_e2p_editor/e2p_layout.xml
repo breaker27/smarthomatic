@@ -336,8 +336,36 @@
 			<MinVal>1</MinVal>
 			<MaxVal>16</MaxVal>
 		</UIntValue>
+		<UIntValue>
+			<ID>DigitalInputMeasureInterval</ID>
+			<Description>The number of times the device wakes up before this value is measured.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>255</MaxVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>DigitalInputAveragingCount</ID>
+			<Description>The number of values whose average is calculated before sending.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>16</MaxVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>AnalogInputMeasureInterval</ID>
+			<Description>The number of times the device wakes up before this value is measured.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>255</MaxVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>AnalogInputAveragingCount</ID>
+			<Description>The number of values whose average is calculated before sending.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>16</MaxVal>
+		</UIntValue>
 		<Reserved>
-			<Bits>416</Bits>
+			<Bits>384</Bits>
 		</Reserved>
 		<Array>
 			<Length>8</Length>

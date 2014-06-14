@@ -356,7 +356,75 @@ static inline uint8_t e2p_envsensor_get_distanceaveragingcount(void)
   return eeprom_read_UIntValue8(139, 0, 8, 1, 16);
 }
 
-// Reserved area with 416 bits
+// DigitalInputMeasureInterval (UIntValue)
+// Description: The number of times the device wakes up before this value is measured.
+
+// Set DigitalInputMeasureInterval (UIntValue)
+// Byte offset: 140, bit offset: 0, length bits 8, min val 1, max val 255
+static inline void e2p_envsensor_set_digitalinputmeasureinterval(uint8_t val)
+{
+  eeprom_write_UIntValue(140, 0, 8, val);
+}
+
+// Get DigitalInputMeasureInterval (UIntValue)
+// Byte offset: 140, bit offset: 0, length bits 8, min val 1, max val 255
+static inline uint8_t e2p_envsensor_get_digitalinputmeasureinterval(void)
+{
+  return eeprom_read_UIntValue8(140, 0, 8, 1, 255);
+}
+
+// DigitalInputAveragingCount (UIntValue)
+// Description: The number of values whose average is calculated before sending.
+
+// Set DigitalInputAveragingCount (UIntValue)
+// Byte offset: 141, bit offset: 0, length bits 8, min val 1, max val 16
+static inline void e2p_envsensor_set_digitalinputaveragingcount(uint8_t val)
+{
+  eeprom_write_UIntValue(141, 0, 8, val);
+}
+
+// Get DigitalInputAveragingCount (UIntValue)
+// Byte offset: 141, bit offset: 0, length bits 8, min val 1, max val 16
+static inline uint8_t e2p_envsensor_get_digitalinputaveragingcount(void)
+{
+  return eeprom_read_UIntValue8(141, 0, 8, 1, 16);
+}
+
+// AnalogInputMeasureInterval (UIntValue)
+// Description: The number of times the device wakes up before this value is measured.
+
+// Set AnalogInputMeasureInterval (UIntValue)
+// Byte offset: 142, bit offset: 0, length bits 8, min val 1, max val 255
+static inline void e2p_envsensor_set_analoginputmeasureinterval(uint8_t val)
+{
+  eeprom_write_UIntValue(142, 0, 8, val);
+}
+
+// Get AnalogInputMeasureInterval (UIntValue)
+// Byte offset: 142, bit offset: 0, length bits 8, min val 1, max val 255
+static inline uint8_t e2p_envsensor_get_analoginputmeasureinterval(void)
+{
+  return eeprom_read_UIntValue8(142, 0, 8, 1, 255);
+}
+
+// AnalogInputAveragingCount (UIntValue)
+// Description: The number of values whose average is calculated before sending.
+
+// Set AnalogInputAveragingCount (UIntValue)
+// Byte offset: 143, bit offset: 0, length bits 8, min val 1, max val 16
+static inline void e2p_envsensor_set_analoginputaveragingcount(uint8_t val)
+{
+  eeprom_write_UIntValue(143, 0, 8, val);
+}
+
+// Get AnalogInputAveragingCount (UIntValue)
+// Byte offset: 143, bit offset: 0, length bits 8, min val 1, max val 16
+static inline uint8_t e2p_envsensor_get_analoginputaveragingcount(void)
+{
+  return eeprom_read_UIntValue8(143, 0, 8, 1, 16);
+}
+
+// Reserved area with 384 bits
 
 // DigitalInputPins (EnumValue[8])
 // Description: You can choose up to 8 GPIO pins as digital input. The enum values are couting through every pin from port B, C and D, leaving out the pins that are not accessible because otherwise used.
