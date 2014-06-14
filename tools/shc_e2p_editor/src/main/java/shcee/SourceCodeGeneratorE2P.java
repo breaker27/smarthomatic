@@ -225,7 +225,7 @@ public class SourceCodeGeneratorE2P
 				
 				sb.append("static inline " + ID1 + "Enum " + functionPrefix + "_get_" + ID1.toLowerCase() + "(" + funcParam2 + ")" + newline);
 				sb.append("{" + newline);
-				sb.append("  return eeprom_read_UIntValue" + cTypeBits + "(" + accessStr + ", 8, 0, " + maxVal + ");" + newline);
+				sb.append("  return eeprom_read_UIntValue" + cTypeBits + "(" + accessStr + ", " + bits + ", 0, " + maxVal + ");" + newline);
 				sb.append("}" + newline);
 				sb.append(newline);
 				
