@@ -715,7 +715,7 @@ int main(void)
 		}
 		else // wakeup by RFM12B -> measure everything
 		{
-			bool measure_srf02 = srf02_connected && (distance.cnt + 1 % distance.measInt == 0);
+			bool measure_srf02 = srf02_connected && ((distance.cnt + 1) % distance.measInt == 0);
 			bool measure_i2c = measure_srf02 || measure_other_i2c;
 			bool needs_power = measure_srf02 || (measure_other_i2c && srf02_connected);
 
