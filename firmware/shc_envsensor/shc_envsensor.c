@@ -63,9 +63,9 @@ bool pin_wakeup = false; // remember if wakeup was done by pin change (or by RFM
 struct measurement_t
 {
 	int32_t val;      // stores the accumulated value
-	uint16_t wupCnt;      // Amount of wake-up cycles counting from the last time a measurement was done.
+	uint16_t wupCnt;  // Amount of wake-up cycles counting from the last time a measurement was done.
 	uint16_t measInt; // The number of times the device wakes up before this value is measured.
-	uint8_t avgCnt;   // The number of values whose average is calculated before sending.
+	uint8_t avgInt;   // The number of values whose average is calculated before sending.
 } temperature, humidity, barometric_pressure, distance, battery_voltage, brightness;
 
 struct portpin_t
@@ -156,7 +156,7 @@ void init_di_sensor(void)
 {
 	uint8_t i;
 	uint8_t measInt = e2p_envsensor_get_digitalinputmeasuringinterval();
-	uint8_t avgCnt = e2p_envsensor_get_digitalinputaveraginginterval();
+	uint8_t avgInt = e2p_envsensor_get_digitalinputaveraginginterval();
 	
 	for (i = 0; i < 8; i++)
 	{
@@ -189,7 +189,7 @@ void init_di_sensor(void)
 			}
 
 			di[i].meas.measInt = measInt;
-			di[i].meas.avgCnt = avgCnt;
+			di[i].meas.avgInt = avgInt;
 
 			UART_PUTF3("Using port %u pin %u as digital input pin %u ", di[i].port, di[i].pin, i);
 			UART_PUTF2("in mode %u with pull-up %s\r\n", mode, di[i].pull_up ? "ON" : "OFF");
@@ -203,7 +203,7 @@ void init_di_sensor(void)
 
 	if (di_sensor_used)
 	{
-		UART_PUTF2("(MeasInt %u, AvgCnt %u)\r\n\r\n", measInt, avgCnt);
+		UART_PUTF2("(MeasInt %u, avgInt %u)\r\n\r\n", measInt, avgInt);
 	}
 }
 
@@ -652,18 +652,18 @@ int main(void)
 	version_measInt = 85000 / wakeup_sec;
 	version_wupCnt = version_measInt - 1; // send right after startup
 	
-	temperature.avgCnt = e2p_envsensor_get_temperatureaveraginginterval();
-	humidity.avgCnt = e2p_envsensor_get_humidityaveraginginterval();
-	barometric_pressure.avgCnt = e2p_envsensor_get_barometricaveraginginterval();
-	brightness.avgCnt = e2p_envsensor_get_brightnessaveraginginterval();
-	distance.avgCnt = e2p_envsensor_get_distanceaveraginginterval();
-	battery_voltage.avgCnt = 8;
+	temperature.avgInt = e2p_envsensor_get_temperatureaveraginginterval();
+	humidity.avgInt = e2p_envsensor_get_humidityaveraginginterval();
+	barometric_pressure.avgInt = e2p_envsensor_get_barometricaveraginginterval();
+	brightness.avgInt = e2p_envsensor_get_brightnessaveraginginterval();
+	distance.avgInt = e2p_envsensor_get_distanceaveraginginterval();
+	battery_voltage.avgInt = 8;
 
-	UART_PUTF3("Temperature sensor type: %u (MeasInt %u, AvgCnt %u)\r\n", temperature_sensor_type, temperature.measInt, temperature.avgCnt);
-	UART_PUTF3("Humidity sensor type: %u (MeasInt %u, AvgCnt %u)\r\n", humidity_sensor_type, humidity.measInt, humidity.avgCnt);
-	UART_PUTF3("Barometric sensor type: %u (MeasInt %u, AvgCnt %u)\r\n", barometric_sensor_type, barometric_pressure.measInt, barometric_pressure.avgCnt);
-	UART_PUTF3("Brightness sensor type: %u (MeasInt %u, AvgCnt %u)\r\n", brightness_sensor_type, brightness.measInt, brightness.avgCnt);
-	UART_PUTF3("Distance sensor type: %u (MeasInt %u, AvgCnt %u)\r\n", distance_sensor_type, distance.measInt, distance.avgCnt);
+	UART_PUTF3("Temperature sensor type: %u (MeasInt %u, avgInt %u)\r\n", temperature_sensor_type, temperature.measInt, temperature.avgInt);
+	UART_PUTF3("Humidity sensor type: %u (MeasInt %u, avgInt %u)\r\n", humidity_sensor_type, humidity.measInt, humidity.avgInt);
+	UART_PUTF3("Barometric sensor type: %u (MeasInt %u, avgInt %u)\r\n", barometric_sensor_type, barometric_pressure.measInt, barometric_pressure.avgInt);
+	UART_PUTF3("Brightness sensor type: %u (MeasInt %u, avgInt %u)\r\n", brightness_sensor_type, brightness.measInt, brightness.avgInt);
+	UART_PUTF3("Distance sensor type: %u (MeasInt %u, avgInt %u)\r\n", distance_sensor_type, distance.measInt, distance.avgInt);
 
 	adc_init();
 
@@ -678,7 +678,7 @@ int main(void)
 	  vempty = 1200; // 1.2V * 2 cells = 2.4V = min. voltage for SHT15
 	}
 	
-	UART_PUTF3("Min. battery voltage: %umV (MeasInt %u, AvgCnt %u)\r\n", vempty, battery_voltage.measInt, battery_voltage.avgCnt);
+	UART_PUTF3("Min. battery voltage: %umV (MeasInt %u, avgInt %u)\r\n", vempty, battery_voltage.measInt, battery_voltage.avgInt);
 
 	if (barometric_sensor_type == BAROMETRICSENSORTYPE_BMP085)
 	{
@@ -757,34 +757,34 @@ int main(void)
 			version_wupCnt++;
 		}
 
-		// search for value to send with avgCnt reached
+		// search for value to send with avgInt reached
 		bool send = true;
 		
 		if (di_change)
 		{
 			prepare_digitalpin();
 		}
-		else if (humidity.wupCnt >= humidity.measInt * humidity.avgCnt)
+		else if (humidity.wupCnt >= humidity.measInt * humidity.avgInt)
 		{
 			prepare_humiditytemperature();
 		}
-		else if (barometric_pressure.wupCnt >= barometric_pressure.measInt * barometric_pressure.avgCnt)
+		else if (barometric_pressure.wupCnt >= barometric_pressure.measInt * barometric_pressure.avgInt)
 		{
 			prepare_barometricpressuretemperature();
 		}
-		else if (temperature.wupCnt >= temperature.measInt * temperature.avgCnt)
+		else if (temperature.wupCnt >= temperature.measInt * temperature.avgInt)
 		{
 			prepare_temperature();
 		}
-		else if (distance.wupCnt >= distance.measInt * distance.avgCnt)
+		else if (distance.wupCnt >= distance.measInt * distance.avgInt)
 		{
 			prepare_distance();
 		}
-		else if (brightness.wupCnt >= brightness.measInt * brightness.avgCnt)
+		else if (brightness.wupCnt >= brightness.measInt * brightness.avgInt)
 		{
 			prepare_brightness();
 		}
-		else if (battery_voltage.wupCnt >= battery_voltage.measInt * battery_voltage.avgCnt)
+		else if (battery_voltage.wupCnt >= battery_voltage.measInt * battery_voltage.avgInt)
 		{
 			prepare_battery_voltage();
 		}
