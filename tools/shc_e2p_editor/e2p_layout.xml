@@ -267,98 +267,98 @@
 			</Element>
 		</EnumValue>
 		<UIntValue>
-			<ID>TemperatureMeasureInterval</ID>
+			<ID>TemperatureMeasuringInterval</ID>
 			<Description>The number of times the device wakes up before this value is measured.</Description>
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>255</MaxVal>
 		</UIntValue>
 		<UIntValue>
-			<ID>TemperatureAveragingCount</ID>
+			<ID>TemperatureAveragingInterval</ID>
 			<Description>The number of values whose average is calculated before sending.</Description>
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>16</MaxVal>
 		</UIntValue>
 		<UIntValue>
-			<ID>HumidityMeasureInterval</ID>
+			<ID>HumidityMeasuringInterval</ID>
 			<Description>The number of times the device wakes up before this value is measured.</Description>
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>255</MaxVal>
 		</UIntValue>
 		<UIntValue>
-			<ID>HumidityAveragingCount</ID>
+			<ID>HumidityAveragingInterval</ID>
 			<Description>The number of values whose average is calculated before sending.</Description>
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>16</MaxVal>
 		</UIntValue>
 		<UIntValue>
-			<ID>BarometricMeasureInterval</ID>
+			<ID>BarometricMeasuringInterval</ID>
 			<Description>The number of times the device wakes up before this value is measured.</Description>
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>255</MaxVal>
 		</UIntValue>
 		<UIntValue>
-			<ID>BarometricAveragingCount</ID>
+			<ID>BarometricAveragingInterval</ID>
 			<Description>The number of values whose average is calculated before sending.</Description>
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>16</MaxVal>
 		</UIntValue>
 		<UIntValue>
-			<ID>BrightnessMeasureInterval</ID>
+			<ID>BrightnessMeasuringInterval</ID>
 			<Description>The number of times the device wakes up before this value is measured.</Description>
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>255</MaxVal>
 		</UIntValue>
 		<UIntValue>
-			<ID>BrightnessAveragingCount</ID>
+			<ID>BrightnessAveragingInterval</ID>
 			<Description>The number of values whose average is calculated before sending.</Description>
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>16</MaxVal>
 		</UIntValue>
 		<UIntValue>
-			<ID>DistanceMeasureInterval</ID>
+			<ID>DistanceMeasuringInterval</ID>
 			<Description>The number of times the device wakes up before this value is measured.</Description>
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>255</MaxVal>
 		</UIntValue>
 		<UIntValue>
-			<ID>DistanceAveragingCount</ID>
+			<ID>DistanceAveragingInterval</ID>
 			<Description>The number of values whose average is calculated before sending.</Description>
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>16</MaxVal>
 		</UIntValue>
 		<UIntValue>
-			<ID>DigitalInputMeasureInterval</ID>
+			<ID>DigitalInputMeasuringInterval</ID>
 			<Description>The number of times the device wakes up before this value is measured.</Description>
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>255</MaxVal>
 		</UIntValue>
 		<UIntValue>
-			<ID>DigitalInputAveragingCount</ID>
+			<ID>DigitalInputAveragingInterval</ID>
 			<Description>The number of values whose average is calculated before sending.</Description>
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>16</MaxVal>
 		</UIntValue>
 		<UIntValue>
-			<ID>AnalogInputMeasureInterval</ID>
+			<ID>AnalogInputMeasuringInterval</ID>
 			<Description>The number of times the device wakes up before this value is measured.</Description>
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>255</MaxVal>
 		</UIntValue>
 		<UIntValue>
-			<ID>AnalogInputAveragingCount</ID>
+			<ID>AnalogInputAveragingInterval</ID>
 			<Description>The number of values whose average is calculated before sending.</Description>
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>

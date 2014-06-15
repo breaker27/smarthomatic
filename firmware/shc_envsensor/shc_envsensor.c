@@ -155,8 +155,8 @@ void clearPullUp(uint8_t port_nr, uint8_t pin)
 void init_di_sensor(void)
 {
 	uint8_t i;
-	uint8_t measInt = e2p_envsensor_get_digitalinputmeasureinterval();
-	uint8_t avgCnt = e2p_envsensor_get_digitalinputaveragingcount();
+	uint8_t measInt = e2p_envsensor_get_digitalinputmeasuringinterval();
+	uint8_t avgCnt = e2p_envsensor_get_digitalinputaveraginginterval();
 	
 	for (i = 0; i < 8; i++)
 	{
@@ -645,20 +645,20 @@ int main(void)
 	wakeup_sec = init_wakeup();
 
 	// Configure measurement and averaging intervals.
-	temperature.measInt = e2p_envsensor_get_temperaturemeasureinterval();
-	humidity.measInt = e2p_envsensor_get_humiditymeasureinterval();
-	barometric_pressure.measInt = e2p_envsensor_get_barometricmeasureinterval();
-	brightness.measInt = e2p_envsensor_get_brightnessmeasureinterval();
-	distance.measInt = e2p_envsensor_get_distancemeasureinterval();
+	temperature.measInt = e2p_envsensor_get_temperaturemeasuringinterval();
+	humidity.measInt = e2p_envsensor_get_humiditymeasuringinterval();
+	barometric_pressure.measInt = e2p_envsensor_get_barometricmeasuringinterval();
+	brightness.measInt = e2p_envsensor_get_brightnessmeasuringinterval();
+	distance.measInt = e2p_envsensor_get_distancemeasuringinterval();
 	battery_voltage.measInt = 12000 / wakeup_sec;
 	version_measInt = 85000 / wakeup_sec;
 	version_cnt = version_measInt - 1; // send right after startup
 	
-	temperature.avgCnt = e2p_envsensor_get_temperatureaveragingcount();
-	humidity.avgCnt = e2p_envsensor_get_humidityaveragingcount();
-	barometric_pressure.avgCnt = e2p_envsensor_get_barometricaveragingcount();
-	brightness.avgCnt = e2p_envsensor_get_brightnessaveragingcount();
-	distance.avgCnt = e2p_envsensor_get_distanceaveragingcount();
+	temperature.avgCnt = e2p_envsensor_get_temperatureaveraginginterval();
+	humidity.avgCnt = e2p_envsensor_get_humidityaveraginginterval();
+	barometric_pressure.avgCnt = e2p_envsensor_get_barometricaveraginginterval();
+	brightness.avgCnt = e2p_envsensor_get_brightnessaveraginginterval();
+	distance.avgCnt = e2p_envsensor_get_distanceaveraginginterval();
 	battery_voltage.avgCnt = 8;
 
 	UART_PUTF3("Temperature sensor type: %u (MeasInt %u, AvgCnt %u)\r\n", temperature_sensor_type, temperature.measInt, temperature.avgCnt);

@@ -186,240 +186,240 @@ static inline WakeupIntervalEnum e2p_envsensor_get_wakeupinterval(void)
   return eeprom_read_UIntValue16(128, 0, 16, 0, 65535);
 }
 
-// TemperatureMeasureInterval (UIntValue)
+// TemperatureMeasuringInterval (UIntValue)
 // Description: The number of times the device wakes up before this value is measured.
 
-// Set TemperatureMeasureInterval (UIntValue)
+// Set TemperatureMeasuringInterval (UIntValue)
 // Byte offset: 130, bit offset: 0, length bits 8, min val 1, max val 255
-static inline void e2p_envsensor_set_temperaturemeasureinterval(uint8_t val)
+static inline void e2p_envsensor_set_temperaturemeasuringinterval(uint8_t val)
 {
   eeprom_write_UIntValue(130, 0, 8, val);
 }
 
-// Get TemperatureMeasureInterval (UIntValue)
+// Get TemperatureMeasuringInterval (UIntValue)
 // Byte offset: 130, bit offset: 0, length bits 8, min val 1, max val 255
-static inline uint8_t e2p_envsensor_get_temperaturemeasureinterval(void)
+static inline uint8_t e2p_envsensor_get_temperaturemeasuringinterval(void)
 {
   return eeprom_read_UIntValue8(130, 0, 8, 1, 255);
 }
 
-// TemperatureAveragingCount (UIntValue)
+// TemperatureAveragingInterval (UIntValue)
 // Description: The number of values whose average is calculated before sending.
 
-// Set TemperatureAveragingCount (UIntValue)
+// Set TemperatureAveragingInterval (UIntValue)
 // Byte offset: 131, bit offset: 0, length bits 8, min val 1, max val 16
-static inline void e2p_envsensor_set_temperatureaveragingcount(uint8_t val)
+static inline void e2p_envsensor_set_temperatureaveraginginterval(uint8_t val)
 {
   eeprom_write_UIntValue(131, 0, 8, val);
 }
 
-// Get TemperatureAveragingCount (UIntValue)
+// Get TemperatureAveragingInterval (UIntValue)
 // Byte offset: 131, bit offset: 0, length bits 8, min val 1, max val 16
-static inline uint8_t e2p_envsensor_get_temperatureaveragingcount(void)
+static inline uint8_t e2p_envsensor_get_temperatureaveraginginterval(void)
 {
   return eeprom_read_UIntValue8(131, 0, 8, 1, 16);
 }
 
-// HumidityMeasureInterval (UIntValue)
+// HumidityMeasuringInterval (UIntValue)
 // Description: The number of times the device wakes up before this value is measured.
 
-// Set HumidityMeasureInterval (UIntValue)
+// Set HumidityMeasuringInterval (UIntValue)
 // Byte offset: 132, bit offset: 0, length bits 8, min val 1, max val 255
-static inline void e2p_envsensor_set_humiditymeasureinterval(uint8_t val)
+static inline void e2p_envsensor_set_humiditymeasuringinterval(uint8_t val)
 {
   eeprom_write_UIntValue(132, 0, 8, val);
 }
 
-// Get HumidityMeasureInterval (UIntValue)
+// Get HumidityMeasuringInterval (UIntValue)
 // Byte offset: 132, bit offset: 0, length bits 8, min val 1, max val 255
-static inline uint8_t e2p_envsensor_get_humiditymeasureinterval(void)
+static inline uint8_t e2p_envsensor_get_humiditymeasuringinterval(void)
 {
   return eeprom_read_UIntValue8(132, 0, 8, 1, 255);
 }
 
-// HumidityAveragingCount (UIntValue)
+// HumidityAveragingInterval (UIntValue)
 // Description: The number of values whose average is calculated before sending.
 
-// Set HumidityAveragingCount (UIntValue)
+// Set HumidityAveragingInterval (UIntValue)
 // Byte offset: 133, bit offset: 0, length bits 8, min val 1, max val 16
-static inline void e2p_envsensor_set_humidityaveragingcount(uint8_t val)
+static inline void e2p_envsensor_set_humidityaveraginginterval(uint8_t val)
 {
   eeprom_write_UIntValue(133, 0, 8, val);
 }
 
-// Get HumidityAveragingCount (UIntValue)
+// Get HumidityAveragingInterval (UIntValue)
 // Byte offset: 133, bit offset: 0, length bits 8, min val 1, max val 16
-static inline uint8_t e2p_envsensor_get_humidityaveragingcount(void)
+static inline uint8_t e2p_envsensor_get_humidityaveraginginterval(void)
 {
   return eeprom_read_UIntValue8(133, 0, 8, 1, 16);
 }
 
-// BarometricMeasureInterval (UIntValue)
+// BarometricMeasuringInterval (UIntValue)
 // Description: The number of times the device wakes up before this value is measured.
 
-// Set BarometricMeasureInterval (UIntValue)
+// Set BarometricMeasuringInterval (UIntValue)
 // Byte offset: 134, bit offset: 0, length bits 8, min val 1, max val 255
-static inline void e2p_envsensor_set_barometricmeasureinterval(uint8_t val)
+static inline void e2p_envsensor_set_barometricmeasuringinterval(uint8_t val)
 {
   eeprom_write_UIntValue(134, 0, 8, val);
 }
 
-// Get BarometricMeasureInterval (UIntValue)
+// Get BarometricMeasuringInterval (UIntValue)
 // Byte offset: 134, bit offset: 0, length bits 8, min val 1, max val 255
-static inline uint8_t e2p_envsensor_get_barometricmeasureinterval(void)
+static inline uint8_t e2p_envsensor_get_barometricmeasuringinterval(void)
 {
   return eeprom_read_UIntValue8(134, 0, 8, 1, 255);
 }
 
-// BarometricAveragingCount (UIntValue)
+// BarometricAveragingInterval (UIntValue)
 // Description: The number of values whose average is calculated before sending.
 
-// Set BarometricAveragingCount (UIntValue)
+// Set BarometricAveragingInterval (UIntValue)
 // Byte offset: 135, bit offset: 0, length bits 8, min val 1, max val 16
-static inline void e2p_envsensor_set_barometricaveragingcount(uint8_t val)
+static inline void e2p_envsensor_set_barometricaveraginginterval(uint8_t val)
 {
   eeprom_write_UIntValue(135, 0, 8, val);
 }
 
-// Get BarometricAveragingCount (UIntValue)
+// Get BarometricAveragingInterval (UIntValue)
 // Byte offset: 135, bit offset: 0, length bits 8, min val 1, max val 16
-static inline uint8_t e2p_envsensor_get_barometricaveragingcount(void)
+static inline uint8_t e2p_envsensor_get_barometricaveraginginterval(void)
 {
   return eeprom_read_UIntValue8(135, 0, 8, 1, 16);
 }
 
-// BrightnessMeasureInterval (UIntValue)
+// BrightnessMeasuringInterval (UIntValue)
 // Description: The number of times the device wakes up before this value is measured.
 
-// Set BrightnessMeasureInterval (UIntValue)
+// Set BrightnessMeasuringInterval (UIntValue)
 // Byte offset: 136, bit offset: 0, length bits 8, min val 1, max val 255
-static inline void e2p_envsensor_set_brightnessmeasureinterval(uint8_t val)
+static inline void e2p_envsensor_set_brightnessmeasuringinterval(uint8_t val)
 {
   eeprom_write_UIntValue(136, 0, 8, val);
 }
 
-// Get BrightnessMeasureInterval (UIntValue)
+// Get BrightnessMeasuringInterval (UIntValue)
 // Byte offset: 136, bit offset: 0, length bits 8, min val 1, max val 255
-static inline uint8_t e2p_envsensor_get_brightnessmeasureinterval(void)
+static inline uint8_t e2p_envsensor_get_brightnessmeasuringinterval(void)
 {
   return eeprom_read_UIntValue8(136, 0, 8, 1, 255);
 }
 
-// BrightnessAveragingCount (UIntValue)
+// BrightnessAveragingInterval (UIntValue)
 // Description: The number of values whose average is calculated before sending.
 
-// Set BrightnessAveragingCount (UIntValue)
+// Set BrightnessAveragingInterval (UIntValue)
 // Byte offset: 137, bit offset: 0, length bits 8, min val 1, max val 16
-static inline void e2p_envsensor_set_brightnessaveragingcount(uint8_t val)
+static inline void e2p_envsensor_set_brightnessaveraginginterval(uint8_t val)
 {
   eeprom_write_UIntValue(137, 0, 8, val);
 }
 
-// Get BrightnessAveragingCount (UIntValue)
+// Get BrightnessAveragingInterval (UIntValue)
 // Byte offset: 137, bit offset: 0, length bits 8, min val 1, max val 16
-static inline uint8_t e2p_envsensor_get_brightnessaveragingcount(void)
+static inline uint8_t e2p_envsensor_get_brightnessaveraginginterval(void)
 {
   return eeprom_read_UIntValue8(137, 0, 8, 1, 16);
 }
 
-// DistanceMeasureInterval (UIntValue)
+// DistanceMeasuringInterval (UIntValue)
 // Description: The number of times the device wakes up before this value is measured.
 
-// Set DistanceMeasureInterval (UIntValue)
+// Set DistanceMeasuringInterval (UIntValue)
 // Byte offset: 138, bit offset: 0, length bits 8, min val 1, max val 255
-static inline void e2p_envsensor_set_distancemeasureinterval(uint8_t val)
+static inline void e2p_envsensor_set_distancemeasuringinterval(uint8_t val)
 {
   eeprom_write_UIntValue(138, 0, 8, val);
 }
 
-// Get DistanceMeasureInterval (UIntValue)
+// Get DistanceMeasuringInterval (UIntValue)
 // Byte offset: 138, bit offset: 0, length bits 8, min val 1, max val 255
-static inline uint8_t e2p_envsensor_get_distancemeasureinterval(void)
+static inline uint8_t e2p_envsensor_get_distancemeasuringinterval(void)
 {
   return eeprom_read_UIntValue8(138, 0, 8, 1, 255);
 }
 
-// DistanceAveragingCount (UIntValue)
+// DistanceAveragingInterval (UIntValue)
 // Description: The number of values whose average is calculated before sending.
 
-// Set DistanceAveragingCount (UIntValue)
+// Set DistanceAveragingInterval (UIntValue)
 // Byte offset: 139, bit offset: 0, length bits 8, min val 1, max val 16
-static inline void e2p_envsensor_set_distanceaveragingcount(uint8_t val)
+static inline void e2p_envsensor_set_distanceaveraginginterval(uint8_t val)
 {
   eeprom_write_UIntValue(139, 0, 8, val);
 }
 
-// Get DistanceAveragingCount (UIntValue)
+// Get DistanceAveragingInterval (UIntValue)
 // Byte offset: 139, bit offset: 0, length bits 8, min val 1, max val 16
-static inline uint8_t e2p_envsensor_get_distanceaveragingcount(void)
+static inline uint8_t e2p_envsensor_get_distanceaveraginginterval(void)
 {
   return eeprom_read_UIntValue8(139, 0, 8, 1, 16);
 }
 
-// DigitalInputMeasureInterval (UIntValue)
+// DigitalInputMeasuringInterval (UIntValue)
 // Description: The number of times the device wakes up before this value is measured.
 
-// Set DigitalInputMeasureInterval (UIntValue)
+// Set DigitalInputMeasuringInterval (UIntValue)
 // Byte offset: 140, bit offset: 0, length bits 8, min val 1, max val 255
-static inline void e2p_envsensor_set_digitalinputmeasureinterval(uint8_t val)
+static inline void e2p_envsensor_set_digitalinputmeasuringinterval(uint8_t val)
 {
   eeprom_write_UIntValue(140, 0, 8, val);
 }
 
-// Get DigitalInputMeasureInterval (UIntValue)
+// Get DigitalInputMeasuringInterval (UIntValue)
 // Byte offset: 140, bit offset: 0, length bits 8, min val 1, max val 255
-static inline uint8_t e2p_envsensor_get_digitalinputmeasureinterval(void)
+static inline uint8_t e2p_envsensor_get_digitalinputmeasuringinterval(void)
 {
   return eeprom_read_UIntValue8(140, 0, 8, 1, 255);
 }
 
-// DigitalInputAveragingCount (UIntValue)
+// DigitalInputAveragingInterval (UIntValue)
 // Description: The number of values whose average is calculated before sending.
 
-// Set DigitalInputAveragingCount (UIntValue)
+// Set DigitalInputAveragingInterval (UIntValue)
 // Byte offset: 141, bit offset: 0, length bits 8, min val 1, max val 16
-static inline void e2p_envsensor_set_digitalinputaveragingcount(uint8_t val)
+static inline void e2p_envsensor_set_digitalinputaveraginginterval(uint8_t val)
 {
   eeprom_write_UIntValue(141, 0, 8, val);
 }
 
-// Get DigitalInputAveragingCount (UIntValue)
+// Get DigitalInputAveragingInterval (UIntValue)
 // Byte offset: 141, bit offset: 0, length bits 8, min val 1, max val 16
-static inline uint8_t e2p_envsensor_get_digitalinputaveragingcount(void)
+static inline uint8_t e2p_envsensor_get_digitalinputaveraginginterval(void)
 {
   return eeprom_read_UIntValue8(141, 0, 8, 1, 16);
 }
 
-// AnalogInputMeasureInterval (UIntValue)
+// AnalogInputMeasuringInterval (UIntValue)
 // Description: The number of times the device wakes up before this value is measured.
 
-// Set AnalogInputMeasureInterval (UIntValue)
+// Set AnalogInputMeasuringInterval (UIntValue)
 // Byte offset: 142, bit offset: 0, length bits 8, min val 1, max val 255
-static inline void e2p_envsensor_set_analoginputmeasureinterval(uint8_t val)
+static inline void e2p_envsensor_set_analoginputmeasuringinterval(uint8_t val)
 {
   eeprom_write_UIntValue(142, 0, 8, val);
 }
 
-// Get AnalogInputMeasureInterval (UIntValue)
+// Get AnalogInputMeasuringInterval (UIntValue)
 // Byte offset: 142, bit offset: 0, length bits 8, min val 1, max val 255
-static inline uint8_t e2p_envsensor_get_analoginputmeasureinterval(void)
+static inline uint8_t e2p_envsensor_get_analoginputmeasuringinterval(void)
 {
   return eeprom_read_UIntValue8(142, 0, 8, 1, 255);
 }
 
-// AnalogInputAveragingCount (UIntValue)
+// AnalogInputAveragingInterval (UIntValue)
 // Description: The number of values whose average is calculated before sending.
 
-// Set AnalogInputAveragingCount (UIntValue)
+// Set AnalogInputAveragingInterval (UIntValue)
 // Byte offset: 143, bit offset: 0, length bits 8, min val 1, max val 16
-static inline void e2p_envsensor_set_analoginputaveragingcount(uint8_t val)
+static inline void e2p_envsensor_set_analoginputaveraginginterval(uint8_t val)
 {
   eeprom_write_UIntValue(143, 0, 8, val);
 }
 
-// Get AnalogInputAveragingCount (UIntValue)
+// Get AnalogInputAveragingInterval (UIntValue)
 // Byte offset: 143, bit offset: 0, length bits 8, min val 1, max val 16
-static inline uint8_t e2p_envsensor_get_analoginputaveragingcount(void)
+static inline uint8_t e2p_envsensor_get_analoginputaveraginginterval(void)
 {
   return eeprom_read_UIntValue8(143, 0, 8, 1, 16);
 }
