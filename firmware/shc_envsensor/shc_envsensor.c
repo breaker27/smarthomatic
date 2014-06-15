@@ -444,7 +444,7 @@ void measure_distance_i2c(void)
 	if (distance_sensor_type == DISTANCESENSORTYPE_SRF02)
 	{
 		distance.val += srf02_get_distance();
-		UART_PUTF("Dist sum = %u cm\r\n", distance.val);
+		//UART_PUTF("Dist sum = %u cm\r\n", distance.val);
 	}
 }
 
@@ -466,7 +466,6 @@ void measure_brightness(void)
 
 	if (brightness_sensor_type == BRIGHTNESSSENSORTYPE_PHOTOCELL)
 	{
-		UART_PUTS("Measure brightness now.\r\n");
 		brightness.val += read_adc(1);
 	}
 }
@@ -672,11 +671,11 @@ int main(void)
 	distance.avgInt = e2p_envsensor_get_distanceaveraginginterval();
 	battery_voltage.avgInt = BATTERY_AVERAGING_INTERVAL;
 
-	UART_PUTF3("Temperature sensor type: %u (MeasInt %u, avgInt %u)\r\n", temperature_sensor_type, temperature.measInt, temperature.avgInt);
-	UART_PUTF3("Humidity sensor type: %u (MeasInt %u, avgInt %u)\r\n", humidity_sensor_type, humidity.measInt, humidity.avgInt);
-	UART_PUTF3("Barometric sensor type: %u (MeasInt %u, avgInt %u)\r\n", barometric_sensor_type, barometric_pressure.measInt, barometric_pressure.avgInt);
-	UART_PUTF3("Brightness sensor type: %u (MeasInt %u, avgInt %u)\r\n", brightness_sensor_type, brightness.measInt, brightness.avgInt);
-	UART_PUTF3("Distance sensor type: %u (MeasInt %u, avgInt %u)\r\n", distance_sensor_type, distance.measInt, distance.avgInt);
+	UART_PUTF3("Temperature sensor type: %u (measInt %u, avgInt %u)\r\n", temperature_sensor_type, temperature.measInt, temperature.avgInt);
+	UART_PUTF3("Humidity sensor type: %u (measInt %u, avgInt %u)\r\n", humidity_sensor_type, humidity.measInt, humidity.avgInt);
+	UART_PUTF3("Barometric sensor type: %u (measInt %u, avgInt %u)\r\n", barometric_sensor_type, barometric_pressure.measInt, barometric_pressure.avgInt);
+	UART_PUTF3("Brightness sensor type: %u (measInt %u, avgInt %u)\r\n", brightness_sensor_type, brightness.measInt, brightness.avgInt);
+	UART_PUTF3("Distance sensor type: %u (measInt %u, avgInt %u)\r\n", distance_sensor_type, distance.measInt, distance.avgInt);
 
 	adc_init();
 
@@ -691,7 +690,7 @@ int main(void)
 	  vempty = 1200; // 1.2V * 2 cells = 2.4V = min. voltage for SHT15
 	}
 	
-	UART_PUTF3("Min. battery voltage: %umV (MeasInt %u, avgInt %u)\r\n", vempty, battery_voltage.measInt, battery_voltage.avgInt);
+	UART_PUTF3("Min. battery voltage: %umV (measInt %u, avgInt %u)\r\n", vempty, battery_voltage.measInt, battery_voltage.avgInt);
 
 	if (barometric_sensor_type == BAROMETRICSENSORTYPE_BMP085)
 	{
@@ -704,6 +703,8 @@ int main(void)
 	{
 		sbi(SRF02_POWER_DDR, SRF02_POWER_PIN);
 	}
+
+	UART_PUTS("\r\n");
 
 	led_blink(500, 500, 3);
 	
