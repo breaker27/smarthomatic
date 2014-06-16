@@ -44,6 +44,11 @@
 #include "util.h"
 #include "version.h"
 
+// Pull-up resistors that are switched on for battery and brightness measurement
+#define ADC_PULLUP_DDR  DDRB
+#define ADC_PULLUP_PORT PORTB
+#define ADC_PULLUP_PIN  6
+
 #define SRF02_POWER_PORT PORTD
 #define SRF02_POWER_DDR DDRD
 #define SRF02_POWER_PIN 5
@@ -620,6 +625,8 @@ int main(void)
 
 	util_init();
 
+	sbi(ADC_PULLUP_DDR, ADC_PULLUP_PIN);
+	
 	check_eeprom_compatibility(DEVICETYPE_ENVSENSOR);
 
 	osccal_init();
@@ -733,8 +740,11 @@ int main(void)
 
 			// measure ADC dependant values
 			adc_on(true);
+			sbi(ADC_PULLUP_PORT, ADC_PULLUP_PIN);
+			_delay_ms(1);
 			measure_battery_voltage();
 			measure_brightness();
+			cbi(ADC_PULLUP_PORT, ADC_PULLUP_PIN);
 			adc_on(false);
 			measure_digital_input();
 
