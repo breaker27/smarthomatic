@@ -57,6 +57,7 @@
 #define BATTERY_MEASURING_INTERVAL_SEC 28500 // about every 8 hours
 #define BATTERY_AVERAGING_INTERVAL 3
 
+uint16_t device_id = 0;
 uint8_t temperature_sensor_type = 0;
 uint8_t humidity_sensor_type = 0;
 uint8_t barometric_sensor_type = 0;
@@ -617,7 +618,6 @@ void prepare_version(void)
 
 int main(void)
 {
-	uint16_t device_id = 0;
 	uint16_t wakeup_sec;
 
 	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
