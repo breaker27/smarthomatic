@@ -21,6 +21,7 @@
 # You should have received a copy of the GNU General Public License along
 # with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 ##########################################################################
+# $Id: 37_SHC_Dev.pm xxxx 2014-xx-xx xx:xx:xx rr2000 $
 
 package SHC_util;
 
@@ -116,7 +117,7 @@ sub setUInt($$$$)
   # move bits to the left border
   $value = $value << (32 - $length_bits);
 
-  print "Moved left: val " . $value . "\r\n";
+  # DEBUG print "Moved left: val " . $value . "\r\n";
 
   # 1st byte
   my $src_start = 0;
@@ -124,7 +125,7 @@ sub setUInt($$$$)
   my $len       = min($length_bits, 8 - $bit);
   my $val8      = get_bits($value, $src_start, $len);
 
-  print "   Write bits to byte " . $byte . ", dst_start " . $dst_start . ", len " . $len . ", val8 " . $val8 . "\r\n";
+  # DEBUG print "   Write bits to byte " . $byte . ", dst_start " . $dst_start . ", len " . $len . ", val8 " . $val8 . "\r\n";
 
   setUIntBits($byteArrayRef, $byte, $dst_start, $len, $val8);
 
@@ -136,7 +137,7 @@ sub setUInt($$$$)
     $val8 = get_bits($value, $src_start, $len);
     $byte++;
 
-    print "      Byte nr. " . $byte . ", src_start " . $src_start . ", len " . $len . ", val8 " . $val8 . "\r\n";
+    # DEBUG print "      Byte nr. " . $byte . ", src_start " . $src_start . ", len " . $len . ", val8 " . $val8 . "\r\n";
 
     setUIntBits($byteArrayRef, $byte, $dst_start, $len, $val8);
 
@@ -233,6 +234,7 @@ sub new
   my $self  = {
     _id     => shift,
     _offset => shift,
+    _length => shift,
   };
   bless $self, $class;
   return $self;
@@ -240,9 +242,9 @@ sub new
 
 sub getValue
 {
-  my ($self, $byteArrayRef) = @_;
+  my ($self, $byteArrayRef, $index) = @_;
 
-  return SHC_util::getUInt($byteArrayRef, $self->{_offset}, 1) == 1 ? 1 : 0;
+  return SHC_util::getUInt($byteArrayRef, $self->{_offset} + $index, 1) == 1 ? 1 : 0;
 }
 
 sub setValue

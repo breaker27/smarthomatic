@@ -24,6 +24,8 @@
 #ifndef _E2P_HARDWARE_H
 #define _E2P_HARDWARE_H
 
+#include "e2p_access.h"
+
 // E2P Block "Hardware"
 // ====================
 // Start offset (bit): 0

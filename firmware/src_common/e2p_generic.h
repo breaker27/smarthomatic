@@ -24,6 +24,8 @@
 #ifndef _E2P_GENERIC_H
 #define _E2P_GENERIC_H
 
+#include "e2p_access.h"
+
 // E2P Block "Generic"
 // ===================
 // Start offset (bit): 64

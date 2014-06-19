@@ -126,6 +126,7 @@ static inline void pkg_header_init_powerswitch_switchstate_ackstatus(void)
 }
 
 // On (BoolValue)
+// Description: Tells if the switch is on (active).
 
 // Set On (BoolValue)
 // Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 1

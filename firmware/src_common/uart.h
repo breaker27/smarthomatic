@@ -33,7 +33,7 @@
 #define BAUD_REAL (F_CPU / (16l * (UBRR_VAL + 1)))                             // real baudrate
 #define BAUD_ERROR ((BAUD_REAL * 1000l) / UART_BAUD_RATE)                      // error in promille, 1000 = optimum
 
-#if ((BAUD_ERROR<990) || (BAUD_ERROR>1010))
+#if ((BAUD_ERROR < 990) || (BAUD_ERROR > 1010))
 	#error Systematic UART baud rate is greater than 1% and therefore too high!
 #endif 
 
