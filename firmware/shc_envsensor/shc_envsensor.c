@@ -57,6 +57,7 @@
 #define BATTERY_MEASURING_INTERVAL_SEC 28500 // about every 8 hours
 #define BATTERY_AVERAGING_INTERVAL 3
 
+uint16_t device_id = 0;
 uint8_t temperature_sensor_type = 0;
 uint8_t humidity_sensor_type = 0;
 uint8_t barometric_sensor_type = 0;
@@ -613,11 +614,22 @@ void prepare_version(void)
 	version_wupCnt = 0;
 }
 
+void send_packet(void)
+{
+	pkg_header_set_senderid(device_id);
+	pkg_header_set_packetcounter(packetcounter);
+	pkg_header_calc_crc32();
+	switch_led(1);
+	rfm12_send_bufx();
+	switch_led(0);		
+	rfm12_tick(); // send packet, and then WAIT SOME TIME BEFORE GOING TO SLEEP (otherwise packet would not be sent)
+	inc_packetcounter();
+}
+
 // ---------- main loop ----------
 
 int main(void)
 {
-	uint16_t device_id = 0;
 	uint16_t wakeup_sec;
 
 	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
@@ -782,59 +794,49 @@ int main(void)
 		}
 
 		// search for value to send with avgInt reached
-		bool send = true;
 		
 		if (di_change)
 		{
 			prepare_digitalpin();
+			send_packet();
 		}
-		else if (humidity.measCnt >= humidity.avgInt)
+		if (humidity.measCnt >= humidity.avgInt)
 		{
 			prepare_humiditytemperature();
+			send_packet();
 		}
-		else if (barometric_pressure.measCnt >= barometric_pressure.avgInt)
+		if (barometric_pressure.measCnt >= barometric_pressure.avgInt)
 		{
 			prepare_barometricpressuretemperature();
+			send_packet();
 		}
-		else if (temperature.measCnt >= temperature.avgInt)
+		if (temperature.measCnt >= temperature.avgInt)
 		{
 			prepare_temperature();
+			send_packet();
 		}
-		else if (distance.measCnt >= distance.avgInt)
+		if (distance.measCnt >= distance.avgInt)
 		{
 			prepare_distance();
+			send_packet();
 		}
-		else if (brightness.measCnt >= brightness.avgInt)
+		if (brightness.measCnt >= brightness.avgInt)
 		{
 			prepare_brightness();
+			send_packet();
 		}
-		else if (battery_voltage.measCnt >= battery_voltage.avgInt)
+		if (battery_voltage.measCnt >= battery_voltage.avgInt)
 		{
 			prepare_battery_voltage();
+			send_packet();
 		}
-		else if (version_wupCnt >= version_measInt)
+		if (version_wupCnt >= version_measInt)
 		{
 			prepare_version();
+			send_packet();
 		}
-		else
-		{
-			send = false;
-		}
-		
-		if (send)
-		{
-			pkg_header_set_senderid(device_id);
-			pkg_header_set_packetcounter(packetcounter);
-			pkg_header_calc_crc32();
-			rfm12_send_bufx();
-			rfm12_tick(); // send packet, and then WAIT SOME TIME BEFORE GOING TO SLEEP (otherwise packet would not be sent)
 
-			switch_led(1);
-			_delay_ms(200);
-			switch_led(0);
-			
-			inc_packetcounter();
-		}
+		_delay_ms(200);
 
 		// Go to sleep. Wakeup by RFM12 wakeup-interrupt or pin change (if configured).
 		pin_wakeup = false;
