@@ -482,6 +482,8 @@ static inline bool e2p_envsensor_get_digitalinputpullupresistor(uint8_t index)
 
 typedef enum {
   DIGITALINPUTMODE_ONCHANGE = 0,
+  DIGITALINPUTMODE_UP = 2,
+  DIGITALINPUTMODE_DOWN = 3,
   DIGITALINPUTMODE_CYCLIC = 1
 } DigitalInputModeEnum;
 
