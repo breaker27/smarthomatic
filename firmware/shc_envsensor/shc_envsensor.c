@@ -192,7 +192,7 @@ void init_di_sensor(void)
 			di[i].pin = (pin - 1) % 8;
 			di[i].mode = mode;
 			
-			if (di[i].mode == DIGITALINPUTMODE_ONCHANGE)
+			if (di[i].mode != DIGITALINPUTMODE_CYCLIC)
 			{
 				enablePCI(di[i].port, di[i].pin); // enable Pin Change Interrupt
 				
@@ -310,7 +310,7 @@ void measure_digital_input(void)
 	
 	for (i = 0; i < 8; i++)
 	{
-		if ((di[i].pull_up) && (di[i].mode != DIGITALINPUTMODE_ONCHANGE))
+		if ((di[i].pull_up) && (di[i].mode == DIGITALINPUTMODE_CYCLIC))
 		{
 			setPullUp(di[i].port, di[i].pin);
 			wait_pullups = true;
@@ -330,10 +330,15 @@ void measure_digital_input(void)
 			uint8_t stat = getPinStatus(di[i].port, di[i].pin);
 			
 			// if status changed in OnChange mode, remember to send immediately
-			if ((di[i].mode == DIGITALINPUTMODE_ONCHANGE) && (di[i].meas.val != stat))
+			if ((di[i].mode != DIGITALINPUTMODE_CYCLIC) && (di[i].meas.val != stat))
 			{
-				//UART_PUTS("Status change -> send\r\n");
-				di_change = true;
+				if ((di[i].mode == DIGITALINPUTMODE_ONCHANGE)
+					|| ((di[i].mode == DIGITALINPUTMODE_UP) && (stat == 1))
+					|| ((di[i].mode == DIGITALINPUTMODE_DOWN) && (stat == 0)))
+				{
+					//UART_PUTS("Status change -> send\r\n");
+					di_change = true;
+				}
 			}
 			
 			di[i].meas.val = stat; // TODO: Add averaging feature?
@@ -342,7 +347,7 @@ void measure_digital_input(void)
 	
 	for (i = 0; i < 8; i++)
 	{
-		if ((di[i].pull_up) && (di[i].mode != DIGITALINPUTMODE_ONCHANGE))
+		if ((di[i].pull_up) && (di[i].mode == DIGITALINPUTMODE_CYCLIC))
 		{
 			clearPullUp(di[i].port, di[i].pin);
 		}
