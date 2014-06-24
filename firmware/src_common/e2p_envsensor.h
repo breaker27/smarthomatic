@@ -38,7 +38,8 @@ typedef enum {
   TEMPERATURESENSORTYPE_NOSENSOR = 0,
   TEMPERATURESENSORTYPE_SHT15 = 1,
   TEMPERATURESENSORTYPE_DS7505 = 2,
-  TEMPERATURESENSORTYPE_BMP085 = 3
+  TEMPERATURESENSORTYPE_BMP085 = 3,
+  TEMPERATURESENSORTYPE_DS18X20 = 4
 } TemperatureSensorTypeEnum;
 
 // Set TemperatureSensorType (EnumValue)
@@ -482,6 +483,8 @@ static inline bool e2p_envsensor_get_digitalinputpullupresistor(uint8_t index)
 
 typedef enum {
   DIGITALINPUTMODE_ONCHANGE = 0,
+  DIGITALINPUTMODE_UP = 2,
+  DIGITALINPUTMODE_DOWN = 3,
   DIGITALINPUTMODE_CYCLIC = 1
 } DigitalInputModeEnum;
 
