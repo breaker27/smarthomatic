@@ -449,6 +449,13 @@
 					<Name>OnChange</Name>
 				</Element>
 				<Element>
+					<Value>2</Value>
+					<Name>Up</Name>  
+				</Element>
+				<Element>
+					<Value>3</Value>
+					<Name>Down</Name>  
+				</Element><Element>
 					<Value>1</Value>
 					<Name>Cyclic</Name>
 				</Element>
