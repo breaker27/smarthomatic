@@ -441,23 +441,24 @@
 		<Array>
 			<Length>8</Length>
 			<EnumValue>
-				<ID>DigitalInputMode</ID>
-				<Description>The mode decides how the device detects changes and when a new message is sent. OnChange means a status message is sent immediately after a change and only on after a larger time otherwise. Cyclic means the status is sent in the normal cycle time.</Description>
+				<ID>DigitalInputTriggerMode</ID>
+				<Description>The mode decides how the device detects changes and when a new message is sent. Off means the value is sent after a full cycle time only. In any other case, the device wakes up immediately after a change. A status is then sent either when the level is going up, down or on change.</Description>
 				<Bits>8</Bits>
 				<Element>
 					<Value>0</Value>
-					<Name>OnChange</Name>
+					<Name>Off</Name>
 				</Element>
 				<Element>
-					<Value>2</Value>
+					<Value>1</Value>
 					<Name>Up</Name>  
 				</Element>
 				<Element>
-					<Value>3</Value>
+					<Value>2</Value>
 					<Name>Down</Name>  
-				</Element><Element>
-					<Value>1</Value>
-					<Name>Cyclic</Name>
+				</Element>
+				<Element>
+					<Value>3</Value>
+					<Name>Change</Name>
 				</Element>
 			</EnumValue>
 		</Array>
@@ -500,7 +501,7 @@
 			<Length>5</Length>
 			<EnumValue>
 				<ID>AnalogInputTriggerMode</ID>
-				<Description>The mode decides how the device detects changes and when a new message is sent. OnChange means a status message is sent immediately after a change and only on after a larger time otherwise. Cyclic means the status is sent in the normal cycle time.</Description>
+				<Description>The mode decides how the device detects changes and when a new message is sent. The voltage level is measured in the configured interval. When the mode is set to off, the status is only sent after a full averaging cycle. In the other modes, a status is sent when the level is going up, down or changes according to the trigger level.</Description>
 				<Bits>8</Bits>
 				<Element>
 					<Value>0</Value>

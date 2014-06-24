@@ -477,26 +477,26 @@ static inline bool e2p_envsensor_get_digitalinputpullupresistor(uint8_t index)
   return eeprom_read_UIntValue8(200 + (uint16_t)index * 1, 0, 8, 0, 1) == 1;
 }
 
-// DigitalInputMode (EnumValue[8])
-// Description: The mode decides how the device detects changes and when a new message is sent. OnChange means a status message is sent immediately after a change and only on after a larger time otherwise. Cyclic means the status is sent in the normal cycle time.
+// DigitalInputTriggerMode (EnumValue[8])
+// Description: The mode decides how the device detects changes and when a new message is sent. Off means the value is sent after a full cycle time only. In any other case, the device wakes up immediately after a change. A status is then sent either when the level is going up, down or on change.
 
 typedef enum {
-  DIGITALINPUTMODE_ONCHANGE = 0,
-  DIGITALINPUTMODE_UP = 2,
-  DIGITALINPUTMODE_DOWN = 3,
-  DIGITALINPUTMODE_CYCLIC = 1
-} DigitalInputModeEnum;
+  DIGITALINPUTTRIGGERMODE_OFF = 0,
+  DIGITALINPUTTRIGGERMODE_UP = 1,
+  DIGITALINPUTTRIGGERMODE_DOWN = 2,
+  DIGITALINPUTTRIGGERMODE_CHANGE = 3
+} DigitalInputTriggerModeEnum;
 
-// Set DigitalInputMode (EnumValue)
+// Set DigitalInputTriggerMode (EnumValue)
 // Byte offset: 208, bit offset: 0, length bits 8
-static inline void e2p_envsensor_set_digitalinputmode(uint8_t index, DigitalInputModeEnum val)
+static inline void e2p_envsensor_set_digitalinputtriggermode(uint8_t index, DigitalInputTriggerModeEnum val)
 {
   eeprom_write_UIntValue(208 + (uint16_t)index * 1, 0, 8, val);
 }
 
-// Get DigitalInputMode (EnumValue)
+// Get DigitalInputTriggerMode (EnumValue)
 // Byte offset: 208, bit offset: 0, length bits 8
-static inline DigitalInputModeEnum e2p_envsensor_get_digitalinputmode(uint8_t index)
+static inline DigitalInputTriggerModeEnum e2p_envsensor_get_digitalinputtriggermode(uint8_t index)
 {
   return eeprom_read_UIntValue8(208 + (uint16_t)index * 1, 0, 8, 0, 255);
 }
@@ -530,7 +530,7 @@ static inline AnalogInputPinsEnum e2p_envsensor_get_analoginputpins(uint8_t inde
 }
 
 // AnalogInputTriggerMode (EnumValue[5])
-// Description: The mode decides how the device detects changes and when a new message is sent. OnChange means a status message is sent immediately after a change and only on after a larger time otherwise. Cyclic means the status is sent in the normal cycle time.
+// Description: The mode decides how the device detects changes and when a new message is sent. The voltage level is measured in the configured interval. When the mode is set to off, the status is only sent after a full averaging cycle. In the other modes, a status is sent when the level is going up, down or changes according to the trigger level.
 
 typedef enum {
   ANALOGINPUTTRIGGERMODE_OFF = 0,
