@@ -37,11 +37,12 @@
 // Message Group "gpio"
 // ====================
 // MessageGroupID: 1
-// Description: This group contains messages for general I/O functions. The meaning of the values is not known to the firmware and depends on the processing by the user.
+// Description: This group contains messages for general I/O functions. The meaning of the values is not known to the SHC devices. It depends on the connected parts (e.g. switches). The values have to be processed by the user/server software appropriately.
 
 // ENUM for MessageIDs of this MessageGroup
 typedef enum {
-  MESSAGEID_GPIO_DIGITALPIN = 1
+  MESSAGEID_GPIO_DIGITALPIN = 1,
+  MESSAGEID_GPIO_ANALOGPIN = 2
 } GPIO_MessageIDEnum;
 
 
@@ -140,6 +141,104 @@ static inline void msg_gpio_digitalpin_set_on(uint8_t index, bool val)
 static inline bool msg_gpio_digitalpin_get_on(uint8_t index)
 {
   return array_read_UIntValue8(((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) / 8, ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) % 8, 1, 0, 1, bufx) == 1;
+}
+
+
+// Message "gpio_analogpin"
+// ------------------------
+// MessageGroupID: 1
+// MessageID: 2
+// Possible MessageTypes: Get, Set, SetGet, Status, Ack, AckStatus
+// Validity: test
+// Length w/o Header + HeaderExtension: 88 bits
+// Data fields: Voltage
+// Description: This is the voltage of up to 8 ADC channels. The ATMega328 in the PDIP package has only 6 ADCs and one ADC may be blocked by the battery voltage measurement, so there may be less than 8 ADC values reported depending on the device and configuration.
+
+// Function to initialize header for the MessageType "Get".
+static inline void pkg_header_init_gpio_analogpin_get(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(0);
+  pkg_headerext_get_set_messagegroupid(1);
+  pkg_headerext_get_set_messageid(2);
+  __HEADEROFFSETBITS = 95;
+  __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 0;
+}
+
+// Function to initialize header for the MessageType "Set".
+static inline void pkg_header_init_gpio_analogpin_set(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(1);
+  pkg_headerext_set_set_messagegroupid(1);
+  pkg_headerext_set_set_messageid(2);
+  __HEADEROFFSETBITS = 95;
+  __PACKETSIZEBYTES = 32;
+  __MESSAGETYPE = 1;
+}
+
+// Function to initialize header for the MessageType "SetGet".
+static inline void pkg_header_init_gpio_analogpin_setget(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(2);
+  pkg_headerext_setget_set_messagegroupid(1);
+  pkg_headerext_setget_set_messageid(2);
+  __HEADEROFFSETBITS = 95;
+  __PACKETSIZEBYTES = 32;
+  __MESSAGETYPE = 2;
+}
+
+// Function to initialize header for the MessageType "Status".
+static inline void pkg_header_init_gpio_analogpin_status(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(8);
+  pkg_headerext_status_set_messagegroupid(1);
+  pkg_headerext_status_set_messageid(2);
+  __HEADEROFFSETBITS = 83;
+  __PACKETSIZEBYTES = 32;
+  __MESSAGETYPE = 8;
+}
+
+// Function to initialize header for the MessageType "Ack".
+static inline void pkg_header_init_gpio_analogpin_ack(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(9);
+  __HEADEROFFSETBITS = 109;
+  __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 9;
+}
+
+// Function to initialize header for the MessageType "AckStatus".
+static inline void pkg_header_init_gpio_analogpin_ackstatus(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(10);
+  pkg_headerext_ackstatus_set_messagegroupid(1);
+  pkg_headerext_ackstatus_set_messageid(2);
+  __HEADEROFFSETBITS = 120;
+  __PACKETSIZEBYTES = 32;
+  __MESSAGETYPE = 10;
+}
+
+// Voltage (UIntValue[8])
+// Description: This is the voltage level in mV.
+
+// Set Voltage (UIntValue)
+// Offset: ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 11) / 8, ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 11) % 8, length bits 11, min val 0, max val 1100
+static inline void msg_gpio_analogpin_set_voltage(uint8_t index, uint32_t val)
+{
+  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 11) / 8, ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 11) % 8, 11, val, bufx);
+}
+
+// Get Voltage (UIntValue)
+// Offset: ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 11) / 8, ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 11) % 8, length bits 11, min val 0, max val 1100
+static inline uint32_t msg_gpio_analogpin_get_voltage(uint8_t index)
+{
+  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 11) / 8, ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 11) % 8, 11, 0, 1100, bufx);
 }
 
 #endif /* _MSGGRP_GPIO_H */
