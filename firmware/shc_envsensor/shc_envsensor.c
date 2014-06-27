@@ -393,11 +393,13 @@ void measure_digital_input(void)
 			uint8_t stat = getPinStatus(di[i].port, di[i].pin);
 			
 			// if status changed in OnChange mode, remember to send immediately
-			if ((di[i].mode != DIGITALINPUTTRIGGERMODE_OFF)
-				&& (di[i].meas.val != stat)
-				&& ( (di[i].mode == DIGITALINPUTTRIGGERMODE_CHANGE)
-				||   ((di[i].mode == DIGITALINPUTTRIGGERMODE_UP) && (stat == 1))
-				||   ((di[i].mode == DIGITALINPUTTRIGGERMODE_DOWN) && (stat == 0)) ))
+			if ((di[0].meas.measCnt >= di[0].meas.avgInt)
+				|| ((di[i].mode != DIGITALINPUTTRIGGERMODE_OFF)
+					&& (di[i].meas.val != stat)
+					&& ( (di[i].mode == DIGITALINPUTTRIGGERMODE_CHANGE)
+					||   ((di[i].mode == DIGITALINPUTTRIGGERMODE_UP) && (stat == 1))
+					||   ((di[i].mode == DIGITALINPUTTRIGGERMODE_DOWN) && (stat == 0)) ))
+				)
 			{
 				//UART_PUTS("Status change -> send\r\n");
 				di_change = true;
