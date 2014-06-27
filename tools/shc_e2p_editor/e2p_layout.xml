@@ -370,7 +370,7 @@
 		<Array>
 			<Length>8</Length>
 			<EnumValue>
-				<ID>DigitalInputPins</ID>
+				<ID>DigitalInputPin</ID>
 				<Description>You can choose up to 8 GPIO pins as digital input. The enum values are counting through every pin from port B, C and D, leaving out the pins that are not accessible because otherwise used.</Description>
 				<Bits>8</Bits>
 				<Element>
@@ -468,7 +468,7 @@
 		<Array>
 			<Length>5</Length>
 			<EnumValue>
-				<ID>AnalogInputPins</ID>
+				<ID>AnalogInputPin</ID>
 				<Description>You can choose up to 5 ADC pins as analog input. The enum values are a reduced set of the ones from the digital input.</Description>
 				<Bits>8</Bits>
 				<Element>

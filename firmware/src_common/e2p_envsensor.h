@@ -426,36 +426,36 @@ static inline uint8_t e2p_envsensor_get_analoginputaveraginginterval(void)
 
 // Reserved area with 384 bits
 
-// DigitalInputPins (EnumValue[8])
-// Description: You can choose up to 8 GPIO pins as digital input. The enum values are couting through every pin from port B, C and D, leaving out the pins that are not accessible because otherwise used.
+// DigitalInputPin (EnumValue[8])
+// Description: You can choose up to 8 GPIO pins as digital input. The enum values are counting through every pin from port B, C and D, leaving out the pins that are not accessible because otherwise used.
 
 typedef enum {
-  DIGITALINPUTPINS_UNUSED = 0,
-  DIGITALINPUTPINS_PB1 = 2,
-  DIGITALINPUTPINS_PB2 = 3,
-  DIGITALINPUTPINS_PB6 = 7,
-  DIGITALINPUTPINS_PB7 = 8,
-  DIGITALINPUTPINS_PC1 = 10,
-  DIGITALINPUTPINS_PC2 = 11,
-  DIGITALINPUTPINS_PC3 = 12,
-  DIGITALINPUTPINS_PC4 = 13,
-  DIGITALINPUTPINS_PC5 = 14,
-  DIGITALINPUTPINS_PD3 = 20,
-  DIGITALINPUTPINS_PD4 = 21,
-  DIGITALINPUTPINS_PD5 = 22,
-  DIGITALINPUTPINS_PD6 = 23
-} DigitalInputPinsEnum;
+  DIGITALINPUTPIN_UNUSED = 0,
+  DIGITALINPUTPIN_PB1 = 2,
+  DIGITALINPUTPIN_PB2 = 3,
+  DIGITALINPUTPIN_PB6 = 7,
+  DIGITALINPUTPIN_PB7 = 8,
+  DIGITALINPUTPIN_PC1 = 10,
+  DIGITALINPUTPIN_PC2 = 11,
+  DIGITALINPUTPIN_PC3 = 12,
+  DIGITALINPUTPIN_PC4 = 13,
+  DIGITALINPUTPIN_PC5 = 14,
+  DIGITALINPUTPIN_PD3 = 20,
+  DIGITALINPUTPIN_PD4 = 21,
+  DIGITALINPUTPIN_PD5 = 22,
+  DIGITALINPUTPIN_PD6 = 23
+} DigitalInputPinEnum;
 
-// Set DigitalInputPins (EnumValue)
+// Set DigitalInputPin (EnumValue)
 // Byte offset: 192, bit offset: 0, length bits 8
-static inline void e2p_envsensor_set_digitalinputpins(uint8_t index, DigitalInputPinsEnum val)
+static inline void e2p_envsensor_set_digitalinputpin(uint8_t index, DigitalInputPinEnum val)
 {
   eeprom_write_UIntValue(192 + (uint16_t)index * 1, 0, 8, val);
 }
 
-// Get DigitalInputPins (EnumValue)
+// Get DigitalInputPin (EnumValue)
 // Byte offset: 192, bit offset: 0, length bits 8
-static inline DigitalInputPinsEnum e2p_envsensor_get_digitalinputpins(uint8_t index)
+static inline DigitalInputPinEnum e2p_envsensor_get_digitalinputpin(uint8_t index)
 {
   return eeprom_read_UIntValue8(192 + (uint16_t)index * 1, 0, 8, 0, 255);
 }
@@ -503,28 +503,28 @@ static inline DigitalInputTriggerModeEnum e2p_envsensor_get_digitalinputtriggerm
 
 // Reserved area with 320 bits
 
-// AnalogInputPins (EnumValue[5])
-// Description: You can choose up to 5 ADC pins as analog input. The enum values are couting through every pin from port B, C and D, leaving out the pins that are not accessible because otherwise used.
+// AnalogInputPin (EnumValue[5])
+// Description: You can choose up to 5 ADC pins as analog input. The enum values are a reduced set of the ones from the digital input.
 
 typedef enum {
-  ANALOGINPUTPINS_UNUSED = 0,
-  ANALOGINPUTPINS_PC1 = 10,
-  ANALOGINPUTPINS_PC2 = 11,
-  ANALOGINPUTPINS_PC3 = 12,
-  ANALOGINPUTPINS_PC4 = 13,
-  ANALOGINPUTPINS_PC5 = 14
-} AnalogInputPinsEnum;
+  ANALOGINPUTPIN_UNUSED = 0,
+  ANALOGINPUTPIN_PC1 = 10,
+  ANALOGINPUTPIN_PC2 = 11,
+  ANALOGINPUTPIN_PC3 = 12,
+  ANALOGINPUTPIN_PC4 = 13,
+  ANALOGINPUTPIN_PC5 = 14
+} AnalogInputPinEnum;
 
-// Set AnalogInputPins (EnumValue)
+// Set AnalogInputPin (EnumValue)
 // Byte offset: 256, bit offset: 0, length bits 8
-static inline void e2p_envsensor_set_analoginputpins(uint8_t index, AnalogInputPinsEnum val)
+static inline void e2p_envsensor_set_analoginputpin(uint8_t index, AnalogInputPinEnum val)
 {
   eeprom_write_UIntValue(256 + (uint16_t)index * 1, 0, 8, val);
 }
 
-// Get AnalogInputPins (EnumValue)
+// Get AnalogInputPin (EnumValue)
 // Byte offset: 256, bit offset: 0, length bits 8
-static inline AnalogInputPinsEnum e2p_envsensor_get_analoginputpins(uint8_t index)
+static inline AnalogInputPinEnum e2p_envsensor_get_analoginputpin(uint8_t index)
 {
   return eeprom_read_UIntValue8(256 + (uint16_t)index * 1, 0, 8, 0, 255);
 }

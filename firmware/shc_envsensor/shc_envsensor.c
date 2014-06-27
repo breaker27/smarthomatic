@@ -182,7 +182,7 @@ void init_di_sensor(void)
 	
 	for (i = 0; i < 8; i++)
 	{
-		uint8_t pin = e2p_envsensor_get_digitalinputpins(i);
+		uint8_t pin = e2p_envsensor_get_digitalinputpin(i);
 
 		di[i].meas.val = 0;
 		di[i].meas.wupCnt = 0;
@@ -240,7 +240,7 @@ void init_ai_sensor(void)
 	
 	for (i = 0; i < 5; i++)
 	{
-		uint8_t pin = e2p_envsensor_get_analoginputpins(i);
+		uint8_t pin = e2p_envsensor_get_analoginputpin(i);
 
 		ai[i].meas.val = 0;
 		ai[i].meas.wupCnt = 0;
