@@ -192,7 +192,7 @@ void init_di_sensor(void)
 		
 		if (pin == 0) // not used
 		{
-			di[i].port = DI_UNUSED;
+			di[i].pin = DI_UNUSED;
 			di[i].pull_up = false;
 		}
 		else
@@ -388,7 +388,7 @@ void measure_digital_input(void)
 	
 	for (i = 0; i < 8; i++)
 	{
-		if (di[i].port != DI_UNUSED)
+		if (di[i].pin != DI_UNUSED)
 		{
 			uint8_t stat = getPinStatus(di[i].port, di[i].pin);
 			
@@ -599,7 +599,7 @@ void prepare_digitalpin(void)
 	for (i = 0; i < 8; i++)
 	{
 		
-		if (di[i].port != DI_UNUSED)
+		if (di[i].pin != DI_UNUSED)
 		{
 			UART_PUTF("%u", di[i].meas.val);
 			
