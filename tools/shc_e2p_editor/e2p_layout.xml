@@ -34,6 +34,7 @@
 			<Bits>8</Bits>
 			<MinVal>-128</MinVal>
 			<MaxVal>127</MaxVal>
+			<Default>0</Default>
 		</IntValue>
 		<Reserved>
 			<Bits>48</Bits>
@@ -81,6 +82,7 @@
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>16</MaxVal>
+			<Default>1</Default>
 		</UIntValue>
 		<Array>
 			<Length>16</Length>
@@ -265,6 +267,7 @@
 				<Value>3474</Value>
 				<Name>20m</Name>
 			</Element>
+			<Default>2509</Default>
 		</EnumValue>
 		<UIntValue>
 			<ID>TemperatureMeasuringInterval</ID>
@@ -272,6 +275,7 @@
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>255</MaxVal>
+			<Default>1</Default>
 		</UIntValue>
 		<UIntValue>
 			<ID>TemperatureAveragingInterval</ID>
@@ -279,6 +283,7 @@
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>16</MaxVal>
+			<Default>4</Default>
 		</UIntValue>
 		<UIntValue>
 			<ID>HumidityMeasuringInterval</ID>
@@ -286,6 +291,7 @@
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>255</MaxVal>
+			<Default>1</Default>
 		</UIntValue>
 		<UIntValue>
 			<ID>HumidityAveragingInterval</ID>
@@ -293,6 +299,7 @@
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>16</MaxVal>
+			<Default>4</Default>
 		</UIntValue>
 		<UIntValue>
 			<ID>BarometricMeasuringInterval</ID>
@@ -300,6 +307,7 @@
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>255</MaxVal>
+			<Default>1</Default>
 		</UIntValue>
 		<UIntValue>
 			<ID>BarometricAveragingInterval</ID>
@@ -307,6 +315,7 @@
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>16</MaxVal>
+			<Default>4</Default>
 		</UIntValue>
 		<UIntValue>
 			<ID>BrightnessMeasuringInterval</ID>
@@ -314,6 +323,7 @@
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>255</MaxVal>
+			<Default>1</Default>
 		</UIntValue>
 		<UIntValue>
 			<ID>BrightnessAveragingInterval</ID>
@@ -321,6 +331,7 @@
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>16</MaxVal>
+			<Default>4</Default>
 		</UIntValue>
 		<UIntValue>
 			<ID>DistanceMeasuringInterval</ID>
@@ -328,6 +339,7 @@
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>255</MaxVal>
+			<Default>4</Default>
 		</UIntValue>
 		<UIntValue>
 			<ID>DistanceAveragingInterval</ID>
@@ -335,6 +347,7 @@
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>16</MaxVal>
+			<Default>1</Default>
 		</UIntValue>
 		<UIntValue>
 			<ID>DigitalInputMeasuringInterval</ID>
@@ -342,6 +355,7 @@
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>255</MaxVal>
+			<Default>1</Default>
 		</UIntValue>
 		<UIntValue>
 			<ID>DigitalInputAveragingInterval</ID>
@@ -349,6 +363,7 @@
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>16</MaxVal>
+			<Default>6</Default>
 		</UIntValue>
 		<UIntValue>
 			<ID>AnalogInputMeasuringInterval</ID>
@@ -356,6 +371,7 @@
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>255</MaxVal>
+			<Default>1</Default>
 		</UIntValue>
 		<UIntValue>
 			<ID>AnalogInputAveragingInterval</ID>
@@ -363,6 +379,7 @@
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>16</MaxVal>
+			<Default>6</Default>
 		</UIntValue>
 		<Reserved>
 			<Bits>384</Bits>
@@ -450,11 +467,11 @@
 				</Element>
 				<Element>
 					<Value>1</Value>
-					<Name>Up</Name>  
+					<Name>Up</Name>
 				</Element>
 				<Element>
 					<Value>2</Value>
-					<Name>Down</Name>  
+					<Name>Down</Name>
 				</Element>
 				<Element>
 					<Value>3</Value>
@@ -608,6 +625,7 @@
 			<ID>BrightnessTranslationTable</ID>
 			<Description>These are the target values (one byte each) for the input brightness of 0, 1, ... 100% to adapt the specific brightness curve of your lamps. Set first byte to FF to not use it.</Description>
 			<Bytes>101</Bytes>
+			<Default>001115191A1B1C1D1E1F202122232425262728292A2B2C2D2E2E2F3031323334363738393A3B3C3D3E40414243454647494A4B4C4E505153545658595B5D5F61636567696B6D6F717375787A7D808386898B8F93969A9FA3A7ABAFB4BCC2C9CFD4DBE6F1FF</Default>
 		</ByteArray>
 		<Reserved>
 			<Bits>6848</Bits>
