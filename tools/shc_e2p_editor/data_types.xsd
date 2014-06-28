@@ -58,6 +58,7 @@
 				</xs:element>
 				<xs:element name="MinVal" type="xs:unsignedInt"/>
 				<xs:element name="MaxVal" type="xs:unsignedInt"/>
+				<xs:element name="Default" type="xs:unsignedInt" minOccurs="0"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
@@ -79,6 +80,7 @@
 				</xs:element>
 				<xs:element name="MinVal" type="xs:int"/>
 				<xs:element name="MaxVal" type="xs:int"/>
+				<xs:element name="Default" type="xs:int" minOccurs="0"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
@@ -90,6 +92,7 @@
 			<xs:sequence>
 				<xs:element name="ID" type="xs:string"/>
 				<xs:element name="Description"/>
+				<xs:element name="Default" type="xs:boolean" minOccurs="0"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
@@ -110,6 +113,7 @@
 						</xs:sequence>
 					</xs:complexType>
 				</xs:element>
+				<xs:element name="Default" type="xs:unsignedInt" minOccurs="0"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
@@ -128,6 +132,7 @@
 						</xs:restriction>
 					</xs:simpleType>
 				</xs:element>
+				<xs:element name="Default" type="xs:hexBinary" minOccurs="0"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
