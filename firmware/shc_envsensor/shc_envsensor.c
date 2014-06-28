@@ -95,6 +95,8 @@ struct ai_portpin_t
 	uint8_t mode;
 	uint16_t thr;
 	uint16_t hyst;
+	uint16_t val_ref; // used for hysteresis function
+	bool over_thr;    // Reference voltage was over threshold?
 	struct measurement_t meas;
 };
 
@@ -261,6 +263,8 @@ void init_ai_sensor(void)
 			ai[i].mode = e2p_envsensor_get_analoginputtriggermode(i);
 			ai[i].thr = e2p_envsensor_get_analoginputtriggerthreshold(i);
 			ai[i].hyst = e2p_envsensor_get_analoginputtriggerhysteresis(i);
+			ai[i].val_ref = 0;
+			ai[i].over_thr = false;
 			
 			UART_PUTF2("Using port ADC%u as analog input pin %u ", ai[i].pin, i);
 			UART_PUTF3("in mode %u with threshold %umV and hysteresis %umV\r\n", mode, ai[i].thr, ai[i].hyst);
@@ -432,16 +436,46 @@ void measure_analog_input(void)
 	{
 		if (ai[i].pin != DI_UNUSED)
 		{
-			uint16_t raw = read_adc(ai[i].pin);
+			// Maximum ADC value of 1023 = 1.1V. Save value in 0.1 mV.
+			uint16_t voltage = (uint16_t)(((uint32_t)read_adc(ai[i].pin) * 11000) / 1023);
 			
-			// if status changed in OnChange mode, remember to send immediately
-			/*if (ai[i].mode == ANALOGINPUTTRIGGERMODE_OFF) && 
+			ai[i].meas.val += voltage; // accumulate values to calc average later on
+
+			if (ai[i].mode != ANALOGINPUTTRIGGERMODE_OFF)
 			{
-				//UART_PUTS("Status change -> send\r\n");
-				ai_change = true;
-			}*/
-		
-			ai[i].meas.val += raw;
+				// Remember maximum / minimum voltage as reference for hysteresis function.
+				if (ai[i].over_thr == (voltage > ai[i].val_ref))
+				{
+					ai[i].val_ref = voltage;
+				}
+				
+				bool trigger_down = ai[i].over_thr && (voltage / 10 + ai[i].hyst < ai[i].val_ref / 10); // beware of overflow!
+				bool trigger_up = !ai[i].over_thr && (voltage / 10 > ai[i].val_ref / 10 + ai[i].hyst);
+				bool trigger = trigger_down || trigger_up;
+				
+				if (trigger)
+				{
+					// When a trigger fires, reverse the direction for the next trigger.
+					ai[i].over_thr = !ai[i].over_thr;
+					ai[i].val_ref = voltage;
+					
+					// Check if the value has to be send (depending on the configuration).
+					if ( (trigger_down && (ai[i].mode == ANALOGINPUTTRIGGERMODE_DOWN))
+						|| (trigger_up && (ai[i].mode == ANALOGINPUTTRIGGERMODE_UP))
+						|| (ai[i].mode == ANALOGINPUTTRIGGERMODE_CHANGE))
+					{
+						ai_change = true;
+						
+						// use only current value instead of average
+						ai[i].meas.val = voltage;
+						ai[i].meas.measCnt = 1;
+					}
+				}
+			}
+			
+			//UART_PUTF2("voltage: %u, maes.val: %u, ", voltage, ai[i].meas.val);
+			//UART_PUTF3("val_ref: %u, over_thr: %u, ai_change: %u", ai[i].val_ref, ai[i].over_thr, ai_change);
+			//UART_PUTS("\r\n\r\n");
 		}
 	}
 
@@ -450,8 +484,6 @@ void measure_analog_input(void)
 	{
 		ai_change = true;
 	}
-	
-	_delay_ms(100);
 }
 
 void sht11_measure_loop(void)
@@ -632,11 +664,7 @@ void prepare_analogpin(void)
 		if (ai[i].pin != DI_UNUSED)
 		{
 			average(&ai[i].meas);
-			
-			// Maximum ADC value of 1023 = 1.1V. Save value in 0.1 mV.
-			ai[i].meas.val = (uint16_t)(((uint32_t)ai[i].meas.val * 11000) / 1023);
 			ai[i].meas.val = (ai[i].meas.val + 5) / 10; // round to mV
-			
 			UART_PUTF(" %u", ai[i].meas.val);
 			
 			msg_gpio_analogpin_set_voltage(i, ai[i].meas.val);
