@@ -665,8 +665,13 @@ void prepare_analogpin(void)
 		{
 			average(&ai[i].meas);
 			ai[i].meas.val = (ai[i].meas.val + 5) / 10; // round to mV
-			UART_PUTF(" %u", ai[i].meas.val);
+
+			bool on = ((ai[i].mode == ANALOGINPUTTRIGGERMODE_OFF) && (ai[i].meas.val >= ai[i].thr))
+				|| ((ai[i].mode != ANALOGINPUTTRIGGERMODE_OFF) && ai[i].over_thr);
+		
+			UART_PUTF2(" %u/%u", ai[i].meas.val, on);
 			
+			msg_gpio_analogpin_set_on(i, on);
 			msg_gpio_analogpin_set_voltage(i, ai[i].meas.val);
 			
 			ai[i].meas.val = 0;
