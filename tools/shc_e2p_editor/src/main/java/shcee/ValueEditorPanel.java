@@ -19,6 +19,7 @@
 package shcee;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Rectangle;
@@ -28,6 +29,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -81,6 +84,20 @@ public class ValueEditorPanel extends JPanel
 		
 		JPanel headingPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 6));
 		headingPanel.add(headingLabel);
+		
+		// Description
+		JPanel colorCodesPanel = new JPanel();
+		colorCodesPanel.setLayout(new BoxLayout(colorCodesPanel, javax.swing.BoxLayout.X_AXIS));
+		
+		colorCodesPanel.add(new JLabel("Color codes:"));
+		colorCodesPanel.add(Box.createRigidArea(new Dimension(6, 6)));
+		colorCodesPanel.add(createColorCodeLabel(" invalid ", Color.RED));
+		colorCodesPanel.add(Box.createRigidArea(new Dimension(6, 6)));
+		colorCodesPanel.add(createColorCodeLabel(" default ", Color.WHITE));
+		colorCodesPanel.add(Box.createRigidArea(new Dimension(6, 6)));
+		colorCodesPanel.add(createColorCodeLabel(" differs from default ", Color.YELLOW));
+		
+		headingPanel.add(colorCodesPanel);
 
 		// create buttons
 		JButton buttonSave = new JButton("Save");
@@ -134,7 +151,13 @@ public class ValueEditorPanel extends JPanel
 		initAccordingEepromLayout();
 	}
 	
-	
+	private JLabel createColorCodeLabel(String text, Color color)
+	{
+		JLabel label = new JLabel(text);
+		label.setOpaque(true);
+		label.setBackground(color);
+		return label;
+	}
 	
 	protected void onButtonAbout()
 	{

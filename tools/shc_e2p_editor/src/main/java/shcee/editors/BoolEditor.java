@@ -61,7 +61,6 @@ public class BoolEditor extends AbstractEditor
 		
 		// add input
 		JPanel inputPanel = new JPanel();
-		//inputPanel.setLayout(new BoxLayout(inputPanel, javax.swing.BoxLayout.X_AXIS));
 		inputPanel.setLayout(new BorderLayout());
 		inputPanel.setBackground(this.getBackground());
 
