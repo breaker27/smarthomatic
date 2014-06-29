@@ -48,7 +48,7 @@ public class BoolEditor extends AbstractEditor
 		addLabel(format);
 		
 		// add input
-		input = new UIntTextArea(minVal, maxVal);
+		input = new UIntTextArea(minVal, maxVal, null);
 		add(input);
 		
 		// add description

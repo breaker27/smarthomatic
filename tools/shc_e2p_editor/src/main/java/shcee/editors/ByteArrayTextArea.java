@@ -39,12 +39,14 @@ public class ByteArrayTextArea extends JTextArea
 
 	private boolean valid;
 	private int bytes;
+	private String defaultVal;
 	
-	public ByteArrayTextArea(int bytes)
+	public ByteArrayTextArea(int bytes, String defaultVal)
 	{
 		super();
 		
 		this.bytes = bytes;
+		this.defaultVal = defaultVal;
 		
 		PlainDocument d = new TextFieldLimit(bytes * 2);
 		setDocument(d);
@@ -81,13 +83,17 @@ public class ByteArrayTextArea extends JTextArea
 	{
 		valid = (getText().length() == bytes * 2) && Util.isHexString(getText());
 		
-		if (valid)
+		if (!valid)
 		{
-			setBackground(Color.WHITE);
+			setBackground(Color.RED);
+		}
+		else if ((null != defaultVal) && (!defaultVal.equals(getText())))
+		{
+			setBackground(Color.YELLOW);
 		}
 		else
 		{
-			setBackground(Color.RED);
+			setBackground(Color.WHITE);
 		}
 	}
 	
