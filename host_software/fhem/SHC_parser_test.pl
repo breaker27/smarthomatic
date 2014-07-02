@@ -81,6 +81,13 @@ sub parser_test($)
 						print "Pin " . $i . ": " . $parser->getField("On", $i) . "\n";
 					}
 				}
+				when('AnalogPin')
+				{
+					for (my $i = 0; $i < 8; $i++)
+					{
+						print "Pin " . $i . ": " . $parser->getField("Voltage", $i) . "mV = " . $parser->getField("On", $i) . "\n";
+					}
+				}
 			}
 		}
 		when('EnvSensor')
@@ -114,7 +121,8 @@ parser_test("Packet Data: SenderID=22;PacketCounter=101;MessageType=8;MessageGro
 parser_test("Packet Data: SenderID=20;PacketCounter=19284;MessageType=8;MessageGroupID=10;MessageID=1;MessageData=085c79630000;Temperature=21.40;Humidity=48.5;Brightness=70;");
 parser_test("Packet Data: SenderID=40;PacketCounter=7401;MessageType=8;MessageGroupID=20;MessageID=1;MessageData=000000000000;On=0;TimeoutSec=0;");
 parser_test("Packet Data: SenderID=40;PacketCounter=7402;MessageType=8;MessageGroupID=0;MessageID=1;MessageData=00000000000000000000000000000000000000000000;Major=0;Minor=0;Patch=0;Hash=00000000;");
-
+parser_test("Packet Data: SenderID=23;PacketCounter=414;MessageType=8;MessageGroupID=1;MessageID=2;MessageData=0042e000000000000000000000000000000000000000;");
+parser_test("Packet Data: SenderID=23;PacketCounter=307;MessageType=8;MessageGroupID=1;MessageID=2;MessageData=80458000000000000000000000000000000000000000;");
 
 ## Create message string for sending
 

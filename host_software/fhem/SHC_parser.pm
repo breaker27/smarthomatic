@@ -142,7 +142,7 @@ sub init_datafield_positions()
 
             # DEBUG print "Data field " . $id . " starts at " . $offset . " with " . $bits . " bits.\n";
 
-            $dataFields{$messageGroupID . "-" . $messageID . "-" . $id} = new UIntValue($id, $offset, $bits);
+            $dataFields{$messageGroupID . "-" . $messageID . "-" . $id} = new UIntValue($id, $offset, $bits, $arrayLength);
 
             $offset += $bits * $arrayLength;
           }
@@ -153,7 +153,7 @@ sub init_datafield_positions()
 
             # DEBUG print "Data field " . $id . " starts at " . $offset . " with " . $bits . " bits.\n";
 
-            $dataFields{$messageGroupID . "-" . $messageID . "-" . $id} = new IntValue($id, $offset, $bits);
+            $dataFields{$messageGroupID . "-" . $messageID . "-" . $id} = new IntValue($id, $offset, $bits, $arrayLength);
 
             $offset += $bits * $arrayLength;
           }
@@ -175,7 +175,7 @@ sub init_datafield_positions()
 
             # DEBUG print "Data field " . $id . " starts at " . $offset . " with " . $bits . " bits.\n";
 
-            my $object = new EnumValue($id, $offset, $bits);
+            my $object = new EnumValue($id, $offset, $bits, $arrayLength);
             $dataFields{$messageGroupID . "-" . $messageID . "-" . $id} = $object;
 
             for my $element ($field->findnodes("Element")) {
