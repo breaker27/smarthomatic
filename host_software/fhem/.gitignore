@@ -1,3 +1,2 @@
 # you may place these files in a subfolder to test the parser
-FHEM/packet_layout.xml
-FHEM/packet_metamodel.xsd
+FHEM/SHC_packet_layout.xml
