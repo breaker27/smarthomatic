@@ -260,7 +260,7 @@ void init_ai_sensor(void)
 			uint8_t mode = e2p_envsensor_get_analoginputtriggermode(i);
 
 			ai[i].pin = (pin - 1) % 8;
-			ai[i].mode = e2p_envsensor_get_analoginputtriggermode(i);
+			ai[i].mode = mode;
 			ai[i].thr = e2p_envsensor_get_analoginputtriggerthreshold(i);
 			ai[i].hyst = e2p_envsensor_get_analoginputtriggerhysteresis(i);
 			ai[i].val_ref = 0;
