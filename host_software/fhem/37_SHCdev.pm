@@ -56,8 +56,8 @@ my %dev_state_format = (
     "barometric_pressure", "Baro: ",
     "brightness",          "B: ",
     "distance",            "D: ",
-    "dpins",               "Din: ",
-    "apins",               "Ain: "
+    "dins",                "Din: ",
+    "ains",                "Ain: "
   ]
 );
 
@@ -84,7 +84,7 @@ my %sets = (
 my %gets = (
   "PowerSwitch" => "",
   "Dimmer"      => "",
-  "EnvSensor"   => "dinput:all,1,2,3,4,5,6,7,8 ainput:all,1,2,3,4,5 ainput_volt:1,2,3,4,5",
+  "EnvSensor"   => "din:all,1,2,3,4,5,6,7,8 ain:all,1,2,3,4,5 ain_volt:1,2,3,4,5",
   "Custom"      => ""
 );
 
@@ -244,10 +244,10 @@ sub SHCdev_Parse($$)
           for (my $i = 0 ; $i < 8 ; $i++) {
             my $pinx = $parser->getField("On", $i);
             my $channel = $i + 1;
-            readingsBulkUpdate($rhash, "dpin" . $channel, $pinx);
+            readingsBulkUpdate($rhash, "din" . $channel, $pinx);
             $pins .= $pinx;
           }
-          readingsBulkUpdate($rhash, "dpins", $pins);
+          readingsBulkUpdate($rhash, "dins", $pins);
         }
         when ('AnalogPin') {
           my $pins = "";
@@ -255,11 +255,11 @@ sub SHCdev_Parse($$)
             my $pinx_on = $parser->getField("On", $i);
             my $pinx_volt = $parser->getField("Voltage", $i);
             my $channel = $i + 1;
-            readingsBulkUpdate($rhash, "apin" . $channel, $pinx_on);
-            readingsBulkUpdate($rhash, "apin_volt" . $channel, $pinx_volt);
+            readingsBulkUpdate($rhash, "ain" . $channel, $pinx_on);
+            readingsBulkUpdate($rhash, "ain_volt" . $channel, $pinx_volt);
             $pins .= $pinx_on;
           }
-          readingsBulkUpdate($rhash, "apins", $pins);
+          readingsBulkUpdate($rhash, "ains", $pins);
         }
       }
     }
@@ -520,9 +520,9 @@ sub SHCdev_Get($@)
 
   given ($devtype) {
     when ('EnvSensor') {
-      if ($cmd eq 'dinput') {
+      if ($cmd eq 'din') {
         if ($arg =~ /[1-8]/) {
-          my $channel = "dpin" . $arg;
+          my $channel = "din" . $arg;
           if ( defined($hash->{READINGS}{$channel})
             && defined($hash->{READINGS}{$channel}{VAL}))
           {
@@ -532,17 +532,17 @@ sub SHCdev_Get($@)
         }
         elsif ($arg eq "all")
         {
-          if ( defined($hash->{READINGS}{dpins})
-            && defined($hash->{READINGS}{dpins}{VAL}))
+          if ( defined($hash->{READINGS}{dins})
+            && defined($hash->{READINGS}{dins}{VAL}))
           {
-            return "$name.dpins => " . $hash->{READINGS}{dpins}{VAL};
+            return "$name.dins => " . $hash->{READINGS}{dins}{VAL};
           }
           return "Error: \"input all\" readings not yet available or not supported by device";
         }
       }
-      if ($cmd eq 'ainput') {
+      if ($cmd eq 'ain') {
         if ($arg =~ /[1-5]/) {
-          my $channel = "apin" . $arg;
+          my $channel = "ain" . $arg;
           if ( defined($hash->{READINGS}{$channel})
             && defined($hash->{READINGS}{$channel}{VAL}))
           {
@@ -552,17 +552,17 @@ sub SHCdev_Get($@)
         }
         elsif ($arg eq "all")
         {
-          if ( defined($hash->{READINGS}{apins})
-            && defined($hash->{READINGS}{apins}{VAL}))
+          if ( defined($hash->{READINGS}{ains})
+            && defined($hash->{READINGS}{ains}{VAL}))
           {
-            return "$name.apins => " . $hash->{READINGS}{apins}{VAL};
+            return "$name.ains => " . $hash->{READINGS}{ains}{VAL};
           }
           return "Error: \"input all\" readings not yet available or not supported by device";
         }
       }
-      if ($cmd eq 'ainput_volt') {
+      if ($cmd eq 'ain_volt') {
         if ($arg =~ /[1-5]/) {
-          my $channel = "apin_volt" . $arg;
+          my $channel = "ain_volt" . $arg;
           if ( defined($hash->{READINGS}{$channel})
             && defined($hash->{READINGS}{$channel}{VAL}))
           {
@@ -656,8 +656,22 @@ sub SHCdev_Send($)
   <a name="SHCdev_Get"></a>
   <b>Get</b>
   <ul>
-    <li>input &lt;pin&gt;<br>
-        Returns the state of the specified pin for pin = 1..8 or the state of all pins for pin = all.
+    <li>din &lt;pin&gt;<br>
+        Returns the state of the specified digital input pin for pin = 1..8. Or the state of all pins for pin = all.
+        Supported by EnvSensor.
+    </li><br>
+    <li>ain &lt;pin&gt;<br>
+        Returns the state of the specified analog input pin for pin = 1..5. Or the state of all pins for pin = all.
+        If the voltage of the pin is over the specied trigger threshold) it return 1 otherwise 0.
+        Supported by EnvSensor.
+    </li><br>
+    <li>ain &lt;pin&gt;<br>
+        Returns the state of the specified analog input pin for pin = 1..5. Or the state of all pins for pin = all.
+        If the voltage of the pin is over the specied trigger threshold) it return 1 otherwise 0.
+        Supported by EnvSensor.
+    </li><br>
+    <li>ain_volt &lt;pin&gt;<br>
+        Returns the voltage of the specified analog input pin for pin = 1..5 in millivolts, ranging from 0 .. 1100 mV.
         Supported by EnvSensor.
     </li><br>
   </ul><br>
