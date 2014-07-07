@@ -77,7 +77,8 @@ public class ValueEditorPanel extends JPanel
 		scrollPane = new JScrollPane(blockContainer,
 	            JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 	            JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-				
+		scrollPane.getVerticalScrollBar().setUnitIncrement(20);
+		
 		// create heading
 		JLabel headingLabel = new JLabel("Value Editor", JLabel.CENTER);
 		headingLabel.setFont(new Font(headingLabel.getFont().getName(), Font.BOLD, 14));
