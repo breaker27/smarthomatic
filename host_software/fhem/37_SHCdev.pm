@@ -84,7 +84,7 @@ my %sets = (
 my %gets = (
   "PowerSwitch" => "",
   "Dimmer"      => "",
-  "EnvSensor"   => "input:all,1,2,3,4,5,6,7,8 ",
+  "EnvSensor"   => "dinput:all,1,2,3,4,5,6,7,8 ainput:all,1,2,3,4,5 ainput_volt:1,2,3,4,5",
   "Custom"      => ""
 );
 
@@ -520,9 +520,9 @@ sub SHCdev_Get($@)
 
   given ($devtype) {
     when ('EnvSensor') {
-      if ($cmd eq 'input') {
+      if ($cmd eq 'dinput') {
         if ($arg =~ /[1-8]/) {
-          my $channel = "pin" . $arg;
+          my $channel = "dpin" . $arg;
           if ( defined($hash->{READINGS}{$channel})
             && defined($hash->{READINGS}{$channel}{VAL}))
           {
@@ -532,12 +532,43 @@ sub SHCdev_Get($@)
         }
         elsif ($arg eq "all")
         {
-          if ( defined($hash->{READINGS}{pins})
-            && defined($hash->{READINGS}{pins}{VAL}))
+          if ( defined($hash->{READINGS}{dpins})
+            && defined($hash->{READINGS}{dpins}{VAL}))
           {
-            return "$name.pins => " . $hash->{READINGS}{pins}{VAL};
+            return "$name.dpins => " . $hash->{READINGS}{dpins}{VAL};
           }
           return "Error: \"input all\" readings not yet available or not supported by device";
+        }
+      }
+      if ($cmd eq 'ainput') {
+        if ($arg =~ /[1-5]/) {
+          my $channel = "apin" . $arg;
+          if ( defined($hash->{READINGS}{$channel})
+            && defined($hash->{READINGS}{$channel}{VAL}))
+          {
+            return "$name.$channel => " . $hash->{READINGS}{$channel}{VAL};
+          }
+          return "Error: \"input " . $channel . "\" readings not yet available or not supported by device";
+        }
+        elsif ($arg eq "all")
+        {
+          if ( defined($hash->{READINGS}{apins})
+            && defined($hash->{READINGS}{apins}{VAL}))
+          {
+            return "$name.apins => " . $hash->{READINGS}{apins}{VAL};
+          }
+          return "Error: \"input all\" readings not yet available or not supported by device";
+        }
+      }
+      if ($cmd eq 'ainput_volt') {
+        if ($arg =~ /[1-5]/) {
+          my $channel = "apin_volt" . $arg;
+          if ( defined($hash->{READINGS}{$channel})
+            && defined($hash->{READINGS}{$channel}{VAL}))
+          {
+            return "$name.$channel => " . $hash->{READINGS}{$channel}{VAL};
+          }
+          return "Error: \"input " . $channel . "\" readings not yet available or not supported by device";
         }
       }
 
