@@ -1,6 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013 Uwe Freese
+* Copyright (c) 2014 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -19,24 +19,14 @@
 package shcee.editors;
 
 import java.awt.Color;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 import javax.swing.JCheckBox;
-import javax.swing.JTextArea;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.text.PlainDocument;
-
-import shcee.Util;
 
 /**
- * UIntTextArea is a JTextArea with a limit on characters that can be entered
- * and automatic input checking.
- * If the input is not correct, the background is red.
- * The validity can be read with isValid().
+ * BoolArea is a JCheckBox which colors its background depending on the
+ * selected value in comparison to the default value.
  * @author uwe
  */
 public class BoolArea extends JCheckBox
