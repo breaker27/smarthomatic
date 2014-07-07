@@ -55,7 +55,9 @@ my %dev_state_format = (
     "humidity",            "H: ",
     "barometric_pressure", "Baro: ",
     "brightness",          "B: ",
-    "distance",            "D: "
+    "distance",            "D: ",
+    "dpins",               "Din: ",
+    "apins",               "Ain: "
   ]
 );
 
@@ -96,6 +98,7 @@ my %auto_devtype = (
   "Environment.Brightness"                => "EnvSensor",
   "Environment.Distance"                  => "EnvSensor",
   "GPIO.DigitalPin"                       => "EnvSensor",
+  "GPIO.AnalogPin"                        => "EnvSensor",
   "PowerSwitch.SwitchState"               => "PowerSwitch",
   "Dimmer.Brightness"                     => "Dimmer"
 );
@@ -241,10 +244,22 @@ sub SHCdev_Parse($$)
           for (my $i = 0 ; $i < 8 ; $i++) {
             my $pinx = $parser->getField("On", $i);
             my $channel = $i + 1;
-            readingsBulkUpdate($rhash, "pin" . $channel, $pinx);
+            readingsBulkUpdate($rhash, "dpin" . $channel, $pinx);
             $pins .= $pinx;
           }
-          readingsBulkUpdate($rhash, "pins", $pins);
+          readingsBulkUpdate($rhash, "dpins", $pins);
+        }
+        when ('AnalogPin') {
+          my $pins = "";
+          for (my $i = 0 ; $i < 5 ; $i++) {
+            my $pinx_on = $parser->getField("On", $i);
+            my $pinx_volt = $parser->getField("Voltage", $i);
+            my $channel = $i + 1;
+            readingsBulkUpdate($rhash, "apin" . $channel, $pinx_on);
+            readingsBulkUpdate($rhash, "apin_volt" . $channel, $pinx_volt);
+            $pins .= $pinx_on;
+          }
+          readingsBulkUpdate($rhash, "apins", $pins);
         }
       }
     }
