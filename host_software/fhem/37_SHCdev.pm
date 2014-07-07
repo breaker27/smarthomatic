@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License along
 # with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 ###########################################################################
-# $Id: 37_SHCdev.pm xxxx 2014-xx-xx xx:xx:xx rr2000 $
+# $Id: 37_SHCdev.pm 6177 2014-06-29 11:09:17Z rr2000 $
 
 package main;
 
@@ -55,7 +55,9 @@ my %dev_state_format = (
     "humidity",            "H: ",
     "barometric_pressure", "Baro: ",
     "brightness",          "B: ",
-    "distance",            "D: "
+    "distance",            "D: ",
+    "dins",                "Din: ",
+    "ains",                "Ain: "
   ]
 );
 
@@ -82,7 +84,7 @@ my %sets = (
 my %gets = (
   "PowerSwitch" => "",
   "Dimmer"      => "",
-  "EnvSensor"   => "input:all,1,2,3,4,5,6,7,8 ",
+  "EnvSensor"   => "din:all,1,2,3,4,5,6,7,8 ain:all,1,2,3,4,5 ain_volt:1,2,3,4,5",
   "Custom"      => ""
 );
 
@@ -96,6 +98,7 @@ my %auto_devtype = (
   "Environment.Brightness"                => "EnvSensor",
   "Environment.Distance"                  => "EnvSensor",
   "GPIO.DigitalPin"                       => "EnvSensor",
+  "GPIO.AnalogPin"                        => "EnvSensor",
   "PowerSwitch.SwitchState"               => "PowerSwitch",
   "Dimmer.Brightness"                     => "Dimmer"
 );
@@ -241,10 +244,22 @@ sub SHCdev_Parse($$)
           for (my $i = 0 ; $i < 8 ; $i++) {
             my $pinx = $parser->getField("On", $i);
             my $channel = $i + 1;
-            readingsBulkUpdate($rhash, "pin" . $channel, $pinx);
+            readingsBulkUpdate($rhash, "din" . $channel, $pinx);
             $pins .= $pinx;
           }
-          readingsBulkUpdate($rhash, "pins", $pins);
+          readingsBulkUpdate($rhash, "dins", $pins);
+        }
+        when ('AnalogPin') {
+          my $pins = "";
+          for (my $i = 0 ; $i < 5 ; $i++) {
+            my $pinx_on = $parser->getField("On", $i);
+            my $pinx_volt = $parser->getField("Voltage", $i);
+            my $channel = $i + 1;
+            readingsBulkUpdate($rhash, "ain" . $channel, $pinx_on);
+            readingsBulkUpdate($rhash, "ain_volt" . $channel, $pinx_volt);
+            $pins .= $pinx_on;
+          }
+          readingsBulkUpdate($rhash, "ains", $pins);
         }
       }
     }
@@ -505,9 +520,9 @@ sub SHCdev_Get($@)
 
   given ($devtype) {
     when ('EnvSensor') {
-      if ($cmd eq 'input') {
+      if ($cmd eq 'din') {
         if ($arg =~ /[1-8]/) {
-          my $channel = "pin" . $arg;
+          my $channel = "din" . $arg;
           if ( defined($hash->{READINGS}{$channel})
             && defined($hash->{READINGS}{$channel}{VAL}))
           {
@@ -517,12 +532,43 @@ sub SHCdev_Get($@)
         }
         elsif ($arg eq "all")
         {
-          if ( defined($hash->{READINGS}{pins})
-            && defined($hash->{READINGS}{pins}{VAL}))
+          if ( defined($hash->{READINGS}{dins})
+            && defined($hash->{READINGS}{dins}{VAL}))
           {
-            return "$name.pins => " . $hash->{READINGS}{pins}{VAL};
+            return "$name.dins => " . $hash->{READINGS}{dins}{VAL};
           }
           return "Error: \"input all\" readings not yet available or not supported by device";
+        }
+      }
+      if ($cmd eq 'ain') {
+        if ($arg =~ /[1-5]/) {
+          my $channel = "ain" . $arg;
+          if ( defined($hash->{READINGS}{$channel})
+            && defined($hash->{READINGS}{$channel}{VAL}))
+          {
+            return "$name.$channel => " . $hash->{READINGS}{$channel}{VAL};
+          }
+          return "Error: \"input " . $channel . "\" readings not yet available or not supported by device";
+        }
+        elsif ($arg eq "all")
+        {
+          if ( defined($hash->{READINGS}{ains})
+            && defined($hash->{READINGS}{ains}{VAL}))
+          {
+            return "$name.ains => " . $hash->{READINGS}{ains}{VAL};
+          }
+          return "Error: \"input all\" readings not yet available or not supported by device";
+        }
+      }
+      if ($cmd eq 'ain_volt') {
+        if ($arg =~ /[1-5]/) {
+          my $channel = "ain_volt" . $arg;
+          if ( defined($hash->{READINGS}{$channel})
+            && defined($hash->{READINGS}{$channel}{VAL}))
+          {
+            return "$name.$channel => " . $hash->{READINGS}{$channel}{VAL};
+          }
+          return "Error: \"input " . $channel . "\" readings not yet available or not supported by device";
         }
       }
 
@@ -610,8 +656,22 @@ sub SHCdev_Send($)
   <a name="SHCdev_Get"></a>
   <b>Get</b>
   <ul>
-    <li>input &lt;pin&gt;<br>
-        Returns the state of the specified pin for pin = 1..8 or the state of all pins for pin = all.
+    <li>din &lt;pin&gt;<br>
+        Returns the state of the specified digital input pin for pin = 1..8. Or the state of all pins for pin = all.
+        Supported by EnvSensor.
+    </li><br>
+    <li>ain &lt;pin&gt;<br>
+        Returns the state of the specified analog input pin for pin = 1..5. Or the state of all pins for pin = all.
+        If the voltage of the pin is over the specied trigger threshold) it return 1 otherwise 0.
+        Supported by EnvSensor.
+    </li><br>
+    <li>ain &lt;pin&gt;<br>
+        Returns the state of the specified analog input pin for pin = 1..5. Or the state of all pins for pin = all.
+        If the voltage of the pin is over the specied trigger threshold) it return 1 otherwise 0.
+        Supported by EnvSensor.
+    </li><br>
+    <li>ain_volt &lt;pin&gt;<br>
+        Returns the voltage of the specified analog input pin for pin = 1..5 in millivolts, ranging from 0 .. 1100 mV.
         Supported by EnvSensor.
     </li><br>
   </ul><br>
