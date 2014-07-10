@@ -19,7 +19,14 @@
 package shcee.editors;
 
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JPanel;
 import javax.swing.text.DefaultCaret;
 
 import org.w3c.dom.Node;
@@ -32,6 +39,7 @@ public class IntEditor extends AbstractEditor
 
 	private long minVal;
 	private long maxVal;
+	private Long defaultVal;
 	private int bits;
 	private UIntTextArea input;
 	
@@ -41,17 +49,49 @@ public class IntEditor extends AbstractEditor
 		
 		// add label about format
 		format = "Int of " + bits + " bits in the range " + minVal + ".." + maxVal;
+		
+		if (null != defaultVal)
+		{
+			format += " (default: " + defaultVal + ")";
+		}
+
 		addLabel(format);
 		
 		// add input
-		input = new UIntTextArea(minVal, maxVal);
-		add(input);
+		JPanel inputPanel = new JPanel();
+		inputPanel.setLayout(new BoxLayout(inputPanel, javax.swing.BoxLayout.X_AXIS));
+		inputPanel.setBackground(this.getBackground());
+
+		input = new UIntTextArea(minVal, maxVal, defaultVal);
+		inputPanel.add(input);
+
+		if (null != defaultVal)
+		{
+			JButton buttonDefault = new JButton("Default");
+			
+			buttonDefault.addActionListener(new ActionListener() {
+	            public void actionPerformed(ActionEvent e)
+	            {
+	                onButtonDefault();
+	            }
+	        });
+
+			inputPanel.add(Box.createRigidArea(new Dimension(6, 6))); // space between components
+			inputPanel.add(buttonDefault);
+		}
+		
+		add(inputPanel);
 		
 		// add description
 		description = Util.getChildNodeValue(root, "Description");
 		addLabel(description);
 	}
 
+	private void onButtonDefault()
+	{
+		input.setText("" + defaultVal);
+	}
+	
 	@Override
 	public boolean dataIsValid()
 	{
@@ -67,6 +107,8 @@ public class IntEditor extends AbstractEditor
 			minVal = Integer.parseInt(n.getFirstChild().getNodeValue());
 		else if (name.equals("MaxVal"))
 			maxVal = Integer.parseInt(n.getFirstChild().getNodeValue());
+		else if (name.equals("DefaultVal"))
+			defaultVal = new Long(Integer.parseInt(n.getFirstChild().getNodeValue()));
 		else if (name.equals("Bits"))
 			bits = Integer.parseInt(n.getFirstChild().getNodeValue());
 	}

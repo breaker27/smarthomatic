@@ -19,28 +19,33 @@
 package shcee.editors;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import javax.swing.JComboBox;
-
-import shcee.LabelArea;
-import shcee.SHCEEMain;
-import shcee.Util;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JPanel;
 
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
+import shcee.SHCEEMain;
+import shcee.Util;
 
 public class EnumEditor extends AbstractEditor
 {
 	private static final long serialVersionUID = -7583780384335242111L;
 
 	private int bits;
+	private Integer defaultVal;
+	private int defaultIndex;
 	private ArrayList<Integer> itemIndex2enumValue; // store ENUM values additionally for quick access 
 	private HashMap<Integer, Integer> enumValue2itemIndex;
-	private JComboBox input;
+	private ColorComboBox input;
 	
 	public EnumEditor(Node root, Color baseColor, int arrayIndex)
 	{
@@ -48,10 +53,37 @@ public class EnumEditor extends AbstractEditor
 		
 		// add label about format
 		format = "Enum value of " + bits + " bits";
+
+		if (null != defaultVal)
+		{
+			format += " (default: " + defaultVal + ")";
+		}
+
 		addLabel(format);
 		
 		// add input
-		add(input);
+		JPanel inputPanel = new JPanel();
+		inputPanel.setLayout(new BoxLayout(inputPanel, javax.swing.BoxLayout.X_AXIS));
+		inputPanel.setBackground(this.getBackground());
+		
+		inputPanel.add(input);
+
+		if (null != defaultVal)
+		{
+			JButton buttonDefault = new JButton("Default");
+			
+			buttonDefault.addActionListener(new ActionListener() {
+	            public void actionPerformed(ActionEvent e)
+	            {
+	                onButtonDefault();
+	            }
+	        });
+
+			inputPanel.add(Box.createRigidArea(new Dimension(6, 6))); // space between components
+			inputPanel.add(buttonDefault);
+		}
+		
+		add(inputPanel);
 		
 		// add description
 		description = Util.getChildNodeValue(root, "Description");
@@ -65,6 +97,11 @@ public class EnumEditor extends AbstractEditor
 		});
 	}
 
+	private void onButtonDefault()
+	{
+		input.setSelectedIndex(defaultIndex);
+	}
+	
 	protected void onChangeValue()
 	{
 		// If the DeviceType is changes, the layout of the ValueEditorPanel has to be changed, because
@@ -72,6 +109,15 @@ public class EnumEditor extends AbstractEditor
 		if (id.equals("DeviceType"))
 		{
 			SHCEEMain.mySHCEEMain.valueEditor.updateBlockVisibility();
+		}
+		
+		if ((null != defaultVal) && (input.getSelectedIndex() != defaultIndex))
+		{
+			input.setBackground(Color.YELLOW);
+		}
+		else
+		{
+			input.setBackground(Color.WHITE);
 		}
 	}
 
@@ -104,7 +150,7 @@ public class EnumEditor extends AbstractEditor
 		{
 			itemIndex2enumValue = new ArrayList<Integer>();
 			enumValue2itemIndex = new HashMap<Integer, Integer>();
-			input = new JComboBox();
+			input = new ColorComboBox();
 		}
 		
 		String name = n.getNodeName();
@@ -129,6 +175,16 @@ public class EnumEditor extends AbstractEditor
 					itemIndex2enumValue.add(Integer.parseInt(v));
 					enumValue2itemIndex.put(Integer.parseInt(v), input.getItemCount() - 1);
 				}
+			}
+		}
+		else if (name.equals("DefaultVal"))
+		{
+			int v = Integer.parseInt(n.getFirstChild().getNodeValue());
+			
+			if (enumValue2itemIndex.containsKey(v))
+			{
+				defaultVal = v;
+				defaultIndex = enumValue2itemIndex.get(defaultVal);
 			}
 		}
 	}

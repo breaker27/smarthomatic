@@ -34,6 +34,7 @@
 			<Bits>8</Bits>
 			<MinVal>-128</MinVal>
 			<MaxVal>127</MaxVal>
+			<DefaultVal>0</DefaultVal>
 		</IntValue>
 		<Reserved>
 			<Bits>48</Bits>
@@ -81,6 +82,7 @@
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>16</MaxVal>
+			<DefaultVal>1</DefaultVal>
 		</UIntValue>
 		<Array>
 			<Length>16</Length>
@@ -175,7 +177,392 @@
 			</Element>
 		</EnumValue>
 		<Reserved>
-			<Bits>7640</Bits>
+			<Bits>472</Bits>
+		</Reserved>
+		<EnumValue>
+			<ID>WakeupInterval</ID>
+			<Description>Decide after which time the device should be woken up by the RFM12B transceiver to measure or send values.</Description>
+			<Bits>16</Bits>
+			<Element>
+				<Value>1018</Value>
+				<Name>2s</Name>
+			</Element>
+			<Element>
+				<Value>1274</Value>
+				<Name>4s</Name>
+			</Element>
+			<Element>
+				<Value>1840</Value>
+				<Name>6s</Name>
+			</Element>
+			<Element>
+				<Value>1530</Value>
+				<Name>8s</Name>
+			</Element>
+			<Element>
+				<Value>1692</Value>
+				<Name>10s</Name>
+			</Element>
+			<Element>
+				<Value>1770</Value>
+				<Name>15s</Name>
+			</Element>
+			<Element>
+				<Value>1948</Value>
+				<Name>20s</Name>
+			</Element>
+			<Element>
+				<Value>2027</Value>
+				<Name>30s</Name>
+			</Element>
+			<Element>
+				<Value>2224</Value>
+				<Name>45s</Name>
+			</Element>
+			<Element>
+				<Value>2421</Value>
+				<Name>60s</Name>
+			</Element>
+			<Element>
+				<Value>2450</Value>
+				<Name>75s</Name>
+			</Element>
+			<Element>
+				<Value>2480</Value>
+				<Name>90s</Name>
+			</Element>
+			<Element>
+				<Value>2509</Value>
+				<Name>105s</Name>
+			</Element>
+			<Element>
+				<Value>2538</Value>
+				<Name>120s</Name>
+			</Element>
+			<Element>
+				<Value>2736</Value>
+				<Name>3m</Name>
+			</Element>
+			<Element>
+				<Value>2794</Value>
+				<Name>4m</Name>
+			</Element>
+			<Element>
+				<Value>2962</Value>
+				<Name>5m</Name>
+			</Element>
+			<Element>
+				<Value>3050</Value>
+				<Name>8m</Name>
+			</Element>
+			<Element>
+				<Value>3248</Value>
+				<Name>12m</Name>
+			</Element>
+			<Element>
+				<Value>3292</Value>
+				<Name>15m</Name>
+			</Element>
+			<Element>
+				<Value>3474</Value>
+				<Name>20m</Name>
+			</Element>
+			<DefaultVal>2509</DefaultVal>
+		</EnumValue>
+		<UIntValue>
+			<ID>TemperatureMeasuringInterval</ID>
+			<Description>The number of times the device wakes up before this value is measured.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>255</MaxVal>
+			<DefaultVal>1</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>TemperatureAveragingInterval</ID>
+			<Description>The number of values whose average is calculated before sending.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>16</MaxVal>
+			<DefaultVal>4</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>HumidityMeasuringInterval</ID>
+			<Description>The number of times the device wakes up before this value is measured.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>255</MaxVal>
+			<DefaultVal>1</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>HumidityAveragingInterval</ID>
+			<Description>The number of values whose average is calculated before sending.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>16</MaxVal>
+			<DefaultVal>4</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>BarometricMeasuringInterval</ID>
+			<Description>The number of times the device wakes up before this value is measured.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>255</MaxVal>
+			<DefaultVal>1</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>BarometricAveragingInterval</ID>
+			<Description>The number of values whose average is calculated before sending.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>16</MaxVal>
+			<DefaultVal>4</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>BrightnessMeasuringInterval</ID>
+			<Description>The number of times the device wakes up before this value is measured.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>255</MaxVal>
+			<DefaultVal>1</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>BrightnessAveragingInterval</ID>
+			<Description>The number of values whose average is calculated before sending.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>16</MaxVal>
+			<DefaultVal>4</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>DistanceMeasuringInterval</ID>
+			<Description>The number of times the device wakes up before this value is measured.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>255</MaxVal>
+			<DefaultVal>4</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>DistanceAveragingInterval</ID>
+			<Description>The number of values whose average is calculated before sending.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>16</MaxVal>
+			<DefaultVal>1</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>DigitalInputMeasuringInterval</ID>
+			<Description>The number of times the device wakes up before this value is measured.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>255</MaxVal>
+			<DefaultVal>1</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>DigitalInputAveragingInterval</ID>
+			<Description>The number of values whose average is calculated before sending.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>16</MaxVal>
+			<DefaultVal>6</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>AnalogInputMeasuringInterval</ID>
+			<Description>The number of times the device wakes up before this value is measured.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>255</MaxVal>
+			<DefaultVal>1</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>AnalogInputAveragingInterval</ID>
+			<Description>The number of values whose average is calculated before sending.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>16</MaxVal>
+			<DefaultVal>6</DefaultVal>
+		</UIntValue>
+		<Reserved>
+			<Bits>384</Bits>
+		</Reserved>
+		<Array>
+			<Length>8</Length>
+			<EnumValue>
+				<ID>DigitalInputPin</ID>
+				<Description>You can choose up to 8 GPIO pins as digital input. The enum values are counting through every pin from port B, C and D, leaving out the pins that are not accessible because otherwise used.</Description>
+				<Bits>8</Bits>
+				<Element>
+					<Value>0</Value>
+					<Name>Unused</Name>
+				</Element>
+				<Element>
+					<Value>2</Value>
+					<Name>PB1</Name>
+				</Element>
+				<Element>
+					<Value>3</Value>
+					<Name>PB2</Name>
+				</Element>
+				<Element>
+					<Value>7</Value>
+					<Name>PB6</Name>
+				</Element>
+				<Element>
+					<Value>8</Value>
+					<Name>PB7</Name>
+				</Element>
+				<Element>
+					<Value>10</Value>
+					<Name>PC1</Name>
+				</Element>
+				<Element>
+					<Value>11</Value>
+					<Name>PC2</Name>
+				</Element>
+				<Element>
+					<Value>12</Value>
+					<Name>PC3</Name>
+				</Element>
+				<Element>
+					<Value>13</Value>
+					<Name>PC4</Name>
+				</Element>
+				<Element>
+					<Value>14</Value>
+					<Name>PC5</Name>
+				</Element>
+				<Element>
+					<Value>20</Value>
+					<Name>PD3</Name>
+				</Element>
+				<Element>
+					<Value>21</Value>
+					<Name>PD4</Name>
+				</Element>
+				<Element>
+					<Value>22</Value>
+					<Name>PD5</Name>
+				</Element>
+				<Element>
+					<Value>23</Value>
+					<Name>PD6</Name>
+				</Element>
+			</EnumValue>
+		</Array>
+		<Array>
+			<Length>8</Length>
+			<BoolValue>
+				<ID>DigitalInputPullUpResistor</ID>
+				<Description>Decide if you want to switch on the pull-up resistor at each input pin you have chosen. (If you connect a simple switch connected to ground, you typically want this.)</Description>
+			</BoolValue>
+		</Array>
+		<Array>
+			<Length>8</Length>
+			<EnumValue>
+				<ID>DigitalInputTriggerMode</ID>
+				<Description>The mode decides how the device detects changes and when a new message is sent. Off means the value is sent after a full cycle time only. In any other case, the device wakes up immediately after a change. A status is then sent either when the level is going up, down or on change.</Description>
+				<Bits>8</Bits>
+				<Element>
+					<Value>0</Value>
+					<Name>Off</Name>
+				</Element>
+				<Element>
+					<Value>1</Value>
+					<Name>Up</Name>
+				</Element>
+				<Element>
+					<Value>2</Value>
+					<Name>Down</Name>
+				</Element>
+				<Element>
+					<Value>3</Value>
+					<Name>Change</Name>
+				</Element>
+			</EnumValue>
+		</Array>
+		<Reserved>
+			<Bits>320</Bits>
+		</Reserved>
+		<Array>
+			<Length>5</Length>
+			<EnumValue>
+				<ID>AnalogInputPin</ID>
+				<Description>You can choose up to 5 ADC pins as analog input. The enum values are a reduced set of the ones from the digital input.</Description>
+				<Bits>8</Bits>
+				<Element>
+					<Value>0</Value>
+					<Name>Unused</Name>
+				</Element>
+				<Element>
+					<Value>10</Value>
+					<Name>PC1</Name>
+				</Element>
+				<Element>
+					<Value>11</Value>
+					<Name>PC2</Name>
+				</Element>
+				<Element>
+					<Value>12</Value>
+					<Name>PC3</Name>
+				</Element>
+				<Element>
+					<Value>13</Value>
+					<Name>PC4</Name>
+				</Element>
+				<Element>
+					<Value>14</Value>
+					<Name>PC5</Name>
+				</Element>
+			</EnumValue>
+		</Array>
+		<Array>
+			<Length>5</Length>
+			<EnumValue>
+				<ID>AnalogInputTriggerMode</ID>
+				<Description>The mode decides how the device detects changes and when a new message is sent. The voltage level is measured in the configured interval. When the mode is set to off, the status is only sent after a full averaging cycle. In the other modes, a status is sent when the level is going up, down or changes according to the trigger level.</Description>
+				<Bits>8</Bits>
+				<Element>
+					<Value>0</Value>
+					<Name>Off</Name>
+				</Element>
+				<Element>
+					<Value>1</Value>
+					<Name>Up</Name>
+				</Element>
+				<Element>
+					<Value>2</Value>
+					<Name>Down</Name>
+				</Element>
+				<Element>
+					<Value>3</Value>
+					<Name>Change</Name>
+				</Element>
+			</EnumValue>
+		</Array>
+		<Array>
+			<Length>5</Length>
+			<UIntValue>
+				<ID>AnalogInputTriggerThreshold</ID>
+				<Description>The threshold in millivolts is used when the trigger mode is on.</Description>
+				<Bits>16</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>1100</MaxVal>
+			</UIntValue>
+		</Array>
+		<Array>
+			<Length>5</Length>
+			<UIntValue>
+				<ID>AnalogInputTriggerHysteresis</ID>
+				<Description>The hysteresis in millivolts is used when the trigger mode is on. It can avoid the trigger firing too often if you measure a slighty changing voltage. Because of noise and accuracy limits of the ADC, you should set a positive hysteresis in any case.</Description>
+				<Bits>16</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>1100</MaxVal>
+			</UIntValue>
+		</Array>
+		<Reserved>
+			<Bits>272</Bits>
+		</Reserved>
+		<Reserved>
+			<Bits>5632</Bits>
 		</Reserved>
 	</Block>
 	<Block>
@@ -238,6 +625,7 @@
 			<ID>BrightnessTranslationTable</ID>
 			<Description>These are the target values (one byte each) for the input brightness of 0, 1, ... 100% to adapt the specific brightness curve of your lamps. Set first byte to FF to not use it.</Description>
 			<Bytes>101</Bytes>
+			<DefaultVal>001115191A1B1C1D1E1F202122232425262728292A2B2C2D2E2E2F3031323334363738393A3B3C3D3E40414243454647494A4B4C4E505153545658595B5D5F61636567696B6D6F717375787A7D808386898B8F93969A9FA3A7ABAFB4BCC2C9CFD4DBE6F1FF</DefaultVal>
 		</ByteArray>
 		<Reserved>
 			<Bits>6848</Bits>

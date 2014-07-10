@@ -24,6 +24,8 @@
 #ifndef _E2P_DIMMER_H
 #define _E2P_DIMMER_H
 
+#include "e2p_access.h"
+
 // E2P Block "Dimmer"
 // ==================
 // Start offset (bit): 512

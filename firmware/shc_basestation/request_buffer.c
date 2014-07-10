@@ -179,10 +179,10 @@ void print_request_queue(void)
 // This function has to be called once a second, because the timeout values represent the amount of seconds.
 //
 // TODO (optimization): Change the behaviour so that a new packet can be sent out of the queue without a delay (currently, we have ~0.5s delay in average).
-// So check the queue for "timeout 0" packets more often, but don't reduce the timeout  in this case.
+// So check the queue for "timeout 0" packets more often, but don't reduce the timeout in this case.
 request_t * find_request_to_repeat(uint32_t packet_counter)
 {
-	uint8_t i, j;
+	uint8_t i;
 	uint8_t slot;
 	request_t * res = 0;
 
@@ -190,27 +190,15 @@ request_t * find_request_to_repeat(uint32_t packet_counter)
 	{
 		if (request_queue[i][0] != SLOT_UNUSED)
 		{
-			for (j = 0; j < REQUEST_QUEUE_PACKETS; j++)
+			// count down timeout from first element per queue
+			slot = request_queue[i][1];
+			
+			if (request_buffer[slot].timeout > 0)
 			{
-				slot = request_queue[i][j + 1];
-				
-				if (slot == SLOT_UNUSED)
-				{
-					break;
-				}
-				else
-				{
-					// count down ALL timeouts
-					if (request_buffer[slot].timeout)
-					{
-						request_buffer[slot].timeout--;
-					}
-				}
+				request_buffer[slot].timeout--;
 			}
 			
 			// set bufx to the request to retry, if timeout is reached
-			slot = request_queue[i][1];
-			
 			if ((request_buffer[slot].timeout == 0) && (res == 0))
 			{
 				res = &request_buffer[slot];
@@ -238,7 +226,7 @@ request_t * find_request_to_repeat(uint32_t packet_counter)
 
 					uint8_t x;
 					
-					for (x = 1; x < REQUEST_QUEUE_PACKETS - 1; x++)
+					for (x = 1; x < REQUEST_QUEUE_PACKETS; x++)
 					{
 						request_queue[i][x] = request_queue[i][x + 1];
 					}
@@ -282,40 +270,39 @@ void remove_request(uint16_t sender_id, uint16_t request_sender_id, uint32_t pac
 				// Because we use a fifo queue, the first buffered element has to be the one that is acknowledged.
 				// We don't need to check the others.
 				uint8_t rb_slot = request_queue[rq_slot][1];
+				
+				if (request_buffer[rb_slot].packet_counter == packet_counter)
 				{
-					if (request_buffer[rb_slot].packet_counter == packet_counter)
+					uint8_t i;
+					
+					UART_PUTF("Removing request from request buffer slot %u.\r\n", rb_slot);
+					
+					// remove from request buffer
+					request_buffer[rb_slot].message_type = MESSAGETYPE_UNUSED;
+					
+					// remove from request queue
+					for (i = 1; i < REQUEST_QUEUE_PACKETS; i++)
 					{
-						uint8_t i;
-						
-						UART_PUTF("Removing request from request buffer slot %u.\r\n", rb_slot);
-						
-						// remove from request buffer
-						request_buffer[rb_slot].message_type = MESSAGETYPE_UNUSED;
-						
-						// remove from request queue
-						for (i = 1; i < REQUEST_QUEUE_PACKETS; i++)
-						{
-							request_queue[rq_slot][i] = request_queue[rq_slot][i + 1];
-						}
-						
-						request_queue[rq_slot][REQUEST_QUEUE_PACKETS] = SLOT_UNUSED;
-						
-						// delete request queue entry if no more packets in this queue_request
-						if (request_queue[rq_slot][1] == SLOT_UNUSED)
-						{
-							UART_PUTF("Request queue %u is now empty.\r\n", rq_slot);
-							request_queue[rq_slot][0] = SLOT_UNUSED;
-						}
-						
-						print_request_queue();
-					}
-					else
-					{
-						UART_PUTS("Warning: SenderID from ack found in queue, but PacketCounter does not match.\r\n");
+						request_queue[rq_slot][i] = request_queue[rq_slot][i + 1];
 					}
 					
-					return;
+					request_queue[rq_slot][REQUEST_QUEUE_PACKETS] = SLOT_UNUSED;
+					
+					// delete request queue entry if no more packets in this queue_request
+					if (request_queue[rq_slot][1] == SLOT_UNUSED)
+					{
+						UART_PUTF("Request queue %u is now empty.\r\n", rq_slot);
+						request_queue[rq_slot][0] = SLOT_UNUSED;
+					}
+					
+					print_request_queue();
 				}
+				else
+				{
+					UART_PUTS("Warning: SenderID from ack found in queue, but PacketCounter does not match.\r\n");
+				}
+				
+				return;
 			}
 		}
 		

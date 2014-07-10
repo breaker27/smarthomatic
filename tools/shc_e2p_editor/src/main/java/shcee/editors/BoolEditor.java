@@ -18,9 +18,16 @@
 
 package shcee.editors;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
-import javax.swing.text.DefaultCaret;
+import javax.swing.Box;
+import javax.swing.JButton;
+import javax.swing.JPanel;
 
 import org.w3c.dom.Node;
 
@@ -30,32 +37,63 @@ public class BoolEditor extends AbstractEditor
 {
 	private static final long serialVersionUID = -7593115068369714873L;
 
-	private long minVal;
-	private long maxVal;
 	private int bits;
-	private UIntTextArea input;
+	private Boolean defaultVal;	
+	private BoolArea input;
 	
 	public BoolEditor(Node root, Color baseColor, int arrayIndex)
 	{
 		super(root, baseColor, arrayIndex);
 		
-		minVal = 0;
-		maxVal = 1;
 		bits = 8;
 		
 		// add label about format
 		format = "Boolean of 8 bits";
+		
+		if (null != defaultVal)
+		{
+			format += " (default: " + defaultVal + ")";
+		}
+
 		addLabel(format);
 		
 		// add input
-		input = new UIntTextArea(minVal, maxVal);
-		add(input);
+		JPanel inputPanel = new JPanel();
+		inputPanel.setLayout(new BorderLayout());
+		inputPanel.setBackground(this.getBackground());
+
+		input = new BoolArea(defaultVal);
+		inputPanel.add(input, BorderLayout.WEST);
+
+		if (null != defaultVal)
+		{
+			JButton buttonDefault = new JButton("Default");
+			
+			buttonDefault.addActionListener(new ActionListener() {
+	            public void actionPerformed(ActionEvent e)
+	            {
+	                onButtonDefault();
+	            }
+	        });
+
+			Component glue = Box.createRigidArea(new Dimension(6, 6));
+			glue.setPreferredSize(new Dimension(1000, 6));
+			inputPanel.add(glue, BorderLayout.CENTER); // space between components
+			inputPanel.add(buttonDefault, BorderLayout.EAST);
+		}
+		
+		add(inputPanel);
 		
 		// add description
 		description = Util.getChildNodeValue(root, "Description");
 		addLabel(description);
 	}
 
+	private void onButtonDefault()
+	{
+		input.setSelected(defaultVal);
+	}
+	
 	@Override
 	public boolean dataIsValid()
 	{
@@ -65,20 +103,18 @@ public class BoolEditor extends AbstractEditor
 	@Override
 	public void setDefinitionParameter(Node n)
 	{
-		// no parameters
+		String name = n.getNodeName();
+		
+		if (name.equals("DefaultVal"))
+			defaultVal = n.getFirstChild().getNodeValue().equals("true");
 	}
 
 	@Override
 	public int readFromEepromArray(byte[] eeprom, int offsetBit)
 	{
 		int data = Util.getIntFromByteArray(eeprom, offsetBit, bits);
-		
-		// temporarily avoid scrolling to the element when content changes,
-		// then set text
-		DefaultCaret caret = (DefaultCaret)input.getCaret();
-		caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
-		input.setText("" + data);
-		caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
+
+		input.setSelected(data != 0);
 
 		return 8;
 	}
@@ -86,7 +122,7 @@ public class BoolEditor extends AbstractEditor
 	@Override
 	public int writeToEepromArray(byte[] eeprom, int offsetBit)
 	{
-		int value = Integer.parseInt(input.getText());		
+		int value = input.isSelected() ? 1 : 0;		
 		Util.setIntInByteArray(value, eeprom, offsetBit, bits);
 		return 8;
 	}

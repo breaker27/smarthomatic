@@ -41,13 +41,15 @@ public class UIntTextArea extends JTextArea
 	private boolean valid;
 	private long minVal;
 	private long maxVal;
+	private Long defaultVal;
 	
-	public UIntTextArea(long minVal, long maxVal)
+	public UIntTextArea(long minVal, long maxVal, Long defaultVal)
 	{
 		super();
 		
 		this.minVal = minVal;
 		this.maxVal = maxVal;
+		this.defaultVal = defaultVal;
 		
 		int charLimit = (int)Math.log10(maxVal) + 1;
 		if (minVal < 0)
@@ -86,13 +88,17 @@ public class UIntTextArea extends JTextArea
 	{
 		valid = (Util.isIntegerBetween(getText(), minVal, maxVal));
 		
-		if (valid)
+		if (!valid)
 		{
-			setBackground(Color.WHITE);
+			setBackground(Color.RED);
+		}
+		else if ((null != defaultVal) && (!defaultVal.toString().equals(getText())))
+		{
+			setBackground(Color.YELLOW);
 		}
 		else
 		{
-			setBackground(Color.RED);
+			setBackground(Color.WHITE);
 		}
 	}
 	

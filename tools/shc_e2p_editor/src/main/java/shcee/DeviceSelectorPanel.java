@@ -90,6 +90,7 @@ public class DeviceSelectorPanel extends JPanel
         add(scrollPane, "Center");
 		add(buttonPanel, "South");
 		scrollPane.getViewport().add(deviceSelectorTable);
+		scrollPane.getVerticalScrollBar().setUnitIncrement(10);
 	}
 
 	protected void onButtonDeleteDevice()

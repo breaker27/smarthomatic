@@ -21,8 +21,8 @@
 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 */
 
-#ifndef _MSGGRP_POWERSWITCH_H
-#define _MSGGRP_POWERSWITCH_H
+#ifndef _MSGGRP_GPIO_H
+#define _MSGGRP_GPIO_H
 
 #include "packet_header.h"
 #include "packet_headerext_common.h"
@@ -34,33 +34,34 @@
 #include "packet_headerext_get.h"
 #include "e2p_access.h"
 
-// Message Group "powerswitch"
-// ===========================
-// MessageGroupID: 20
+// Message Group "gpio"
+// ====================
+// MessageGroupID: 1
+// Description: This group contains messages for general I/O functions. The meaning of the values is not known to the SHC devices. It depends on the connected parts (e.g. switches). The values have to be processed by the user/server software appropriately.
 
 // ENUM for MessageIDs of this MessageGroup
 typedef enum {
-  MESSAGEID_POWERSWITCH_SWITCHSTATE = 1,
-  MESSAGEID_POWERSWITCH_SWITCHSTATEEXT = 2
-} POWERSWITCH_MessageIDEnum;
+  MESSAGEID_GPIO_DIGITALPIN = 1,
+  MESSAGEID_GPIO_ANALOGPIN = 2
+} GPIO_MessageIDEnum;
 
 
-// Message "powerswitch_switchstate"
-// ---------------------------------
-// MessageGroupID: 20
+// Message "gpio_digitalpin"
+// -------------------------
+// MessageGroupID: 1
 // MessageID: 1
 // Possible MessageTypes: Get, Set, SetGet, Status, Ack, AckStatus
 // Validity: test
-// Length w/o Header + HeaderExtension: 17 bits
-// Data fields: On, TimeoutSec
-// Description: This is the state of the relais and its timeout value.
+// Length w/o Header + HeaderExtension: 8 bits
+// Data fields: On
+// Description: This is the state of up to 8 pins.
 
 // Function to initialize header for the MessageType "Get".
-static inline void pkg_header_init_powerswitch_switchstate_get(void)
+static inline void pkg_header_init_gpio_digitalpin_get(void)
 {
   memset(&bufx[0], 0, sizeof(bufx));
   pkg_header_set_messagetype(0);
-  pkg_headerext_get_set_messagegroupid(20);
+  pkg_headerext_get_set_messagegroupid(1);
   pkg_headerext_get_set_messageid(1);
   __HEADEROFFSETBITS = 95;
   __PACKETSIZEBYTES = 16;
@@ -68,11 +69,11 @@ static inline void pkg_header_init_powerswitch_switchstate_get(void)
 }
 
 // Function to initialize header for the MessageType "Set".
-static inline void pkg_header_init_powerswitch_switchstate_set(void)
+static inline void pkg_header_init_gpio_digitalpin_set(void)
 {
   memset(&bufx[0], 0, sizeof(bufx));
   pkg_header_set_messagetype(1);
-  pkg_headerext_set_set_messagegroupid(20);
+  pkg_headerext_set_set_messagegroupid(1);
   pkg_headerext_set_set_messageid(1);
   __HEADEROFFSETBITS = 95;
   __PACKETSIZEBYTES = 16;
@@ -80,11 +81,11 @@ static inline void pkg_header_init_powerswitch_switchstate_set(void)
 }
 
 // Function to initialize header for the MessageType "SetGet".
-static inline void pkg_header_init_powerswitch_switchstate_setget(void)
+static inline void pkg_header_init_gpio_digitalpin_setget(void)
 {
   memset(&bufx[0], 0, sizeof(bufx));
   pkg_header_set_messagetype(2);
-  pkg_headerext_setget_set_messagegroupid(20);
+  pkg_headerext_setget_set_messagegroupid(1);
   pkg_headerext_setget_set_messageid(1);
   __HEADEROFFSETBITS = 95;
   __PACKETSIZEBYTES = 16;
@@ -92,11 +93,11 @@ static inline void pkg_header_init_powerswitch_switchstate_setget(void)
 }
 
 // Function to initialize header for the MessageType "Status".
-static inline void pkg_header_init_powerswitch_switchstate_status(void)
+static inline void pkg_header_init_gpio_digitalpin_status(void)
 {
   memset(&bufx[0], 0, sizeof(bufx));
   pkg_header_set_messagetype(8);
-  pkg_headerext_status_set_messagegroupid(20);
+  pkg_headerext_status_set_messagegroupid(1);
   pkg_headerext_status_set_messageid(1);
   __HEADEROFFSETBITS = 83;
   __PACKETSIZEBYTES = 16;
@@ -104,7 +105,7 @@ static inline void pkg_header_init_powerswitch_switchstate_status(void)
 }
 
 // Function to initialize header for the MessageType "Ack".
-static inline void pkg_header_init_powerswitch_switchstate_ack(void)
+static inline void pkg_header_init_gpio_digitalpin_ack(void)
 {
   memset(&bufx[0], 0, sizeof(bufx));
   pkg_header_set_messagetype(9);
@@ -114,68 +115,51 @@ static inline void pkg_header_init_powerswitch_switchstate_ack(void)
 }
 
 // Function to initialize header for the MessageType "AckStatus".
-static inline void pkg_header_init_powerswitch_switchstate_ackstatus(void)
+static inline void pkg_header_init_gpio_digitalpin_ackstatus(void)
 {
   memset(&bufx[0], 0, sizeof(bufx));
   pkg_header_set_messagetype(10);
-  pkg_headerext_ackstatus_set_messagegroupid(20);
+  pkg_headerext_ackstatus_set_messagegroupid(1);
   pkg_headerext_ackstatus_set_messageid(1);
   __HEADEROFFSETBITS = 120;
-  __PACKETSIZEBYTES = 32;
+  __PACKETSIZEBYTES = 16;
   __MESSAGETYPE = 10;
 }
 
-// On (BoolValue)
-// Description: Tells if the switch is on (active).
+// On (BoolValue[8])
+// Description: Tells if the pin is on (at high level) or not (low level).
 
 // Set On (BoolValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 1
-static inline void msg_powerswitch_switchstate_set_on(bool val)
+// Offset: ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) / 8, ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) % 8, length bits 1
+static inline void msg_gpio_digitalpin_set_on(uint8_t index, bool val)
 {
-  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 1, val ? 1 : 0, bufx);
+  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) / 8, ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) % 8, 1, val ? 1 : 0, bufx);
 }
 
 // Get On (BoolValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 1
-static inline bool msg_powerswitch_switchstate_get_on(void)
+// Offset: ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) / 8, ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) % 8, length bits 1
+static inline bool msg_gpio_digitalpin_get_on(uint8_t index)
 {
-  return array_read_UIntValue8(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 1, 0, 1, bufx) == 1;
-}
-
-// TimeoutSec (UIntValue)
-// Description: The time after which the switch is automatically toggled again. Use 0 to disable this.
-
-// Set TimeoutSec (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 1) / 8, ((uint16_t)__HEADEROFFSETBITS + 1) % 8, length bits 16, min val 0, max val 65535
-static inline void msg_powerswitch_switchstate_set_timeoutsec(uint32_t val)
-{
-  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 1) / 8, ((uint16_t)__HEADEROFFSETBITS + 1) % 8, 16, val, bufx);
-}
-
-// Get TimeoutSec (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 1) / 8, ((uint16_t)__HEADEROFFSETBITS + 1) % 8, length bits 16, min val 0, max val 65535
-static inline uint32_t msg_powerswitch_switchstate_get_timeoutsec(void)
-{
-  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 1) / 8, ((uint16_t)__HEADEROFFSETBITS + 1) % 8, 16, 0, 65535, bufx);
+  return array_read_UIntValue8(((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) / 8, ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) % 8, 1, 0, 1, bufx) == 1;
 }
 
 
-// Message "powerswitch_switchstateext"
-// ------------------------------------
-// MessageGroupID: 20
+// Message "gpio_analogpin"
+// ------------------------
+// MessageGroupID: 1
 // MessageID: 2
 // Possible MessageTypes: Get, Set, SetGet, Status, Ack, AckStatus
 // Validity: test
-// Length w/o Header + HeaderExtension: 144 bits
-// Data fields: On, TimeoutSec
-// Description: This is the state of up to 8 relais and its timeout values.
+// Length w/o Header + HeaderExtension: 104 bits
+// Data fields: On, Voltage
+// Description: This is the voltage of up to 8 ADC channels. The ATMega328 in the PDIP package has only 6 ADCs and one ADC may be blocked by the battery voltage measurement, so there may be less than 8 ADC values reported depending on the device and configuration.
 
 // Function to initialize header for the MessageType "Get".
-static inline void pkg_header_init_powerswitch_switchstateext_get(void)
+static inline void pkg_header_init_gpio_analogpin_get(void)
 {
   memset(&bufx[0], 0, sizeof(bufx));
   pkg_header_set_messagetype(0);
-  pkg_headerext_get_set_messagegroupid(20);
+  pkg_headerext_get_set_messagegroupid(1);
   pkg_headerext_get_set_messageid(2);
   __HEADEROFFSETBITS = 95;
   __PACKETSIZEBYTES = 16;
@@ -183,11 +167,11 @@ static inline void pkg_header_init_powerswitch_switchstateext_get(void)
 }
 
 // Function to initialize header for the MessageType "Set".
-static inline void pkg_header_init_powerswitch_switchstateext_set(void)
+static inline void pkg_header_init_gpio_analogpin_set(void)
 {
   memset(&bufx[0], 0, sizeof(bufx));
   pkg_header_set_messagetype(1);
-  pkg_headerext_set_set_messagegroupid(20);
+  pkg_headerext_set_set_messagegroupid(1);
   pkg_headerext_set_set_messageid(2);
   __HEADEROFFSETBITS = 95;
   __PACKETSIZEBYTES = 32;
@@ -195,11 +179,11 @@ static inline void pkg_header_init_powerswitch_switchstateext_set(void)
 }
 
 // Function to initialize header for the MessageType "SetGet".
-static inline void pkg_header_init_powerswitch_switchstateext_setget(void)
+static inline void pkg_header_init_gpio_analogpin_setget(void)
 {
   memset(&bufx[0], 0, sizeof(bufx));
   pkg_header_set_messagetype(2);
-  pkg_headerext_setget_set_messagegroupid(20);
+  pkg_headerext_setget_set_messagegroupid(1);
   pkg_headerext_setget_set_messageid(2);
   __HEADEROFFSETBITS = 95;
   __PACKETSIZEBYTES = 32;
@@ -207,11 +191,11 @@ static inline void pkg_header_init_powerswitch_switchstateext_setget(void)
 }
 
 // Function to initialize header for the MessageType "Status".
-static inline void pkg_header_init_powerswitch_switchstateext_status(void)
+static inline void pkg_header_init_gpio_analogpin_status(void)
 {
   memset(&bufx[0], 0, sizeof(bufx));
   pkg_header_set_messagetype(8);
-  pkg_headerext_status_set_messagegroupid(20);
+  pkg_headerext_status_set_messagegroupid(1);
   pkg_headerext_status_set_messageid(2);
   __HEADEROFFSETBITS = 83;
   __PACKETSIZEBYTES = 32;
@@ -219,7 +203,7 @@ static inline void pkg_header_init_powerswitch_switchstateext_status(void)
 }
 
 // Function to initialize header for the MessageType "Ack".
-static inline void pkg_header_init_powerswitch_switchstateext_ack(void)
+static inline void pkg_header_init_gpio_analogpin_ack(void)
 {
   memset(&bufx[0], 0, sizeof(bufx));
   pkg_header_set_messagetype(9);
@@ -229,48 +213,49 @@ static inline void pkg_header_init_powerswitch_switchstateext_ack(void)
 }
 
 // Function to initialize header for the MessageType "AckStatus".
-static inline void pkg_header_init_powerswitch_switchstateext_ackstatus(void)
+static inline void pkg_header_init_gpio_analogpin_ackstatus(void)
 {
   memset(&bufx[0], 0, sizeof(bufx));
   pkg_header_set_messagetype(10);
-  pkg_headerext_ackstatus_set_messagegroupid(20);
+  pkg_headerext_ackstatus_set_messagegroupid(1);
   pkg_headerext_ackstatus_set_messageid(2);
   __HEADEROFFSETBITS = 120;
-  __PACKETSIZEBYTES = 48;
+  __PACKETSIZEBYTES = 32;
   __MESSAGETYPE = 10;
 }
 
 // On (BoolValue[8])
+// Description: Tells if the pin is on (voltage over trigger threshold) or not.
 
 // Set On (BoolValue)
 // Offset: ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) / 8, ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) % 8, length bits 1
-static inline void msg_powerswitch_switchstateext_set_on(uint8_t index, bool val)
+static inline void msg_gpio_analogpin_set_on(uint8_t index, bool val)
 {
   array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) / 8, ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) % 8, 1, val ? 1 : 0, bufx);
 }
 
 // Get On (BoolValue)
 // Offset: ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) / 8, ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) % 8, length bits 1
-static inline bool msg_powerswitch_switchstateext_get_on(uint8_t index)
+static inline bool msg_gpio_analogpin_get_on(uint8_t index)
 {
   return array_read_UIntValue8(((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) / 8, ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) % 8, 1, 0, 1, bufx) == 1;
 }
 
-// TimeoutSec (UIntValue[8])
-// Description: The time after which the switch is automatically toggled again. Use 0 to disable this.
+// Voltage (UIntValue[8])
+// Description: This is the voltage level in mV.
 
-// Set TimeoutSec (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 16) / 8, ((uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 16) % 8, length bits 16, min val 0, max val 65535
-static inline void msg_powerswitch_switchstateext_set_timeoutsec(uint8_t index, uint32_t val)
+// Set Voltage (UIntValue)
+// Offset: ((uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 11) / 8, ((uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 11) % 8, length bits 11, min val 0, max val 1100
+static inline void msg_gpio_analogpin_set_voltage(uint8_t index, uint32_t val)
 {
-  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 16) / 8, ((uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 16) % 8, 16, val, bufx);
+  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 11) / 8, ((uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 11) % 8, 11, val, bufx);
 }
 
-// Get TimeoutSec (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 16) / 8, ((uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 16) % 8, length bits 16, min val 0, max val 65535
-static inline uint32_t msg_powerswitch_switchstateext_get_timeoutsec(uint8_t index)
+// Get Voltage (UIntValue)
+// Offset: ((uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 11) / 8, ((uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 11) % 8, length bits 11, min val 0, max val 1100
+static inline uint32_t msg_gpio_analogpin_get_voltage(uint8_t index)
 {
-  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 16) / 8, ((uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 16) % 8, 16, 0, 65535, bufx);
+  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 11) / 8, ((uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 11) % 8, 11, 0, 1100, bufx);
 }
 
-#endif /* _MSGGRP_POWERSWITCH_H */
+#endif /* _MSGGRP_GPIO_H */

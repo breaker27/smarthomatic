@@ -47,7 +47,8 @@ public class FlashDialog extends JDialog
 {
 	private static final long serialVersionUID = -5437332123602239488L;
 	
-	private static String DEFAULT_CMD = "avrdude.exe -p #DEVICE# -U eeprom:w:#FILENAME#:r";
+	private static String DEFAULT_CMD_WINDOWS = "avrdude.exe -p #DEVICE# -U eeprom:w:#FILENAME#:r";
+	private static String DEFAULT_CMD_LINUX = "xterm -hold -e avrdude -p #DEVICE# -U eeprom:w:#FILENAME#:r";
 	private static String CFG_FILENAME = "shc_e2p_editor.cfg";
 	
 	private JTextField textField;
@@ -99,10 +100,10 @@ public class FlashDialog extends JDialog
 		panel.add(new JLabel("#DEVICE# will be replaced by m328p or m168 according to e2p size"));
 		panel.add(new JLabel("#FILENAME# will be replaced by the e2p filename"));
 		panel.add(Box.createRigidArea(new Dimension(0, 10)));
-		panel.add(new JLabel("Default is: " + DEFAULT_CMD));
+		panel.add(new JLabel("Default is: " + (Util.runsOnWindows() ? DEFAULT_CMD_WINDOWS : DEFAULT_CMD_LINUX)));
 		panel.add(Box.createRigidArea(new Dimension(0, 10)));
 
-		textField = new JTextField(DEFAULT_CMD);
+		textField = new JTextField(Util.runsOnWindows() ? DEFAULT_CMD_WINDOWS : DEFAULT_CMD_LINUX);
 		textField.setAlignmentX(Component.LEFT_ALIGNMENT);
 		panel.add(textField);
 
@@ -174,11 +175,7 @@ public class FlashDialog extends JDialog
 		
 		try
 		{
-			// TODO: Support linux by calling bash in a way that the user can see the output.
-			// The user could choose to run bash by prefixing the command line to enter with
-			// e.g. "LINUX", so we can live with the simple prompt consisting only
-			// of one line of text.
-			Util.execute(cmdLineS, false);
+			Util.execute(cmdLineS);
 		}
 		catch (IOException e)
 		{
@@ -189,7 +186,7 @@ public class FlashDialog extends JDialog
 	
 	private void onButtonRestoreDefaults()
 	{
-		textField.setText(DEFAULT_CMD);
+		textField.setText(Util.runsOnWindows() ? DEFAULT_CMD_WINDOWS : DEFAULT_CMD_LINUX);
 	}
 
 	private void onButtonCancel()

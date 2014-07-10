@@ -19,6 +19,7 @@
 #ifndef E2P_ACCESS_H
 #define E2P_ACCESS_H
 
+#include <avr/eeprom.h>
 #include <stdint.h>
 
 #ifdef UNITTEST
