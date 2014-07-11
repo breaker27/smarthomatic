@@ -99,6 +99,13 @@ void setPWMDutyCyclePercent(uint8_t percent)
 	OCR1A = percent;
 }
 
+void setRGB(uint8_t r, uint8_t g, uint8_t b)
+{
+	OCR0A = 255 - r;
+	OCR0B = 255 - g;
+	OCR1A = 255 - b;
+}
+
 void send_version_status(void)
 {
 	inc_packetcounter();
@@ -298,6 +305,16 @@ int main(void)
 	PWM_init();
 	
 	uint8_t p = 0;
+	
+	while(1)
+	{
+		setRGB(255, 0, 0);
+		_delay_ms(5000);
+		setRGB(0, 255, 0);
+		_delay_ms(5000);
+		setRGB(0, 0, 255);
+		_delay_ms(5000);
+	}
 	
 	while(1)
 	{
