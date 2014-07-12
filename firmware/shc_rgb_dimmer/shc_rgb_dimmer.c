@@ -55,7 +55,6 @@ uint16_t send_status_timeout = 5;
 uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly after startup
 
 uint8_t brightness_factor;
-ColorMixModeEnum color_mix_mode;
 
 #define RED_PIN 6
 #define GRN_PIN 5
@@ -274,7 +273,6 @@ int main(void)
 	device_id = e2p_generic_get_deviceid();
 
 	brightness_factor = e2p_rgbdimmer_get_brightnessfactor();
-	color_mix_mode = e2p_rgbdimmer_get_colormixmode();
 
 	osccal_init();
 
@@ -287,7 +285,6 @@ int main(void)
 	UART_PUTF ("DeviceID: %u\r\n", device_id);
 	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);
 	UART_PUTF ("Last received base station PacketCounter: %u\r\n\r\n", station_packetcounter);
-	UART_PUTF ("Color mix mode: %u\r\n", color_mix_mode);
 	UART_PUTF ("Brightness factor: %u%%\r\n", brightness_factor);
 
 	// init AES key
@@ -301,13 +298,13 @@ int main(void)
 	
 	while(1)
 	{
-		setRGB(50, 0, 0);
+		setRGB(255, 0, 0);
 		_delay_ms(5000);
-		setRGB(0, 50, 0);
+		setRGB(0, 255, 0);
 		_delay_ms(5000);
-		setRGB(0, 0, 50);
+		setRGB(0, 0, 255);
 		_delay_ms(5000);
-		setRGB(50, 50, 50);
+		setRGB(255, 255, 255);
 		_delay_ms(5000);
 	}
 
