@@ -29,7 +29,7 @@
 // E2P Block "RGBDimmer"
 // =====================
 // Start offset (bit): 512
-// Overall block length: 7688 bits
+// Overall block length: 7680 bits
 
 // BaseStationPacketCounter (UIntValue)
 // Description: This is the last remembered packet counter of a command from the base station. Packets with the same or lower number are ignored.
@@ -138,7 +138,7 @@ static inline void e2p_rgbdimmer_get_brightnesstranslationtableb(void *dst)
   eeprom_read_block(dst, (uint8_t *)(271), 101);
 }
 
-// Reserved area with 5224 bits
+// Reserved area with 5216 bits
 
 
 #endif /* _E2P_RGBDIMMER_H */
