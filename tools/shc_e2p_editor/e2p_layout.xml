@@ -645,6 +645,7 @@
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>100</MaxVal>
+			<DefaultVal>100</DefaultVal>
 		</UIntValue>
 		<ByteArray>
 			<ID>BrightnessTranslationTableR</ID>
