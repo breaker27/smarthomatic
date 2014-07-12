@@ -627,7 +627,7 @@
 		</UIntValue>
 		<EnumValue>
 			<ID>ColorMixMode</ID>
-			<Description>This value decides how the colors are mixed together. Balanced reduces the power of the all LEDs when you select a color where more than one LED is on to reduce the maximum power consumption and needed cooling. Additive does not do that. E.g. 255,255,255 white is than brighter than 255 red.</Description>
+			<Description>This value decides how the colors are mixed together. 'Balanced' reduces the power of the all LEDs when you select a color where more than one LED is on. It reduces the maximum power consumption and needed cooling. Additive does not do that. E.g. 255,255,255 white is than brighter than 255 red.</Description>
 			<Bits>8</Bits>
 			<Element>
 				<Value>0</Value>
@@ -639,6 +639,13 @@
 			</Element>
 			<DefaultVal>0</DefaultVal>
 		</EnumValue>
+		<UIntValue>
+			<ID>BrightnessFactor</ID>
+			<Description>This value reduces the overall brightness. This is to easily adjust it to your needs without changing the LED series resistors.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>100</MaxVal>
+		</UIntValue>
 		<ByteArray>
 			<ID>BrightnessTranslationTableR</ID>
 			<Description>These are the target values (one byte each) for the input brightness of 0, 1, ... 100% to adapt the specific brightness curve of your *red* LED. Set first byte to FF to not use it.</Description>
@@ -658,7 +665,7 @@
 			<DefaultVal>001115191A1B1C1D1E1F202122232425262728292A2B2C2D2E2E2F3031323334363738393A3B3C3D3E40414243454647494A4B4C4E505153545658595B5D5F61636567696B6D6F717375787A7D808386898B8F93969A9FA3A7ABAFB4BCC2C9CFD4DBE6F1FF</DefaultVal>
 		</ByteArray>
 		<Reserved>
-			<Bits>5224</Bits>
+			<Bits>5216</Bits>
 		</Reserved>
 	</Block>
 	<Block>
