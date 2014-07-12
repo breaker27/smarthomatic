@@ -54,7 +54,6 @@ uint16_t switch_timeout[SWITCH_COUNT];
 uint16_t send_status_timeout = 5;
 uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly after startup
 
-
 #define RED_PIN 6
 #define GRN_PIN 5
 #define BLU_PIN 1
@@ -73,37 +72,23 @@ void PWM_init(void)
 	GRN_DDR |= (1 << GRN_PIN);
 	BLU_DDR |= (1 << BLU_PIN);
 
+	// OC0A (Red LED): Fast PWM, 8 Bit, TOP = 0xFF = 255, non inverting output
+	// OC0B (Green LED): Fast PWM, 8 Bit, TOP = 0xFF = 255, non inverting output
+	TCCR0A = (1 << WGM00) | (1 << COM0A1) | (1 << COM0B1);
 
-	// OC0A (Red LED): Fast PWM, 8 Bit, TOP = 0xFF = 255, Inverting output
-	// OC0B (Green LED): Fast PWM, 8 Bit, TOP = 0xFF = 255, Inverting output
-	TCCR0A = (1 << WGM00) | (1 << COM0A1) | (1 << COM0A0) | (1 << COM0B1) | (1 << COM0B0);
-
-	// OC1A (Blue LED): Fast PWM, 8 Bit, TOP = 0xFF = 255, Inverting output
-	TCCR1A = (1 << WGM10) | (1 << COM1A1) | (1 << COM1A0);
+	// OC1A (Blue LED): Fast PWM, 8 Bit, TOP = 0xFF = 255, non inverting output
+	TCCR1A = (1 << WGM10) | (1 << COM1A1);
 
 	// Clock source for both timers = I/O clock, no prescaler
 	TCCR0B = (1 << CS00);
 	TCCR1B = (1 << CS10);
-
-//	TCCR0B = (1 << CS02) | (1 << CS00);
-//	TCCR1B = (1 << CS12) | (1 << CS10);
-}
-
-void setPWMDutyCyclePercent(uint8_t percent)
-{
-	//uint16_t pwm = (uint16_t)((uint32_t)255 * percent / 100);
-	//UART_PUTF ("PWM=%u\r\n", pwm);
-
-	OCR0A = percent;
-	OCR0B = percent;
-	OCR1A = percent;
 }
 
 void setRGB(uint8_t r, uint8_t g, uint8_t b)
 {
-	OCR0A = 255 - r;
-	OCR0B = 255 - g;
-	OCR1A = 255 - b;
+	OCR0A = r;
+	OCR0B = g;
+	OCR1A = b;
 }
 
 void send_version_status(void)
@@ -304,23 +289,18 @@ int main(void)
 
 	PWM_init();
 	
-	uint8_t p = 0;
+	_delay_ms(5000);
 	
 	while(1)
 	{
-		setRGB(255, 0, 0);
+		setRGB(5, 0, 0);
 		_delay_ms(5000);
-		setRGB(0, 255, 0);
+		setRGB(0, 5, 0);
 		_delay_ms(5000);
-		setRGB(0, 0, 255);
+		setRGB(0, 0, 5);
 		_delay_ms(5000);
-	}
-	
-	while(1)
-	{
-		p = (p + 1) % 50;
-		setPWMDutyCyclePercent(255 - p);
-		_delay_ms(10);
+		setRGB(22, 22, 22);
+		_delay_ms(5000);
 	}
 
 	rfm12_init();
