@@ -25,7 +25,7 @@
 #include "uart.h"
 
 #include "../src_common/msggrp_generic.h"
-#include "../src_common/msggrp_powerswitch.h"
+#include "../src_common/msggrp_dimmer.h"
 
 #include "../src_common/e2p_hardware.h"
 #include "../src_common/e2p_generic.h"
@@ -55,6 +55,7 @@ uint16_t send_status_timeout = 5;
 uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly after startup
 
 uint8_t brightness_factor;
+uint8_t curr_color;
 
 #define RED_PIN 6
 #define GRN_PIN 5
@@ -93,6 +94,30 @@ void setRGB(uint8_t r, uint8_t g, uint8_t b)
 	OCR1A = (uint16_t)b * brightness_factor / 100;
 }
 
+
+// The color palette is 6 bit with 2 bits per color (same as EGA).
+// Bit 1+0 = blue
+// Bit 3+2 = green
+// Bit 5+4 = red
+// The brightness per color can be:
+// 0 -> 0
+// 1 -> 5
+// 2 -> 10 = 0xA
+// 3 -> 15 = 0xF
+void setColor(uint8_t color)
+{
+	uint8_t r = ((color & 0b110000) >> 4) * 5;
+	uint8_t g = ((color & 0b001100) >> 2) * 5;
+	uint8_t b = ((color & 0b000011) >> 0) * 5;
+	setRGB(r, g, b);
+	curr_color = color;
+}
+
+uint8_t getColor(void)
+{
+	return curr_color; // TODO
+}
+
 void send_version_status(void)
 {
 	inc_packetcounter();
@@ -117,7 +142,7 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 {
 	UART_PUTF("MessageGroupID:%u;", messagegroupid);
 	
-	if (messagegroupid != MESSAGEGROUP_POWERSWITCH)
+	if (messagegroupid != MESSAGEGROUP_DIMMER)
 	{
 		UART_PUTS("\r\nERR: Unsupported MessageGroupID.\r\n");
 		return;
@@ -125,28 +150,20 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	
 	UART_PUTF("MessageID:%u;", messageid);
 
-	if (messageid != MESSAGEID_POWERSWITCH_SWITCHSTATE)
+	if (messageid != MESSAGEID_DIMMER_COLOR)
 	{
 		UART_PUTS("\r\nERR: Unsupported MessageID.\r\n");
 		return;
 	}
 
-/*
-	// "Set" or "SetGet" -> modify switch state
+
+	// "Set" or "SetGet" -> modify color
 	if ((messagetype == MESSAGETYPE_SET) || (messagetype == MESSAGETYPE_SETGET))
 	{
-		uint8_t i;
-		bool req_on = msg_powerswitch_switchstate_get_on();
-		uint16_t req_timeout = msg_powerswitch_switchstate_get_timeoutsec();
+		uint8_t color = msg_dimmer_color_get_color();
 
-		UART_PUTF("On:%u;", req_on);
-		UART_PUTF("TimeoutSec:%u;\r\n", req_timeout);
-
-		// react on changed state (version for more than one switch...)
-		for (i = 0; i < SWITCH_COUNT; i++)
-		{
-			switchRelais(i, req_on, req_timeout);
-		}
+		UART_PUTF("Color:%u;\r\n", color);
+		setColor(color);
 	}
 
 	// remember some values before the packet buffer is destroyed
@@ -158,18 +175,17 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	// "Set" -> send "Ack"
 	if (messagetype == MESSAGETYPE_SET)
 	{
-		pkg_header_init_powerswitch_switchstate_ack();
+		pkg_header_init_dimmer_color_ack();
 
 		UART_PUTS("Sending Ack\r\n");
 	}
 	// "Get" or "SetGet" -> send "AckStatus"
 	else
 	{
-		pkg_header_init_powerswitch_switchstate_ackstatus();
+		pkg_header_init_dimmer_color_ackstatus();
 		
 		// set message data
-		msg_powerswitch_switchstate_set_on(switch_state[0] & 1); // TODO: Support > 1 switch
-		msg_powerswitch_switchstate_set_timeoutsec(switch_timeout[0]); // TODO: Support > 1 switch
+		msg_dimmer_color_set_color(getColor());
 
 		UART_PUTS("Sending AckStatus\r\n");
 	}
@@ -186,7 +202,6 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	
 	rfm12_send_bufx();
 	send_status_timeout = 5;
-	*/
 }
 
 void process_packet(uint8_t len)
@@ -260,7 +275,7 @@ int main(void)
 
 	util_init();
 	
-	//check_eeprom_compatibility(DEVICETYPE_POWERSWITCH);
+	check_eeprom_compatibility(DEVICETYPE_RGBDIMMER);
 	
 	// read packetcounter, increase by cycle and write back
 	packetcounter = e2p_generic_get_packetcounter() + PACKET_COUNTER_WRITE_CYCLE;
