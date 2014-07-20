@@ -520,5 +520,24 @@
 				<MaxVal>100</MaxVal>
 			</UIntValue>
 		</Message>
+		<Message>
+			<Name>Color</Name>
+			<Description>This is to set a fixed color.</Description>
+			<MessageID>10</MessageID>
+			<MessageType>0</MessageType>
+			<MessageType>1</MessageType>
+			<MessageType>2</MessageType>
+			<MessageType>8</MessageType>
+			<MessageType>9</MessageType>
+			<MessageType>10</MessageType>
+			<Validity>test</Validity>
+			<UIntValue>
+				<ID>Color</ID>
+				<Description>The color is according to the 6 bit color palette used in SHC.</Description>
+				<Bits>6</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>63</MaxVal>
+			</UIntValue>
+		</Message>
 	</MessageGroup>
 </Packet>
