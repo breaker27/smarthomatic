@@ -166,7 +166,7 @@ static inline uint32_t msg_powerswitch_switchstate_get_timeoutsec(void)
 // MessageID: 2
 // Possible MessageTypes: Get, Set, SetGet, Status, Ack, AckStatus
 // Validity: test
-// Length w/o Header + HeaderExtension: 144 bits
+// Length w/o Header + HeaderExtension: 136 bits
 // Data fields: On, TimeoutSec
 // Description: This is the state of up to 8 relais and its timeout values.
 
@@ -236,7 +236,7 @@ static inline void pkg_header_init_powerswitch_switchstateext_ackstatus(void)
   pkg_headerext_ackstatus_set_messagegroupid(20);
   pkg_headerext_ackstatus_set_messageid(2);
   __HEADEROFFSETBITS = 120;
-  __PACKETSIZEBYTES = 48;
+  __PACKETSIZEBYTES = 32;
   __MESSAGETYPE = 10;
 }
 

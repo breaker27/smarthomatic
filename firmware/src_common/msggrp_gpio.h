@@ -150,7 +150,7 @@ static inline bool msg_gpio_digitalpin_get_on(uint8_t index)
 // MessageID: 2
 // Possible MessageTypes: Get, Set, SetGet, Status, Ack, AckStatus
 // Validity: test
-// Length w/o Header + HeaderExtension: 104 bits
+// Length w/o Header + HeaderExtension: 96 bits
 // Data fields: On, Voltage
 // Description: This is the voltage of up to 8 ADC channels. The ATMega328 in the PDIP package has only 6 ADCs and one ADC may be blocked by the battery voltage measurement, so there may be less than 8 ADC values reported depending on the device and configuration.
 
