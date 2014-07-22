@@ -59,6 +59,11 @@ uint8_t curr_color;
 #define GRN_DDR DDRD
 #define BLU_DDR DDRB
 
+uint8_t anim_col[10];
+uint8_t anim_time[10];
+uint8_t anim_repeat;
+bool anim_autoreverse;
+
 // Read for more information about PWM:
 // http://www.protostack.com/blog/2011/06/atmega168a-pulse-width-modulation-pwm/
 // http://extremeelectronics.co.in/avr-tutorials/pwm-signal-generation-by-using-avr-timers-part-ii/
@@ -112,6 +117,19 @@ uint8_t getColor(void)
 	return curr_color; // TODO
 }
 
+void dump_animation_values(void)
+{
+	uint8_t i;
+	UART_PUTS("Animation color/time: ");
+	
+	for (i = 0; i < 10; i++)
+	{
+		printf("%d/%d,", anim_col[i], anim_time[i]);
+	}
+
+	printf(" repeat: %d, autoreverse: %s\r\n", anim_repeat, anim_autoreverse ? "ON" : "OFF");
+}
+
 void send_version_status(void)
 {
 	inc_packetcounter();
@@ -144,20 +162,37 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	
 	UART_PUTF("MessageID:%u;", messageid);
 
-	if (messageid != MESSAGEID_DIMMER_COLOR)
+	if ((messageid != MESSAGEID_DIMMER_COLOR) && (messageid != MESSAGEID_DIMMER_COLORANIMATION))
 	{
 		UART_PUTS("\r\nERR: Unsupported MessageID.\r\n");
 		return;
 	}
 
-
 	// "Set" or "SetGet" -> modify color
 	if ((messagetype == MESSAGETYPE_SET) || (messagetype == MESSAGETYPE_SETGET))
 	{
-		uint8_t color = msg_dimmer_color_get_color();
-
-		UART_PUTF("Color:%u;\r\n", color);
-		setColor(color);
+		if (messageid == MESSAGEID_DIMMER_COLORANIMATION)
+		{
+			uint8_t i;
+			
+			for (i = 0; i < 10; i++)
+			{
+				anim_col[i] = msg_dimmer_coloranimation_get_color(i);
+				anim_time[i] = msg_dimmer_coloranimation_get_time(i);
+			}
+			
+			anim_repeat = msg_dimmer_coloranimation_get_repeat();
+			anim_autoreverse = msg_dimmer_coloranimation_get_autoreverse();
+		}
+		else
+		{
+			anim_col[0] = msg_dimmer_color_get_color();
+			anim_time[0] = 0;
+			anim_repeat = 1;
+			anim_autoreverse = false;
+		}
+		
+		dump_animation_values();
 	}
 
 	// remember some values before the packet buffer is destroyed
@@ -169,18 +204,42 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	// "Set" -> send "Ack"
 	if (messagetype == MESSAGETYPE_SET)
 	{
-		pkg_header_init_dimmer_color_ack();
+		if (messageid == MESSAGEID_DIMMER_COLORANIMATION)
+		{
+			pkg_header_init_dimmer_coloranimation_ack();
+		}
+		else
+		{
+			pkg_header_init_dimmer_color_ack();
+		}
 
 		UART_PUTS("Sending Ack\r\n");
 	}
 	// "Get" or "SetGet" -> send "AckStatus"
 	else
 	{
-		pkg_header_init_dimmer_color_ackstatus();
+		if (messageid == MESSAGEID_DIMMER_COLORANIMATION)
+		{
+			uint8_t i;
+
+			pkg_header_init_dimmer_coloranimation_ackstatus();
+			
+			for (i = 0; i < 10; i++)
+			{
+				msg_dimmer_coloranimation_set_color(i, anim_col[i]);
+				msg_dimmer_coloranimation_set_time(i, anim_time[i]);
+			}
+			
+			msg_dimmer_coloranimation_set_repeat(anim_repeat);
+			msg_dimmer_coloranimation_set_autoreverse(anim_autoreverse);
+		}
+		else
+		{
+			pkg_header_init_dimmer_color_ackstatus();
+			msg_dimmer_color_set_color(getColor());
+		}
 		
 		// set message data
-		msg_dimmer_color_set_color(getColor());
-
 		UART_PUTS("Sending AckStatus\r\n");
 	}
 
@@ -302,20 +361,6 @@ int main(void)
 
 	PWM_init();
 	
-	_delay_ms(5000);
-	
-	while(1)
-	{
-		setRGB(255, 0, 0);
-		_delay_ms(5000);
-		setRGB(0, 255, 0);
-		_delay_ms(5000);
-		setRGB(0, 0, 255);
-		_delay_ms(5000);
-		setRGB(255, 255, 255);
-		_delay_ms(5000);
-	}
-
 	rfm12_init();
 
 	sei();
