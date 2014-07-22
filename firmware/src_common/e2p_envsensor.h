@@ -42,17 +42,17 @@ typedef enum {
 } TemperatureSensorTypeEnum;
 
 // Set TemperatureSensorType (EnumValue)
-// Byte offset: 64, bit offset: 0, length bits 8
+// Offset: 512, length bits 8
 static inline void e2p_envsensor_set_temperaturesensortype(TemperatureSensorTypeEnum val)
 {
-  eeprom_write_UIntValue(64, 0, 8, val);
+  eeprom_write_UIntValue(512, 8, val);
 }
 
 // Get TemperatureSensorType (EnumValue)
-// Byte offset: 64, bit offset: 0, length bits 8
+// Offset: 512, length bits 8
 static inline TemperatureSensorTypeEnum e2p_envsensor_get_temperaturesensortype(void)
 {
-  return eeprom_read_UIntValue8(64, 0, 8, 0, 255);
+  return eeprom_read_UIntValue8(512, 8, 0, 255);
 }
 
 // HumiditySensorType (EnumValue)
@@ -64,17 +64,17 @@ typedef enum {
 } HumiditySensorTypeEnum;
 
 // Set HumiditySensorType (EnumValue)
-// Byte offset: 65, bit offset: 0, length bits 8
+// Offset: 520, length bits 8
 static inline void e2p_envsensor_set_humiditysensortype(HumiditySensorTypeEnum val)
 {
-  eeprom_write_UIntValue(65, 0, 8, val);
+  eeprom_write_UIntValue(520, 8, val);
 }
 
 // Get HumiditySensorType (EnumValue)
-// Byte offset: 65, bit offset: 0, length bits 8
+// Offset: 520, length bits 8
 static inline HumiditySensorTypeEnum e2p_envsensor_get_humiditysensortype(void)
 {
-  return eeprom_read_UIntValue8(65, 0, 8, 0, 255);
+  return eeprom_read_UIntValue8(520, 8, 0, 255);
 }
 
 // BarometricSensorType (EnumValue)
@@ -86,17 +86,17 @@ typedef enum {
 } BarometricSensorTypeEnum;
 
 // Set BarometricSensorType (EnumValue)
-// Byte offset: 66, bit offset: 0, length bits 8
+// Offset: 528, length bits 8
 static inline void e2p_envsensor_set_barometricsensortype(BarometricSensorTypeEnum val)
 {
-  eeprom_write_UIntValue(66, 0, 8, val);
+  eeprom_write_UIntValue(528, 8, val);
 }
 
 // Get BarometricSensorType (EnumValue)
-// Byte offset: 66, bit offset: 0, length bits 8
+// Offset: 528, length bits 8
 static inline BarometricSensorTypeEnum e2p_envsensor_get_barometricsensortype(void)
 {
-  return eeprom_read_UIntValue8(66, 0, 8, 0, 255);
+  return eeprom_read_UIntValue8(528, 8, 0, 255);
 }
 
 // BrightnessSensorType (EnumValue)
@@ -108,17 +108,17 @@ typedef enum {
 } BrightnessSensorTypeEnum;
 
 // Set BrightnessSensorType (EnumValue)
-// Byte offset: 67, bit offset: 0, length bits 8
+// Offset: 536, length bits 8
 static inline void e2p_envsensor_set_brightnesssensortype(BrightnessSensorTypeEnum val)
 {
-  eeprom_write_UIntValue(67, 0, 8, val);
+  eeprom_write_UIntValue(536, 8, val);
 }
 
 // Get BrightnessSensorType (EnumValue)
-// Byte offset: 67, bit offset: 0, length bits 8
+// Offset: 536, length bits 8
 static inline BrightnessSensorTypeEnum e2p_envsensor_get_brightnesssensortype(void)
 {
-  return eeprom_read_UIntValue8(67, 0, 8, 0, 255);
+  return eeprom_read_UIntValue8(536, 8, 0, 255);
 }
 
 // DistanceSensorType (EnumValue)
@@ -130,20 +130,21 @@ typedef enum {
 } DistanceSensorTypeEnum;
 
 // Set DistanceSensorType (EnumValue)
-// Byte offset: 68, bit offset: 0, length bits 8
+// Offset: 544, length bits 8
 static inline void e2p_envsensor_set_distancesensortype(DistanceSensorTypeEnum val)
 {
-  eeprom_write_UIntValue(68, 0, 8, val);
+  eeprom_write_UIntValue(544, 8, val);
 }
 
 // Get DistanceSensorType (EnumValue)
-// Byte offset: 68, bit offset: 0, length bits 8
+// Offset: 544, length bits 8
 static inline DistanceSensorTypeEnum e2p_envsensor_get_distancesensortype(void)
 {
-  return eeprom_read_UIntValue8(68, 0, 8, 0, 255);
+  return eeprom_read_UIntValue8(544, 8, 0, 255);
 }
 
 // Reserved area with 472 bits
+// Offset: 552
 
 // WakeupInterval (EnumValue)
 // Description: Decide after which time the device should be woken up by the RFM12B transceiver to measure or send values.
@@ -173,258 +174,259 @@ typedef enum {
 } WakeupIntervalEnum;
 
 // Set WakeupInterval (EnumValue)
-// Byte offset: 128, bit offset: 0, length bits 16
+// Offset: 1024, length bits 16
 static inline void e2p_envsensor_set_wakeupinterval(WakeupIntervalEnum val)
 {
-  eeprom_write_UIntValue(128, 0, 16, val);
+  eeprom_write_UIntValue(1024, 16, val);
 }
 
 // Get WakeupInterval (EnumValue)
-// Byte offset: 128, bit offset: 0, length bits 16
+// Offset: 1024, length bits 16
 static inline WakeupIntervalEnum e2p_envsensor_get_wakeupinterval(void)
 {
-  return eeprom_read_UIntValue16(128, 0, 16, 0, 65535);
+  return eeprom_read_UIntValue16(1024, 16, 0, 65535);
 }
 
 // TemperatureMeasuringInterval (UIntValue)
 // Description: The number of times the device wakes up before this value is measured.
 
 // Set TemperatureMeasuringInterval (UIntValue)
-// Byte offset: 130, bit offset: 0, length bits 8, min val 1, max val 255
+// Offset: 1040, length bits 8, min val 1, max val 255
 static inline void e2p_envsensor_set_temperaturemeasuringinterval(uint8_t val)
 {
-  eeprom_write_UIntValue(130, 0, 8, val);
+  eeprom_write_UIntValue(1040, 8, val);
 }
 
 // Get TemperatureMeasuringInterval (UIntValue)
-// Byte offset: 130, bit offset: 0, length bits 8, min val 1, max val 255
+// Offset: 1040, length bits 8, min val 1, max val 255
 static inline uint8_t e2p_envsensor_get_temperaturemeasuringinterval(void)
 {
-  return eeprom_read_UIntValue8(130, 0, 8, 1, 255);
+  return eeprom_read_UIntValue8(1040, 8, 1, 255);
 }
 
 // TemperatureAveragingInterval (UIntValue)
 // Description: The number of values whose average is calculated before sending.
 
 // Set TemperatureAveragingInterval (UIntValue)
-// Byte offset: 131, bit offset: 0, length bits 8, min val 1, max val 16
+// Offset: 1048, length bits 8, min val 1, max val 16
 static inline void e2p_envsensor_set_temperatureaveraginginterval(uint8_t val)
 {
-  eeprom_write_UIntValue(131, 0, 8, val);
+  eeprom_write_UIntValue(1048, 8, val);
 }
 
 // Get TemperatureAveragingInterval (UIntValue)
-// Byte offset: 131, bit offset: 0, length bits 8, min val 1, max val 16
+// Offset: 1048, length bits 8, min val 1, max val 16
 static inline uint8_t e2p_envsensor_get_temperatureaveraginginterval(void)
 {
-  return eeprom_read_UIntValue8(131, 0, 8, 1, 16);
+  return eeprom_read_UIntValue8(1048, 8, 1, 16);
 }
 
 // HumidityMeasuringInterval (UIntValue)
 // Description: The number of times the device wakes up before this value is measured.
 
 // Set HumidityMeasuringInterval (UIntValue)
-// Byte offset: 132, bit offset: 0, length bits 8, min val 1, max val 255
+// Offset: 1056, length bits 8, min val 1, max val 255
 static inline void e2p_envsensor_set_humiditymeasuringinterval(uint8_t val)
 {
-  eeprom_write_UIntValue(132, 0, 8, val);
+  eeprom_write_UIntValue(1056, 8, val);
 }
 
 // Get HumidityMeasuringInterval (UIntValue)
-// Byte offset: 132, bit offset: 0, length bits 8, min val 1, max val 255
+// Offset: 1056, length bits 8, min val 1, max val 255
 static inline uint8_t e2p_envsensor_get_humiditymeasuringinterval(void)
 {
-  return eeprom_read_UIntValue8(132, 0, 8, 1, 255);
+  return eeprom_read_UIntValue8(1056, 8, 1, 255);
 }
 
 // HumidityAveragingInterval (UIntValue)
 // Description: The number of values whose average is calculated before sending.
 
 // Set HumidityAveragingInterval (UIntValue)
-// Byte offset: 133, bit offset: 0, length bits 8, min val 1, max val 16
+// Offset: 1064, length bits 8, min val 1, max val 16
 static inline void e2p_envsensor_set_humidityaveraginginterval(uint8_t val)
 {
-  eeprom_write_UIntValue(133, 0, 8, val);
+  eeprom_write_UIntValue(1064, 8, val);
 }
 
 // Get HumidityAveragingInterval (UIntValue)
-// Byte offset: 133, bit offset: 0, length bits 8, min val 1, max val 16
+// Offset: 1064, length bits 8, min val 1, max val 16
 static inline uint8_t e2p_envsensor_get_humidityaveraginginterval(void)
 {
-  return eeprom_read_UIntValue8(133, 0, 8, 1, 16);
+  return eeprom_read_UIntValue8(1064, 8, 1, 16);
 }
 
 // BarometricMeasuringInterval (UIntValue)
 // Description: The number of times the device wakes up before this value is measured.
 
 // Set BarometricMeasuringInterval (UIntValue)
-// Byte offset: 134, bit offset: 0, length bits 8, min val 1, max val 255
+// Offset: 1072, length bits 8, min val 1, max val 255
 static inline void e2p_envsensor_set_barometricmeasuringinterval(uint8_t val)
 {
-  eeprom_write_UIntValue(134, 0, 8, val);
+  eeprom_write_UIntValue(1072, 8, val);
 }
 
 // Get BarometricMeasuringInterval (UIntValue)
-// Byte offset: 134, bit offset: 0, length bits 8, min val 1, max val 255
+// Offset: 1072, length bits 8, min val 1, max val 255
 static inline uint8_t e2p_envsensor_get_barometricmeasuringinterval(void)
 {
-  return eeprom_read_UIntValue8(134, 0, 8, 1, 255);
+  return eeprom_read_UIntValue8(1072, 8, 1, 255);
 }
 
 // BarometricAveragingInterval (UIntValue)
 // Description: The number of values whose average is calculated before sending.
 
 // Set BarometricAveragingInterval (UIntValue)
-// Byte offset: 135, bit offset: 0, length bits 8, min val 1, max val 16
+// Offset: 1080, length bits 8, min val 1, max val 16
 static inline void e2p_envsensor_set_barometricaveraginginterval(uint8_t val)
 {
-  eeprom_write_UIntValue(135, 0, 8, val);
+  eeprom_write_UIntValue(1080, 8, val);
 }
 
 // Get BarometricAveragingInterval (UIntValue)
-// Byte offset: 135, bit offset: 0, length bits 8, min val 1, max val 16
+// Offset: 1080, length bits 8, min val 1, max val 16
 static inline uint8_t e2p_envsensor_get_barometricaveraginginterval(void)
 {
-  return eeprom_read_UIntValue8(135, 0, 8, 1, 16);
+  return eeprom_read_UIntValue8(1080, 8, 1, 16);
 }
 
 // BrightnessMeasuringInterval (UIntValue)
 // Description: The number of times the device wakes up before this value is measured.
 
 // Set BrightnessMeasuringInterval (UIntValue)
-// Byte offset: 136, bit offset: 0, length bits 8, min val 1, max val 255
+// Offset: 1088, length bits 8, min val 1, max val 255
 static inline void e2p_envsensor_set_brightnessmeasuringinterval(uint8_t val)
 {
-  eeprom_write_UIntValue(136, 0, 8, val);
+  eeprom_write_UIntValue(1088, 8, val);
 }
 
 // Get BrightnessMeasuringInterval (UIntValue)
-// Byte offset: 136, bit offset: 0, length bits 8, min val 1, max val 255
+// Offset: 1088, length bits 8, min val 1, max val 255
 static inline uint8_t e2p_envsensor_get_brightnessmeasuringinterval(void)
 {
-  return eeprom_read_UIntValue8(136, 0, 8, 1, 255);
+  return eeprom_read_UIntValue8(1088, 8, 1, 255);
 }
 
 // BrightnessAveragingInterval (UIntValue)
 // Description: The number of values whose average is calculated before sending.
 
 // Set BrightnessAveragingInterval (UIntValue)
-// Byte offset: 137, bit offset: 0, length bits 8, min val 1, max val 16
+// Offset: 1096, length bits 8, min val 1, max val 16
 static inline void e2p_envsensor_set_brightnessaveraginginterval(uint8_t val)
 {
-  eeprom_write_UIntValue(137, 0, 8, val);
+  eeprom_write_UIntValue(1096, 8, val);
 }
 
 // Get BrightnessAveragingInterval (UIntValue)
-// Byte offset: 137, bit offset: 0, length bits 8, min val 1, max val 16
+// Offset: 1096, length bits 8, min val 1, max val 16
 static inline uint8_t e2p_envsensor_get_brightnessaveraginginterval(void)
 {
-  return eeprom_read_UIntValue8(137, 0, 8, 1, 16);
+  return eeprom_read_UIntValue8(1096, 8, 1, 16);
 }
 
 // DistanceMeasuringInterval (UIntValue)
 // Description: The number of times the device wakes up before this value is measured.
 
 // Set DistanceMeasuringInterval (UIntValue)
-// Byte offset: 138, bit offset: 0, length bits 8, min val 1, max val 255
+// Offset: 1104, length bits 8, min val 1, max val 255
 static inline void e2p_envsensor_set_distancemeasuringinterval(uint8_t val)
 {
-  eeprom_write_UIntValue(138, 0, 8, val);
+  eeprom_write_UIntValue(1104, 8, val);
 }
 
 // Get DistanceMeasuringInterval (UIntValue)
-// Byte offset: 138, bit offset: 0, length bits 8, min val 1, max val 255
+// Offset: 1104, length bits 8, min val 1, max val 255
 static inline uint8_t e2p_envsensor_get_distancemeasuringinterval(void)
 {
-  return eeprom_read_UIntValue8(138, 0, 8, 1, 255);
+  return eeprom_read_UIntValue8(1104, 8, 1, 255);
 }
 
 // DistanceAveragingInterval (UIntValue)
 // Description: The number of values whose average is calculated before sending.
 
 // Set DistanceAveragingInterval (UIntValue)
-// Byte offset: 139, bit offset: 0, length bits 8, min val 1, max val 16
+// Offset: 1112, length bits 8, min val 1, max val 16
 static inline void e2p_envsensor_set_distanceaveraginginterval(uint8_t val)
 {
-  eeprom_write_UIntValue(139, 0, 8, val);
+  eeprom_write_UIntValue(1112, 8, val);
 }
 
 // Get DistanceAveragingInterval (UIntValue)
-// Byte offset: 139, bit offset: 0, length bits 8, min val 1, max val 16
+// Offset: 1112, length bits 8, min val 1, max val 16
 static inline uint8_t e2p_envsensor_get_distanceaveraginginterval(void)
 {
-  return eeprom_read_UIntValue8(139, 0, 8, 1, 16);
+  return eeprom_read_UIntValue8(1112, 8, 1, 16);
 }
 
 // DigitalInputMeasuringInterval (UIntValue)
 // Description: The number of times the device wakes up before this value is measured.
 
 // Set DigitalInputMeasuringInterval (UIntValue)
-// Byte offset: 140, bit offset: 0, length bits 8, min val 1, max val 255
+// Offset: 1120, length bits 8, min val 1, max val 255
 static inline void e2p_envsensor_set_digitalinputmeasuringinterval(uint8_t val)
 {
-  eeprom_write_UIntValue(140, 0, 8, val);
+  eeprom_write_UIntValue(1120, 8, val);
 }
 
 // Get DigitalInputMeasuringInterval (UIntValue)
-// Byte offset: 140, bit offset: 0, length bits 8, min val 1, max val 255
+// Offset: 1120, length bits 8, min val 1, max val 255
 static inline uint8_t e2p_envsensor_get_digitalinputmeasuringinterval(void)
 {
-  return eeprom_read_UIntValue8(140, 0, 8, 1, 255);
+  return eeprom_read_UIntValue8(1120, 8, 1, 255);
 }
 
 // DigitalInputAveragingInterval (UIntValue)
 // Description: The number of values whose average is calculated before sending.
 
 // Set DigitalInputAveragingInterval (UIntValue)
-// Byte offset: 141, bit offset: 0, length bits 8, min val 1, max val 16
+// Offset: 1128, length bits 8, min val 1, max val 16
 static inline void e2p_envsensor_set_digitalinputaveraginginterval(uint8_t val)
 {
-  eeprom_write_UIntValue(141, 0, 8, val);
+  eeprom_write_UIntValue(1128, 8, val);
 }
 
 // Get DigitalInputAveragingInterval (UIntValue)
-// Byte offset: 141, bit offset: 0, length bits 8, min val 1, max val 16
+// Offset: 1128, length bits 8, min val 1, max val 16
 static inline uint8_t e2p_envsensor_get_digitalinputaveraginginterval(void)
 {
-  return eeprom_read_UIntValue8(141, 0, 8, 1, 16);
+  return eeprom_read_UIntValue8(1128, 8, 1, 16);
 }
 
 // AnalogInputMeasuringInterval (UIntValue)
 // Description: The number of times the device wakes up before this value is measured.
 
 // Set AnalogInputMeasuringInterval (UIntValue)
-// Byte offset: 142, bit offset: 0, length bits 8, min val 1, max val 255
+// Offset: 1136, length bits 8, min val 1, max val 255
 static inline void e2p_envsensor_set_analoginputmeasuringinterval(uint8_t val)
 {
-  eeprom_write_UIntValue(142, 0, 8, val);
+  eeprom_write_UIntValue(1136, 8, val);
 }
 
 // Get AnalogInputMeasuringInterval (UIntValue)
-// Byte offset: 142, bit offset: 0, length bits 8, min val 1, max val 255
+// Offset: 1136, length bits 8, min val 1, max val 255
 static inline uint8_t e2p_envsensor_get_analoginputmeasuringinterval(void)
 {
-  return eeprom_read_UIntValue8(142, 0, 8, 1, 255);
+  return eeprom_read_UIntValue8(1136, 8, 1, 255);
 }
 
 // AnalogInputAveragingInterval (UIntValue)
 // Description: The number of values whose average is calculated before sending.
 
 // Set AnalogInputAveragingInterval (UIntValue)
-// Byte offset: 143, bit offset: 0, length bits 8, min val 1, max val 16
+// Offset: 1144, length bits 8, min val 1, max val 16
 static inline void e2p_envsensor_set_analoginputaveraginginterval(uint8_t val)
 {
-  eeprom_write_UIntValue(143, 0, 8, val);
+  eeprom_write_UIntValue(1144, 8, val);
 }
 
 // Get AnalogInputAveragingInterval (UIntValue)
-// Byte offset: 143, bit offset: 0, length bits 8, min val 1, max val 16
+// Offset: 1144, length bits 8, min val 1, max val 16
 static inline uint8_t e2p_envsensor_get_analoginputaveraginginterval(void)
 {
-  return eeprom_read_UIntValue8(143, 0, 8, 1, 16);
+  return eeprom_read_UIntValue8(1144, 8, 1, 16);
 }
 
 // Reserved area with 384 bits
+// Offset: 1152
 
 // DigitalInputPin (EnumValue[8])
 // Description: You can choose up to 8 GPIO pins as digital input. The enum values are counting through every pin from port B, C and D, leaving out the pins that are not accessible because otherwise used.
@@ -447,34 +449,34 @@ typedef enum {
 } DigitalInputPinEnum;
 
 // Set DigitalInputPin (EnumValue)
-// Byte offset: 192, bit offset: 0, length bits 8
+// Offset: 1536, length bits 8
 static inline void e2p_envsensor_set_digitalinputpin(uint8_t index, DigitalInputPinEnum val)
 {
-  eeprom_write_UIntValue(192 + (uint16_t)index * 1, 0, 8, val);
+  eeprom_write_UIntValue(1536 + (uint16_t)index * 8, 8, val);
 }
 
 // Get DigitalInputPin (EnumValue)
-// Byte offset: 192, bit offset: 0, length bits 8
+// Offset: 1536, length bits 8
 static inline DigitalInputPinEnum e2p_envsensor_get_digitalinputpin(uint8_t index)
 {
-  return eeprom_read_UIntValue8(192 + (uint16_t)index * 1, 0, 8, 0, 255);
+  return eeprom_read_UIntValue8(1536 + (uint16_t)index * 8, 8, 0, 255);
 }
 
 // DigitalInputPullUpResistor (BoolValue[8])
 // Description: Decide if you want to switch on the pull-up resistor at each input pin you have chosen. (If you connect a simple switch connected to ground, you typically want this.)
 
 // Set DigitalInputPullUpResistor (BoolValue)
-// Byte offset: 200, bit offset: 0, length bits 8
+// Offset: 1600, length bits 8
 static inline void e2p_envsensor_set_digitalinputpullupresistor(uint8_t index, bool val)
 {
-  eeprom_write_UIntValue(200 + (uint16_t)index * 1, 0, 8, val ? 1 : 0);
+  eeprom_write_UIntValue(1600 + (uint16_t)index * 8, 8, val ? 1 : 0);
 }
 
 // Get DigitalInputPullUpResistor (BoolValue)
-// Byte offset: 200, bit offset: 0, length bits 8
+// Offset: 1600, length bits 8
 static inline bool e2p_envsensor_get_digitalinputpullupresistor(uint8_t index)
 {
-  return eeprom_read_UIntValue8(200 + (uint16_t)index * 1, 0, 8, 0, 1) == 1;
+  return eeprom_read_UIntValue8(1600 + (uint16_t)index * 8, 8, 0, 1) == 1;
 }
 
 // DigitalInputTriggerMode (EnumValue[8])
@@ -488,20 +490,21 @@ typedef enum {
 } DigitalInputTriggerModeEnum;
 
 // Set DigitalInputTriggerMode (EnumValue)
-// Byte offset: 208, bit offset: 0, length bits 8
+// Offset: 1664, length bits 8
 static inline void e2p_envsensor_set_digitalinputtriggermode(uint8_t index, DigitalInputTriggerModeEnum val)
 {
-  eeprom_write_UIntValue(208 + (uint16_t)index * 1, 0, 8, val);
+  eeprom_write_UIntValue(1664 + (uint16_t)index * 8, 8, val);
 }
 
 // Get DigitalInputTriggerMode (EnumValue)
-// Byte offset: 208, bit offset: 0, length bits 8
+// Offset: 1664, length bits 8
 static inline DigitalInputTriggerModeEnum e2p_envsensor_get_digitalinputtriggermode(uint8_t index)
 {
-  return eeprom_read_UIntValue8(208 + (uint16_t)index * 1, 0, 8, 0, 255);
+  return eeprom_read_UIntValue8(1664 + (uint16_t)index * 8, 8, 0, 255);
 }
 
 // Reserved area with 320 bits
+// Offset: 1728
 
 // AnalogInputPin (EnumValue[5])
 // Description: You can choose up to 5 ADC pins as analog input. The enum values are a reduced set of the ones from the digital input.
@@ -516,17 +519,17 @@ typedef enum {
 } AnalogInputPinEnum;
 
 // Set AnalogInputPin (EnumValue)
-// Byte offset: 256, bit offset: 0, length bits 8
+// Offset: 2048, length bits 8
 static inline void e2p_envsensor_set_analoginputpin(uint8_t index, AnalogInputPinEnum val)
 {
-  eeprom_write_UIntValue(256 + (uint16_t)index * 1, 0, 8, val);
+  eeprom_write_UIntValue(2048 + (uint16_t)index * 8, 8, val);
 }
 
 // Get AnalogInputPin (EnumValue)
-// Byte offset: 256, bit offset: 0, length bits 8
+// Offset: 2048, length bits 8
 static inline AnalogInputPinEnum e2p_envsensor_get_analoginputpin(uint8_t index)
 {
-  return eeprom_read_UIntValue8(256 + (uint16_t)index * 1, 0, 8, 0, 255);
+  return eeprom_read_UIntValue8(2048 + (uint16_t)index * 8, 8, 0, 255);
 }
 
 // AnalogInputTriggerMode (EnumValue[5])
@@ -540,56 +543,58 @@ typedef enum {
 } AnalogInputTriggerModeEnum;
 
 // Set AnalogInputTriggerMode (EnumValue)
-// Byte offset: 261, bit offset: 0, length bits 8
+// Offset: 2088, length bits 8
 static inline void e2p_envsensor_set_analoginputtriggermode(uint8_t index, AnalogInputTriggerModeEnum val)
 {
-  eeprom_write_UIntValue(261 + (uint16_t)index * 1, 0, 8, val);
+  eeprom_write_UIntValue(2088 + (uint16_t)index * 8, 8, val);
 }
 
 // Get AnalogInputTriggerMode (EnumValue)
-// Byte offset: 261, bit offset: 0, length bits 8
+// Offset: 2088, length bits 8
 static inline AnalogInputTriggerModeEnum e2p_envsensor_get_analoginputtriggermode(uint8_t index)
 {
-  return eeprom_read_UIntValue8(261 + (uint16_t)index * 1, 0, 8, 0, 255);
+  return eeprom_read_UIntValue8(2088 + (uint16_t)index * 8, 8, 0, 255);
 }
 
 // AnalogInputTriggerThreshold (UIntValue[5])
 // Description: The threshold in millivolts is used when the trigger mode is on.
 
 // Set AnalogInputTriggerThreshold (UIntValue)
-// Byte offset: 266, bit offset: 0, length bits 16, min val 0, max val 1100
+// Offset: 2128, length bits 16, min val 0, max val 1100
 static inline void e2p_envsensor_set_analoginputtriggerthreshold(uint8_t index, uint16_t val)
 {
-  eeprom_write_UIntValue(266 + (uint16_t)index * 2, 0, 16, val);
+  eeprom_write_UIntValue(2128 + (uint16_t)index * 16, 16, val);
 }
 
 // Get AnalogInputTriggerThreshold (UIntValue)
-// Byte offset: 266, bit offset: 0, length bits 16, min val 0, max val 1100
+// Offset: 2128, length bits 16, min val 0, max val 1100
 static inline uint16_t e2p_envsensor_get_analoginputtriggerthreshold(uint8_t index)
 {
-  return eeprom_read_UIntValue16(266 + (uint16_t)index * 2, 0, 16, 0, 1100);
+  return eeprom_read_UIntValue16(2128 + (uint16_t)index * 16, 16, 0, 1100);
 }
 
 // AnalogInputTriggerHysteresis (UIntValue[5])
 // Description: The hysteresis in millivolts is used when the trigger mode is on. It can avoid the trigger firing too often if you measure a slighty changing voltage. Because of noise and accuracy limits of the ADC, you should set a positive hysteresis in any case.
 
 // Set AnalogInputTriggerHysteresis (UIntValue)
-// Byte offset: 276, bit offset: 0, length bits 16, min val 0, max val 1100
+// Offset: 2208, length bits 16, min val 0, max val 1100
 static inline void e2p_envsensor_set_analoginputtriggerhysteresis(uint8_t index, uint16_t val)
 {
-  eeprom_write_UIntValue(276 + (uint16_t)index * 2, 0, 16, val);
+  eeprom_write_UIntValue(2208 + (uint16_t)index * 16, 16, val);
 }
 
 // Get AnalogInputTriggerHysteresis (UIntValue)
-// Byte offset: 276, bit offset: 0, length bits 16, min val 0, max val 1100
+// Offset: 2208, length bits 16, min val 0, max val 1100
 static inline uint16_t e2p_envsensor_get_analoginputtriggerhysteresis(uint8_t index)
 {
-  return eeprom_read_UIntValue16(276 + (uint16_t)index * 2, 0, 16, 0, 1100);
+  return eeprom_read_UIntValue16(2208 + (uint16_t)index * 16, 16, 0, 1100);
 }
 
 // Reserved area with 272 bits
+// Offset: 2288
 
 // Reserved area with 5632 bits
+// Offset: 2560
 
 
 #endif /* _E2P_ENVSENSOR_H */

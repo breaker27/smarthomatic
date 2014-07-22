@@ -18,6 +18,7 @@
 
 package shcee;
 
+import java.io.Console;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -203,12 +204,12 @@ public class SourceCodeGeneratorE2P
 				sb.append("} " + ID1 + "Enum;" + newline);
 				sb.append(newline);
 				
-				String accessStr = calcAccessStr(offset, bits, isArray);
+				String accessStr = Util.calcAccessStr("", offset, bits, isArray);
 				
 				// SET
 				
 				sb.append("// Set " + ID1 + " (EnumValue)" + newline);
-				sb.append("// Byte offset: " + (offset / 8) + ", bit offset: " + (offset % 8) + ", length bits " + bits + newline);
+				sb.append("// Offset: " + offset + ", length bits " + bits + newline);
 				
 				sb.append("static inline void " + functionPrefix + "_set_" + ID1.toLowerCase() + "(" + funcParam + ID1 + "Enum val)" + newline);
 				sb.append("{" + newline);
@@ -221,7 +222,7 @@ public class SourceCodeGeneratorE2P
 				int maxVal = (1 << cTypeBits) - 1;
 				
 				sb.append("// Get " + ID1 + " (EnumValue)" + newline);
-				sb.append("// Byte offset: " + (offset / 8) + ", bit offset: " + (offset % 8) + ", length bits " + bits + newline);
+				sb.append("// Offset: " + offset + ", length bits " + bits + newline);
 				
 				sb.append("static inline " + ID1 + "Enum " + functionPrefix + "_get_" + ID1.toLowerCase() + "(" + funcParam2 + ")" + newline);
 				sb.append("{" + newline);
@@ -248,12 +249,12 @@ public class SourceCodeGeneratorE2P
 				
 				sb.append(newline);
 				
-				String accessStr = calcAccessStr(offset, bits, isArray);
+				String accessStr = Util.calcAccessStr("", offset, bits, isArray);
 
 				// SET
 				
 				sb.append("// Set " + ID + " (UIntValue)" + newline);
-				sb.append("// Byte offset: " + (offset / 8) + ", bit offset: " + (offset % 8) + ", length bits " + bits + ", min val " + minVal + ", max val " + maxVal + newline);
+				sb.append("// Offset: " + offset + ", length bits " + bits + ", min val " + minVal + ", max val " + maxVal + newline);
 				
 				sb.append("static inline void " + functionPrefix + "_set_" + ID.toLowerCase() + "(" + funcParam + "uint" + cTypeBits + "_t val)" + newline);
 				sb.append("{" + newline);
@@ -264,7 +265,7 @@ public class SourceCodeGeneratorE2P
 				// GET
 				
 				sb.append("// Get " + ID + " (UIntValue)" + newline);
-				sb.append("// Byte offset: " + (offset / 8) + ", bit offset: " + (offset % 8) + ", length bits " + bits + ", min val " + minVal + ", max val " + maxVal + newline);
+				sb.append("// Offset: " + offset + ", length bits " + bits + ", min val " + minVal + ", max val " + maxVal + newline);
 				
 				// TODO: Return minimal type uint8_t, ...
 				sb.append("static inline uint" + cTypeBits + "_t " + functionPrefix + "_get_" + ID.toLowerCase() + "(" + funcParam2 + ")" + newline);
@@ -292,12 +293,12 @@ public class SourceCodeGeneratorE2P
 				
 				sb.append(newline);
 				
-				String accessStr = calcAccessStr(offset, bits, isArray);
+				String accessStr = Util.calcAccessStr("", offset, bits, isArray);
 
 				// SET
 				
 				sb.append("// Set " + ID + " (IntValue)" + newline);
-				sb.append("// Byte offset: " + (offset / 8) + ", bit offset: " + (offset % 8) + ", length bits " + bits + ", min val " + minVal + ", max val " + maxVal + newline);
+				sb.append("// Offset: " + offset + ", length bits " + bits + ", min val " + minVal + ", max val " + maxVal + newline);
 				
 				sb.append("static inline void " + functionPrefix + "_set_" + ID.toLowerCase() + "(" + funcParam + "int" + cTypeBits + "_t val)" + newline);
 				sb.append("{" + newline);
@@ -308,7 +309,7 @@ public class SourceCodeGeneratorE2P
 				// GET
 				
 				sb.append("// Get " + ID + " (IntValue)" + newline);
-				sb.append("// Byte offset: " + (offset / 8) + ", bit offset: " + (offset % 8) + ", length bits " + bits + ", min val " + minVal + ", max val " + maxVal + newline);
+				sb.append("// Offset: " + offset + ", length bits " + bits + ", min val " + minVal + ", max val " + maxVal + newline);
 				
 				// TODO: Return minimal type uint8_t, ...
 				sb.append("static inline int" + cTypeBits + "_t " + functionPrefix + "_get_" + ID.toLowerCase() + "(" + funcParam2 + ")" + newline);
@@ -338,28 +339,28 @@ public class SourceCodeGeneratorE2P
 				int bytes = Integer.parseInt(Util.getChildNodeValue(element, "Bytes"));
 				int bits = bytes * 8;
 				
-				String accessStr = Util.calcByteAccessStr("", offset, bytes * 8, isArray);
+				String accessStr = Util.calcAccessStr("", offset, bytes * 8, isArray);
 				
 				// SET
 				
 				sb.append("// Set " + ID + " (ByteArray)" + newline);
-				sb.append("// Byte offset: " + (offset / 8) + ", bit offset: " + (offset % 8) + ", length bits " + bits + newline);
+				sb.append("// Offset: " + offset + ", length bits " + bits + newline);
 				
 				sb.append("static inline void " + functionPrefix + "_set_" + ID.toLowerCase() + "(" + funcParam + "void *src)" + newline);
 				sb.append("{" + newline);
-				sb.append("  eeprom_write_block(src, (uint8_t *)(" + accessStr + "), " + bytes + ");" + newline);
+				sb.append("  eeprom_write_block(src, (uint8_t *)((" + accessStr + ") / 8), " + bytes + ");" + newline);
 				sb.append("}" + newline);
 				sb.append(newline);
 				
 				// GET
 				
 				sb.append("// Get " + ID + " (ByteArray)" + newline);
-				sb.append("// Byte offset: " + (offset / 8) + ", bit offset: " + (offset % 8) + ", length bits " + bits + newline);
+				sb.append("// Offset: " + offset + ", length bits " + bits + newline);
 				
 				// TODO: Return minimal type uint8_t, ...
 				sb.append("static inline void " + functionPrefix + "_get_" + ID.toLowerCase() + "(" + funcParam + "void *dst)" + newline);
 				sb.append("{" + newline);
-				sb.append("  eeprom_read_block(dst, (uint8_t *)(" + accessStr + "), " + bytes + ");" + newline);
+				sb.append("  eeprom_read_block(dst, (uint8_t *)((" + accessStr + ") / 8), " + bytes + ");" + newline);
 				sb.append("}" + newline);
 				sb.append(newline);
 
@@ -378,12 +379,12 @@ public class SourceCodeGeneratorE2P
 				
 				sb.append(newline);
 				
-				String accessStr = calcAccessStr(offset, 8, isArray);
+				String accessStr = Util.calcAccessStr("", offset, 8, isArray);
 				
 				// SET
 				
 				sb.append("// Set " + ID + " (BoolValue)" + newline);
-				sb.append("// Byte offset: " + (offset / 8) + ", bit offset: " + (offset % 8) + ", length bits 8" + newline);
+				sb.append("// Offset: " + offset + ", length bits 8" + newline);
 				
 				sb.append("static inline void " + functionPrefix + "_set_" + ID.toLowerCase() + "(" + funcParam + "bool val)" + newline);
 				sb.append("{" + newline);
@@ -394,7 +395,7 @@ public class SourceCodeGeneratorE2P
 				// GET
 				
 				sb.append("// Get " + ID + " (BoolValue)" + newline);
-				sb.append("// Byte offset: " + (offset / 8) + ", bit offset: " + (offset % 8) + ", length bits 8" + newline);
+				sb.append("// Offset: " + offset + ", length bits 8" + newline);
 				
 				// TODO: Return minimal type uint8_t, ...
 				sb.append("static inline bool " + functionPrefix + "_get_" + ID.toLowerCase() + "(" + funcParam2 + ")" + newline);
@@ -417,6 +418,7 @@ public class SourceCodeGeneratorE2P
 				
 				String bits = Util.getChildNodeValue(element, "Bits");
 				sb.append("// Reserved area with " + bits + " bits" + newline);
+				sb.append("// Offset: " + offset + newline);
 				sb.append(newline);
 				offset += Integer.parseInt(bits);
 			}
@@ -429,18 +431,6 @@ public class SourceCodeGeneratorE2P
 		}
 		
 		return offset - startOffset;
-	}
-
-	/**
-	 * Return a string used in generated e2p and packet data access functions to represent the byte and bit position.
-	 * @param offset  The bit offset of the data value.
-	 * @param bits    The number of bits per value (relevant for arrays).
-	 * @param isArray The information if an array is accessed by using a variable "index".
-	 * @return A string like "68 + (uint16_t)index * 1, 0"
-	 */
-	private String calcAccessStr(int offset, int bits, boolean isArray)
-	{
-		return Util.calcByteAccessStr("", offset, bits, isArray) + ", " + Util.calcBitAccessStr("", offset, bits, isArray);
 	}
 
 	/**

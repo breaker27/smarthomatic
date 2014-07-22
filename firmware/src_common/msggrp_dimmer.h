@@ -131,17 +131,17 @@ static inline void pkg_header_init_dimmer_brightness_ackstatus(void)
 // Description: The brightness in percent. 0 = Off.
 
 // Set Brightness (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 7, min val 0, max val 100
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 7, min val 0, max val 100
 static inline void msg_dimmer_brightness_set_brightness(uint32_t val)
 {
-  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 7, val, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 0, 7, val, bufx);
 }
 
 // Get Brightness (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 7, min val 0, max val 100
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 7, min val 0, max val 100
 static inline uint32_t msg_dimmer_brightness_get_brightness(void)
 {
-  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 7, 0, 100, bufx);
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 0, 7, 0, 100, bufx);
 }
 
 
@@ -234,68 +234,68 @@ typedef enum {
 } AnimationModeEnum;
 
 // Set AnimationMode (EnumValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 2
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 2
 static inline void msg_dimmer_animation_set_animationmode(AnimationModeEnum val)
 {
-  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 2, val, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 0, 2, val, bufx);
 }
 
 // Get AnimationMode (EnumValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 2
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 2
 static inline AnimationModeEnum msg_dimmer_animation_get_animationmode(void)
 {
-  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 2, 0, 3, bufx);
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 0, 2, 0, 3, bufx);
 }
 
 // TimeoutSec (UIntValue)
 // Description: The time for the animation. Use 0 to disable this.
 
 // Set TimeoutSec (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 2) / 8, ((uint16_t)__HEADEROFFSETBITS + 2) % 8, length bits 16, min val 0, max val 65535
+// Offset: (uint16_t)__HEADEROFFSETBITS + 2, length bits 16, min val 0, max val 65535
 static inline void msg_dimmer_animation_set_timeoutsec(uint32_t val)
 {
-  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 2) / 8, ((uint16_t)__HEADEROFFSETBITS + 2) % 8, 16, val, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 2, 16, val, bufx);
 }
 
 // Get TimeoutSec (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 2) / 8, ((uint16_t)__HEADEROFFSETBITS + 2) % 8, length bits 16, min val 0, max val 65535
+// Offset: (uint16_t)__HEADEROFFSETBITS + 2, length bits 16, min val 0, max val 65535
 static inline uint32_t msg_dimmer_animation_get_timeoutsec(void)
 {
-  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 2) / 8, ((uint16_t)__HEADEROFFSETBITS + 2) % 8, 16, 0, 65535, bufx);
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 2, 16, 0, 65535, bufx);
 }
 
 // StartBrightness (UIntValue)
 // Description: The brightness in percent at the beginning of the animation.
 
 // Set StartBrightness (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 18) / 8, ((uint16_t)__HEADEROFFSETBITS + 18) % 8, length bits 7, min val 0, max val 100
+// Offset: (uint16_t)__HEADEROFFSETBITS + 18, length bits 7, min val 0, max val 100
 static inline void msg_dimmer_animation_set_startbrightness(uint32_t val)
 {
-  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 18) / 8, ((uint16_t)__HEADEROFFSETBITS + 18) % 8, 7, val, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 18, 7, val, bufx);
 }
 
 // Get StartBrightness (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 18) / 8, ((uint16_t)__HEADEROFFSETBITS + 18) % 8, length bits 7, min val 0, max val 100
+// Offset: (uint16_t)__HEADEROFFSETBITS + 18, length bits 7, min val 0, max val 100
 static inline uint32_t msg_dimmer_animation_get_startbrightness(void)
 {
-  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 18) / 8, ((uint16_t)__HEADEROFFSETBITS + 18) % 8, 7, 0, 100, bufx);
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 18, 7, 0, 100, bufx);
 }
 
 // EndBrightness (UIntValue)
 // Description: The brightness in percent at the end of the animation.
 
 // Set EndBrightness (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 25) / 8, ((uint16_t)__HEADEROFFSETBITS + 25) % 8, length bits 7, min val 0, max val 100
+// Offset: (uint16_t)__HEADEROFFSETBITS + 25, length bits 7, min val 0, max val 100
 static inline void msg_dimmer_animation_set_endbrightness(uint32_t val)
 {
-  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 25) / 8, ((uint16_t)__HEADEROFFSETBITS + 25) % 8, 7, val, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 25, 7, val, bufx);
 }
 
 // Get EndBrightness (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 25) / 8, ((uint16_t)__HEADEROFFSETBITS + 25) % 8, length bits 7, min val 0, max val 100
+// Offset: (uint16_t)__HEADEROFFSETBITS + 25, length bits 7, min val 0, max val 100
 static inline uint32_t msg_dimmer_animation_get_endbrightness(void)
 {
-  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 25) / 8, ((uint16_t)__HEADEROFFSETBITS + 25) % 8, 7, 0, 100, bufx);
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 25, 7, 0, 100, bufx);
 }
 
 
@@ -383,17 +383,17 @@ static inline void pkg_header_init_dimmer_color_ackstatus(void)
 // Description: The color is according to the 6 bit color palette used in SHC.
 
 // Set Color (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 6, min val 0, max val 63
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 6, min val 0, max val 63
 static inline void msg_dimmer_color_set_color(uint32_t val)
 {
-  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 6, val, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 0, 6, val, bufx);
 }
 
 // Get Color (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 6, min val 0, max val 63
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 6, min val 0, max val 63
 static inline uint32_t msg_dimmer_color_get_color(void)
 {
-  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 6, 0, 63, bufx);
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 0, 6, 0, 63, bufx);
 }
 
 
@@ -481,34 +481,34 @@ static inline void pkg_header_init_dimmer_coloranimation_ackstatus(void)
 // Description: The number of times the animation will be repeated. 0 means infinitely.
 
 // Set Repeat (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 4, min val 0, max val 15
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 4, min val 0, max val 15
 static inline void msg_dimmer_coloranimation_set_repeat(uint32_t val)
 {
-  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 4, val, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 0, 4, val, bufx);
 }
 
 // Get Repeat (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 4, min val 0, max val 15
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 4, min val 0, max val 15
 static inline uint32_t msg_dimmer_coloranimation_get_repeat(void)
 {
-  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 4, 0, 15, bufx);
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 0, 4, 0, 15, bufx);
 }
 
 // AutoReverse (BoolValue)
 // Description: If true, the animation will be played back in the normal direction and then in reverse order.
 
 // Set AutoReverse (BoolValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 4) / 8, ((uint16_t)__HEADEROFFSETBITS + 4) % 8, length bits 1
+// Offset: (uint16_t)__HEADEROFFSETBITS + 4, length bits 1
 static inline void msg_dimmer_coloranimation_set_autoreverse(bool val)
 {
-  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 4) / 8, ((uint16_t)__HEADEROFFSETBITS + 4) % 8, 1, val ? 1 : 0, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 4, 1, val ? 1 : 0, bufx);
 }
 
 // Get AutoReverse (BoolValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 4) / 8, ((uint16_t)__HEADEROFFSETBITS + 4) % 8, length bits 1
+// Offset: (uint16_t)__HEADEROFFSETBITS + 4, length bits 1
 static inline bool msg_dimmer_coloranimation_get_autoreverse(void)
 {
-  return array_read_UIntValue8(((uint16_t)__HEADEROFFSETBITS + 4) / 8, ((uint16_t)__HEADEROFFSETBITS + 4) % 8, 1, 0, 1, bufx) == 1;
+  return array_read_UIntValue8((uint16_t)__HEADEROFFSETBITS + 4, 1, 0, 1, bufx) == 1;
 }
 
 // Color (UIntValue[8])
@@ -516,17 +516,17 @@ static inline bool msg_dimmer_coloranimation_get_autoreverse(void)
 // Description: The color is according to the 6 bit color palette used in SHC. The last color (or the first when AutoReverse is true) of the animation will remain visible after the animation is completed.
 
 // Set Color (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 5 + (uint16_t)index * 11) / 8, ((uint16_t)__HEADEROFFSETBITS + 5 + (uint16_t)index * 11) % 8, length bits 6, min val 0, max val 63
+// Offset: (uint16_t)__HEADEROFFSETBITS + 5 + (uint16_t)index * 11, length bits 6, min val 0, max val 63
 static inline void msg_dimmer_coloranimation_set_color(uint8_t index, uint32_t val)
 {
-  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 5 + (uint16_t)index * 11) / 8, ((uint16_t)__HEADEROFFSETBITS + 5 + (uint16_t)index * 11) % 8, 6, val, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 5 + (uint16_t)index * 11, 6, val, bufx);
 }
 
 // Get Color (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 5 + (uint16_t)index * 11) / 8, ((uint16_t)__HEADEROFFSETBITS + 5 + (uint16_t)index * 11) % 8, length bits 6, min val 0, max val 63
+// Offset: (uint16_t)__HEADEROFFSETBITS + 5 + (uint16_t)index * 11, length bits 6, min val 0, max val 63
 static inline uint32_t msg_dimmer_coloranimation_get_color(uint8_t index)
 {
-  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 5 + (uint16_t)index * 11) / 8, ((uint16_t)__HEADEROFFSETBITS + 5 + (uint16_t)index * 11) % 8, 6, 0, 63, bufx);
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 5 + (uint16_t)index * 11, 6, 0, 63, bufx);
 }
 
 // Time (UIntValue[8])
@@ -534,17 +534,17 @@ static inline uint32_t msg_dimmer_coloranimation_get_color(uint8_t index)
 // Description: The time for the animation between the current color and the next one. The number of seconds used is 0.1s * 1.3 ^ Time and covers the range from 0.1s to 341s. Use 0 to mark the end of the animation. Further values will be ignored.
 
 // Set Time (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 11 + (uint16_t)index * 11) / 8, ((uint16_t)__HEADEROFFSETBITS + 11 + (uint16_t)index * 11) % 8, length bits 5, min val 0, max val 31
+// Offset: (uint16_t)__HEADEROFFSETBITS + 11 + (uint16_t)index * 11, length bits 5, min val 0, max val 31
 static inline void msg_dimmer_coloranimation_set_time(uint8_t index, uint32_t val)
 {
-  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 11 + (uint16_t)index * 11) / 8, ((uint16_t)__HEADEROFFSETBITS + 11 + (uint16_t)index * 11) % 8, 5, val, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 11 + (uint16_t)index * 11, 5, val, bufx);
 }
 
 // Get Time (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 11 + (uint16_t)index * 11) / 8, ((uint16_t)__HEADEROFFSETBITS + 11 + (uint16_t)index * 11) % 8, length bits 5, min val 0, max val 31
+// Offset: (uint16_t)__HEADEROFFSETBITS + 11 + (uint16_t)index * 11, length bits 5, min val 0, max val 31
 static inline uint32_t msg_dimmer_coloranimation_get_time(uint8_t index)
 {
-  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 11 + (uint16_t)index * 11) / 8, ((uint16_t)__HEADEROFFSETBITS + 11 + (uint16_t)index * 11) % 8, 5, 0, 31, bufx);
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 11 + (uint16_t)index * 11, 5, 0, 31, bufx);
 }
 
 #endif /* _MSGGRP_DIMMER_H */

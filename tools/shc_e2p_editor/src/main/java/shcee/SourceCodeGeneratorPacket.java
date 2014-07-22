@@ -865,12 +865,29 @@ public class SourceCodeGeneratorPacket
 
 				String offsetStr = calcAccessStr(useHeaderOffset, offset, structLengthBits, isArray);
 
+				// TODO: These functions would not work if generated.
+				// Implement them and fix the generator here if byte arrays in
+				// a message is needed.
+				
+				// SET
+				
 				sb.append("// Set " + ID + " (ByteArray)" + newline);
 				sb.append("// Offset: " + offsetStr + ", length bytes " + bytes + newline);
 				
 				sb.append("static inline void " + functionPrefix + "_set_" + ID.toLowerCase() + "(array * val)" + newline);
 				sb.append("{" + newline);
 				sb.append("  array_write_ByteArray(" + offsetStr + ", " + bytes + ", val, bufx);" + newline);
+				sb.append("}" + newline);
+				sb.append(newline);
+				
+				// GET
+
+				sb.append("// Get " + ID + " (ByteArray)" + newline);
+				sb.append("// Offset: " + offsetStr + ", length bytes " + bytes + newline);
+				
+				sb.append("static inline void " + functionPrefix + "_get_" + ID.toLowerCase() + "(" + funcParam + "void *dst)" + newline);
+				sb.append("{" + newline);
+				sb.append("  array_read_ByteArray(dst, offsetStr, " + bytes + ");" + newline);
 				sb.append("}" + newline);
 				sb.append(newline);
 				
@@ -993,8 +1010,8 @@ public class SourceCodeGeneratorPacket
 	private String calcAccessStr(boolean useHeaderOffset, int offset, int bits, boolean isArray)
 	{
 		String additionalOffsetPrefix = useHeaderOffset ? "(uint16_t)__HEADEROFFSETBITS + " : ""; 
-			
-		return Util.calcByteAccessStr(additionalOffsetPrefix, offset, bits, isArray) + ", " + Util.calcBitAccessStr(additionalOffsetPrefix, offset, bits, isArray);
+
+		return Util.calcAccessStr(additionalOffsetPrefix, offset, bits, isArray);
 	}
 	
 	public static String genCopyrightNotice()

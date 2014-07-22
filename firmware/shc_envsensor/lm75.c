@@ -76,11 +76,11 @@ int16_t lm75_get_tmp(void)
 
 #ifdef LM92_TYPE
 	// 13 bit signed value shifted to the left in two's complement
-	temp = array_read_IntValue32(0, 0, 13, -4096, 4095, temp_raw);
+	temp = array_read_IntValue32(0, 13, -4096, 4095, temp_raw);
 #endif
 #ifdef DS7505_TYPE
 	// 12 bit signed value shifted to the left in two's complement
-	temp = array_read_IntValue32(0, 0, 12, -2048, 2047, temp_raw);
+	temp = array_read_IntValue32(0, 12, -2048, 2047, temp_raw);
 #endif
 	// Calc temp in 1/10000 Celsius
 	temp = temp * 625;

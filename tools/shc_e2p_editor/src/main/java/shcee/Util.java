@@ -472,61 +472,30 @@ public class Util {
 	}
 	
 	/**
-	 * Return a string used in functions to represent the byte position for e2p access.
-	 */
-	public static String calcByteAccessStr(String additionalOffsetPrefix, int offset, int bits, boolean isArray)
-	{
-		if (isArray)
-		{
-			if (((bits % 8) == 0) && additionalOffsetPrefix.equals(""))
-			{
-				int bytesPerValue = bits / 8;
-				return (offset / 8) + " + (uint16_t)index * " + bytesPerValue;
-			}
-			else
-			{
-				return "(" + additionalOffsetPrefix + offset + " + (uint16_t)index * " + bits + ") / 8";
-			}
-		}
-		else
-		{
-			if (additionalOffsetPrefix.equals(""))
-			{
-				return "" + offset / 8;
-			}
-			else
-			{
-				return "(" + additionalOffsetPrefix + offset + ") / 8";
-			}
-		}
-	}
-	
-	/**
 	 * Return a string used in functions to represent the bit position for e2p access.
+	 * @param offset  The bit offset of the data value.
+	 * @param bits    The number of bits per value (relevant for arrays).
+	 * @param isArray The information if an array is accessed by using a variable "index".
+	 * @return A string like "68 + (uint16_t)index * 1"
 	 */
-	public static String calcBitAccessStr(String additionalOffsetPrefix, int offset, int bits, boolean isArray)
+	public static String calcAccessStr(String additionalOffsetPrefix, int offset, int bits, boolean isArray)
 	{
-		if (isArray)
+		String res;
+		
+		if (additionalOffsetPrefix.equals(""))
 		{
-			if (((bits % 8) == 0) && additionalOffsetPrefix.equals(""))
-			{
-				return "" + (offset % 8);
-			}
-			else
-			{
-				return "(" + additionalOffsetPrefix + offset + " + (uint16_t)index * " + bits + ") % 8";
-			}
+			res = "" + offset;
 		}
 		else
 		{
-			if (additionalOffsetPrefix.equals(""))
-			{
-				return "" + offset % 8;
-			}
-			else
-			{
-				return  "(" + additionalOffsetPrefix + offset + ") % 8";
-			}
+			res = "" + additionalOffsetPrefix + offset;
 		}
+		
+		if (isArray)
+		{
+			res += " + (uint16_t)index * " + bits;
+		}
+
+		return res;
 	}
 }

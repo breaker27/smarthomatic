@@ -90,9 +90,12 @@ uint8_t __get_bits(uint32_t input, uint8_t bit, uint8_t length)
 
 // Read UIntValue from EEPROM.
 // Go into error mode if bit length is not as assumed.
-uint32_t __eeprom_read_UIntValue32(uint16_t byte, uint8_t bit, uint16_t length_bits, uint16_t max_bits_for_type, uint8_t * array)
+uint32_t __eeprom_read_UIntValue32(uint16_t bit, uint16_t length, uint16_t max_bits_for_type, uint8_t * array)
 {
-	if (length_bits > max_bits_for_type)
+	uint16_t byte = bit / 8;
+	bit = bit % 8;
+	
+	if (length > max_bits_for_type)
 	{
 		signal_error_state();
 	}
@@ -102,9 +105,9 @@ uint32_t __eeprom_read_UIntValue32(uint16_t byte, uint8_t bit, uint16_t length_b
 	int8_t shift;
 	
 	// read the bytes one after another, shift them to the correct position and add them
-	while (length_bits + bit > byres_read * 8)
+	while (length + bit > byres_read * 8)
 	{
-		shift = length_bits + bit - byres_read * 8 - 8;
+		shift = length + bit - byres_read * 8 - 8;
 		uint32_t zz = (NULL == array) ? eeprom_read_byte((uint8_t*)(byte + byres_read)) : array[byte + byres_read];
 
 		if (shift >= 0)
@@ -120,17 +123,20 @@ uint32_t __eeprom_read_UIntValue32(uint16_t byte, uint8_t bit, uint16_t length_b
 	}
 
 	// filter out only the wanted bits and clear unwanted upper bits
-	if (length_bits < 32)
+	if (length < 32)
 	{
-		val = val & (((uint32_t)1 << length_bits) - 1);
+		val = val & (((uint32_t)1 << length) - 1);
 	}
 
 	return val;
 }
 
 // write some bits to EEPROM only within one byte
-void __eeprom_write_bits(uint16_t byte, uint8_t bit, uint16_t length, uint8_t val, uint8_t * array)
+void __eeprom_write_bits(uint16_t bit, uint16_t length, uint8_t val, uint8_t * array)
 {
+	uint16_t byte = bit / 8;
+	bit = bit % 8;
+
 //	printf("Write value %d to byte %d bit %d with length %d\n", val, byte, bit, length);
 	
 	uint8_t b = 0;
@@ -158,24 +164,24 @@ void __eeprom_write_bits(uint16_t byte, uint8_t bit, uint16_t length, uint8_t va
 /* ---------- exported functions ---------- */
 
 // Read UIntValue from EEPROM and limit it into the given boundaries.
-uint32_t _eeprom_read_UIntValue32(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t minval, uint32_t maxval, uint16_t max_bits_for_type, uint8_t * array)
+uint32_t _eeprom_read_UIntValue32(uint16_t bit, uint16_t length, uint32_t minval, uint32_t maxval, uint16_t max_bits_for_type, uint8_t * array)
 {
-	uint32_t x = __eeprom_read_UIntValue32(byte, bit, length_bits, max_bits_for_type, array);
+	uint32_t x = __eeprom_read_UIntValue32(bit, length, max_bits_for_type, array);
 	
 	__limitUIntValue32(&x, minval, maxval);
 	return x;
 }
 
 // Read IntValue from EEPROM and limit it into the given boundaries.
-int32_t _eeprom_read_IntValue32(uint16_t byte, uint8_t bit, uint16_t length_bits, int32_t minval, int32_t maxval, uint8_t * array)
+int32_t _eeprom_read_IntValue32(uint16_t bit, uint16_t length, int32_t minval, int32_t maxval, uint8_t * array)
 {
-	uint32_t x = __eeprom_read_UIntValue32(byte, bit, length_bits, 32, array);
+	uint32_t x = __eeprom_read_UIntValue32(bit, length, 32, array);
 
 	// If MSB is 1 (value is negative interpreted as signed int),
 	// set all higher bits also to 1.
-	if (((x >> (length_bits - 1)) & 1) == 1)
+	if (((x >> (length - 1)) & 1) == 1)
 	{
-		x = x | ~(((uint32_t)1 << (length_bits - 1)) - 1);
+		x = x | ~(((uint32_t)1 << (length - 1)) - 1);
 	}
 
 	int32_t y = (int32_t)x;
@@ -185,35 +191,38 @@ int32_t _eeprom_read_IntValue32(uint16_t byte, uint8_t bit, uint16_t length_bits
 }
 
 // Write UIntValue to EEPROM.
-void _eeprom_write_UIntValue(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t val, uint8_t * array)
+void _eeprom_write_UIntValue(uint16_t bit, uint16_t length, uint32_t val, uint8_t * array)
 {
+	uint16_t byte = bit / 8;
+	bit = bit % 8;
+
 	// move bits to the left border
-	val = val << (32 - length_bits);
+	val = val << (32 - length);
 
 	//UART_PUTF("Moved left: val %lu\r\n", val);	
 	
 	// 1st byte
 	uint8_t src_start = 0;
 	uint8_t dst_start = bit;
-	uint8_t len = MIN(length_bits, 8 - bit);
+	uint8_t len = MIN(length, 8 - bit);
 	uint8_t val8 = __get_bits(val, src_start, len);
 	
 	//UART_PUTF4("Write bits to byte %u, dst_start %u, len %u, val8 %u\r\n", byte, dst_start, len, val8);	
 	
-	__eeprom_write_bits(byte, dst_start, len, val8, array);
+	__eeprom_write_bits(byte * 8 + dst_start, len, val8, array);
 	
 	dst_start = 0;
 	src_start = len;
 
-	while (src_start < length_bits)
+	while (src_start < length)
 	{
-		len = MIN(length_bits - src_start, 8);
+		len = MIN(length - src_start, 8);
 		val8 = __get_bits(val, src_start, len);
 		byte++;
 
 		//UART_PUTF4(" Byte nr. %d, src_start %d, len %d, val8 %d\r\n", byte, src_start, len, val8);
 
-		__eeprom_write_bits(byte, dst_start, len, val8, array);
+		__eeprom_write_bits(byte * 8 + dst_start, len, val8, array);
 		
 		src_start += len;
 	}

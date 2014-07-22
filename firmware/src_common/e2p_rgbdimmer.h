@@ -35,88 +35,89 @@
 // Description: This is the last remembered packet counter of a command from the base station. Packets with the same or lower number are ignored.
 
 // Set BaseStationPacketCounter (UIntValue)
-// Byte offset: 64, bit offset: 0, length bits 24, min val 0, max val 16777215
+// Offset: 512, length bits 24, min val 0, max val 16777215
 static inline void e2p_rgbdimmer_set_basestationpacketcounter(uint32_t val)
 {
-  eeprom_write_UIntValue(64, 0, 24, val);
+  eeprom_write_UIntValue(512, 24, val);
 }
 
 // Get BaseStationPacketCounter (UIntValue)
-// Byte offset: 64, bit offset: 0, length bits 24, min val 0, max val 16777215
+// Offset: 512, length bits 24, min val 0, max val 16777215
 static inline uint32_t e2p_rgbdimmer_get_basestationpacketcounter(void)
 {
-  return eeprom_read_UIntValue32(64, 0, 24, 0, 16777215);
+  return eeprom_read_UIntValue32(512, 24, 0, 16777215);
 }
 
 // BrightnessFactor (UIntValue)
 // Description: This value reduces the overall brightness. This is to easily adjust it to your needs without changing the LED series resistors.
 
 // Set BrightnessFactor (UIntValue)
-// Byte offset: 67, bit offset: 0, length bits 8, min val 1, max val 100
+// Offset: 536, length bits 8, min val 1, max val 100
 static inline void e2p_rgbdimmer_set_brightnessfactor(uint8_t val)
 {
-  eeprom_write_UIntValue(67, 0, 8, val);
+  eeprom_write_UIntValue(536, 8, val);
 }
 
 // Get BrightnessFactor (UIntValue)
-// Byte offset: 67, bit offset: 0, length bits 8, min val 1, max val 100
+// Offset: 536, length bits 8, min val 1, max val 100
 static inline uint8_t e2p_rgbdimmer_get_brightnessfactor(void)
 {
-  return eeprom_read_UIntValue8(67, 0, 8, 1, 100);
+  return eeprom_read_UIntValue8(536, 8, 1, 100);
 }
 
 // BrightnessTranslationTableR (ByteArray)
 // Description: These are the target values (one byte each) for the input brightness of 0, 1, ... 100% to adapt the specific brightness curve of your *red* LED. Set first byte to FF to not use it.
 
 // Set BrightnessTranslationTableR (ByteArray)
-// Byte offset: 68, bit offset: 0, length bits 808
+// Offset: 544, length bits 808
 static inline void e2p_rgbdimmer_set_brightnesstranslationtabler(void *src)
 {
-  eeprom_write_block(src, (uint8_t *)(68), 101);
+  eeprom_write_block(src, (uint8_t *)((544) / 8), 101);
 }
 
 // Get BrightnessTranslationTableR (ByteArray)
-// Byte offset: 68, bit offset: 0, length bits 808
+// Offset: 544, length bits 808
 static inline void e2p_rgbdimmer_get_brightnesstranslationtabler(void *dst)
 {
-  eeprom_read_block(dst, (uint8_t *)(68), 101);
+  eeprom_read_block(dst, (uint8_t *)((544) / 8), 101);
 }
 
 // BrightnessTranslationTableG (ByteArray)
 // Description: These are the target values (one byte each) for the input brightness of 0, 1, ... 100% to adapt the specific brightness curve of your *green* LED. Set first byte to FF to not use it.
 
 // Set BrightnessTranslationTableG (ByteArray)
-// Byte offset: 169, bit offset: 0, length bits 808
+// Offset: 1352, length bits 808
 static inline void e2p_rgbdimmer_set_brightnesstranslationtableg(void *src)
 {
-  eeprom_write_block(src, (uint8_t *)(169), 101);
+  eeprom_write_block(src, (uint8_t *)((1352) / 8), 101);
 }
 
 // Get BrightnessTranslationTableG (ByteArray)
-// Byte offset: 169, bit offset: 0, length bits 808
+// Offset: 1352, length bits 808
 static inline void e2p_rgbdimmer_get_brightnesstranslationtableg(void *dst)
 {
-  eeprom_read_block(dst, (uint8_t *)(169), 101);
+  eeprom_read_block(dst, (uint8_t *)((1352) / 8), 101);
 }
 
 // BrightnessTranslationTableB (ByteArray)
 // Description: These are the target values (one byte each) for the input brightness of 0, 1, ... 100% to adapt the specific brightness curve of your *blue* LED. Set first byte to FF to not use it.
 
 // Set BrightnessTranslationTableB (ByteArray)
-// Byte offset: 270, bit offset: 0, length bits 808
+// Offset: 2160, length bits 808
 static inline void e2p_rgbdimmer_set_brightnesstranslationtableb(void *src)
 {
-  eeprom_write_block(src, (uint8_t *)(270), 101);
+  eeprom_write_block(src, (uint8_t *)((2160) / 8), 101);
 }
 
 // Get BrightnessTranslationTableB (ByteArray)
-// Byte offset: 270, bit offset: 0, length bits 808
+// Offset: 2160, length bits 808
 static inline void e2p_rgbdimmer_get_brightnesstranslationtableb(void *dst)
 {
-  eeprom_read_block(dst, (uint8_t *)(270), 101);
+  eeprom_read_block(dst, (uint8_t *)((2160) / 8), 101);
 }
 
 // Reserved area with 5224 bits
+// Offset: 2968
 
 
 #endif /* _E2P_RGBDIMMER_H */

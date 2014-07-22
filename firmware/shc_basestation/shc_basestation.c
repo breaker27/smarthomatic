@@ -96,17 +96,15 @@ void decode_data(uint8_t len)
 	if ((messagetype != MESSAGETYPE_GET) && (messagetype != MESSAGETYPE_ACK))
 	{
 		uint8_t i;
-		uint8_t start = __HEADEROFFSETBITS / 8;
-		uint8_t shift = __HEADEROFFSETBITS % 8;
 		uint16_t count = (((uint16_t)len * 8) - __HEADEROFFSETBITS + 7) / 8;
 	
 		//UART_PUTF4("\r\n\r\nLEN=%u, START=%u, SHIFT=%u, COUNT=%u\r\n\r\n", len, start, shift, count);
 	
 		UART_PUTS("MessageData=");
 	
-		for (i = start; i < start + count; i++)
+		for (i = 0; i < count; i++)
 		{
-			UART_PUTF("%02x", array_read_UIntValue8(i, shift, 8, 0, 255, bufx));
+			UART_PUTF("%02x", array_read_UIntValue8(__HEADEROFFSETBITS + i * 8, 8, 0, 255, bufx));
 		}
 		
 		UART_PUTS(";");
@@ -433,15 +431,12 @@ int main(void)
 			{
 				uint8_t data_len_raw = (strlen(cmdbuf) - 1 - string_offset_data) / 2;
 				//UART_PUTF("Data bytes = %u\r\n", data_len_raw);
-				
-				uint8_t start = __HEADEROFFSETBITS / 8;
-				uint8_t shift = __HEADEROFFSETBITS % 8;
 
 				// copy message data, using __HEADEROFFSETBITS value and string_offset_data
 				for (i = 0; i < data_len_raw; i++)
 				{
 					uint8_t val = hex_to_uint8((uint8_t *)cmdbuf, string_offset_data + 2 * i + 1);
-					array_write_UIntValue(start + i, shift, 8, val, bufx);
+					array_write_UIntValue(__HEADEROFFSETBITS + i * 8, 8, val, bufx);
 				}
 			}
 			
