@@ -35,10 +35,6 @@
 #include "util.h"
 #include "version.h"
 
-// Don't change this, because other switch count like 8 needs other status message.
-// If support implemented, use EEPROM_SUPPORTEDSWITCHES_* E2P addresses.
-#define SWITCH_COUNT 1
-
 #define RGBLED_DDR DDRD
 #define RGBLED_PORT PORTD
 #define RGBLED_PINPORT PIND
@@ -48,8 +44,6 @@
 
 uint16_t device_id;
 uint32_t station_packetcounter;
-bool switch_state[SWITCH_COUNT];
-uint16_t switch_timeout[SWITCH_COUNT];
 
 uint16_t send_status_timeout = 5;
 uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly after startup
@@ -268,7 +262,6 @@ void process_packet(uint8_t len)
 int main(void)
 {
 	uint8_t loop = 0;
-	uint8_t i;
 
 	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
 	_delay_ms(1000);
@@ -377,29 +370,8 @@ int main(void)
 		// flash LED every second to show the device is alive
 		if (loop == 50)
 		{
-			if (switch_timeout[0])
-			{
-				led_blink(10, 10, 1);
-			}
-
 			loop = 0;
 
-			// Check timeouts and toggle switches
-			for (i = 0; i < SWITCH_COUNT; i++)
-			{
-				if (switch_timeout[i])
-				{
-					switch_timeout[i]--;
-					
-					if (switch_timeout[i] == 0)
-					{
-						UART_PUTS("Timeout! ");
-						//switchRelais(i, !switch_state[i], 0);
-						send_status_timeout = 1; // immediately send the status update
-					}
-				}
-			}
-			
 			// send status from time to time
 			send_status_timeout--;
 		
@@ -424,8 +396,6 @@ int main(void)
 		{
 			_delay_ms(20);
 		}
-
-		switch_led(switch_state[0]);
 
 		rfm12_tick();
 
