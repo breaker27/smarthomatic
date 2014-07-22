@@ -23,7 +23,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "util.h"
+
 #include "../src_common/e2p_access.h"
+#include "../src_common/msggrp_weather.h"
+#include "../src_common/msggrp_gpio.h"
 
 uint8_t res = 0;
 
@@ -49,25 +53,25 @@ void compare(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t minval, 
 // Test one of the e2p read functions.
 void test_eeprom_read_UIntValue8(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t minval, uint32_t maxval, uint32_t assumed_value)
 {
-	uint32_t x = eeprom_read_UIntValue8(byte, bit, length_bits, minval, maxval);
+	uint32_t x = eeprom_read_UIntValue8(byte * 8 + bit, length_bits, minval, maxval);
 	compare(byte, bit, length_bits, minval, maxval, assumed_value, x);
 }
 
 void test_eeprom_read_UIntValue16(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t minval, uint32_t maxval, uint32_t assumed_value)
 {
-	uint32_t x = eeprom_read_UIntValue16(byte, bit, length_bits, minval, maxval);
+	uint32_t x = eeprom_read_UIntValue16(byte * 8 + bit, length_bits, minval, maxval);
 	compare(byte, bit, length_bits, minval, maxval, assumed_value, x);
 }
 
 void test_eeprom_read_UIntValue32(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t minval, uint32_t maxval, uint32_t assumed_value)
 {
-	uint32_t x = eeprom_read_UIntValue32(byte, bit, length_bits, minval, maxval);
+	uint32_t x = eeprom_read_UIntValue32(byte * 8 + bit, length_bits, minval, maxval);
 	compare(byte, bit, length_bits, minval, maxval, assumed_value, x);
 }
 
 void test_array_read_UIntValue8(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t minval, uint32_t maxval, uint32_t assumed_value, uint8_t * array)
 {
-	uint32_t x = array_read_UIntValue8(byte, bit, length_bits, minval, maxval, array);
+	uint32_t x = array_read_UIntValue8(byte * 8 + bit, length_bits, minval, maxval, array);
 	compare(byte, bit, length_bits, minval, maxval, assumed_value, x);
 }
 
@@ -95,6 +99,31 @@ void test_array_value(uint16_t pos, uint8_t assumed_value)
 	printf("Test array value at pos %d. Assumed value: %d, returned value: %d", pos, assumed_value, val);
 	
 	if (val != assumed_value)
+	{
+		res = 1;
+		printf(" --> NOK\n");
+	}
+	else
+	{
+		printf(" --> OK\n");
+	}
+}
+
+void test_bufx(char * assumed_value)
+{
+	char s[100];
+
+	uint8_t i;
+	
+	for (i = 0; i < 32; i++)
+	{
+		sprintf(s + i * 2, "%02x", bufx[i]);
+	}
+	
+	printf("Test access functions for e2p / packet data\r\n");
+	printf("  Assumed value: %s, returned value: %s", assumed_value, s);
+
+	if (strcmp(assumed_value, s) != 0)
 	{
 		res = 1;
 		printf(" --> NOK\n");
@@ -141,20 +170,20 @@ int main(int argc , char** argv){
 	test_array_read_UIntValue8(5, 7, 1, 0, 255, 1, testarray); // bit masking test
 
 	// write tests within one byte
-	eeprom_write_UIntValue(5, 0, 8, 133); // normal write
+	eeprom_write_UIntValue(5 * 8 + 0, 8, 133); // normal write
 	test_eeprom_value(5, 133);
-	eeprom_write_UIntValue(5, 1, 2, 3); // offset test 1
+	eeprom_write_UIntValue(5 * 8 + 1, 2, 3); // offset test 1
 	test_eeprom_value(5, 229);
-	eeprom_write_UIntValue(5, 2, 1, 0); // offset test 2
+	eeprom_write_UIntValue(5 * 8 + 2, 1, 0); // offset test 2
 	test_eeprom_value(5, 197);
 
 	// write test over byte boundary
-	eeprom_write_UIntValue(4, 4, 8, 0); // offset test 2
+	eeprom_write_UIntValue(4 * 8 + 4, 8, 0); // offset test 2
 	test_eeprom_value(4, 0);
 	test_eeprom_value(5, 5);
 
 	// write test 32 bits over byte boundary
-	eeprom_write_UIntValue(4, 4, 32, 0b10101010101011001100110011011010); // offset test 3
+	eeprom_write_UIntValue(4 * 8 + 4, 32, 0b10101010101011001100110011011010); // offset test 3
 	test_eeprom_value(4, 10);
 	test_eeprom_value(5, 170);
 	test_eeprom_value(6, 204);
@@ -162,18 +191,39 @@ int main(int argc , char** argv){
 	test_eeprom_value(8, 168);
 	
 	// write test 17 bits over byte boundary
-	eeprom_write_UIntValue(16, 3, 17, 0b11110000111100001); // offset test 3
+	eeprom_write_UIntValue(16 * 8 + 3, 17, 0b11110000111100001); // offset test 3
 	test_eeprom_value(16, 254);
 	test_eeprom_value(17, 30);
 	test_eeprom_value(18, 29);
 	
 	// write tests within one byte (ARRAY)
-	array_write_UIntValue(5, 0, 8, 133, testarray); // normal write
+	array_write_UIntValue(5 * 8 + 0, 8, 133, testarray); // normal write
 	test_array_value(5, 133);
-	array_write_UIntValue(5, 1, 2, 3, testarray); // offset test 1
+	array_write_UIntValue(5 * 8 + 1, 2, 3, testarray); // offset test 1
 	test_array_value(5, 229);
-	array_write_UIntValue(5, 2, 1, 0, testarray); // offset test 2
+	array_write_UIntValue(5 * 8 + 2, 1, 0, testarray); // offset test 2
 	test_array_value(5, 197);
+	
+	// write test envsensor
+	pkg_header_init_weather_temperature_status();
+	msg_weather_temperature_set_temperature(271);
+	pkg_header_set_senderid(177);
+	pkg_header_set_packetcounter(2345);
+	test_bufx("000000000b10009298142021e000000000000000000000000000000000000000");
+	
+	// write test GPIO analogpin
+	pkg_header_init_gpio_analogpin_status();
+	msg_gpio_analogpin_set_on(1, true);
+	msg_gpio_analogpin_set_on(3, true);
+	msg_gpio_analogpin_set_on(4, true);
+	msg_gpio_analogpin_set_voltage(0, 1100);
+	msg_gpio_analogpin_set_voltage(1, 8);
+	msg_gpio_analogpin_set_voltage(4, 0);
+	pkg_header_set_senderid(999);
+	pkg_header_set_packetcounter(65432);
+	test_bufx("000000003e700ff988024b113004000000000000000000000000000000000000");
+	
+	printf("\r\nOverall result: %s\r\n", res ? "NOK (at least one test failed)" : "OK (all tests ok)");
 	
 	return res;
 }
