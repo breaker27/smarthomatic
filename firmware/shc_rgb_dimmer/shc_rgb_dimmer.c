@@ -49,7 +49,6 @@ uint16_t send_status_timeout = 5;
 uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly after startup
 
 uint8_t brightness_factor;
-uint8_t curr_color;
 
 #define RED_PIN 6
 #define GRN_PIN 5
@@ -59,11 +58,25 @@ uint8_t curr_color;
 #define GRN_DDR DDRD
 #define BLU_DDR DDRB
 
-uint8_t anim_col[10];
-uint8_t anim_time[10];
-uint8_t anim_repeat;
-bool anim_autoreverse;
+struct rgb_color_t
+{
+	uint8_t r;
+	uint8_t g;
+	uint8_t b;
+};
 
+struct rgb_color_t anim_col[10]; // The 10 colors used for the animation.
+uint8_t anim_col_i[10];          // The 10 (indexed) colors used for the animation.
+uint8_t anim_time[10];           // The times used for animate blending between two colors.
+                                 // 0 indicates the last color used.
+uint8_t anim_repeat;             // Number of repeats, 0 = endless.
+bool anim_autoreverse;           // Play back animation in reverse order when finished.
+uint16_t anim_len = 0;           // length of animation of current color to next color.
+                                 // max. anim. time is ~ 340s = 10600 steps à 32ms
+uint16_t anim_pos = 0;           // Position in the current animation.
+uint8_t anim_col_index = 0;      // Index of currently animated color.
+
+// Timer0 (8 Bit) and Timer1 (10 Bit) are used for the PWM output for the LEDs.
 // Read for more information about PWM:
 // http://www.protostack.com/blog/2011/06/atmega168a-pulse-width-modulation-pwm/
 // http://extremeelectronics.co.in/avr-tutorials/pwm-signal-generation-by-using-avr-timers-part-ii/
@@ -86,14 +99,35 @@ void PWM_init(void)
 	TCCR1B = (1 << CS10);
 }
 
-void setRGB(uint8_t r, uint8_t g, uint8_t b)
+// Timer2 (8 Bit) is used for accurate counting of the animation time.
+void timer2_init(void)
 {
-	OCR0A = (uint16_t)r * brightness_factor / 100;
-	OCR0B = (uint16_t)g * brightness_factor / 100;
-	OCR1A = (uint16_t)b * brightness_factor / 100;
+	// Clock source = I/O clock, 1/1024 prescaler
+	TCCR2B = (1 << CS22) | (1 << CS21) | (1 << CS20);
+
+	// Timer/Counter2 Overflow Interrupt Enable
+	TIMSK2 = (1 << TOIE2);
+}
+
+// Count up the animation_position every 1/8000000 * 1024 * 256 ms = 32,768 ms,
+// if animation is running.
+ISR (TIMER2_OVF_vect)
+{
+	if (anim_pos < anim_len)
+	{
+		anim_pos++;
+	}
+}
+
+void set_PWM(struct rgb_color_t color)
+{
+	OCR0A = (uint16_t)color.r * brightness_factor / 100;
+	OCR0B = (uint16_t)color.g * brightness_factor / 100;
+	OCR1A = (uint16_t)color.b * brightness_factor / 100;
 }
 
 
+// Calculate an RGB value out of the index color.
 // The color palette is 6 bit with 2 bits per color (same as EGA).
 // Bit 1+0 = blue
 // Bit 3+2 = green
@@ -103,18 +137,41 @@ void setRGB(uint8_t r, uint8_t g, uint8_t b)
 // 1 -> 5
 // 2 -> 10 = 0xA
 // 3 -> 15 = 0xF
-void setColor(uint8_t color)
+struct rgb_color_t index2color(uint8_t color)
 {
-	uint8_t r = ((color & 0b110000) >> 4) * 5;
-	uint8_t g = ((color & 0b001100) >> 2) * 5;
-	uint8_t b = ((color & 0b000011) >> 0) * 5;
-	setRGB(r, g, b);
-	curr_color = color;
+	struct rgb_color_t res;
+	
+	res.r = ((color & 0b110000) >> 4) * 5;
+	res.g = ((color & 0b001100) >> 2) * 5;
+	res.b = ((color & 0b000011) >> 0) * 5;
+	
+	return res;
 }
 
-uint8_t getColor(void)
+// Calculate the color that has to be shown according to the animation settings and counter.
+struct rgb_color_t calc_pwm_color(void)
 {
-	return curr_color; // TODO
+	struct rgb_color_t res;
+
+	res.r = (uint8_t)((uint32_t)anim_col[anim_col_index].r * (anim_len - anim_pos) / anim_len
+		+ (uint32_t)anim_col[anim_col_index + 1].r * anim_pos / anim_len);
+	res.g = (uint8_t)((uint32_t)anim_col[anim_col_index].g * (anim_len - anim_pos) / anim_len
+		+ (uint32_t)anim_col[anim_col_index + 1].g * anim_pos / anim_len);
+	res.b = (uint8_t)((uint32_t)anim_col[anim_col_index].b * (anim_len - anim_pos) / anim_len
+		+ (uint32_t)anim_col[anim_col_index + 1].b * anim_pos / anim_len);
+
+	return res;
+}
+
+void set_animation_fixed_color(uint8_t color_index)
+{
+	anim_col[0] = index2color(color_index);
+	anim_time[0] = 0;
+	anim_repeat = 1;
+	anim_autoreverse = false;
+	anim_len = 0;
+	anim_pos = 0;
+	anim_col_index = 0;
 }
 
 void dump_animation_values(void)
@@ -124,10 +181,10 @@ void dump_animation_values(void)
 	
 	for (i = 0; i < 10; i++)
 	{
-		printf("%d/%d,", anim_col[i], anim_time[i]);
+		UART_PUTF4("(%d,%d,%d) %d,", anim_col[i].r, anim_col[i].g, anim_col[i].b, anim_time[i]);
 	}
 
-	printf(" repeat: %d, autoreverse: %s\r\n", anim_repeat, anim_autoreverse ? "ON" : "OFF");
+	UART_PUTF2(" repeat: %d, autoreverse: %s\r\n", anim_repeat, anim_autoreverse ? "ON" : "OFF");
 }
 
 void send_version_status(void)
@@ -177,7 +234,8 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 			
 			for (i = 0; i < 10; i++)
 			{
-				anim_col[i] = msg_dimmer_coloranimation_get_color(i);
+				anim_col_i[i] = msg_dimmer_coloranimation_get_color(i);
+				anim_col[i] = index2color(anim_col_i[i]);
 				anim_time[i] = msg_dimmer_coloranimation_get_time(i);
 			}
 			
@@ -186,10 +244,7 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		}
 		else
 		{
-			anim_col[0] = msg_dimmer_color_get_color();
-			anim_time[0] = 0;
-			anim_repeat = 1;
-			anim_autoreverse = false;
+			set_animation_fixed_color(msg_dimmer_color_get_color());
 		}
 		
 		dump_animation_values();
@@ -226,7 +281,7 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 			
 			for (i = 0; i < 10; i++)
 			{
-				msg_dimmer_coloranimation_set_color(i, anim_col[i]);
+				msg_dimmer_coloranimation_set_color(i, anim_col_i[i]);
 				msg_dimmer_coloranimation_set_time(i, anim_time[i]);
 			}
 			
@@ -236,7 +291,7 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		else
 		{
 			pkg_header_init_dimmer_color_ackstatus();
-			msg_dimmer_color_set_color(getColor());
+			msg_dimmer_color_set_color(anim_col_i[0]);
 		}
 		
 		// set message data
@@ -362,6 +417,9 @@ int main(void)
 	PWM_init();
 	
 	rfm12_init();
+	
+	set_animation_fixed_color(0);
+	timer2_init();
 
 	sei();
 
