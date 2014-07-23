@@ -134,16 +134,16 @@ void set_PWM(struct rgb_color_t color)
 // Bit 5+4 = red
 // The brightness per color can be:
 // 0 -> 0
-// 1 -> 5
-// 2 -> 10 = 0xA
-// 3 -> 15 = 0xF
+// 1 -> 85
+// 2 -> 170
+// 3 -> 255
 struct rgb_color_t index2color(uint8_t color)
 {
 	struct rgb_color_t res;
 	
-	res.r = ((color & 0b110000) >> 4) * 5;
-	res.g = ((color & 0b001100) >> 2) * 5;
-	res.b = ((color & 0b000011) >> 0) * 5;
+	res.r = ((color & 0b110000) >> 4) * 85;
+	res.g = ((color & 0b001100) >> 2) * 85;
+	res.b = ((color & 0b000011) >> 0) * 85;
 	
 	return res;
 }
