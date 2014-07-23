@@ -562,7 +562,7 @@
 				<Description>If true, the animation will be played back in the normal direction and then in reverse order.</Description>
 			</BoolValue>
 			<Array>
-				<Length>8</Length>
+				<Length>10</Length>
 				<UIntValue>
 					<ID>Color</ID>
 					<Description>The color is according to the 6 bit color palette used in SHC. The last color (or the first when AutoReverse is true) of the animation will remain visible after the animation is completed.</Description>
