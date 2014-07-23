@@ -58,6 +58,13 @@ uint8_t brightness_factor;
 #define GRN_DDR DDRD
 #define BLU_DDR DDRB
 
+// For the given 5 bit animation time, these are the amount of timer 2 cycles it has to run.
+// The input value x means 0.1s * 1.3 ^ x and covers 0.1s to ~340s. Each timer cycle is 32.768ms.
+// Therefore, the values are: round((0.1s * 1.3 ^ x) / 0.032768s).
+const uint16_t anim_cycles[32] = {3, 4, 5, 7, 9, 11, 15, 19, 25, 32, 42, 55, 71, 92, 120,
+                                  156, 203, 264, 343, 446, 580, 754, 980, 1274, 1656, 2153,
+                                  2799, 3639, 4731, 6150, 7996, 10394};
+
 struct rgb_color_t
 {
 	uint8_t r;
@@ -109,16 +116,6 @@ void timer2_init(void)
 	TIMSK2 = (1 << TOIE2);
 }
 
-// Count up the animation_position every 1/8000000 * 1024 * 256 ms = 32,768 ms,
-// if animation is running.
-ISR (TIMER2_OVF_vect)
-{
-	if (anim_pos < anim_len)
-	{
-		anim_pos++;
-	}
-}
-
 void set_PWM(struct rgb_color_t color)
 {
 	OCR0A = (uint16_t)color.r * brightness_factor / 100;
@@ -163,6 +160,34 @@ struct rgb_color_t calc_pwm_color(void)
 	return res;
 }
 
+// Count up the animation_position every 1/8000000 * 1024 * 256 ms = 32.768 ms,
+// if animation is running.
+ISR (TIMER2_OVF_vect)
+{
+	// TODO: Implement reverse direction.
+	// TODO: Implement repeat.
+	
+	if (anim_pos < anim_len)
+	{
+		anim_pos++;
+	}
+	else
+	{
+		if (anim_col_index < 9)
+		{
+			anim_col_index++;
+			anim_pos = 0;
+			anim_len = anim_cycles[anim_time[anim_col_index]];
+		}
+		else
+		{
+			return; // don't change color at end of animation
+		}
+	}
+	
+	set_PWM(calc_pwm_color());
+}
+
 void set_animation_fixed_color(uint8_t color_index)
 {
 	anim_col[0] = index2color(color_index);
@@ -177,14 +202,21 @@ void set_animation_fixed_color(uint8_t color_index)
 void dump_animation_values(void)
 {
 	uint8_t i;
-	UART_PUTS("Animation color/time: ");
+	
+	UART_PUTF2("Animation repeat: %d, autoreverse: %s, color/time: ",
+		anim_repeat, anim_autoreverse ? "ON" : "OFF");
 	
 	for (i = 0; i < 10; i++)
 	{
-		UART_PUTF4("(%d,%d,%d) %d,", anim_col[i].r, anim_col[i].g, anim_col[i].b, anim_time[i]);
+		UART_PUTF2("%d/%d", anim_col_i[i], anim_time[i]);
+		
+		if (i < 9)
+		{
+			UART_PUTS(", ");
+		}
 	}
 
-	UART_PUTF2(" repeat: %d, autoreverse: %s\r\n", anim_repeat, anim_autoreverse ? "ON" : "OFF");
+	UART_PUTS("\r\n");
 }
 
 void send_version_status(void)
