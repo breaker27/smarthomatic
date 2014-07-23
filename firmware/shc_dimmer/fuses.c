@@ -20,10 +20,10 @@
 
 FUSES = 
 { 
-	// value 0xE2 - these should also be the default settings for ATMega328
+	// value 0xE2 - disable clock divider for 8 MHz clock, the other fuses are default for ATMega328
     .low = (FUSE_CKSEL0 & FUSE_CKSEL2 & FUSE_CKSEL3 & FUSE_SUT0),
 	// value 0xD1 - EESAVE is 0, others are default
     .high = (FUSE_SPIEN & FUSE_EESAVE & FUSE_BOOTSZ1 & FUSE_BOOTSZ0),
-	// value 0x07 - default at ATMega328
-    .extended = 0x07, 
+	// value 0xFD - set BOD to 2.7V to prevent accidentially FLASH garbage
+	.extended = FUSE_BODLEVEL1,
 };
