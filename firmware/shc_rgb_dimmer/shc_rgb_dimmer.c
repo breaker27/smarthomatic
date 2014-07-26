@@ -58,12 +58,13 @@ uint8_t brightness_factor;
 #define GRN_DDR DDRD
 #define BLU_DDR DDRB
 
-// For the given 5 bit animation time, these are the amount of timer 2 cycles it has to run.
-// The input value x means 0.1s * 1.3 ^ x and covers 0.1s to ~340s. Each timer cycle is 32.768ms.
-// Therefore, the values are: round((0.1s * 1.3 ^ x) / 0.032768s).
-const uint16_t anim_cycles[32] = {3, 4, 5, 7, 9, 11, 15, 19, 25, 32, 42, 55, 71, 92, 120,
+// For the given 5 bit animation time, these are the lengths in timer 2 cycles.
+// The input value x means 0.1s * 1.3 ^ (x - 1) and covers 0.1s to 262s. Each timer cycle is 32.768ms.
+// Therefore, the values are: round((0.1s * 1.3 ^ (x - 1)) / 0.032768s).
+// Animation time 0 is animation OFF, so there are 31 defined animation times.
+const uint16_t anim_cycles[31] = {3, 4, 5, 7, 9, 11, 15, 19, 25, 32, 42, 55, 71, 92, 120,
                                   156, 203, 264, 343, 446, 580, 754, 980, 1274, 1656, 2153,
-                                  2799, 3639, 4731, 6150, 7996, 10394};
+                                  2799, 3639, 4731, 6150, 7996};
 
 struct rgb_color_t
 {
@@ -83,7 +84,7 @@ uint16_t anim_len = 0;           // length of animation of current color to next
 uint16_t anim_pos = 0;           // Position in the current animation.
 uint8_t anim_col_index = 0;      // Index of currently animated color.
 
-// Timer0 (8 Bit) and Timer1 (10 Bit) are used for the PWM output for the LEDs.
+// Timer0 (8 Bit) and Timer1 (10 Bit in 8 Bit mode) are used for the PWM output for the LEDs.
 // Read for more information about PWM:
 // http://www.protostack.com/blog/2011/06/atmega168a-pulse-width-modulation-pwm/
 // http://extremeelectronics.co.in/avr-tutorials/pwm-signal-generation-by-using-avr-timers-part-ii/
@@ -122,7 +123,6 @@ void set_PWM(struct rgb_color_t color)
 	OCR0B = (uint16_t)color.g * brightness_factor / 100;
 	OCR1A = (uint16_t)color.b * brightness_factor / 100;
 }
-
 
 // Calculate an RGB value out of the index color.
 // The color palette is 6 bit with 2 bits per color (same as EGA).
@@ -167,6 +167,11 @@ ISR (TIMER2_OVF_vect)
 	// TODO: Implement reverse direction.
 	// TODO: Implement repeat.
 	
+	if (anim_len == 0) // no animation running
+	{
+		return;
+	}
+	
 	if (anim_pos < anim_len)
 	{
 		anim_pos++;
@@ -176,8 +181,18 @@ ISR (TIMER2_OVF_vect)
 		if (anim_col_index < 9)
 		{
 			anim_col_index++;
-			anim_pos = 0;
-			anim_len = anim_cycles[anim_time[anim_col_index]];
+			
+			if ((9 == anim_col_index) || (0 == anim_time[anim_col_index])) // end of animation
+			{
+				set_PWM(anim_col[anim_col_index]); // set color last time
+				anim_len = 0; // end animation
+				return;
+			}
+			else
+			{
+				anim_pos = 0;
+				anim_len = anim_cycles[anim_time[anim_col_index]];
+			}
 		}
 		else
 		{
