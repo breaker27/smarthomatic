@@ -59,12 +59,12 @@ uint8_t brightness_factor;
 #define BLU_DDR DDRB
 
 // For the given 5 bit animation time, these are the lengths in timer 2 cycles.
-// The input value x means 0.1s * 1.3 ^ (x - 1) and covers 0.1s to 262s. Each timer cycle is 32.768ms.
-// Therefore, the values are: round((0.1s * 1.3 ^ (x - 1)) / 0.032768s).
+// The input value x means 0.05s * 1.3 ^ x and covers 30ms to 170s. Each timer cycle is 32.768ms.
+// Therefore, the values are: round((0.05s * 1.3 ^ x) / 0.032768s).
 // Animation time 0 is animation OFF, so there are 31 defined animation times.
-const uint16_t anim_cycles[31] = {3, 4, 5, 7, 9, 11, 15, 19, 25, 32, 42, 55, 71, 92, 120,
-                                  156, 203, 264, 343, 446, 580, 754, 980, 1274, 1656, 2153,
-                                  2799, 3639, 4731, 6150, 7996};
+const uint16_t anim_cycles[31] = {1, 2, 3, 4, 6, 8, 10, 12, 16, 21, 27, 36, 46, 60,
+                                  78, 102, 132, 172, 223, 290, 377, 490, 637, 828,
+                                  1077, 1400, 1820, 2366, 3075, 3998, 5197};
 
 struct rgb_color_t
 {
