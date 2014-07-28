@@ -16,6 +16,9 @@
 * with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef _LM75_H
+#define _LM75_H
+
 #include "util.h"
 
 /*
@@ -71,3 +74,5 @@ static inline uint16_t lm75_get_meas_time_ms(void)
  * Returns the measured temperature in centigrades.
  */
 int16_t lm75_get_tmp(void);
+
+#endif /* _LM75_H */

@@ -19,7 +19,14 @@
 package shcee.editors;
 
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JPanel;
 import javax.swing.text.DefaultCaret;
 
 import org.w3c.dom.Node;
@@ -31,6 +38,7 @@ public class ByteArrayEditor extends AbstractEditor
 	private static final long serialVersionUID = -4736742201423869251L;
 
 	private int bytes;
+	private String defaultVal;
 	private ByteArrayTextArea input;
 	
 	public ByteArrayEditor(Node root, Color baseColor, int arrayIndex)
@@ -39,17 +47,49 @@ public class ByteArrayEditor extends AbstractEditor
 		
 		// add label about format
 		format = "ByteArray of " + bytes + " bytes (use HEX format as input)";
+		
+		if (null != defaultVal)
+		{
+			format += " (default: " + defaultVal + ")";
+		}
+
 		addLabel(format);
 		
 		// add input
-		input = new ByteArrayTextArea(bytes);
-		add(input);
+		JPanel inputPanel = new JPanel();
+		inputPanel.setLayout(new BoxLayout(inputPanel, javax.swing.BoxLayout.X_AXIS));
+		inputPanel.setBackground(this.getBackground());
+
+		input = new ByteArrayTextArea(bytes, defaultVal);
+		inputPanel.add(input);
+
+		if (null != defaultVal)
+		{
+			JButton buttonDefault = new JButton("Default");
+			
+			buttonDefault.addActionListener(new ActionListener() {
+	            public void actionPerformed(ActionEvent e)
+	            {
+	                onButtonDefault();
+	            }
+	        });
+
+			inputPanel.add(Box.createRigidArea(new Dimension(6, 6))); // space between components
+			inputPanel.add(buttonDefault);
+		}
+		
+		add(inputPanel);
 		
 		// add description
 		description = Util.getChildNodeValue(root, "Description");
 		addLabel(description);
 	}
 
+	private void onButtonDefault()
+	{
+		input.setText(defaultVal);
+	}
+	
 	@Override
 	public boolean dataIsValid()
 	{
@@ -63,6 +103,8 @@ public class ByteArrayEditor extends AbstractEditor
 		
 		if (name.equals("Bytes"))
 			bytes = Integer.parseInt(n.getFirstChild().getNodeValue());
+		else if (name.equals("DefaultVal"))
+			defaultVal = n.getFirstChild().getNodeValue();		
 	}
 
 	@Override

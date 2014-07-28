@@ -177,7 +177,7 @@ void signal_error_state(void)
 
 // Check if the EEPROM is compatible to the device by checking against the device type byte in EEPROM.
 // If not, wait in endless loop and let LED blink.
-void check_eeprom_compatibility(uint8_t expectedDeviceType)
+void check_eeprom_compatibility(DeviceTypeEnum expectedDeviceType)
 {
 	if (expectedDeviceType != e2p_hardware_get_devicetype())
 	{

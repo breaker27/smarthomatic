@@ -20,9 +20,6 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 #include <string.h>
-#include <avr/wdt.h>
-#include <avr/sleep.h>
-#include <avr/eeprom.h>
 
 #include "rfm12.h"
 #include "uart.h"
@@ -83,7 +80,7 @@ uint8_t start_brightness = 0;
 uint8_t end_brightness = 0;
 float current_brightness = 0;
 
-uint8_t device_id;
+uint16_t device_id;
 uint8_t use_pwm_translation = 1;
 uint32_t station_packetcounter;
 uint8_t switch_off_counter = 0;

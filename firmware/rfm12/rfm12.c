@@ -301,10 +301,14 @@ ISR(RFM12_INT_VECT) //, ISR_NOBLOCK)
 			//wakeup timer feature
 			#if RFM12_USE_WAKEUP_TIMER
 				//clear wakeup timer once
-				rfm12_data(ctrl.pwrmgt_shadow & ~RFM12_PWRMGT_EW);
+				// UF: Commented out resetting the wake-up timer, because
+				// waking up in fixed intervals is what's expected in the EnvSensor.
+				// Hopefully, this doesn't lead to problems in other use cases.
+				// rfm12_data(ctrl.pwrmgt_shadow & ~RFM12_PWRMGT_EW);
+				
 				//set shadow register to default receive state
 				//the define correctly handles the transmit only mode
-				ctrl.pwrmgt_shadow = (RFM12_CMD_PWRMGT | PWRMGT_RECEIVE);							
+				ctrl.pwrmgt_shadow = (RFM12_CMD_PWRMGT | PWRMGT_RECEIVE);
 			#endif /* RFM12_USE_WAKEUP_TIMER */
 				
 			//turn off the transmitter and enable receiver

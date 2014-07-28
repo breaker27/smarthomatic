@@ -238,6 +238,59 @@
 		</Message>
 	</MessageGroup>
 	<MessageGroup>
+		<Name>GPIO</Name>
+		<Description>This group contains messages for general I/O functions. The meaning of the values is not known to the SHC devices. It depends on the connected parts (e.g. switches). The values have to be processed by the user/server software appropriately.</Description>
+		<MessageGroupID>1</MessageGroupID>
+		<Message>
+			<Name>DigitalPin</Name>
+			<Description>This is the state of up to 8 pins.</Description>
+			<MessageID>1</MessageID>
+			<MessageType>0</MessageType>
+			<MessageType>1</MessageType>
+			<MessageType>2</MessageType>
+			<MessageType>8</MessageType>
+			<MessageType>9</MessageType>
+			<MessageType>10</MessageType>
+			<Validity>test</Validity>
+			<Array>
+				<Length>8</Length>
+				<BoolValue>
+					<ID>On</ID>
+					<Description>Tells if the pin is on (at high level) or not (low level).</Description>
+				</BoolValue>
+			</Array>
+		</Message>
+		<Message>
+			<Name>AnalogPin</Name>
+			<Description>This is the voltage of up to 8 ADC channels. The ATMega328 in the PDIP package has only 6 ADCs and one ADC may be blocked by the battery voltage measurement, so there may be less than 8 ADC values reported depending on the device and configuration.</Description>
+			<MessageID>2</MessageID>
+			<MessageType>0</MessageType>
+			<MessageType>1</MessageType>
+			<MessageType>2</MessageType>
+			<MessageType>8</MessageType>
+			<MessageType>9</MessageType>
+			<MessageType>10</MessageType>
+			<Validity>test</Validity>
+			<Array>
+				<Length>8</Length>
+				<BoolValue>
+					<ID>On</ID>
+					<Description>Tells if the pin is on (voltage over trigger threshold) or not.</Description>
+				</BoolValue>
+			</Array>
+			<Array>
+				<Length>8</Length>
+				<UIntValue>
+					<ID>Voltage</ID>
+					<Description>This is the voltage level in mV.</Description>
+					<Bits>11</Bits>
+					<MinVal>0</MinVal>
+					<MaxVal>1100</MaxVal>
+				</UIntValue>
+			</Array>
+		</Message>
+	</MessageGroup>
+	<MessageGroup>
 		<Name>Weather</Name>
 		<Description>This message group contains messages for weather data.</Description>
 		<MessageGroupID>10</MessageGroupID>
@@ -358,7 +411,7 @@
 			<Validity>test</Validity>
 			<BoolValue>
 				<ID>On</ID>
-				<Description/>
+				<Description>Tells if the switch is on (active).</Description>
 			</BoolValue>
 			<UIntValue>
 				<ID>TimeoutSec</ID>

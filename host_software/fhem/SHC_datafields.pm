@@ -21,6 +21,7 @@
 # You should have received a copy of the GNU General Public License along
 # with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 ##########################################################################
+# $Id: SHC_datafields.pm 6177 2014-06-29 11:09:17Z rr2000 $
 
 package SHC_util;
 
@@ -116,7 +117,7 @@ sub setUInt($$$$)
   # move bits to the left border
   $value = $value << (32 - $length_bits);
 
-  print "Moved left: val " . $value . "\r\n";
+  # DEBUG print "Moved left: val " . $value . "\r\n";
 
   # 1st byte
   my $src_start = 0;
@@ -124,7 +125,7 @@ sub setUInt($$$$)
   my $len       = min($length_bits, 8 - $bit);
   my $val8      = get_bits($value, $src_start, $len);
 
-  print "   Write bits to byte " . $byte . ", dst_start " . $dst_start . ", len " . $len . ", val8 " . $val8 . "\r\n";
+  # DEBUG print "   Write bits to byte " . $byte . ", dst_start " . $dst_start . ", len " . $len . ", val8 " . $val8 . "\r\n";
 
   setUIntBits($byteArrayRef, $byte, $dst_start, $len, $val8);
 
@@ -136,7 +137,7 @@ sub setUInt($$$$)
     $val8 = get_bits($value, $src_start, $len);
     $byte++;
 
-    print "      Byte nr. " . $byte . ", src_start " . $src_start . ", len " . $len . ", val8 " . $val8 . "\r\n";
+    # DEBUG print "      Byte nr. " . $byte . ", src_start " . $src_start . ", len " . $len . ", val8 " . $val8 . "\r\n";
 
     setUIntBits($byteArrayRef, $byte, $dst_start, $len, $val8);
 
@@ -174,6 +175,7 @@ sub new
     _id     => shift,
     _offset => shift,
     _bits   => shift,
+    _length => shift,
   };
   bless $self, $class;
   return $self;
@@ -181,16 +183,16 @@ sub new
 
 sub getValue
 {
-  my ($self, $byteArrayRef) = @_;
+  my ($self, $byteArrayRef, $index) = @_;
 
-  return SHC_util::getUInt($byteArrayRef, $self->{_offset}, $self->{_bits});
+  return SHC_util::getUInt($byteArrayRef, $self->{_offset} + $self->{_bits} * $index, $self->{_bits});
 }
 
 sub setValue
 {
-  my ($self, $byteArrayRef, $value) = @_;
+  my ($self, $byteArrayRef, $value, $index) = @_;
 
-  SHC_util::setUInt($byteArrayRef, $self->{_offset}, $self->{_bits}, $value);
+  SHC_util::setUInt($byteArrayRef, $self->{_offset} + $self->{_bits} * $index, $self->{_bits}, $value);
 }
 
 # ----------- IntValue class -----------
@@ -204,6 +206,7 @@ sub new
     _id     => shift,
     _offset => shift,
     _bits   => shift,
+    _length => shift,
   };
   bless $self, $class;
   return $self;
@@ -211,16 +214,16 @@ sub new
 
 sub getValue
 {
-  my ($self, $byteArrayRef) = @_;
+  my ($self, $byteArrayRef, $index) = @_;
 
-  return SHC_util::getUInt($byteArrayRef, $self->{_offset}, $self->{_bits});
+  return SHC_util::getUInt($byteArrayRef, $self->{_offset} + $self->{_bits} * $index, $self->{_bits});
 }
 
 sub setValue
 {
-  my ($self, $byteArrayRef, $value) = @_;
+  my ($self, $byteArrayRef, $value, $index) = @_;
 
-  SHC_util::setUInt($byteArrayRef, $self->{_offset}, $self->{_bits}, $value);
+  SHC_util::setUInt($byteArrayRef, $self->{_offset} + $self->{_bits} * $index, $self->{_bits}, $value);
 }
 
 # ----------- BoolValue class -----------
@@ -233,6 +236,7 @@ sub new
   my $self  = {
     _id     => shift,
     _offset => shift,
+    _length => shift,
   };
   bless $self, $class;
   return $self;
@@ -240,16 +244,16 @@ sub new
 
 sub getValue
 {
-  my ($self, $byteArrayRef) = @_;
+  my ($self, $byteArrayRef, $index) = @_;
 
-  return SHC_util::getUInt($byteArrayRef, $self->{_offset}, 1) == 1 ? 1 : 0;
+  return SHC_util::getUInt($byteArrayRef, $self->{_offset} + $index, 1) == 1 ? 1 : 0;
 }
 
 sub setValue
 {
-  my ($self, $byteArrayRef, $value) = @_;
+  my ($self, $byteArrayRef, $value, $index) = @_;
 
-  return SHC_util::setUInt($byteArrayRef, $self->{_offset}, 1, $value == 0 ? 0 : 1);
+  return SHC_util::setUInt($byteArrayRef, $self->{_offset} + $index, 1, $value == 0 ? 0 : 1);
 }
 
 # ----------- EnumValue class -----------
@@ -266,6 +270,7 @@ sub new
     _id     => shift,
     _offset => shift,
     _bits   => shift,
+    _length => shift,
   };
   bless $self, $class;
   return $self;
@@ -281,18 +286,18 @@ sub addValue
 
 sub getValue
 {
-  my ($self, $byteArrayRef) = @_;
+  my ($self, $byteArrayRef, $index) = @_;
 
-  my $value = SHC_util::getUInt($byteArrayRef, $self->{_offset}, $self->{_bits});
+  my $value = SHC_util::getUInt($byteArrayRef, $self->{_offset} + $self->{_bits} * $index, $self->{_bits});
   return $value2name{$value};
 }
 
 sub setValue
 {
-  my ($self, $byteArrayRef, $name) = @_;
+  my ($self, $byteArrayRef, $name, $index) = @_;
 
   my $value = $name2value{$name};
-  SHC_util::setUInt($byteArrayRef, $self->{_offset}, $self->{_bits}, $value);
+  SHC_util::setUInt($byteArrayRef, $self->{_offset} + $self->{_bits} * $index, $self->{_bits}, $value);
 }
 
 1;

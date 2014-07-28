@@ -24,6 +24,8 @@
 #ifndef _E2P_POWERSWITCH_H
 #define _E2P_POWERSWITCH_H
 
+#include "e2p_access.h"
+
 // E2P Block "PowerSwitch"
 // =======================
 // Start offset (bit): 512
