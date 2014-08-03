@@ -398,12 +398,9 @@ void process_packet(uint8_t len)
 {
 	pkg_header_adjust_offset();
 
-	UART_PUTS("Received: ");
-	print_bytearray(bufx, len);
-	
 	// check SenderID
 	uint32_t senderID = pkg_header_get_senderid();
-	UART_PUTF("SenderID:%u;", senderID);
+	UART_PUTF("Packet Data: SenderID:%u;", senderID);
 	
 	if (senderID != 0)
 	{
