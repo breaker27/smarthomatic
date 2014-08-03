@@ -74,9 +74,9 @@ struct rgb_color_t
 };
 
 struct rgb_color_t anim_col[10]; // The 10 colors used for the animation.
-uint8_t anim_col_i[10];          // The 10 (indexed) colors used for the animation.
 uint8_t anim_time[10];           // The times used for animate blending between two colors.
                                  // 0 indicates the last color used.
+uint8_t anim_col_i[10];          // The 10 (indexed) colors used for the animation.
 uint8_t anim_repeat;             // Number of repeats, 0 = endless.
 bool anim_autoreverse;           // Play back animation in reverse order when finished.
 uint16_t anim_len = 0;           // length of animation of current color to next color.
@@ -149,13 +149,15 @@ struct rgb_color_t index2color(uint8_t color)
 struct rgb_color_t calc_pwm_color(void)
 {
 	struct rgb_color_t res;
-
+	
 	res.r = (uint8_t)((uint32_t)anim_col[anim_col_index].r * (anim_len - anim_pos) / anim_len
 		+ (uint32_t)anim_col[anim_col_index + 1].r * anim_pos / anim_len);
 	res.g = (uint8_t)((uint32_t)anim_col[anim_col_index].g * (anim_len - anim_pos) / anim_len
 		+ (uint32_t)anim_col[anim_col_index + 1].g * anim_pos / anim_len);
 	res.b = (uint8_t)((uint32_t)anim_col[anim_col_index].b * (anim_len - anim_pos) / anim_len
 		+ (uint32_t)anim_col[anim_col_index + 1].b * anim_pos / anim_len);
+
+	UART_PUTF3("Animation PWM color %d,%d,%d\r\n", res.r, res.g, res.b);
 
 	return res;
 }
@@ -205,13 +207,15 @@ ISR (TIMER2_OVF_vect)
 
 void set_animation_fixed_color(uint8_t color_index)
 {
-	anim_col[0] = index2color(color_index);
 	anim_time[0] = 0;
+	anim_col[0] = index2color(color_index);
 	anim_repeat = 1;
 	anim_autoreverse = false;
 	anim_len = 0;
 	anim_pos = 0;
 	anim_col_index = 0;
+	
+	set_PWM(anim_col[0]);
 }
 
 void dump_animation_values(void)
@@ -492,16 +496,6 @@ int main(void)
 
 				UART_PUTS("Decrypted bytes: ");
 				print_bytearray(bufx, len);
-
-				/*
-				uint32_t assumed_crc = getBuf32(0);
-				uint32_t actual_crc = crc32(bufx + 4, len - 4);
-				
-				UART_PUTF("Received CRC32 would be %lx\r\n", assumed_crc);
-				UART_PUTF("Re-calculated CRC32 is  %lx\r\n", actual_crc);
-
-				if (assumed_crc != actual_crc)
-				*/
 				
 				if (!pkg_header_check_crc32(len))
 				{
