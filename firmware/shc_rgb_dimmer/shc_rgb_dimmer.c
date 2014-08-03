@@ -142,6 +142,8 @@ struct rgb_color_t index2color(uint8_t color)
 	res.g = ((color & 0b001100) >> 2) * 85;
 	res.b = ((color & 0b000011) >> 0) * 85;
 	
+	//UART_PUTF4("Index %d to color -> %d,%d,%d\r\n", color, res.r, res.g, res.b);
+	
 	return res;
 }
 
@@ -214,7 +216,8 @@ void set_animation_fixed_color(uint8_t color_index)
 	anim_len = 0;
 	anim_pos = 0;
 	anim_col_index = 0;
-	
+
+	//UART_PUTF("Set color nr. %d\r\n", color_index);
 	set_PWM(anim_col[0]);
 }
 
@@ -283,23 +286,32 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		{
 			uint8_t i;
 			
-			for (i = 0; i < 10; i++)
-			{
-				anim_col_i[i] = msg_dimmer_coloranimation_get_color(i);
-				anim_col[i] = index2color(anim_col_i[i]);
-				anim_time[i] = msg_dimmer_coloranimation_get_time(i);
-			}
-			
 			anim_repeat = msg_dimmer_coloranimation_get_repeat();
 			anim_autoreverse = msg_dimmer_coloranimation_get_autoreverse();
+			
+			UART_PUTF2("Repeat:%u;AutoReverse:%u;", anim_repeat, anim_autoreverse);
+			
+			for (i = 0; i < 10; i++)
+			{
+				anim_time[i] = msg_dimmer_coloranimation_get_time(i);
+				anim_col_i[i] = msg_dimmer_coloranimation_get_color(i);
+				anim_col[i] = index2color(anim_col_i[i]);
+				
+				UART_PUTF2("Time[%u]:%u;", i, anim_time[i]);
+				UART_PUTF2("Color[%u]:%u;", i, anim_col[i]);
+			}
+			
+//			dump_animation_values();
 		}
 		else
 		{
-			set_animation_fixed_color(msg_dimmer_color_get_color());
+			uint8_t color = msg_dimmer_color_get_color();
+			UART_PUTF("Color:%u;", color);
+			set_animation_fixed_color(color);
 		}
-		
-		dump_animation_values();
 	}
+
+	UART_PUTS("\r\n");
 
 	// remember some values before the packet buffer is destroyed
 	uint32_t acksenderid = pkg_header_get_senderid();
