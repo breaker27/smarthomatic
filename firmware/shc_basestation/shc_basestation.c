@@ -397,12 +397,14 @@ int main(void)
 			*/
 			
 			// set header extension fields to the values given as hex string in the user input
+			uint16_t receiverid = 0;
 			switch (message_type)
 			{
 				case MESSAGETYPE_GET:
 				case MESSAGETYPE_SET:
 				case MESSAGETYPE_SETGET:
-					pkg_headerext_common_set_receiverid(hex_to_uint16((uint8_t *)cmdbuf, 5));
+					receiverid = hex_to_uint16((uint8_t *)cmdbuf, 5);
+					pkg_headerext_common_set_receiverid(receiverid);
 					pkg_headerext_common_set_messagegroupid(hex_to_uint8((uint8_t *)cmdbuf, 9));
 					pkg_headerext_common_set_messageid(hex_to_uint8((uint8_t *)cmdbuf, 11));
 					string_offset_data = 12;
@@ -449,8 +451,13 @@ int main(void)
 			{
 				send_packet(aes_key_nr, packet_len);
 			}
-			else // enqueue request (don't send immediately)
+			else if (receiverid == 4095)
 			{
+				UART_PUTS("Sending broadcast request without using queue.\r\n");
+				send_packet(aes_key_nr, packet_len);
+			}
+			else // enqueue request (don't send immediately)
+			{ 
 				// header size = 9 bytes!
 				if (queue_request(pkg_headerext_common_get_receiverid(), message_type, aes_key_nr, bufx + 9, packet_len - 9))
 				{
