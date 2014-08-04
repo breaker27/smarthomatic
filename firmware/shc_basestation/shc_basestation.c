@@ -432,6 +432,7 @@ int main(void)
 			if ((message_type != MESSAGETYPE_GET) && (message_type != MESSAGETYPE_ACK))
 			{
 				uint8_t data_len_raw = (strlen(cmdbuf) - 1 - string_offset_data) / 2;
+				uint8_t data_len_trunc = 0;
 				//UART_PUTF("Data bytes = %u\r\n", data_len_raw);
 
 				// copy message data, using __HEADEROFFSETBITS value and string_offset_data
@@ -439,6 +440,18 @@ int main(void)
 				{
 					uint8_t val = hex_to_uint8((uint8_t *)cmdbuf, string_offset_data + 2 * i + 1);
 					array_write_UIntValue(__HEADEROFFSETBITS + i * 8, 8, val, bufx);
+					
+					if (val)
+					{
+						data_len_trunc = i + 1;
+					}
+				}
+				
+				// truncate message data after last byte which is not 0
+				if (data_len_trunc < data_len_raw)
+				{
+					UART_PUTF2("Truncate data from %u to %u bytes.\r\n", data_len_raw, data_len_trunc);
+					data_len_raw = data_len_trunc;
 				}
 			}
 			
