@@ -328,6 +328,10 @@ sub SHCdev_Parse($$)
           readingsBulkUpdate($rhash, "on",         $on);
           readingsBulkUpdate($rhash, "brightness", $brightness);
         }
+        when ('Color') {
+          my $color = $parser->getField("Color");
+          readingsBulkUpdate($rhash, "color", $color);
+        }
       }
     }
   }
