@@ -215,7 +215,7 @@ void set_animation_fixed_color(uint8_t color_index)
 	anim_autoreverse = false;
 	anim_len = 0;
 	anim_pos = 0;
-	anim_col_index = 0;
+	anim_col_index = color_index;
 
 	//UART_PUTF("Set color nr. %d\r\n", color_index);
 	set_PWM(anim_col[0]);
@@ -354,7 +354,7 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		else
 		{
 			pkg_header_init_dimmer_color_ackstatus();
-			msg_dimmer_color_set_color(anim_col_i[0]);
+			msg_dimmer_color_set_color(anim_col_index);
 		}
 		
 		// set message data
