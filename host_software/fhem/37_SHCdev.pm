@@ -507,6 +507,22 @@ sub SHCdev_Set($@)
         return SetExtensions($hash, "", $name, @aa);
       }
     }
+    when ('RGB_Dimmer') {
+      #TODO Verify argument values
+      if ($cmd eq 'Color') {
+        my $color = $arg;
+
+        # DEBUG
+        # Log3 $name, 3, "$name: Color args: $arg, $arg2, $arg3, $arg4";
+
+        readingsSingleUpdate($hash, "state", "set-color:$color", 1);
+        $parser->initPacket("Dimmer", "Color", "SetGet");
+        $parser->setField("Dimmer", "Color", "Color",   $color);
+        SHCdev_Send($hash);
+      } else {
+        return SetExtensions($hash, "", $name, @aa);
+      }
+    }
   }
 
   return undef;
