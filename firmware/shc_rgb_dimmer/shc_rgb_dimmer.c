@@ -82,7 +82,7 @@ bool anim_autoreverse;           // Play back animation in reverse order when fi
 uint16_t anim_len = 0;           // length of animation of current color to next color.
                                  // max. anim. time is ~ 340s = 10600 steps à 32ms
 uint16_t anim_pos = 0;           // Position in the current animation.
-uint8_t anim_col_index = 0;      // Index of currently animated color.
+uint8_t anim_col_pos = 0;        // Index of currently animated color.
 
 // Timer0 (8 Bit) and Timer1 (10 Bit in 8 Bit mode) are used for the PWM output for the LEDs.
 // Read for more information about PWM:
@@ -152,12 +152,12 @@ struct rgb_color_t calc_pwm_color(void)
 {
 	struct rgb_color_t res;
 	
-	res.r = (uint8_t)((uint32_t)anim_col[anim_col_index].r * (anim_len - anim_pos) / anim_len
-		+ (uint32_t)anim_col[anim_col_index + 1].r * anim_pos / anim_len);
-	res.g = (uint8_t)((uint32_t)anim_col[anim_col_index].g * (anim_len - anim_pos) / anim_len
-		+ (uint32_t)anim_col[anim_col_index + 1].g * anim_pos / anim_len);
-	res.b = (uint8_t)((uint32_t)anim_col[anim_col_index].b * (anim_len - anim_pos) / anim_len
-		+ (uint32_t)anim_col[anim_col_index + 1].b * anim_pos / anim_len);
+	res.r = (uint8_t)((uint32_t)anim_col[anim_col_pos].r * (anim_len - anim_pos) / anim_len
+		+ (uint32_t)anim_col[anim_col_pos + 1].r * anim_pos / anim_len);
+	res.g = (uint8_t)((uint32_t)anim_col[anim_col_pos].g * (anim_len - anim_pos) / anim_len
+		+ (uint32_t)anim_col[anim_col_pos + 1].g * anim_pos / anim_len);
+	res.b = (uint8_t)((uint32_t)anim_col[anim_col_pos].b * (anim_len - anim_pos) / anim_len
+		+ (uint32_t)anim_col[anim_col_pos + 1].b * anim_pos / anim_len);
 
 	UART_PUTF3("Animation PWM color %d,%d,%d\r\n", res.r, res.g, res.b);
 
@@ -182,20 +182,20 @@ ISR (TIMER2_OVF_vect)
 	}
 	else
 	{
-		if (anim_col_index < 9)
+		if (anim_col_pos < 9)
 		{
-			anim_col_index++;
+			anim_col_pos++;
 			
-			if ((9 == anim_col_index) || (0 == anim_time[anim_col_index])) // end of animation
+			if ((9 == anim_col_pos) || (0 == anim_time[anim_col_pos])) // end of animation
 			{
-				set_PWM(anim_col[anim_col_index]); // set color last time
+				set_PWM(anim_col[anim_col_pos]); // set color last time
 				anim_len = 0; // end animation
 				return;
 			}
 			else
 			{
 				anim_pos = 0;
-				anim_len = anim_cycles[anim_time[anim_col_index]];
+				anim_len = anim_cycles[anim_time[anim_col_pos]];
 			}
 		}
 		else
@@ -210,12 +210,13 @@ ISR (TIMER2_OVF_vect)
 void set_animation_fixed_color(uint8_t color_index)
 {
 	anim_time[0] = 0;
+	anim_col_i[0] = color_index;
 	anim_col[0] = index2color(color_index);
 	anim_repeat = 1;
 	anim_autoreverse = false;
 	anim_len = 0;
 	anim_pos = 0;
-	anim_col_index = 0;
+	anim_col_pos = 0;
 
 	//UART_PUTF("Set color nr. %d\r\n", color_index);
 	set_PWM(anim_col[0]);
