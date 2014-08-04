@@ -35,13 +35,15 @@ my $parser = new SHC_parser();
 my %dev_state_icons = (
   "PowerSwitch" => "on:on:toggle off:off:toggle set.*:light_question:off",
   "Dimmer"      => "on:on off:off set.*:light_question:off",
-  "EnvSensor"   => undef
+  "EnvSensor"   => undef,
+  "RGB_Dimmer"  => undef
 );
 
 my %web_cmds = (
   "PowerSwitch" => "on:off:toggle:statusRequest",
   "Dimmer"      => "on:off:statusRequest",
-  "EnvSensor"   => undef
+  "EnvSensor"   => undef,
+  "RGB_Dimmer"  => undef
 );
 
 # Array format: [ reading1, str_format1, reading2, str_format2 ... ]
@@ -50,7 +52,7 @@ my %web_cmds = (
 my %dev_state_format = (
   "PowerSwitch" => ["on", ""],
   "Dimmer"      => ["on", "", "brightness", "B: "],
-  "EnvSensor" => [    # Results in "T: 23.4 H: 27.3 Baro: 978.34 B: 45"
+  "EnvSensor"   => [    # Results in "T: 23.4 H: 27.3 Baro: 978.34 B: 45"
     "temperature",         "T: ",
     "humidity",            "H: ",
     "barometric_pressure", "Baro: ",
@@ -58,6 +60,9 @@ my %dev_state_format = (
     "distance",            "D: ",
     "dins",                "Din: ",
     "ains",                "Ain: "
+  ],
+  "RGB_Dimmer"  => [
+    "color",               "Color: "
   ]
 );
 
@@ -73,6 +78,8 @@ my %sets = (
                    # Used from SetExtensions.pm
                    "blink on-for-timer on-till off-for-timer off-till intervals",
   "EnvSensor"   => "",
+  "RGB_Dimmer"  => "Color " .
+                   "ColorAnimation",
   "Custom"      => "PowerSwitch.SwitchState " .
                    "PowerSwitch.SwitchStateExt " .
                    "Dimmer.Brightness " .
@@ -85,6 +92,7 @@ my %gets = (
   "PowerSwitch" => "",
   "Dimmer"      => "",
   "EnvSensor"   => "din:all,1,2,3,4,5,6,7,8 ain:all,1,2,3,4,5 ain_volt:1,2,3,4,5",
+  "RGB_Dimmer"  => "",
   "Custom"      => ""
 );
 
@@ -100,7 +108,9 @@ my %auto_devtype = (
   "GPIO.DigitalPin"                       => "EnvSensor",
   "GPIO.AnalogPin"                        => "EnvSensor",
   "PowerSwitch.SwitchState"               => "PowerSwitch",
-  "Dimmer.Brightness"                     => "Dimmer"
+  "Dimmer.Brightness"                     => "Dimmer",
+  "Dimmer.Color"                          => "RGB_Dimmer",
+  "Dimmer.ColorAnimation"                 => "RGB_Dimmer"
 );
 
 sub SHCdev_Parse($$);
@@ -120,7 +130,7 @@ sub SHCdev_Initialize($)
                        ." readonly:1"
                        ." forceOn:1"
                        ." $readingFnAttributes"
-                       ." devtype:EnvSensor,Dimmer,PowerSwitch";
+                       ." devtype:EnvSensor,Dimmer,PowerSwitch,RGB_Dimmer";
 }
 
 #####################################
