@@ -722,6 +722,14 @@ sub SHCdev_Send($)
     <li>statusRequest<br>
         Supported by Dimmer and PowerSwitch.
     </li><br>
+    <li>Color<br>
+        Description and details available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_Color">www.smarthomatic.org</a>
+        Supported by RGB_Dimmer.
+    </li><br>
+    <li>ColorAnimation<br>
+        Description and details available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_ColorAnimation">www.smarthomatic.org</a>
+        Supported by RGB_Dimmer.
+    </li><br>
     <li><a href="#setExtensions"> set extensions</a><br>
         Supported by Dimmer and PowerSwitch.</li>
   </ul><br>
@@ -754,7 +762,7 @@ sub SHCdev_Send($)
   <ul>
     <li>devtype<br>
       The device type determines the command set, default web commands and the
-      default devStateicon. Currently supported are: EnvSensor, Dimmer, PowerSwitch.<br><br>
+      default devStateicon. Currently supported are: EnvSensor, Dimmer, PowerSwitch, RGB_Dimmer.<br><br>
 
       Note: If the device is not set manually, it will be determined automatically
       on reception of a device type specific message. For example: If a
