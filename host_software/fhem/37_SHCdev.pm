@@ -332,6 +332,18 @@ sub SHCdev_Parse($$)
           my $color = $parser->getField("Color");
           readingsBulkUpdate($rhash, "color", $color);
         }
+        when ('ColorAnimation') {
+          my $repeat = $parser->getField("Repeat");
+          my $autoreverse = $parser->getField("AutoReverse");
+          readingsBulkUpdate($rhash, "repeat", $repeat);
+          readingsBulkUpdate($rhash, "autoreverse", $autoreverse);
+          for (my $i = 0 ; $i < 10 ; $i = $i + 1) {
+            my $time  = $parser->getField("Time" , $i);
+            my $color = $parser->getField("Color", $i);
+            readingsBulkUpdate($rhash, "time$i", $time);
+            readingsBulkUpdate($rhash, "color$i", $color);
+          }
+        }
       }
     }
   }
@@ -508,8 +520,8 @@ sub SHCdev_Set($@)
       }
     }
     when ('RGB_Dimmer') {
-      #TODO Verify argument values
       if ($cmd eq 'Color') {
+        #TODO Verify argument values
         my $color = $arg;
 
         # DEBUG
@@ -518,6 +530,37 @@ sub SHCdev_Set($@)
         readingsSingleUpdate($hash, "state", "set-color:$color", 1);
         $parser->initPacket("Dimmer", "Color", "SetGet");
         $parser->setField("Dimmer", "Color", "Color",   $color);
+        SHCdev_Send($hash);
+      } elsif ($cmd eq 'ColorAnimation') {
+        #TODO Verify argument values
+
+        $parser->initPacket("Dimmer", "ColorAnimation", "SetGet");
+        $parser->setField("Dimmer", "ColorAnimation", "Repeat", $arg);
+        $parser->setField("Dimmer", "ColorAnimation", "AutoReverse", $arg2);
+
+        my $curtime = 0;
+        my $curcolor = 0;
+        # Iterate over all given command line parameters and set Time and Color
+        # accordingly. Fill the remaining values with zero.
+        for (my $i = 0 ; $i < 10 ; $i = $i + 1) {
+          if (!defined($aa[($i * 2) + 3])) {
+            $curtime = 0;
+          } else {
+            $curtime = $aa[($i * 2) + 3];
+          }
+          if (!defined($aa[($i * 2) + 4])) {
+            $curcolor = 0;
+          } else {
+            $curcolor = $aa[($i * 2) + 4];
+          }
+
+          # DEBUG
+          # Log3 $name, 3, "$name: Nr: $i Time: $curtime Color: $curcolor";
+
+          $parser->setField("Dimmer", "ColorAnimation", "Time" , $curtime, $i);
+          $parser->setField("Dimmer", "ColorAnimation", "Color", $curcolor, $i);
+        }
+        readingsSingleUpdate($hash, "state", "set-coloranimation", 1);
         SHCdev_Send($hash);
       } else {
         return SetExtensions($hash, "", $name, @aa);
