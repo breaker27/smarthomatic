@@ -431,7 +431,7 @@ int main(void)
 			// copy message data, which exists in all packets except in Get and Ack packets
 			if ((message_type != MESSAGETYPE_GET) && (message_type != MESSAGETYPE_ACK))
 			{
-				uint8_t data_len_raw = (strlen(cmdbuf) - 1 - string_offset_data) / 2;
+				data_len_raw = (strlen(cmdbuf) - 1 - string_offset_data) / 2;
 				uint8_t data_len_trunc = 0;
 				//UART_PUTF("Data bytes = %u\r\n", data_len_raw);
 
@@ -450,13 +450,13 @@ int main(void)
 				// truncate message data after last byte which is not 0
 				if (data_len_trunc < data_len_raw)
 				{
-					UART_PUTF2("Truncate data from %u to %u bytes.\r\n", data_len_raw, data_len_trunc);
+					UART_PUTF2("Truncate MessageData from %u to %u bytes.\r\n", data_len_raw, data_len_trunc);
 					data_len_raw = data_len_trunc;
 				}
 			}
 			
 			// round packet length to x * 16 bytes
-			uint8_t packet_len = ((uint16_t)__HEADEROFFSETBITS + (uint16_t)data_len_raw * 8) / 8;
+			uint8_t packet_len = ((uint16_t)__HEADEROFFSETBITS + (uint16_t)data_len_raw * 8 + 7) / 8;
 			packet_len = ((packet_len - 1) / 16 + 1) * 16;
 
 			// send packet which doesn't require an acknowledge immediately
