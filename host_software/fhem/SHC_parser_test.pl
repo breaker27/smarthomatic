@@ -135,9 +135,16 @@ $parser->setField("PowerSwitch", "SwitchState", "On", 1);
 print "BaseStation command = " . $parser->getSendString(61) . "\n";
 
 $parser->initPacket("Dimmer", "ColorAnimation", "Set");
-$parser->setField("Dimmer", "ColorAnimation", "Time", 5, 0);
-$parser->setField("Dimmer", "ColorAnimation", "Color", 6, 0);
-$parser->setField("Dimmer", "ColorAnimation", "Time", 6, 1);
-$parser->setField("Dimmer", "ColorAnimation", "Color", 20, 1);
+$parser->setField("Dimmer", "ColorAnimation", "Repeat", 3);
+$parser->setField("Dimmer", "ColorAnimation", "Time", 10, 0);
+$parser->setField("Dimmer", "ColorAnimation", "Color", 0, 0);
+$parser->setField("Dimmer", "ColorAnimation", "Time", 16, 1);
+$parser->setField("Dimmer", "ColorAnimation", "Color", 48, 1);
+$parser->setField("Dimmer", "ColorAnimation", "Time", 16, 2);
+$parser->setField("Dimmer", "ColorAnimation", "Color", 12, 2);
+$parser->setField("Dimmer", "ColorAnimation", "Time", 16, 3);
+$parser->setField("Dimmer", "ColorAnimation", "Color", 3, 3);
+$parser->setField("Dimmer", "ColorAnimation", "Time", 10, 4);
+$parser->setField("Dimmer", "ColorAnimation", "Color", 48, 4);
 
-print "BaseStation command = " . $parser->getSendString(61) . "\n";
+print "BaseStation command = " . $parser->getSendString(50) . "\n";
