@@ -35,13 +35,15 @@ my $parser = new SHC_parser();
 my %dev_state_icons = (
   "PowerSwitch" => "on:on:toggle off:off:toggle set.*:light_question:off",
   "Dimmer"      => "on:on off:off set.*:light_question:off",
-  "EnvSensor"   => undef
+  "EnvSensor"   => undef,
+  "RGB_Dimmer"  => undef
 );
 
 my %web_cmds = (
   "PowerSwitch" => "on:off:toggle:statusRequest",
   "Dimmer"      => "on:off:statusRequest",
-  "EnvSensor"   => undef
+  "EnvSensor"   => undef,
+  "RGB_Dimmer"  => undef
 );
 
 # Array format: [ reading1, str_format1, reading2, str_format2 ... ]
@@ -50,7 +52,7 @@ my %web_cmds = (
 my %dev_state_format = (
   "PowerSwitch" => ["on", ""],
   "Dimmer"      => ["on", "", "brightness", "B: "],
-  "EnvSensor" => [    # Results in "T: 23.4 H: 27.3 Baro: 978.34 B: 45"
+  "EnvSensor"   => [    # Results in "T: 23.4 H: 27.3 Baro: 978.34 B: 45"
     "temperature",         "T: ",
     "humidity",            "H: ",
     "barometric_pressure", "Baro: ",
@@ -58,6 +60,9 @@ my %dev_state_format = (
     "distance",            "D: ",
     "dins",                "Din: ",
     "ains",                "Ain: "
+  ],
+  "RGB_Dimmer"  => [
+    "color",               "Color: "
   ]
 );
 
@@ -73,6 +78,8 @@ my %sets = (
                    # Used from SetExtensions.pm
                    "blink on-for-timer on-till off-for-timer off-till intervals",
   "EnvSensor"   => "",
+  "RGB_Dimmer"  => "Color " .
+                   "ColorAnimation",
   "Custom"      => "PowerSwitch.SwitchState " .
                    "PowerSwitch.SwitchStateExt " .
                    "Dimmer.Brightness " .
@@ -85,6 +92,7 @@ my %gets = (
   "PowerSwitch" => "",
   "Dimmer"      => "",
   "EnvSensor"   => "din:all,1,2,3,4,5,6,7,8 ain:all,1,2,3,4,5 ain_volt:1,2,3,4,5",
+  "RGB_Dimmer"  => "",
   "Custom"      => ""
 );
 
@@ -100,7 +108,9 @@ my %auto_devtype = (
   "GPIO.DigitalPin"                       => "EnvSensor",
   "GPIO.AnalogPin"                        => "EnvSensor",
   "PowerSwitch.SwitchState"               => "PowerSwitch",
-  "Dimmer.Brightness"                     => "Dimmer"
+  "Dimmer.Brightness"                     => "Dimmer",
+  "Dimmer.Color"                          => "RGB_Dimmer",
+  "Dimmer.ColorAnimation"                 => "RGB_Dimmer"
 );
 
 sub SHCdev_Parse($$);
@@ -120,7 +130,7 @@ sub SHCdev_Initialize($)
                        ." readonly:1"
                        ." forceOn:1"
                        ." $readingFnAttributes"
-                       ." devtype:EnvSensor,Dimmer,PowerSwitch";
+                       ." devtype:EnvSensor,Dimmer,PowerSwitch,RGB_Dimmer";
 }
 
 #####################################
@@ -318,6 +328,22 @@ sub SHCdev_Parse($$)
           readingsBulkUpdate($rhash, "on",         $on);
           readingsBulkUpdate($rhash, "brightness", $brightness);
         }
+        when ('Color') {
+          my $color = $parser->getField("Color");
+          readingsBulkUpdate($rhash, "color", $color);
+        }
+        when ('ColorAnimation') {
+          my $repeat = $parser->getField("Repeat");
+          my $autoreverse = $parser->getField("AutoReverse");
+          readingsBulkUpdate($rhash, "repeat", $repeat);
+          readingsBulkUpdate($rhash, "autoreverse", $autoreverse);
+          for (my $i = 0 ; $i < 10 ; $i = $i + 1) {
+            my $time  = $parser->getField("Time" , $i);
+            my $color = $parser->getField("Color", $i);
+            readingsBulkUpdate($rhash, "time$i", $time);
+            readingsBulkUpdate($rhash, "color$i", $color);
+          }
+        }
       }
     }
   }
@@ -493,6 +519,53 @@ sub SHCdev_Set($@)
         return SetExtensions($hash, "", $name, @aa);
       }
     }
+    when ('RGB_Dimmer') {
+      if ($cmd eq 'Color') {
+        #TODO Verify argument values
+        my $color = $arg;
+
+        # DEBUG
+        # Log3 $name, 3, "$name: Color args: $arg, $arg2, $arg3, $arg4";
+
+        readingsSingleUpdate($hash, "state", "set-color:$color", 1);
+        $parser->initPacket("Dimmer", "Color", "SetGet");
+        $parser->setField("Dimmer", "Color", "Color",   $color);
+        SHCdev_Send($hash);
+      } elsif ($cmd eq 'ColorAnimation') {
+        #TODO Verify argument values
+
+        $parser->initPacket("Dimmer", "ColorAnimation", "SetGet");
+        $parser->setField("Dimmer", "ColorAnimation", "Repeat", $arg);
+        $parser->setField("Dimmer", "ColorAnimation", "AutoReverse", $arg2);
+
+        my $curtime = 0;
+        my $curcolor = 0;
+        # Iterate over all given command line parameters and set Time and Color
+        # accordingly. Fill the remaining values with zero.
+        for (my $i = 0 ; $i < 10 ; $i = $i + 1) {
+          if (!defined($aa[($i * 2) + 3])) {
+            $curtime = 0;
+          } else {
+            $curtime = $aa[($i * 2) + 3];
+          }
+          if (!defined($aa[($i * 2) + 4])) {
+            $curcolor = 0;
+          } else {
+            $curcolor = $aa[($i * 2) + 4];
+          }
+
+          # DEBUG
+          # Log3 $name, 3, "$name: Nr: $i Time: $curtime Color: $curcolor";
+
+          $parser->setField("Dimmer", "ColorAnimation", "Time" , $curtime, $i);
+          $parser->setField("Dimmer", "ColorAnimation", "Color", $curcolor, $i);
+        }
+        readingsSingleUpdate($hash, "state", "set-coloranimation", 1);
+        SHCdev_Send($hash);
+      } else {
+        return SetExtensions($hash, "", $name, @aa);
+      }
+    }
   }
 
   return undef;
@@ -649,6 +722,14 @@ sub SHCdev_Send($)
     <li>statusRequest<br>
         Supported by Dimmer and PowerSwitch.
     </li><br>
+    <li>Color<br>
+        Description and details available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_Color">www.smarthomatic.org</a>
+        Supported by RGB_Dimmer.
+    </li><br>
+    <li>ColorAnimation<br>
+        Description and details available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_ColorAnimation">www.smarthomatic.org</a>
+        Supported by RGB_Dimmer.
+    </li><br>
     <li><a href="#setExtensions"> set extensions</a><br>
         Supported by Dimmer and PowerSwitch.</li>
   </ul><br>
@@ -681,7 +762,7 @@ sub SHCdev_Send($)
   <ul>
     <li>devtype<br>
       The device type determines the command set, default web commands and the
-      default devStateicon. Currently supported are: EnvSensor, Dimmer, PowerSwitch.<br><br>
+      default devStateicon. Currently supported are: EnvSensor, Dimmer, PowerSwitch, RGB_Dimmer.<br><br>
 
       Note: If the device is not set manually, it will be determined automatically
       on reception of a device type specific message. For example: If a
