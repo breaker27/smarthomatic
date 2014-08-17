@@ -73,7 +73,7 @@ struct rgb_color_t
 	uint8_t b;
 };
 
-struct rgb_color_t anim_col[10]; // The 10 colors used for the animation.
+struct rgb_color_t anim_col[11]; // The last active color (index 0) + 10 new colors used for the animation (index 1-10).
 uint8_t anim_time[10];           // The times used for animate blending between two colors.
                                  // 0 indicates the last color used.
 uint8_t anim_col_i[10];          // The 10 (indexed) colors used for the animation.
@@ -142,7 +142,7 @@ struct rgb_color_t index2color(uint8_t color)
 	res.g = ((color & 0b001100) >> 2) * 85;
 	res.b = ((color & 0b000011) >> 0) * 85;
 	
-	//UART_PUTF4("Index %d to color -> %d,%d,%d\r\n", color, res.r, res.g, res.b);
+	// UART_PUTF4("Index %d to color -> %d,%d,%d\r\n", color, res.r, res.g, res.b);
 	
 	return res;
 }
@@ -159,7 +159,9 @@ struct rgb_color_t calc_pwm_color(void)
 	res.b = (uint8_t)((uint32_t)anim_col[anim_col_pos].b * (anim_len - anim_pos) / anim_len
 		+ (uint32_t)anim_col[anim_col_pos + 1].b * anim_pos / anim_len);
 
-	UART_PUTF3("Animation PWM color %d,%d,%d\r\n", res.r, res.g, res.b);
+	//UART_PUTF("anim_col_pos %d, ", anim_col_pos);
+	//UART_PUTF3("Animation PWM color %d,%d,%d\r\n", res.r, res.g, res.b);
+	//UART_PUTF3("%d,%d,%d\r\n", res.r, res.g, res.b);
 
 	return res;
 }
@@ -170,7 +172,7 @@ ISR (TIMER2_OVF_vect)
 {
 	// TODO: Implement reverse direction.
 	// TODO: Implement repeat.
-	
+
 	if (anim_len == 0) // no animation running
 	{
 		return;
@@ -182,15 +184,32 @@ ISR (TIMER2_OVF_vect)
 	}
 	else
 	{
+		UART_PUTF("Anim step %d finished.\r\n", anim_col_pos);
+	
 		if (anim_col_pos < 9)
 		{
 			anim_col_pos++;
 			
 			if ((9 == anim_col_pos) || (0 == anim_time[anim_col_pos])) // end of animation
 			{
-				set_PWM(anim_col[anim_col_pos]); // set color last time
-				anim_len = 0; // end animation
-				return;
+				UART_PUTF("set last: %d\r\n", anim_col_pos);
+				
+				if (anim_repeat == 1) // this was last run, end animation
+				{
+					set_PWM(anim_col[anim_col_pos]); // set color last time
+					anim_len = 0;
+					return;
+				}
+				else // more cycles to go (may also be an endless loop with anim_repeat == 0)
+				{
+					if (anim_repeat > 1)
+						anim_repeat--;
+
+					anim_col[1] = anim_col[anim_col_pos];
+					anim_col_pos = 1;
+					anim_pos = 0;
+					anim_len = anim_cycles[anim_time[anim_col_pos]];
+				}
 			}
 			else
 			{
@@ -209,6 +228,8 @@ ISR (TIMER2_OVF_vect)
 
 void set_animation_fixed_color(uint8_t color_index)
 {
+	cli();
+
 	anim_time[0] = 0;
 	anim_col_i[0] = color_index;
 	anim_col[0] = index2color(color_index);
@@ -220,6 +241,8 @@ void set_animation_fixed_color(uint8_t color_index)
 
 	//UART_PUTF("Set color nr. %d\r\n", color_index);
 	set_PWM(anim_col[0]);
+	
+	sei();
 }
 
 void dump_animation_values(void)
@@ -231,7 +254,7 @@ void dump_animation_values(void)
 	
 	for (i = 0; i < 10; i++)
 	{
-		UART_PUTF2("%d/%d", anim_col_i[i], anim_time[i]);
+		UART_PUTF2("%d/%d", anim_col_i[i + 1], anim_time[i]);
 		
 		if (i < 9)
 		{
@@ -261,6 +284,47 @@ void send_version_status(void)
 	rfm12_send_bufx();
 }
 
+// Send color or coloranimation status, depending on whether an animation is running.
+void send_status(void)
+{
+	inc_packetcounter();
+	
+	if (anim_len == 0) // no animation running
+	{
+		UART_PUTF("Sending color status: color: %u\r\n", anim_col_i[0]);
+		
+		// Set packet content
+		pkg_header_init_dimmer_color_status();
+		msg_dimmer_color_set_color(anim_col_i[0]);
+	}
+	else // animation running
+	{
+		uint8_t i;
+		
+		// Set packet content
+		pkg_header_init_dimmer_coloranimation_status();
+		
+		UART_PUTF2("Sending animation status: Repeat: %u, AutoReverse: %u", anim_repeat, anim_autoreverse);
+		msg_dimmer_coloranimation_set_repeat(anim_repeat);
+		msg_dimmer_coloranimation_set_autoreverse(anim_autoreverse);
+		
+		for (i = 0; i < 10; i++)
+		{
+			UART_PUTF2(", Time[%u]: %u", i, anim_time[i]);
+			UART_PUTF2(", Color[%u]: %u", i, anim_col_i[i]);
+			msg_dimmer_coloranimation_set_color(i, anim_col_i[i]);
+			msg_dimmer_coloranimation_set_time(i, anim_time[i]);
+		}
+		
+		UART_PUTS("\r\n");
+	}
+
+	pkg_header_set_senderid(device_id);
+	pkg_header_set_packetcounter(packetcounter);
+	pkg_header_calc_crc32();
+	rfm12_send_bufx();
+}
+
 // React accordingly on the MessageType, MessageGroup and MessageID.
 void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint32_t messageid)
 {
@@ -287,8 +351,13 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		{
 			uint8_t i;
 			
+			cli();
+			
 			anim_repeat = msg_dimmer_coloranimation_get_repeat();
 			anim_autoreverse = msg_dimmer_coloranimation_get_autoreverse();
+			anim_pos = 0;
+			anim_col_pos = 0;
+			anim_col[0] = index2color(0); // TODO: Set currently active color instead.
 			
 			UART_PUTF2("Repeat:%u;AutoReverse:%u;", anim_repeat, anim_autoreverse);
 			
@@ -296,13 +365,16 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 			{
 				anim_time[i] = msg_dimmer_coloranimation_get_time(i);
 				anim_col_i[i] = msg_dimmer_coloranimation_get_color(i);
-				anim_col[i] = index2color(anim_col_i[i]);
+				anim_col[i + 1] = index2color(anim_col_i[i]);
 				
 				UART_PUTF2("Time[%u]:%u;", i, anim_time[i]);
-				UART_PUTF2("Color[%u]:%u;", i, anim_col[i]);
+				UART_PUTF2("Color[%u]:%u;", i, anim_col_i[i]);
 			}
 			
-//			dump_animation_values();
+			anim_len = anim_cycles[anim_time[0]];
+			set_PWM(calc_pwm_color());
+			
+			sei();
 		}
 		else
 		{
@@ -378,6 +450,7 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 
 void process_packet(uint8_t len)
 {
+	// Set packet content
 	pkg_header_adjust_offset();
 
 	// check SenderID
@@ -497,7 +570,10 @@ int main(void)
 			}
 			else // try to decrypt with all keys stored in EEPROM
 			{
+				UART_PUTS("\r\nReceived data!\r\n");
+				
 				memcpy(bufx, rfm12_rx_buffer(), len);
+				memset(&bufx[len], 0, BUFX_LENGTH - len);
 				
 				UART_PUTS("Before decryption: ");
 				print_bytearray(bufx, len);
@@ -529,11 +605,10 @@ int main(void)
 			// send status from time to time
 			send_status_timeout--;
 		
-			/*
 			if (send_status_timeout == 0)
 			{
 				send_status_timeout = SEND_STATUS_EVERY_SEC;
-				send_power_switch_status();
+				send_status();
 				led_blink(200, 0, 1);
 				
 				version_status_cycle++;
@@ -544,7 +619,6 @@ int main(void)
 				send_version_status();
 				led_blink(200, 0, 1);
 			}
-			*/
 		}
 		else
 		{

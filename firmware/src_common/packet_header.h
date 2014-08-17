@@ -64,7 +64,7 @@ static inline void pkg_header_set_crc32(uint32_t val)
 // Offset: 0, length bits 32, min val 0, max val 4294967295
 static inline uint32_t pkg_header_get_crc32(void)
 {
-  return array_read_UIntValue32(0, 32, 0, 4294967295U, bufx);
+  return array_read_UIntValue32(0, 32, 0, 4294967295, bufx);
 }
 
 // SenderID (UIntValue)

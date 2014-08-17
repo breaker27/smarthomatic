@@ -403,8 +403,8 @@ static inline uint32_t msg_dimmer_color_get_color(void)
 // MessageID: 11
 // Possible MessageTypes: Get, Set, SetGet, Status, Ack, AckStatus
 // Validity: test
-// Length w/o Header + HeaderExtension: 93 bits
-// Data fields: Repeat, AutoReverse, Color, Time
+// Length w/o Header + HeaderExtension: 115 bits
+// Data fields: Repeat, AutoReverse, Time, Color
 // Description: This is to set a color animation.
 
 // Function to initialize header for the MessageType "Get".
@@ -511,40 +511,40 @@ static inline bool msg_dimmer_coloranimation_get_autoreverse(void)
   return array_read_UIntValue8((uint16_t)__HEADEROFFSETBITS + 4, 1, 0, 1, bufx) == 1;
 }
 
-// Color (UIntValue[8])
+// Time (UIntValue[10])
+// This sub-element with 5 bits is part of an element with 11 bits in a structured array.
+// Description: The time for the animation between the current color and the next one. The number of seconds used is 0.05 * 1.3 ^ Time and covers the range from 0.03s to 170s. Use 0 to mark the end of the animation. Further values will be ignored.
+
+// Set Time (UIntValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 5 + (uint16_t)index * 11, length bits 5, min val 0, max val 31
+static inline void msg_dimmer_coloranimation_set_time(uint8_t index, uint32_t val)
+{
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 5 + (uint16_t)index * 11, 5, val, bufx);
+}
+
+// Get Time (UIntValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 5 + (uint16_t)index * 11, length bits 5, min val 0, max val 31
+static inline uint32_t msg_dimmer_coloranimation_get_time(uint8_t index)
+{
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 5 + (uint16_t)index * 11, 5, 0, 31, bufx);
+}
+
+// Color (UIntValue[10])
 // This sub-element with 6 bits is part of an element with 11 bits in a structured array.
 // Description: The color is according to the 6 bit color palette used in SHC. The last color (or the first when AutoReverse is true) of the animation will remain visible after the animation is completed.
 
 // Set Color (UIntValue)
-// Offset: (uint16_t)__HEADEROFFSETBITS + 5 + (uint16_t)index * 11, length bits 6, min val 0, max val 63
+// Offset: (uint16_t)__HEADEROFFSETBITS + 10 + (uint16_t)index * 11, length bits 6, min val 0, max val 63
 static inline void msg_dimmer_coloranimation_set_color(uint8_t index, uint32_t val)
 {
-  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 5 + (uint16_t)index * 11, 6, val, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 10 + (uint16_t)index * 11, 6, val, bufx);
 }
 
 // Get Color (UIntValue)
-// Offset: (uint16_t)__HEADEROFFSETBITS + 5 + (uint16_t)index * 11, length bits 6, min val 0, max val 63
+// Offset: (uint16_t)__HEADEROFFSETBITS + 10 + (uint16_t)index * 11, length bits 6, min val 0, max val 63
 static inline uint32_t msg_dimmer_coloranimation_get_color(uint8_t index)
 {
-  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 5 + (uint16_t)index * 11, 6, 0, 63, bufx);
-}
-
-// Time (UIntValue[8])
-// This sub-element with 5 bits is part of an element with 11 bits in a structured array.
-// Description: The time for the animation between the current color and the next one. The number of seconds used is 0.1s * 1.3 ^ Time and covers the range from 0.1s to 341s. Use 0 to mark the end of the animation. Further values will be ignored.
-
-// Set Time (UIntValue)
-// Offset: (uint16_t)__HEADEROFFSETBITS + 11 + (uint16_t)index * 11, length bits 5, min val 0, max val 31
-static inline void msg_dimmer_coloranimation_set_time(uint8_t index, uint32_t val)
-{
-  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 11 + (uint16_t)index * 11, 5, val, bufx);
-}
-
-// Get Time (UIntValue)
-// Offset: (uint16_t)__HEADEROFFSETBITS + 11 + (uint16_t)index * 11, length bits 5, min val 0, max val 31
-static inline uint32_t msg_dimmer_coloranimation_get_time(uint8_t index)
-{
-  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 11 + (uint16_t)index * 11, 5, 0, 31, bufx);
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 10 + (uint16_t)index * 11, 6, 0, 63, bufx);
 }
 
 #endif /* _MSGGRP_DIMMER_H */
