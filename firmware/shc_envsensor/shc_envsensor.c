@@ -585,7 +585,57 @@ void measure_distance_i2c(void)
 
 	if (distance_sensor_type == DISTANCESENSORTYPE_SRF02)
 	{
-		distance.val += srf02_get_distance();
+		/* HACK: Using the distance measurement to carry moisture information.
+
+			Use circuitry for moisture measurement:
+			    Can be found in picture one:
+			    http://electronicdesign.com/analog/use-analog-techniques-measure-capacitance-capacitive-sensors
+
+
+		    Expected frequencies from moisture sensor @ 3,6 Volt
+		   		Nothing connected:		125 kHz
+		   		           5,6 pF:       80 kHz
+		   		           8,2 pF:       68 kHz
+		   		            33 pF:       31 kHz
+		   		With a modified sensor (http://www.seeedstudio.com/wiki/Grove_-_Moisture_Sensor),
+		   		Remove the resistors and transistor, using only the electrodes with additional 
+		   		insulation with a heat shrink tube
+		   		    Sensor connected:   108 kHz (wires are 15 cm long, additional capacitance!)
+		   		      1/4 into water:    80 kHz
+		   		      1/2 into water:    75 kHz
+		   		      1/1 into water:    60 kHz
+
+			Therefore assuming that the frequencies lie between 150 and 30 kHz
+
+			16 bit counter: 65536
+
+			==> with 150 kHz a maximum meas time = 430 ms
+
+			Choosing 100 ms
+		*/
+
+		uint16_t result;
+
+		// make PD5 an input and disable pull-ups
+		DDRD &= ~(1 << 5);
+		PORTD &= ~(1 << 5);
+
+		// clear counter
+		TCNT1H = 0x00;
+		TCNT1L = 0x00;
+
+		// configure counter and use external clock source, rising edge
+		TCCR1A = 0x00;
+		TCCR1B |= (1 << CS12) | (1 << CS11) | (1 << CS10);
+
+		_delay_ms(100);
+
+		//result = (TCNT1H << 8) | TCNT1L;
+		result = TCNT1;
+
+		TCCR1B = 0x00;  // turn counter off
+
+		distance.val += result;  // distance is only 14 bit
 		//UART_PUTF("Dist sum = %u cm\r\n", distance.val);
 	}
 }
@@ -883,7 +933,7 @@ int main(void)
 
 	if (distance_sensor_type == DISTANCESENSORTYPE_SRF02)
 	{
-		sbi(SRF02_POWER_DDR, SRF02_POWER_PIN);
+		// sbi(SRF02_POWER_DDR, SRF02_POWER_PIN);
 	}
 
 	UART_PUTS("\r\n");
@@ -929,8 +979,8 @@ int main(void)
 			{
 				if (needs_power)
 				{
-					sbi(SRF02_POWER_PORT, SRF02_POWER_PIN);
-					_delay_ms(1000); // ~500ms are needed to make the output voltage of the regulator stable
+					//sbi(SRF02_POWER_PORT, SRF02_POWER_PIN);
+					//_delay_ms(1000); // ~500ms are needed to make the output voltage of the regulator stable
 				}
 
 				i2c_enable();
@@ -941,7 +991,7 @@ int main(void)
 
 				if (needs_power)
 				{
-					cbi(SRF02_POWER_PORT, SRF02_POWER_PIN);
+					//cbi(SRF02_POWER_PORT, SRF02_POWER_PIN);
 				}
 			}
 			
