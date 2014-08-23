@@ -12380,14 +12380,15 @@ high speed (Philips)</description>
 <part name="R8" library="rcl" deviceset="R-EU_" device="0207/7" value="3R9"/>
 <part name="JP3" library="jumper" deviceset="JP1E" device="" value="SPK"/>
 <part name="GND4" library="supply1" deviceset="GND" device=""/>
+<part name="C2" library="rcl" deviceset="CPOL-EU" device="E2.5-6" value="100µ"/>
 </parts>
 <sheets>
 <sheet>
 <plain>
 <frame x1="-66.04" y1="-53.34" x2="127" y2="88.9" columns="8" rows="5" layer="97"/>
 <text x="40.64" y="-33.02" size="3.81" layer="97">smarthomatic RGB Dimmer 1</text>
-<text x="96.52" y="-38.1" size="2.1844" layer="97">Date: 11.07.2014</text>
-<text x="40.64" y="-38.1" size="2.1844" layer="97">Rev 1.0</text>
+<text x="96.52" y="-38.1" size="2.1844" layer="97">Date: 23.08.2014</text>
+<text x="40.64" y="-38.1" size="2.1844" layer="97">Rev 1.1</text>
 <text x="40.64" y="-43.18" size="2.1844" layer="97">Copyright (c) Uwe Freese, www.smarthomatic.org</text>
 </plain>
 <instances>
@@ -12395,7 +12396,7 @@ high speed (Philips)</description>
 <instance part="LED1" gate="G$1" x="86.36" y="5.08" rot="R90"/>
 <instance part="IC1" gate="1" x="0" y="17.78"/>
 <instance part="JP1" gate="G$1" x="86.36" y="-15.24" rot="R180"/>
-<instance part="GND1" gate="1" x="2.54" y="-27.94"/>
+<instance part="GND1" gate="1" x="12.7" y="-27.94"/>
 <instance part="R1" gate="G$1" x="66.04" y="5.08"/>
 <instance part="GND2" gate="1" x="114.3" y="-15.24"/>
 <instance part="C1" gate="G$1" x="-40.64" y="-25.4" rot="R90"/>
@@ -12407,7 +12408,7 @@ high speed (Philips)</description>
 <instance part="IC3" gate="G$1" x="-25.4" y="-35.56" rot="R180"/>
 <instance part="D1" gate="G$1" x="-30.48" y="-45.72"/>
 <instance part="+3V1" gate="G$1" x="-45.72" y="-45.72" rot="R180"/>
-<instance part="P+4" gate="1" x="2.54" y="-38.1" rot="R270"/>
+<instance part="P+4" gate="1" x="12.7" y="-38.1" rot="R270"/>
 <instance part="+3V2" gate="G$1" x="63.5" y="48.26" rot="R180"/>
 <instance part="+3V3" gate="G$1" x="86.36" y="20.32" rot="R180"/>
 <instance part="JP6" gate="-1" x="-50.8" y="76.2" rot="MR270"/>
@@ -12425,6 +12426,7 @@ high speed (Philips)</description>
 <instance part="R8" gate="G$1" x="25.4" y="76.2"/>
 <instance part="JP3" gate="A" x="48.26" y="12.7" rot="R180"/>
 <instance part="GND4" gate="1" x="55.88" y="10.16"/>
+<instance part="C2" gate="G$1" x="2.54" y="-33.02" rot="R180"/>
 </instances>
 <busses>
 </busses>
@@ -12489,6 +12491,10 @@ high speed (Philips)</description>
 <pinref part="GND1" gate="1" pin="GND"/>
 <wire x1="-12.7" y1="-25.4" x2="2.54" y2="-25.4" width="0.1524" layer="91"/>
 <junction x="-12.7" y="-25.4"/>
+<wire x1="2.54" y1="-25.4" x2="12.7" y2="-25.4" width="0.1524" layer="91"/>
+<wire x1="2.54" y1="-27.94" x2="2.54" y2="-25.4" width="0.1524" layer="91"/>
+<junction x="2.54" y="-25.4"/>
+<pinref part="C2" gate="G$1" pin="-"/>
 </segment>
 </net>
 <net name="N$3" class="0">
@@ -12641,8 +12647,12 @@ high speed (Philips)</description>
 <wire x1="-15.24" y1="-45.72" x2="-15.24" y2="-38.1" width="0.1524" layer="91"/>
 <junction x="-15.24" y="-38.1"/>
 <pinref part="P+4" gate="1" pin="+5V"/>
-<wire x1="-12.7" y1="-38.1" x2="0" y2="-38.1" width="0.1524" layer="91"/>
+<wire x1="-12.7" y1="-38.1" x2="2.54" y2="-38.1" width="0.1524" layer="91"/>
 <junction x="-12.7" y="-38.1"/>
+<wire x1="2.54" y1="-38.1" x2="10.16" y2="-38.1" width="0.1524" layer="91"/>
+<wire x1="2.54" y1="-35.56" x2="2.54" y2="-38.1" width="0.1524" layer="91"/>
+<junction x="2.54" y="-38.1"/>
+<pinref part="C2" gate="G$1" pin="+"/>
 </segment>
 <segment>
 <pinref part="JP6" gate="-1" pin="2"/>
