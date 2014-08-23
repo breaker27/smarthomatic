@@ -510,14 +510,14 @@ void sht11_measure_loop(void)
 
 void measure_temperature_i2c(void)
 {
-	if ((temperature_sensor_type != TEMPERATURESENSORTYPE_DS7505) && (temperature_sensor_type != TEMPERATURESENSORTYPE_BMP085))
-		return;
-
-	if (!countWakeup(&temperature))
+	if (temperature_sensor_type == TEMPERATURESENSORTYPE_NOSENSOR)
 		return;
 
 	if (temperature_sensor_type == TEMPERATURESENSORTYPE_DS7505)
 	{
+		if (!countWakeup(&temperature))
+			return;
+
 		lm75_wakeup();
 		_delay_ms(lm75_get_meas_time_ms());
 		temperature.val += lm75_get_tmp();
@@ -525,20 +525,26 @@ void measure_temperature_i2c(void)
 	}
 	else if (temperature_sensor_type == TEMPERATURESENSORTYPE_BMP085)
 	{
+		if (!countWakeup(&temperature))
+			return;
+
 		temperature.val += bmp085_meas_temp();
 	}
 }
 
 void measure_temperature_other(void)
 {
-	if (temperature_sensor_type != TEMPERATURESENSORTYPE_SHT15)
+	if (temperature_sensor_type == TEMPERATURESENSORTYPE_NOSENSOR)
 		return;
 
-	if (!countWakeup(&temperature))
-		return;
+    if (temperature_sensor_type == HUMIDITYSENSORTYPE_SHT15)
+	{
+		if (!countWakeup(&temperature))
+			return;
 
-	sht11_measure_loop();
-	temperature.val += sht11_get_tmp();
+		sht11_measure_loop();
+		temperature.val += sht11_get_tmp();
+	}
 }
 
 void measure_humidity_other(void)
@@ -546,11 +552,11 @@ void measure_humidity_other(void)
 	if (humidity_sensor_type == HUMIDITYSENSORTYPE_NOSENSOR)
 		return;
 
-	if (!countWakeup(&humidity))
-		return;
-
 	if (humidity_sensor_type == HUMIDITYSENSORTYPE_SHT15)
 	{
+		if (!countWakeup(&humidity))
+			return;
+
 		// actually measure if not done already while getting temperature
 		if (temperature_sensor_type != TEMPERATURESENSORTYPE_SHT15)
 		{
@@ -566,11 +572,11 @@ void measure_barometric_pressure_i2c(void)
 	if (barometric_sensor_type == BAROMETRICSENSORTYPE_NOSENSOR)
 		return;
 
-	if (!countWakeup(&barometric_pressure))
-		return;
-
 	if (barometric_sensor_type == BAROMETRICSENSORTYPE_BMP085)
 	{
+		if (!countWakeup(&barometric_pressure))
+			return;
+
 		barometric_pressure.val += bmp085_meas_pressure();
 	}
 }
@@ -580,11 +586,11 @@ void measure_distance_i2c(void)
 	if (distance_sensor_type == DISTANCESENSORTYPE_NOSENSOR)
 		return;
 
-	if (!countWakeup(&distance))
-		return;
-
 	if (distance_sensor_type == DISTANCESENSORTYPE_SRF02)
 	{
+		if (!countWakeup(&distance))
+			return;
+
 		distance.val += srf02_get_distance();
 		//UART_PUTF("Dist sum = %u cm\r\n", distance.val);
 	}
