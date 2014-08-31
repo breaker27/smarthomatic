@@ -396,7 +396,7 @@ int main(void)
 			UART_PUTS("sKK0ASSSSPPPPPPEEGGMMDD...AckStatus\r\n");
 			*/
 			
-			// set header extension fields to the values given as hex string in the user input
+			// set header extension fields in bufx to the values given as hex string in the user input
 			uint16_t receiverid = 0;
 			switch (message_type)
 			{
@@ -422,41 +422,44 @@ int main(void)
 				case MESSAGETYPE_ACKSTATUS:
 					pkg_headerext_common_set_messagegroupid(hex_to_uint8((uint8_t *)cmdbuf, 17));
 					pkg_headerext_common_set_messageid(hex_to_uint8((uint8_t *)cmdbuf, 19));
-					string_offset_data = 20;
+					string_offset_data = 22;
 					break;
 			}
 
-			uint8_t data_len_raw = 0;
+			uint8_t messagedata_len_raw = 0;
 
 			// copy message data, which exists in all packets except in Get and Ack packets
 			if ((message_type != MESSAGETYPE_GET) && (message_type != MESSAGETYPE_ACK))
 			{
-				data_len_raw = (strlen(cmdbuf) - 1 - string_offset_data) / 2;
-				uint8_t data_len_trunc = 0;
-				//UART_PUTF("Data bytes = %u\r\n", data_len_raw);
+				messagedata_len_raw = (strlen(cmdbuf) - 1 - string_offset_data) / 2;
+				uint8_t messagedata_len_trunc = 0;
+				//UART_PUTF("User entered %u bytes MessageData.\r\n", messagedata_len_raw);
 
 				// copy message data, using __HEADEROFFSETBITS value and string_offset_data
-				for (i = 0; i < data_len_raw; i++)
+				for (i = 0; i < messagedata_len_raw; i++)
 				{
 					uint8_t val = hex_to_uint8((uint8_t *)cmdbuf, string_offset_data + 2 * i + 1);
 					array_write_UIntValue(__HEADEROFFSETBITS + i * 8, 8, val, bufx);
 					
 					if (val)
 					{
-						data_len_trunc = i + 1;
+						messagedata_len_trunc = i + 1;
 					}
 				}
 				
 				// truncate message data after last byte which is not 0
-				if (data_len_trunc < data_len_raw)
+				if (messagedata_len_trunc < messagedata_len_raw)
 				{
-					UART_PUTF2("Truncate MessageData from %u to %u bytes.\r\n", data_len_raw, data_len_trunc);
-					data_len_raw = data_len_trunc;
+					UART_PUTF2("Truncate MessageData from %u to %u bytes.\r\n", messagedata_len_raw, messagedata_len_trunc);
+					messagedata_len_raw = messagedata_len_trunc;
 				}
 			}
 			
 			// round packet length to x * 16 bytes
-			uint8_t packet_len = ((uint16_t)__HEADEROFFSETBITS + (uint16_t)data_len_raw * 8 + 7) / 8;
+			// __HEADEROFFSETBITS == Header + Ext.Header length
+			// Message Data bytes = messagedata_len_raw * 8
+			//UART_PUTF("__HEADEROFFSETBITS = %d\r\n", __HEADEROFFSETBITS);
+			uint8_t packet_len = ((uint16_t)__HEADEROFFSETBITS + (uint16_t)messagedata_len_raw * 8 + 7) / 8;
 			packet_len = ((packet_len - 1) / 16 + 1) * 16;
 
 			// send packet which doesn't require an acknowledge immediately
