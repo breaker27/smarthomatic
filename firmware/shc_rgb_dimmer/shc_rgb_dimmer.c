@@ -74,6 +74,7 @@ struct rgb_color_t
 };
 
 struct rgb_color_t anim_col[11]; // The last active color (index 0) + 10 new colors used for the animation (index 1-10).
+struct rgb_color_t current_col;  // The current (mixed) color calculated within an animation.
 uint8_t anim_time[10];           // The times used for animate blending between two colors.
                                  // 0 indicates the last color used.
 uint8_t anim_col_i[10];          // The 10 (indexed) colors used for the animation.
@@ -147,23 +148,25 @@ struct rgb_color_t index2color(uint8_t color)
 	return res;
 }
 
-// Calculate the color that has to be shown according to the animation settings and counter.
-struct rgb_color_t calc_pwm_color(void)
+// Calculate the color that has to be shown according to the animation settings and counters.
+// Save the color as currently active color in current_col.
+void update_current_col(void)
 {
-	struct rgb_color_t res;
-	
-	res.r = (uint8_t)((uint32_t)anim_col[anim_col_pos].r * (anim_len - anim_pos) / anim_len
-		+ (uint32_t)anim_col[anim_col_pos + 1].r * anim_pos / anim_len);
-	res.g = (uint8_t)((uint32_t)anim_col[anim_col_pos].g * (anim_len - anim_pos) / anim_len
-		+ (uint32_t)anim_col[anim_col_pos + 1].g * anim_pos / anim_len);
-	res.b = (uint8_t)((uint32_t)anim_col[anim_col_pos].b * (anim_len - anim_pos) / anim_len
-		+ (uint32_t)anim_col[anim_col_pos + 1].b * anim_pos / anim_len);
+	if (anim_len != 0) // animation running
+	{
+		current_col.r = (uint8_t)((uint32_t)anim_col[anim_col_pos].r * (anim_len - anim_pos) / anim_len
+			+ (uint32_t)anim_col[anim_col_pos + 1].r * anim_pos / anim_len);
+		current_col.g = (uint8_t)((uint32_t)anim_col[anim_col_pos].g * (anim_len - anim_pos) / anim_len
+			+ (uint32_t)anim_col[anim_col_pos + 1].g * anim_pos / anim_len);
+		current_col.b = (uint8_t)((uint32_t)anim_col[anim_col_pos].b * (anim_len - anim_pos) / anim_len
+			+ (uint32_t)anim_col[anim_col_pos + 1].b * anim_pos / anim_len);
+	}
 
 	//UART_PUTF("anim_col_pos %d, ", anim_col_pos);
 	//UART_PUTF3("Animation PWM color %d,%d,%d\r\n", res.r, res.g, res.b);
 	//UART_PUTF3("%d,%d,%d\r\n", res.r, res.g, res.b);
-
-	return res;
+	
+	set_PWM(current_col);
 }
 
 // Count up the animation_position every 1/8000000 * 1024 * 256 ms = 32.768 ms,
@@ -184,18 +187,21 @@ ISR (TIMER2_OVF_vect)
 	}
 	else
 	{
-		UART_PUTF("Anim step %d finished.\r\n", anim_col_pos);
+		UART_PUTF("--- Anim step %d finished.\r\n", anim_col_pos);
 	
 		if (anim_col_pos < 9)
 		{
 			anim_col_pos++;
+			UART_PUTF("--- New anim_col_pos: %d\r\n", anim_col_pos);
 			
 			if ((9 == anim_col_pos) || (0 == anim_time[anim_col_pos])) // end of animation
 			{
-				UART_PUTF("set last: %d\r\n", anim_col_pos);
+				UART_PUTS("--- End of animation.\r\n");
 				
 				if (anim_repeat == 1) // this was last run, end animation
 				{
+					UART_PUTF("--- anim_repeat = 1, last run. Set fixed color %d\r\n", anim_col_pos);
+				
 					set_PWM(anim_col[anim_col_pos]); // set color last time
 					anim_len = 0;
 					return;
@@ -204,6 +210,8 @@ ISR (TIMER2_OVF_vect)
 				{
 					if (anim_repeat > 1)
 						anim_repeat--;
+
+					UART_PUTF("--- More cycles to go. New anim_repeat = %d\r\n", anim_repeat);
 
 					anim_col[1] = anim_col[anim_col_pos];
 					anim_col_pos = 1;
@@ -215,15 +223,18 @@ ISR (TIMER2_OVF_vect)
 			{
 				anim_pos = 0;
 				anim_len = anim_cycles[anim_time[anim_col_pos]];
+				
+				UART_PUTF("--- New anim_len: %d\r\n", anim_len);
 			}
 		}
 		else
 		{
+			UART_PUTS("--- don't change color at end of animation\r\n");	
 			return; // don't change color at end of animation
 		}
 	}
 	
-	set_PWM(calc_pwm_color());
+	update_current_col();
 }
 
 void set_animation_fixed_color(uint8_t color_index)
@@ -240,7 +251,7 @@ void set_animation_fixed_color(uint8_t color_index)
 	anim_col_pos = 0;
 
 	//UART_PUTF("Set color nr. %d\r\n", color_index);
-	set_PWM(anim_col[0]);
+	update_current_col();
 	
 	sei();
 }
@@ -357,7 +368,7 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 			anim_autoreverse = msg_dimmer_coloranimation_get_autoreverse();
 			anim_pos = 0;
 			anim_col_pos = 0;
-			anim_col[0] = index2color(0); // TODO: Set currently active color instead.
+			anim_col[0] = current_col;
 			
 			UART_PUTF2("Repeat:%u;AutoReverse:%u;", anim_repeat, anim_autoreverse);
 			
@@ -372,7 +383,7 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 			}
 			
 			anim_len = anim_cycles[anim_time[0]];
-			set_PWM(calc_pwm_color());
+			update_current_col();
 			
 			sei();
 		}
