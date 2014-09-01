@@ -84,6 +84,7 @@ uint16_t anim_len = 0;           // length of animation of current color to next
                                  // max. anim. time is ~ 340s = 10600 steps à 32ms
 uint16_t anim_pos = 0;           // Position in the current animation.
 uint8_t anim_col_pos = 0;        // Index of currently animated color.
+bool anim_play_backwards;        // Tells if the animation is currently running backwards (when autoreverse is used).
 
 // Timer0 (8 Bit) and Timer1 (10 Bit in 8 Bit mode) are used for the PWM output for the LEDs.
 // Read for more information about PWM:
@@ -188,49 +189,39 @@ ISR (TIMER2_OVF_vect)
 	else
 	{
 		UART_PUTF("--- Anim step %d finished.\r\n", anim_col_pos);
-	
-		if (anim_col_pos < 9)
+		anim_col_pos++;
+		
+		// If more repeat cycles to go and at second to last color, restart at beginning.
+		// If endless cycles to go and at last color, restart at beginning.
+		if (((anim_repeat > 1) && (anim_time[anim_col_pos + 1] == 0))
+		  || ((anim_repeat == 0) && (anim_time[anim_col_pos] == 0)))
 		{
-			anim_col_pos++;
-			UART_PUTF("--- New anim_col_pos: %d\r\n", anim_col_pos);
+			UART_PUTF("--- More cycles to go. New anim_repeat = %d. Reset anim_col_pos to 1.\r\n", anim_repeat);
+			UART_PUTF("--- Overwrite anim_col[1] with color at position %d\r\n", anim_col_pos);
+
+			if (anim_repeat > 1)
+					anim_repeat--;
 			
-			if ((9 == anim_col_pos) || (0 == anim_time[anim_col_pos])) // end of animation
-			{
-				UART_PUTS("--- End of animation.\r\n");
-				
-				if (anim_repeat == 1) // this was last run, end animation
-				{
-					UART_PUTF("--- anim_repeat = 1, last run. Set fixed color %d\r\n", anim_col_pos);
-				
-					set_PWM(anim_col[anim_col_pos]); // set color last time
-					anim_len = 0;
-					return;
-				}
-				else // more cycles to go (may also be an endless loop with anim_repeat == 0)
-				{
-					if (anim_repeat > 1)
-						anim_repeat--;
-
-					UART_PUTF("--- More cycles to go. New anim_repeat = %d\r\n", anim_repeat);
-
-					anim_col[1] = anim_col[anim_col_pos];
-					anim_col_pos = 1;
-					anim_pos = 0;
-					anim_len = anim_cycles[anim_time[anim_col_pos]];
-				}
-			}
-			else
-			{
-				anim_pos = 0;
-				anim_len = anim_cycles[anim_time[anim_col_pos]];
-				
-				UART_PUTF("--- New anim_len: %d\r\n", anim_len);
-			}
+			anim_col[1] = anim_col[anim_col_pos];
+			anim_col_pos = 1;
+			anim_pos = 0;
+			anim_len = anim_cycles[anim_time[anim_col_pos]];
 		}
+		// If in last repeat cycle and at last color, stop animation.
+		else if ((anim_repeat == 1) && (anim_time[anim_col_pos] == 0))
+		{
+			UART_PUTF("--- End of animation. Set fixed color %d\r\n", anim_col_pos);
+			set_PWM(anim_col[anim_col_pos]); // set color last time
+			anim_len = 0;
+			return;
+		}
+		// Within animation, go to next color.
 		else
 		{
-			UART_PUTS("--- don't change color at end of animation\r\n");	
-			return; // don't change color at end of animation
+			anim_pos = 0;
+			anim_len = anim_cycles[anim_time[anim_col_pos]];
+			
+			UART_PUTF2("--- Go to next color, anim_col_pos: %d. New anim_len: %d\r\n", anim_col_pos, anim_len);
 		}
 	}
 	
@@ -241,14 +232,10 @@ void set_animation_fixed_color(uint8_t color_index)
 {
 	cli();
 
-	anim_time[0] = 0;
-	anim_col_i[0] = color_index;
-	anim_col[0] = index2color(color_index);
-	anim_repeat = 1;
-	anim_autoreverse = false;
 	anim_len = 0;
-	anim_pos = 0;
-	anim_col_pos = 0;
+	current_col = index2color(color_index);
+	anim_col_i[0] = color_index;
+	anim_col[0] = current_col;
 
 	//UART_PUTF("Set color nr. %d\r\n", color_index);
 	update_current_col();
@@ -366,6 +353,7 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 			
 			anim_repeat = msg_dimmer_coloranimation_get_repeat();
 			anim_autoreverse = msg_dimmer_coloranimation_get_autoreverse();
+			anim_play_backwards = false;
 			anim_pos = 0;
 			anim_col_pos = 0;
 			anim_col[0] = current_col;
