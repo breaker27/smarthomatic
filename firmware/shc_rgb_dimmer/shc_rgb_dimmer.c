@@ -73,18 +73,20 @@ struct rgb_color_t
 	uint8_t b;
 };
 
-struct rgb_color_t anim_col[11]; // The last active color (index 0) + 10 new colors used for the animation (index 1-10).
-struct rgb_color_t current_col;  // The current (mixed) color calculated within an animation.
-uint8_t anim_time[10];           // The times used for animate blending between two colors.
-                                 // 0 indicates the last color used.
-uint8_t anim_col_i[10];          // The 10 (indexed) colors used for the animation.
-uint8_t anim_repeat;             // Number of repeats, 0 = endless.
-bool anim_autoreverse;           // Play back animation in reverse order when finished.
-uint16_t anim_len = 0;           // length of animation of current color to next color.
-                                 // max. anim. time is ~ 340s = 10600 steps à 32ms
-uint16_t anim_pos = 0;           // Position in the current animation.
-uint8_t anim_col_pos = 0;        // Index of currently animated color.
-bool anim_play_backwards;        // Tells if the animation is currently running backwards (when autoreverse is used).
+#define ANIM_COL_MAX 31
+struct rgb_color_t anim_col[ANIM_COL_MAX]; // The last active color (index 0) + 10 new colors used for the animation (index 1-10).
+struct rgb_color_t current_col;            // The current (mixed) color calculated within an animation.
+uint8_t anim_time[ANIM_COL_MAX];           // The times used for animate blending between two colors.
+                                           // 0 at pos x indicates the last color used is x-1.
+uint8_t anim_col_i[10];    // The 10 (indexed) colors used for the animation.
+uint8_t repeat;            // Number of repeats, 0 = endless.
+bool autoreverse;          // Play back animation in reverse order when finished.
+uint16_t step_len = 0;     // length of animation step of current color to next color.
+uint16_t step_pos = 0;     // Position in the current animation step.
+uint8_t col_pos = 0;       // Index of currently animated color.
+uint8_t rfirst;            // When a repeat loop active, where does a cycle start (depends on autoreverse switch).
+uint8_t rlast;             // When a repeat loop active, where does a cycle end (depends on repeat count).
+uint8_t llast;             // In the last cycle, where does it end (depends on repeat count).
 
 // Timer0 (8 Bit) and Timer1 (10 Bit in 8 Bit mode) are used for the PWM output for the LEDs.
 // Read for more information about PWM:
@@ -153,17 +155,17 @@ struct rgb_color_t index2color(uint8_t color)
 // Save the color as currently active color in current_col.
 void update_current_col(void)
 {
-	if (anim_len != 0) // animation running
+	if (step_len != 0) // animation running
 	{
-		current_col.r = (uint8_t)((uint32_t)anim_col[anim_col_pos].r * (anim_len - anim_pos) / anim_len
-			+ (uint32_t)anim_col[anim_col_pos + 1].r * anim_pos / anim_len);
-		current_col.g = (uint8_t)((uint32_t)anim_col[anim_col_pos].g * (anim_len - anim_pos) / anim_len
-			+ (uint32_t)anim_col[anim_col_pos + 1].g * anim_pos / anim_len);
-		current_col.b = (uint8_t)((uint32_t)anim_col[anim_col_pos].b * (anim_len - anim_pos) / anim_len
-			+ (uint32_t)anim_col[anim_col_pos + 1].b * anim_pos / anim_len);
+		current_col.r = (uint8_t)((uint32_t)anim_col[col_pos].r * (step_len - step_pos) / step_len
+			+ (uint32_t)anim_col[col_pos + 1].r * step_pos / step_len);
+		current_col.g = (uint8_t)((uint32_t)anim_col[col_pos].g * (step_len - step_pos) / step_len
+			+ (uint32_t)anim_col[col_pos + 1].g * step_pos / step_len);
+		current_col.b = (uint8_t)((uint32_t)anim_col[col_pos].b * (step_len - step_pos) / step_len
+			+ (uint32_t)anim_col[col_pos + 1].b * step_pos / step_len);
 	}
 
-	//UART_PUTF("anim_col_pos %d, ", anim_col_pos);
+	//UART_PUTF("col_pos %d, ", col_pos);
 	//UART_PUTF3("Animation PWM color %d,%d,%d\r\n", res.r, res.g, res.b);
 	//UART_PUTF3("%d,%d,%d\r\n", res.r, res.g, res.b);
 	
@@ -174,54 +176,50 @@ void update_current_col(void)
 // if animation is running.
 ISR (TIMER2_OVF_vect)
 {
-	// TODO: Implement reverse direction.
-	// TODO: Implement repeat.
-
-	if (anim_len == 0) // no animation running
+	if (step_len == 0) // no animation running
 	{
 		return;
 	}
 	
-	if (anim_pos < anim_len)
+	if (step_pos < step_len)
 	{
-		anim_pos++;
+		step_pos++;
 	}
 	else
 	{
-		UART_PUTF("--- Anim step %d finished.\r\n", anim_col_pos);
-		anim_col_pos++;
-		
-		// If more repeat cycles to go and at second to last color, restart at beginning.
-		// If endless cycles to go and at last color, restart at beginning.
-		if (((anim_repeat > 1) && (anim_time[anim_col_pos + 1] == 0))
-		  || ((anim_repeat == 0) && (anim_time[anim_col_pos] == 0)))
-		{
-			UART_PUTF("--- More cycles to go. New anim_repeat = %d. Reset anim_col_pos to 1.\r\n", anim_repeat);
-			UART_PUTF("--- Overwrite anim_col[1] with color at position %d\r\n", anim_col_pos);
+		UART_PUTF3("-- Anim step %d (color pos %d -> %d) finished.\r\n", col_pos, col_pos, col_pos + 1);
 
-			if (anim_repeat > 1)
-					anim_repeat--;
-			
-			anim_col[1] = anim_col[anim_col_pos];
-			anim_col_pos = 1;
-			anim_pos = 0;
-			anim_len = anim_cycles[anim_time[anim_col_pos]];
-		}
-		// If in last repeat cycle and at last color, stop animation.
-		else if ((anim_repeat == 1) && (anim_time[anim_col_pos] == 0))
+		// When animation step at rlast is completed (col_pos = rlast) and
+		// repeat != 1, decrease repeat by 1 (if not 0 already) and jump to rfirst.
+		if ((repeat != 1) && (col_pos == rlast))
 		{
-			UART_PUTF("--- End of animation. Set fixed color %d\r\n", anim_col_pos);
-			set_PWM(anim_col[anim_col_pos]); // set color last time
-			anim_len = 0;
+			col_pos++;
+
+			if (repeat > 1)
+					repeat--;
+
+			UART_PUTF2("-- More cycles to go. New repeat = %d. Reset col_pos to %d.\r\n", repeat, rfirst);
+			
+			col_pos = rfirst;
+			step_pos = 0;
+			step_len = anim_cycles[anim_time[col_pos]];
+		}
+		// When animation step at llast is completed (col_pos = llast) and
+		// repeat = 1, stop animation.
+		else if ((repeat == 1)  && (col_pos == llast))
+		{
+			UART_PUTF("-- End of animation. Set fixed color %d\r\n", col_pos + 1);
+			set_PWM(anim_col[col_pos + 1]); // set color last time
+			step_len = 0;
 			return;
 		}
-		// Within animation, go to next color.
-		else
+		else // Within animation -> go to next color
 		{
-			anim_pos = 0;
-			anim_len = anim_cycles[anim_time[anim_col_pos]];
+			col_pos++;
+			step_pos = 0;
+			step_len = anim_cycles[anim_time[col_pos]];
 			
-			UART_PUTF2("--- Go to next color, anim_col_pos: %d. New anim_len: %d\r\n", anim_col_pos, anim_len);
+			UART_PUTF2("--- Go to next color, new col_pos: %d. new step_len: %d\r\n", col_pos, step_len);
 		}
 	}
 	
@@ -232,7 +230,7 @@ void set_animation_fixed_color(uint8_t color_index)
 {
 	cli();
 
-	anim_len = 0;
+	step_len = 0;
 	current_col = index2color(color_index);
 	anim_col_i[0] = color_index;
 	anim_col[0] = current_col;
@@ -241,26 +239,6 @@ void set_animation_fixed_color(uint8_t color_index)
 	update_current_col();
 	
 	sei();
-}
-
-void dump_animation_values(void)
-{
-	uint8_t i;
-	
-	UART_PUTF2("Animation repeat: %d, autoreverse: %s, color/time: ",
-		anim_repeat, anim_autoreverse ? "ON" : "OFF");
-	
-	for (i = 0; i < 10; i++)
-	{
-		UART_PUTF2("%d/%d", anim_col_i[i + 1], anim_time[i]);
-		
-		if (i < 9)
-		{
-			UART_PUTS(", ");
-		}
-	}
-
-	UART_PUTS("\r\n");
 }
 
 void send_version_status(void)
@@ -287,7 +265,7 @@ void send_status(void)
 {
 	inc_packetcounter();
 	
-	if (anim_len == 0) // no animation running
+	if (step_len == 0) // no animation running
 	{
 		UART_PUTF("Sending color status: color: %u\r\n", anim_col_i[0]);
 		
@@ -302,9 +280,9 @@ void send_status(void)
 		// Set packet content
 		pkg_header_init_dimmer_coloranimation_status();
 		
-		UART_PUTF2("Sending animation status: Repeat: %u, AutoReverse: %u", anim_repeat, anim_autoreverse);
-		msg_dimmer_coloranimation_set_repeat(anim_repeat);
-		msg_dimmer_coloranimation_set_autoreverse(anim_autoreverse);
+		UART_PUTF2("Sending animation status: Repeat: %u, AutoReverse: %u", repeat, autoreverse);
+		msg_dimmer_coloranimation_set_repeat(repeat);
+		msg_dimmer_coloranimation_set_autoreverse(autoreverse);
 		
 		for (i = 0; i < 10; i++)
 		{
@@ -321,6 +299,214 @@ void send_status(void)
 	pkg_header_set_packetcounter(packetcounter);
 	pkg_header_calc_crc32();
 	rfm12_send_bufx();
+}
+
+// Print out the animation parameters, indexed colors used in the "Set"/"SetGet" message and the
+// calculated RGB colors.
+// Only for debugging purposes!
+void dump_animation_values(void)
+{
+	uint8_t i;
+	
+	UART_PUTF2("Animation repeat: %d, autoreverse: %s, ",
+		repeat, autoreverse ? "ON" : "OFF");
+	UART_PUTF3("Current color: RGB %3d,%3d,%3d\r\n", current_col.r, current_col.g, current_col.b);
+
+	UART_PUTF3("rfirst: %d, rlast: %d, llast: %d\r\n",
+		rfirst, rlast, llast);
+
+	for (i = 0; i < ANIM_COL_MAX; i++)
+	{
+		UART_PUTF("Pos %02d: color ", i);
+	
+		if (i < 10)
+		{
+			UART_PUTF("%02d   ", anim_col_i[i]);
+		}
+		else
+		{
+			UART_PUTS("--   ");
+		}
+
+		UART_PUTF3("RGB %3d,%3d,%3d", anim_col[i].r, anim_col[i].g, anim_col[i].b);
+		
+		UART_PUTF("   time %02d\r\n", anim_time[i]);
+	}
+
+	UART_PUTS("\r\n");
+}
+
+uint8_t find_last_col_pos(void)
+{
+	uint8_t i;
+	
+	for (i = 0; i < ANIM_COL_MAX; i++)
+	{
+		if (anim_time[i] == 0)
+		{
+			return i - 1;
+		}
+	}
+	
+	return ANIM_COL_MAX - 1;
+}
+
+void copy_reverse(uint8_t from, uint8_t to, uint8_t count)
+{
+	int8_t i;
+	
+	UART_PUTF3("Copy rev from %d to %d count %d\r\n", from, to, count);
+	
+	for (i = 0; i < count; i++)
+	{
+		anim_col[to + count - 1 - i] = anim_col[from + i];
+		anim_time[to + count - 1 - i] = anim_time[from + i - 1];
+	}
+}
+
+void copy_forward(uint8_t from, uint8_t to, uint8_t count)
+{
+	int8_t i;
+	
+	UART_PUTF3("Copy fwd from %d to %d count %d\r\n", from, to, count);
+	
+	// copy in reverse direction because of overlapping range in scenario #4 "autoreverse = 0, repeat > 1"
+	for (i = count - 1; i >= 0; i--)
+	{
+		anim_col[to + i] = anim_col[from + i];
+		anim_time[to + i] = anim_time[from + i];
+	}
+}
+
+// Set the RGB color values to play back according to the indexed colors.
+// "Unfold" the colors to a linear animation only playing forward when
+// autoreverse is set.
+void init_animation(void)
+{
+	uint8_t key_idx = 10; // Marker for calculating how the values are copied (see doc).
+	uint8_t i;
+	
+	// Transfer initial data to RGB array, shifted by 1.
+	for (i = 0; i < 10; i++)
+	{
+		anim_col[i + 1] = index2color(anim_col_i[i]);
+	}
+
+	anim_col[0] = current_col;
+	
+	// Find key_idx
+	for (i = 0; i < 10; i++)
+	{
+		if (anim_time[i] == 0)
+		{
+			key_idx = i;
+			break;
+		}
+	}
+	
+	// calc rfirst
+	rfirst = autoreverse && (repeat % 2 == 1) ? key_idx - 1 : 2;
+	
+	// Copy data and set rlast and llast according "doc/initialization.png".
+	if (autoreverse && (repeat != 1))
+	{
+		if (repeat == 0) // infinite cycles (picture #3)
+		{
+			copy_reverse(2, key_idx, key_idx - 1);
+			rlast = llast = 2 * key_idx - 3;
+		}
+		else if (repeat % 2 == 0) // even number of cycles (picture #2)
+		{
+			uint8_t tmp_time = anim_time[key_idx - 1];
+			copy_forward(key_idx, 2 * key_idx - 3, 1);
+			copy_reverse(2, key_idx - 1, key_idx - 2);
+			anim_time[2 * key_idx - 4] = tmp_time;
+			rlast = 2 * key_idx - 5;
+			llast = 2 * key_idx - 4;
+			repeat /= 2;
+		}
+		else // odd number of cycles (picture #1)
+		{
+			copy_forward(2, 2 * key_idx - 4, key_idx - 1);
+			copy_reverse(3, key_idx - 1, key_idx - 3);
+			rlast = 3 * key_idx - 8;
+			llast = 3 * key_idx - 7;
+			repeat /= 2;
+		}
+	}
+	else
+	{
+		if (repeat == 0) // infinite cycles (picture #5)
+		{
+			copy_forward(2, key_idx + 1, 1);
+			rlast = llast = key_idx;
+			anim_time[key_idx] = anim_time[1];
+		}
+		else if (repeat == 1) // one cycle (picture #6)
+		{
+			rlast = llast = key_idx - 1;
+		}
+		else // 2 cycles or more (picture #4)
+		{
+			copy_forward(2, key_idx, key_idx - 1);
+			anim_time[key_idx - 1] = anim_time[1];
+			rlast = key_idx - 1;
+			llast = 2 * key_idx - 3;
+			repeat--;
+		}
+	}
+	
+	UART_PUTF("key_idx: %d\r\n", key_idx);
+	UART_PUTF("rfirst: %d\r\n", rfirst);
+	UART_PUTF("rlast: %d\r\n", rlast);
+	UART_PUTF("llast: %d\r\n", llast);
+}
+
+void clear_anim_data(void)
+{
+	uint8_t i;
+	
+	for (i = 0; i < ANIM_COL_MAX; i++)
+	{
+		anim_time[i] = 0;
+	}
+}
+
+// Function to test the calculation of animation colors.
+// Call it at the beginning of the main function for debugging.
+void test_anim_calculation(void)
+{
+	// change repeat and autoreverse to check the different scenarios
+	repeat = 0;
+	autoreverse = true;
+	
+	step_pos = 0;
+	col_pos = 0;
+			
+	anim_time[0] = 10;
+	anim_col_i[0] = 0;
+	anim_time[1] = 16;
+	anim_col_i[1] = 48;
+	anim_time[2] = 16;
+	anim_col_i[2] = 12;
+	anim_time[3] = 16;
+	anim_col_i[3] = 3;
+	anim_time[4] = 15;
+	anim_col_i[4] = 51;
+	anim_time[5] = 9;
+	anim_col_i[5] = 1;
+
+	UART_PUTS("\r\n*** Initial colors ***\r\n");
+	dump_animation_values();
+	
+	init_animation();
+	
+	UART_PUTS("\r\n*** Colors after initialisation ***\r\n");
+	dump_animation_values();
+	
+	step_len = anim_cycles[anim_time[0]];
+
+	while (42) {}
 }
 
 // React accordingly on the MessageType, MessageGroup and MessageID.
@@ -351,26 +537,25 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 			
 			cli();
 			
-			anim_repeat = msg_dimmer_coloranimation_get_repeat();
-			anim_autoreverse = msg_dimmer_coloranimation_get_autoreverse();
-			anim_play_backwards = false;
-			anim_pos = 0;
-			anim_col_pos = 0;
+			repeat = msg_dimmer_coloranimation_get_repeat();
+			autoreverse = msg_dimmer_coloranimation_get_autoreverse();
+			step_pos = 0;
+			col_pos = 0;
 			anim_col[0] = current_col;
 			
-			UART_PUTF2("Repeat:%u;AutoReverse:%u;", anim_repeat, anim_autoreverse);
+			UART_PUTF2("Repeat:%u;AutoReverse:%u;", repeat, autoreverse);
 			
 			for (i = 0; i < 10; i++)
 			{
 				anim_time[i] = msg_dimmer_coloranimation_get_time(i);
 				anim_col_i[i] = msg_dimmer_coloranimation_get_color(i);
-				anim_col[i + 1] = index2color(anim_col_i[i]);
 				
 				UART_PUTF2("Time[%u]:%u;", i, anim_time[i]);
 				UART_PUTF2("Color[%u]:%u;", i, anim_col_i[i]);
 			}
 			
-			anim_len = anim_cycles[anim_time[0]];
+			init_animation();
+			step_len = anim_cycles[anim_time[0]];
 			update_current_col();
 			
 			sei();
@@ -420,8 +605,8 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 				msg_dimmer_coloranimation_set_time(i, anim_time[i]);
 			}
 			
-			msg_dimmer_coloranimation_set_repeat(anim_repeat);
-			msg_dimmer_coloranimation_set_autoreverse(anim_autoreverse);
+			msg_dimmer_coloranimation_set_repeat(repeat);
+			msg_dimmer_coloranimation_set_autoreverse(autoreverse);
 		}
 		else
 		{
@@ -553,6 +738,9 @@ int main(void)
 	
 	set_animation_fixed_color(0);
 	timer2_init();
+
+	clear_anim_data();
+	test_anim_calculation();
 
 	sei();
 
