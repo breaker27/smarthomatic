@@ -62,7 +62,7 @@ uint8_t brightness_factor;
 // The input value x means 0.05s * 1.3 ^ x and covers 30ms to 170s. Each timer cycle is 32.768ms.
 // Therefore, the values are: round((0.05s * 1.3 ^ x) / 0.032768s).
 // Animation time 0 is animation OFF, so there are 31 defined animation times.
-const uint16_t anim_cycles[31] = {1, 2, 3, 4, 6, 8, 10, 12, 16, 21, 27, 36, 46, 60,
+const uint16_t timer_cycles[31] = {1, 2, 3, 4, 6, 8, 10, 12, 16, 21, 27, 36, 46, 60,
                                   78, 102, 132, 172, 223, 290, 377, 490, 637, 828,
                                   1077, 1400, 1820, 2366, 3075, 3998, 5197};
 
@@ -74,7 +74,7 @@ struct rgb_color_t
 };
 
 #define ANIM_COL_MAX 31
-struct rgb_color_t anim_col[ANIM_COL_MAX]; // The last active color (index 0) + 10 new colors used for the animation (index 1-10).
+struct rgb_color_t anim_col[ANIM_COL_MAX]; // The last active color (index 0) + colors used for the animation
 struct rgb_color_t current_col;            // The current (mixed) color calculated within an animation.
 uint8_t anim_time[ANIM_COL_MAX];           // The times used for animate blending between two colors.
                                            // 0 at pos x indicates the last color used is x-1.
@@ -166,8 +166,7 @@ void update_current_col(void)
 	}
 
 	//UART_PUTF("col_pos %d, ", col_pos);
-	//UART_PUTF3("Animation PWM color %d,%d,%d\r\n", res.r, res.g, res.b);
-	//UART_PUTF3("%d,%d,%d\r\n", res.r, res.g, res.b);
+	//UART_PUTF3("PWM %d,%d,%d\r\n", current_col.r, current_col.g, current_col.b);
 	
 	set_PWM(current_col);
 }
@@ -187,7 +186,7 @@ ISR (TIMER2_OVF_vect)
 	}
 	else
 	{
-		UART_PUTF3("-- Anim step %d (color pos %d -> %d) finished.\r\n", col_pos, col_pos, col_pos + 1);
+		//UART_PUTF3("-- Anim step %d (color pos %d -> %d) finished.\r\n", col_pos, col_pos, col_pos + 1);
 
 		// When animation step at rlast is completed (col_pos = rlast) and
 		// repeat != 1, decrease repeat by 1 (if not 0 already) and jump to rfirst.
@@ -198,17 +197,17 @@ ISR (TIMER2_OVF_vect)
 			if (repeat > 1)
 					repeat--;
 
-			UART_PUTF2("-- More cycles to go. New repeat = %d. Reset col_pos to %d.\r\n", repeat, rfirst);
+			//UART_PUTF2("-- More cycles to go. New repeat = %d. Reset col_pos to %d.\r\n", repeat, rfirst);
 			
 			col_pos = rfirst;
 			step_pos = 0;
-			step_len = anim_cycles[anim_time[col_pos]];
+			step_len = timer_cycles[anim_time[col_pos]];
 		}
 		// When animation step at llast is completed (col_pos = llast) and
 		// repeat = 1, stop animation.
 		else if ((repeat == 1)  && (col_pos == llast))
 		{
-			UART_PUTF("-- End of animation. Set fixed color %d\r\n", col_pos + 1);
+			//UART_PUTF("-- End of animation. Set fixed color %d\r\n", col_pos + 1);
 			set_PWM(anim_col[col_pos + 1]); // set color last time
 			step_len = 0;
 			return;
@@ -217,9 +216,9 @@ ISR (TIMER2_OVF_vect)
 		{
 			col_pos++;
 			step_pos = 0;
-			step_len = anim_cycles[anim_time[col_pos]];
+			step_len = timer_cycles[anim_time[col_pos]];
 			
-			UART_PUTF2("--- Go to next color, new col_pos: %d. new step_len: %d\r\n", col_pos, step_len);
+			//UART_PUTF2("--- Go to next color, new col_pos: %d. new step_len: %d\r\n", col_pos, step_len);
 		}
 	}
 	
@@ -301,41 +300,6 @@ void send_status(void)
 	rfm12_send_bufx();
 }
 
-// Print out the animation parameters, indexed colors used in the "Set"/"SetGet" message and the
-// calculated RGB colors.
-// Only for debugging purposes!
-void dump_animation_values(void)
-{
-	uint8_t i;
-	
-	UART_PUTF2("Animation repeat: %d, autoreverse: %s, ",
-		repeat, autoreverse ? "ON" : "OFF");
-	UART_PUTF3("Current color: RGB %3d,%3d,%3d\r\n", current_col.r, current_col.g, current_col.b);
-
-	UART_PUTF3("rfirst: %d, rlast: %d, llast: %d\r\n",
-		rfirst, rlast, llast);
-
-	for (i = 0; i < ANIM_COL_MAX; i++)
-	{
-		UART_PUTF("Pos %02d: color ", i);
-	
-		if (i < 10)
-		{
-			UART_PUTF("%02d   ", anim_col_i[i]);
-		}
-		else
-		{
-			UART_PUTS("--   ");
-		}
-
-		UART_PUTF3("RGB %3d,%3d,%3d", anim_col[i].r, anim_col[i].g, anim_col[i].b);
-		
-		UART_PUTF("   time %02d\r\n", anim_time[i]);
-	}
-
-	UART_PUTS("\r\n");
-}
-
 uint8_t find_last_col_pos(void)
 {
 	uint8_t i;
@@ -355,7 +319,7 @@ void copy_reverse(uint8_t from, uint8_t to, uint8_t count)
 {
 	int8_t i;
 	
-	UART_PUTF3("Copy rev from %d to %d count %d\r\n", from, to, count);
+	//UART_PUTF3("Copy rev from %d to %d count %d\r\n", from, to, count);
 	
 	for (i = 0; i < count; i++)
 	{
@@ -368,7 +332,7 @@ void copy_forward(uint8_t from, uint8_t to, uint8_t count)
 {
 	int8_t i;
 	
-	UART_PUTF3("Copy fwd from %d to %d count %d\r\n", from, to, count);
+	//UART_PUTF3("Copy fwd from %d to %d count %d\r\n", from, to, count);
 	
 	// copy in reverse direction because of overlapping range in scenario #4 "autoreverse = 0, repeat > 1"
 	for (i = count - 1; i >= 0; i--)
@@ -455,11 +419,11 @@ void init_animation(void)
 			repeat--;
 		}
 	}
-	
+	/*
 	UART_PUTF("key_idx: %d\r\n", key_idx);
 	UART_PUTF("rfirst: %d\r\n", rfirst);
 	UART_PUTF("rlast: %d\r\n", rlast);
-	UART_PUTF("llast: %d\r\n", llast);
+	UART_PUTF("llast: %d\r\n", llast); */
 }
 
 void clear_anim_data(void)
@@ -470,6 +434,41 @@ void clear_anim_data(void)
 	{
 		anim_time[i] = 0;
 	}
+}
+
+// Print out the animation parameters, indexed colors used in the "Set"/"SetGet" message and the
+// calculated RGB colors.
+// Only for debugging purposes!
+void dump_animation_values(void)
+{
+	uint8_t i;
+	
+	UART_PUTF2("Animation repeat: %d, autoreverse: %s, ",
+		repeat, autoreverse ? "ON" : "OFF");
+	UART_PUTF3("Current color: RGB %3d,%3d,%3d\r\n", current_col.r, current_col.g, current_col.b);
+
+	UART_PUTF3("rfirst: %d, rlast: %d, llast: %d\r\n",
+		rfirst, rlast, llast);
+
+	for (i = 0; i < ANIM_COL_MAX; i++)
+	{
+		UART_PUTF("Pos %02d: color ", i);
+	
+		if (i < 10)
+		{
+			UART_PUTF("%02d   ", anim_col_i[i]);
+		}
+		else
+		{
+			UART_PUTS("--   ");
+		}
+
+		UART_PUTF3("RGB %3d,%3d,%3d", anim_col[i].r, anim_col[i].g, anim_col[i].b);
+		
+		UART_PUTF("   time %02d\r\n", anim_time[i]);
+	}
+
+	UART_PUTS("\r\n");
 }
 
 // Function to test the calculation of animation colors.
@@ -504,7 +503,7 @@ void test_anim_calculation(void)
 	UART_PUTS("\r\n*** Colors after initialisation ***\r\n");
 	dump_animation_values();
 	
-	step_len = anim_cycles[anim_time[0]];
+	step_len = timer_cycles[anim_time[0]];
 
 	while (42) {}
 }
@@ -555,7 +554,7 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 			}
 			
 			init_animation();
-			step_len = anim_cycles[anim_time[0]];
+			step_len = timer_cycles[anim_time[0]];
 			update_current_col();
 			
 			sei();
@@ -733,14 +732,13 @@ int main(void)
 	led_blink(500, 500, 3);
 
 	PWM_init();
-	
 	rfm12_init();
 	
 	set_animation_fixed_color(0);
 	timer2_init();
 
 	clear_anim_data();
-	test_anim_calculation();
+	// test_anim_calculation(); // for debugging only
 
 	sei();
 
