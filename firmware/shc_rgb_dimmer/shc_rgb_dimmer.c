@@ -760,13 +760,13 @@ int main(void)
 				memcpy(bufx, rfm12_rx_buffer(), len);
 				memset(&bufx[len], 0, BUFX_LENGTH - len);
 				
-				UART_PUTS("Before decryption: ");
-				print_bytearray(bufx, len);
+				//UART_PUTS("Before decryption: ");
+				//print_bytearray(bufx, len);
 					
 				aes256_decrypt_cbc(bufx, len);
 
-				UART_PUTS("Decrypted bytes: ");
-				print_bytearray(bufx, len);
+				//UART_PUTS("Decrypted bytes: ");
+				//print_bytearray(bufx, len);
 				
 				if (!pkg_header_check_crc32(len))
 				{
