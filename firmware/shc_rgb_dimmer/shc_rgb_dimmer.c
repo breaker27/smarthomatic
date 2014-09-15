@@ -45,7 +45,7 @@
 uint16_t device_id;
 uint32_t station_packetcounter;
 
-uint16_t send_status_timeout = 5;
+uint16_t send_status_timeout = 15;
 uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly after startup
 
 uint8_t brightness_factor;
@@ -65,6 +65,22 @@ uint8_t brightness_factor;
 const uint16_t timer_cycles[31] = {1, 2, 3, 4, 6, 8, 10, 12, 16, 21, 27, 36, 46, 60,
                                   78, 102, 132, 172, 223, 290, 377, 490, 637, 828,
                                   1077, 1400, 1820, 2366, 3075, 3998, 5197};
+
+const uint16_t pwm_transl[256] = {
+	0, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 7, 7, 7, 7,
+	8, 8, 8, 9, 9, 9, 9, 10, 10, 10, 11, 11, 11, 11, 12, 12, 12, 13, 13, 13, 14, 14,
+	14, 14, 15, 15, 15, 16, 16, 16, 17, 17, 17, 18, 18, 18, 19, 19, 19, 20, 20, 20,
+	21, 21, 21, 22, 22, 22, 23, 23, 23, 24, 24, 24, 25, 25, 25, 26, 26, 27, 27, 27,
+	28, 28, 28, 29, 29, 30, 30, 30, 31, 31, 32, 32, 32, 33, 33, 34, 34, 34, 35, 35,
+	36, 36, 37, 37, 38, 38, 38, 39, 39, 40, 40, 41, 41, 42, 42, 43, 43, 44, 44, 45,
+	46, 46, 47, 47, 48, 48, 49, 49, 50, 51, 51, 52, 52, 53, 54, 54, 55, 56, 56, 57,
+	58, 58, 59, 60, 60, 61, 62, 63, 63, 64, 65, 66, 67, 67, 68, 69, 70, 71, 72, 73,
+	73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 87, 88, 89, 90, 91, 92, 94,
+	95, 96, 97, 99, 100, 101, 103, 104, 105, 107, 108, 110, 111, 113, 114, 116, 118,
+	119, 121, 123, 124, 126, 128, 130, 132, 134, 135, 137, 139, 141, 144, 146, 148,
+	150, 152, 155, 157, 159, 162, 164, 167, 169, 172, 174, 177, 180, 183, 185, 188,
+	191, 194, 197, 200, 204, 207, 210, 214, 217, 221, 224, 228, 231, 235, 239, 243,
+	247, 251, 255};
 
 struct rgb_color_t
 {
@@ -123,9 +139,9 @@ void timer2_init(void)
 
 void set_PWM(struct rgb_color_t color)
 {
-	OCR0A = (uint16_t)color.r * brightness_factor / 100;
-	OCR0B = (uint16_t)color.g * brightness_factor / 100;
-	OCR1A = (uint16_t)color.b * brightness_factor / 100;
+	OCR0A = (uint16_t)(pwm_transl[color.r]) * brightness_factor / 100;
+	OCR0B = (uint16_t)(pwm_transl[color.g]) * brightness_factor / 100;
+	OCR1A = (uint16_t)(pwm_transl[color.b]) * brightness_factor / 100;
 }
 
 // Calculate an RGB value out of the index color.
@@ -628,7 +644,7 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	pkg_header_calc_crc32();
 	
 	rfm12_send_bufx();
-	send_status_timeout = 5;
+	send_status_timeout = 15;
 }
 
 void process_packet(uint8_t len)
