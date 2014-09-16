@@ -35,71 +35,72 @@
 // Description: This is a bit field about the connected switches. (Currently, only one switch is supported and the value has to be 0b00000001, but the value is for future usage.)
 
 // Set SupportedSwitches (UIntValue)
-// Byte offset: 64, bit offset: 0, length bits 8, min val 1, max val 1
+// Offset: 512, length bits 8, min val 1, max val 1
 static inline void e2p_powerswitch_set_supportedswitches(uint8_t val)
 {
-  eeprom_write_UIntValue(64, 0, 8, val);
+  eeprom_write_UIntValue(512, 8, val);
 }
 
 // Get SupportedSwitches (UIntValue)
-// Byte offset: 64, bit offset: 0, length bits 8, min val 1, max val 1
+// Offset: 512, length bits 8, min val 1, max val 1
 static inline uint8_t e2p_powerswitch_get_supportedswitches(void)
 {
-  return eeprom_read_UIntValue8(64, 0, 8, 1, 1);
+  return eeprom_read_UIntValue8(512, 8, 1, 1);
 }
 
 // BaseStationPacketCounter (UIntValue)
 // Description: This is the last remembered packet counter of a command from the base station. Packets with the same or lower number are ignored.
 
 // Set BaseStationPacketCounter (UIntValue)
-// Byte offset: 65, bit offset: 0, length bits 24, min val 0, max val 16777215
+// Offset: 520, length bits 24, min val 0, max val 16777215
 static inline void e2p_powerswitch_set_basestationpacketcounter(uint32_t val)
 {
-  eeprom_write_UIntValue(65, 0, 24, val);
+  eeprom_write_UIntValue(520, 24, val);
 }
 
 // Get BaseStationPacketCounter (UIntValue)
-// Byte offset: 65, bit offset: 0, length bits 24, min val 0, max val 16777215
+// Offset: 520, length bits 24, min val 0, max val 16777215
 static inline uint32_t e2p_powerswitch_get_basestationpacketcounter(void)
 {
-  return eeprom_read_UIntValue32(65, 0, 24, 0, 16777215);
+  return eeprom_read_UIntValue32(520, 24, 0, 16777215);
 }
 
 // SwitchState (BoolValue[8])
 // Description: This field stores the last known switch state(s) for eight switches to allow restoring the same state after power loss. It contains also the remaining timeout value. Fill this with zeros when creating a e2p file!
 
 // Set SwitchState (BoolValue)
-// Byte offset: 68, bit offset: 0, length bits 8
+// Offset: 544, length bits 8
 static inline void e2p_powerswitch_set_switchstate(uint8_t index, bool val)
 {
-  eeprom_write_UIntValue(68 + (uint16_t)index * 1, 0, 8, val ? 1 : 0);
+  eeprom_write_UIntValue(544 + (uint16_t)index * 8, 8, val ? 1 : 0);
 }
 
 // Get SwitchState (BoolValue)
-// Byte offset: 68, bit offset: 0, length bits 8
+// Offset: 544, length bits 8
 static inline bool e2p_powerswitch_get_switchstate(uint8_t index)
 {
-  return eeprom_read_UIntValue8(68 + (uint16_t)index * 1, 0, 8, 0, 1) == 1;
+  return eeprom_read_UIntValue8(544 + (uint16_t)index * 8, 8, 0, 1) == 1;
 }
 
 // SwitchTimeout (UIntValue[8])
 // Description: This field stores the last known switch state(s) for eight switches to allow restoring the same state after power loss. It contains also the remaining timeout value. Fill this with zeros when creating a e2p file!
 
 // Set SwitchTimeout (UIntValue)
-// Byte offset: 76, bit offset: 0, length bits 16, min val 0, max val 65767
+// Offset: 608, length bits 16, min val 0, max val 65767
 static inline void e2p_powerswitch_set_switchtimeout(uint8_t index, uint16_t val)
 {
-  eeprom_write_UIntValue(76 + (uint16_t)index * 2, 0, 16, val);
+  eeprom_write_UIntValue(608 + (uint16_t)index * 16, 16, val);
 }
 
 // Get SwitchTimeout (UIntValue)
-// Byte offset: 76, bit offset: 0, length bits 16, min val 0, max val 65767
+// Offset: 608, length bits 16, min val 0, max val 65767
 static inline uint16_t e2p_powerswitch_get_switchtimeout(uint8_t index)
 {
-  return eeprom_read_UIntValue16(76 + (uint16_t)index * 2, 0, 16, 0, 65767);
+  return eeprom_read_UIntValue16(608 + (uint16_t)index * 16, 16, 0, 65767);
 }
 
 // Reserved area with 7456 bits
+// Offset: 736
 
 
 #endif /* _E2P_POWERSWITCH_H */

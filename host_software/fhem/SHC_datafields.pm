@@ -97,6 +97,7 @@ sub setUIntBits($$$$$)
   # if length is smaller than 8 bits, get the old value from array
   if ($length_bits < 8) {
     $b = @$byteArrayRef[$byte];
+
     $b = clear_bits($b, $bit, $length_bits);
   }
 
@@ -111,7 +112,7 @@ sub setUInt($$$$)
 {
   my ($byteArrayRef, $offset, $length_bits, $value) = @_;
 
-  my $byte = $offset / 8;
+  my $byte = int($offset / 8);
   my $bit  = $offset % 8;
 
   # move bits to the left border
@@ -125,7 +126,7 @@ sub setUInt($$$$)
   my $len       = min($length_bits, 8 - $bit);
   my $val8      = get_bits($value, $src_start, $len);
 
-  # DEBUG print "   Write bits to byte " . $byte . ", dst_start " . $dst_start . ", len " . $len . ", val8 " . $val8 . "\r\n";
+# DEBUG print "   Write value " . $val8 . " (" . $len . " bits) to byte " . $byte . ", dst_start " . $dst_start . "\r\n";
 
   setUIntBits($byteArrayRef, $byte, $dst_start, $len, $val8);
 
@@ -137,7 +138,7 @@ sub setUInt($$$$)
     $val8 = get_bits($value, $src_start, $len);
     $byte++;
 
-    # DEBUG print "      Byte nr. " . $byte . ", src_start " . $src_start . ", len " . $len . ", val8 " . $val8 . "\r\n";
+# DEBUG print "   Write value " . $val8 . " (" . $len . " bits) from src_start " . $src_start . " to byte " . $byte . ", dst_start " . $dst_start . "\r\n";
 
     setUIntBits($byteArrayRef, $byte, $dst_start, $len, $val8);
 
@@ -172,10 +173,11 @@ sub new
 {
   my $class = shift;
   my $self  = {
-    _id     => shift,
-    _offset => shift,
-    _bits   => shift,
-    _length => shift,
+    _id               => shift,
+    _offset           => shift,
+    _bits             => shift,
+    _length           => shift,
+    _arrayElementBits => shift
   };
   bless $self, $class;
   return $self;
@@ -185,14 +187,14 @@ sub getValue
 {
   my ($self, $byteArrayRef, $index) = @_;
 
-  return SHC_util::getUInt($byteArrayRef, $self->{_offset} + $self->{_bits} * $index, $self->{_bits});
+  return SHC_util::getUInt($byteArrayRef, $self->{_offset} + $self->{_arrayElementBits} * $index, $self->{_bits});
 }
 
 sub setValue
 {
   my ($self, $byteArrayRef, $value, $index) = @_;
 
-  SHC_util::setUInt($byteArrayRef, $self->{_offset} + $self->{_bits} * $index, $self->{_bits}, $value);
+  SHC_util::setUInt($byteArrayRef, $self->{_offset} + $self->{_arrayElementBits} * $index, $self->{_bits}, $value);
 }
 
 # ----------- IntValue class -----------
@@ -203,10 +205,11 @@ sub new
 {
   my $class = shift;
   my $self  = {
-    _id     => shift,
-    _offset => shift,
-    _bits   => shift,
-    _length => shift,
+    _id               => shift,
+    _offset           => shift,
+    _bits             => shift,
+    _length           => shift,
+    _arrayElementBits => shift
   };
   bless $self, $class;
   return $self;
@@ -216,14 +219,14 @@ sub getValue
 {
   my ($self, $byteArrayRef, $index) = @_;
 
-  return SHC_util::getUInt($byteArrayRef, $self->{_offset} + $self->{_bits} * $index, $self->{_bits});
+  return SHC_util::getUInt($byteArrayRef, $self->{_offset} + $self->{_arrayElementBits} * $index, $self->{_bits});
 }
 
 sub setValue
 {
   my ($self, $byteArrayRef, $value, $index) = @_;
 
-  SHC_util::setUInt($byteArrayRef, $self->{_offset} + $self->{_bits} * $index, $self->{_bits}, $value);
+  SHC_util::setUInt($byteArrayRef, $self->{_offset} + $self->{_arrayElementBits} * $index, $self->{_bits}, $value);
 }
 
 # ----------- BoolValue class -----------
@@ -234,9 +237,10 @@ sub new
 {
   my $class = shift;
   my $self  = {
-    _id     => shift,
-    _offset => shift,
-    _length => shift,
+    _id               => shift,
+    _offset           => shift,
+    _length           => shift,
+    _arrayElementBits => shift
   };
   bless $self, $class;
   return $self;
@@ -246,14 +250,15 @@ sub getValue
 {
   my ($self, $byteArrayRef, $index) = @_;
 
-  return SHC_util::getUInt($byteArrayRef, $self->{_offset} + $index, 1) == 1 ? 1 : 0;
+  return SHC_util::getUInt($byteArrayRef, $self->{_offset} + $self->{_arrayElementBits} * $index, 1) == 1 ? 1 : 0;
 }
 
 sub setValue
 {
   my ($self, $byteArrayRef, $value, $index) = @_;
 
-  return SHC_util::setUInt($byteArrayRef, $self->{_offset} + $index, 1, $value == 0 ? 0 : 1);
+  return SHC_util::setUInt($byteArrayRef, $self->{_offset} + $self->{_arrayElementBits} * $index, 1,
+    $value == 0 ? 0 : 1);
 }
 
 # ----------- EnumValue class -----------
@@ -267,10 +272,11 @@ sub new
 {
   my $class = shift;
   my $self  = {
-    _id     => shift,
-    _offset => shift,
-    _bits   => shift,
-    _length => shift,
+    _id               => shift,
+    _offset           => shift,
+    _bits             => shift,
+    _length           => shift,
+    _arrayElementBits => shift
   };
   bless $self, $class;
   return $self;
@@ -288,7 +294,7 @@ sub getValue
 {
   my ($self, $byteArrayRef, $index) = @_;
 
-  my $value = SHC_util::getUInt($byteArrayRef, $self->{_offset} + $self->{_bits} * $index, $self->{_bits});
+  my $value = SHC_util::getUInt($byteArrayRef, $self->{_offset} + $self->{_arrayElementBits} * $index, $self->{_bits});
   return $value2name{$value};
 }
 
@@ -297,7 +303,7 @@ sub setValue
   my ($self, $byteArrayRef, $name, $index) = @_;
 
   my $value = $name2value{$name};
-  SHC_util::setUInt($byteArrayRef, $self->{_offset} + $self->{_bits} * $index, $self->{_bits}, $value);
+  SHC_util::setUInt($byteArrayRef, $self->{_offset} + $self->{_arrayElementBits} * $index, $self->{_bits}, $value);
 }
 
 1;

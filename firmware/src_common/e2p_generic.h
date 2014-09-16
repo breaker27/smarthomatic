@@ -35,55 +35,57 @@
 // Description: The DeviceID identifies the specific unit in the SHC network. It is used to address the device and in messages the device sends. Every device has to have a different DeviceID.
 
 // Set DeviceID (UIntValue)
-// Byte offset: 8, bit offset: 0, length bits 12, min val 0, max val 4095
+// Offset: 64, length bits 12, min val 0, max val 4095
 static inline void e2p_generic_set_deviceid(uint16_t val)
 {
-  eeprom_write_UIntValue(8, 0, 12, val);
+  eeprom_write_UIntValue(64, 12, val);
 }
 
 // Get DeviceID (UIntValue)
-// Byte offset: 8, bit offset: 0, length bits 12, min val 0, max val 4095
+// Offset: 64, length bits 12, min val 0, max val 4095
 static inline uint16_t e2p_generic_get_deviceid(void)
 {
-  return eeprom_read_UIntValue16(8, 0, 12, 0, 4095);
+  return eeprom_read_UIntValue16(64, 12, 0, 4095);
 }
 
 // Reserved area with 4 bits
+// Offset: 76
 
 // PacketCounter (UIntValue)
 // Description: The PacketCounter is counted up throughout the whole lifetime of the device and is used to make the encrypted packets differently from each other every time.
 
 // Set PacketCounter (UIntValue)
-// Byte offset: 10, bit offset: 0, length bits 24, min val 0, max val 16777215
+// Offset: 80, length bits 24, min val 0, max val 16777215
 static inline void e2p_generic_set_packetcounter(uint32_t val)
 {
-  eeprom_write_UIntValue(10, 0, 24, val);
+  eeprom_write_UIntValue(80, 24, val);
 }
 
 // Get PacketCounter (UIntValue)
-// Byte offset: 10, bit offset: 0, length bits 24, min val 0, max val 16777215
+// Offset: 80, length bits 24, min val 0, max val 16777215
 static inline uint32_t e2p_generic_get_packetcounter(void)
 {
-  return eeprom_read_UIntValue32(10, 0, 24, 0, 16777215);
+  return eeprom_read_UIntValue32(80, 24, 0, 16777215);
 }
 
 // Reserved area with 152 bits
+// Offset: 104
 
 // AesKey (ByteArray)
 // Description: This key is used to encrypt packets before sending and also used as primary key to decrypt packets. Special devices may have additional keys in their device specific block.
 
 // Set AesKey (ByteArray)
-// Byte offset: 32, bit offset: 0, length bits 256
+// Offset: 256, length bits 256
 static inline void e2p_generic_set_aeskey(void *src)
 {
-  eeprom_write_block(src, (uint8_t *)(32), 32);
+  eeprom_write_block(src, (uint8_t *)((256) / 8), 32);
 }
 
 // Get AesKey (ByteArray)
-// Byte offset: 32, bit offset: 0, length bits 256
+// Offset: 256, length bits 256
 static inline void e2p_generic_get_aeskey(void *dst)
 {
-  eeprom_read_block(dst, (uint8_t *)(32), 32);
+  eeprom_read_block(dst, (uint8_t *)((256) / 8), 32);
 }
 
 

@@ -28,7 +28,8 @@
 #include <stdbool.h>
 
 // used as buffer for sending data to SHT
-uint8_t bufx[65];
+#define BUFX_LENGTH 65
+uint8_t bufx[BUFX_LENGTH];
 
 // ########## Linear Interpolation
 

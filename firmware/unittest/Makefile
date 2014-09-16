@@ -26,8 +26,11 @@ CC = gcc
 # Linker command
 LD = gcc
 
+# Include paths
+INC=-I.
+
 # Flags to pass to the compiler - add "-g" to include debug information
-CFLAGS = -Wall
+CFLAGS = -Wall $(INC)
 CFLAGS += -DUNITTEST=1 # tell some header files that we are compiling for the unittest (and AVR functions are not available)
 
 # Flags to pass to the linker
@@ -37,7 +40,7 @@ LDFLAGS =
 RM = rm
 
 # List your source files here
-CSRC = main.c ../src_common/e2p_access.c
+CSRC = main.c util.c ../src_common/e2p_access.c
 
 # List your object files here
 OBJ = $(CSRC:%.c=$(OBJDIR)/%.o)
@@ -67,6 +70,7 @@ $(OBJDIR)/depend:
 	$(CC) $(CFLAGS) -MM $(CSRC) > $(OBJDIR)/depend
 
 run: all
+	depend
 	$(PROG)
 
 include $(OBJDIR)/depend

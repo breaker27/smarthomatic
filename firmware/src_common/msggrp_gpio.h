@@ -130,17 +130,17 @@ static inline void pkg_header_init_gpio_digitalpin_ackstatus(void)
 // Description: Tells if the pin is on (at high level) or not (low level).
 
 // Set On (BoolValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) / 8, ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) % 8, length bits 1
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1, length bits 1
 static inline void msg_gpio_digitalpin_set_on(uint8_t index, bool val)
 {
-  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) / 8, ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) % 8, 1, val ? 1 : 0, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1, 1, val ? 1 : 0, bufx);
 }
 
 // Get On (BoolValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) / 8, ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) % 8, length bits 1
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1, length bits 1
 static inline bool msg_gpio_digitalpin_get_on(uint8_t index)
 {
-  return array_read_UIntValue8(((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) / 8, ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) % 8, 1, 0, 1, bufx) == 1;
+  return array_read_UIntValue8((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1, 1, 0, 1, bufx) == 1;
 }
 
 
@@ -150,7 +150,7 @@ static inline bool msg_gpio_digitalpin_get_on(uint8_t index)
 // MessageID: 2
 // Possible MessageTypes: Get, Set, SetGet, Status, Ack, AckStatus
 // Validity: test
-// Length w/o Header + HeaderExtension: 104 bits
+// Length w/o Header + HeaderExtension: 96 bits
 // Data fields: On, Voltage
 // Description: This is the voltage of up to 8 ADC channels. The ATMega328 in the PDIP package has only 6 ADCs and one ADC may be blocked by the battery voltage measurement, so there may be less than 8 ADC values reported depending on the device and configuration.
 
@@ -228,34 +228,34 @@ static inline void pkg_header_init_gpio_analogpin_ackstatus(void)
 // Description: Tells if the pin is on (voltage over trigger threshold) or not.
 
 // Set On (BoolValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) / 8, ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) % 8, length bits 1
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1, length bits 1
 static inline void msg_gpio_analogpin_set_on(uint8_t index, bool val)
 {
-  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) / 8, ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) % 8, 1, val ? 1 : 0, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1, 1, val ? 1 : 0, bufx);
 }
 
 // Get On (BoolValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) / 8, ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) % 8, length bits 1
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1, length bits 1
 static inline bool msg_gpio_analogpin_get_on(uint8_t index)
 {
-  return array_read_UIntValue8(((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) / 8, ((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1) % 8, 1, 0, 1, bufx) == 1;
+  return array_read_UIntValue8((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1, 1, 0, 1, bufx) == 1;
 }
 
 // Voltage (UIntValue[8])
 // Description: This is the voltage level in mV.
 
 // Set Voltage (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 11) / 8, ((uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 11) % 8, length bits 11, min val 0, max val 1100
+// Offset: (uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 11, length bits 11, min val 0, max val 1100
 static inline void msg_gpio_analogpin_set_voltage(uint8_t index, uint32_t val)
 {
-  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 11) / 8, ((uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 11) % 8, 11, val, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 11, 11, val, bufx);
 }
 
 // Get Voltage (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 11) / 8, ((uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 11) % 8, length bits 11, min val 0, max val 1100
+// Offset: (uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 11, length bits 11, min val 0, max val 1100
 static inline uint32_t msg_gpio_analogpin_get_voltage(uint8_t index)
 {
-  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 11) / 8, ((uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 11) % 8, 11, 0, 1100, bufx);
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 11, 11, 0, 1100, bufx);
 }
 
 #endif /* _MSGGRP_GPIO_H */

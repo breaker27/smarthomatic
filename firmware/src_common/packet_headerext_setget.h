@@ -30,50 +30,50 @@
 // Description: The ID of the device to process the request. Use 4095 for broadcasts.
 
 // Set ReceiverID (UIntValue)
-// Offset: 9, 0, length bits 12, min val 0, max val 4095
+// Offset: 72, length bits 12, min val 0, max val 4095
 static inline void pkg_headerext_setget_set_receiverid(uint32_t val)
 {
-  array_write_UIntValue(9, 0, 12, val, bufx);
+  array_write_UIntValue(72, 12, val, bufx);
 }
 
 // Get ReceiverID (UIntValue)
-// Offset: 9, 0, length bits 12, min val 0, max val 4095
+// Offset: 72, length bits 12, min val 0, max val 4095
 static inline uint32_t pkg_headerext_setget_get_receiverid(void)
 {
-  return array_read_UIntValue32(9, 0, 12, 0, 4095, bufx);
+  return array_read_UIntValue32(72, 12, 0, 4095, bufx);
 }
 
 // MessageGroupID (UIntValue)
 // Description: 0 = Generic, 1..9 = Reserved, others are arbitrary
 
 // Set MessageGroupID (UIntValue)
-// Offset: 10, 4, length bits 7, min val 0, max val 127
+// Offset: 84, length bits 7, min val 0, max val 127
 static inline void pkg_headerext_setget_set_messagegroupid(uint32_t val)
 {
-  array_write_UIntValue(10, 4, 7, val, bufx);
+  array_write_UIntValue(84, 7, val, bufx);
 }
 
 // Get MessageGroupID (UIntValue)
-// Offset: 10, 4, length bits 7, min val 0, max val 127
+// Offset: 84, length bits 7, min val 0, max val 127
 static inline uint32_t pkg_headerext_setget_get_messagegroupid(void)
 {
-  return array_read_UIntValue32(10, 4, 7, 0, 127, bufx);
+  return array_read_UIntValue32(84, 7, 0, 127, bufx);
 }
 
 // MessageID (UIntValue)
 
 // Set MessageID (UIntValue)
-// Offset: 11, 3, length bits 4, min val 0, max val 15
+// Offset: 91, length bits 4, min val 0, max val 15
 static inline void pkg_headerext_setget_set_messageid(uint32_t val)
 {
-  array_write_UIntValue(11, 3, 4, val, bufx);
+  array_write_UIntValue(91, 4, val, bufx);
 }
 
 // Get MessageID (UIntValue)
-// Offset: 11, 3, length bits 4, min val 0, max val 15
+// Offset: 91, length bits 4, min val 0, max val 15
 static inline uint32_t pkg_headerext_setget_get_messageid(void)
 {
-  return array_read_UIntValue32(11, 3, 4, 0, 15, bufx);
+  return array_read_UIntValue32(91, 4, 0, 15, bufx);
 }
 
 

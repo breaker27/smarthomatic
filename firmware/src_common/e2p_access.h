@@ -19,7 +19,10 @@
 #ifndef E2P_ACCESS_H
 #define E2P_ACCESS_H
 
+#ifndef UNITTEST
 #include <avr/eeprom.h>
+#endif
+
 #include <stdint.h>
 
 #ifdef UNITTEST
@@ -34,76 +37,76 @@ void signal_error_state(void);
 	#define NULL ((void*)0) 
 #endif
 
-uint32_t _eeprom_read_UIntValue32(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t minval, uint32_t maxval, uint16_t max_bits_for_type, uint8_t * array);
-int32_t _eeprom_read_IntValue32(uint16_t byte, uint8_t bit, uint16_t length_bits, int32_t minval, int32_t maxval, uint8_t * array);
+uint32_t _eeprom_read_UIntValue32(uint16_t bit, uint16_t length, uint32_t minval, uint32_t maxval, uint16_t max_bits_for_type, uint8_t * array);
+int32_t _eeprom_read_IntValue32(uint16_t bit, uint16_t length, int32_t minval, int32_t maxval, uint8_t * array);
 
-void _eeprom_write_UIntValue(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t val, uint8_t * array);
+void _eeprom_write_UIntValue(uint16_t bit, uint16_t length, uint32_t val, uint8_t * array);
 
 // function wrappers for EEPROM access
-static inline uint8_t eeprom_read_UIntValue8(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t minval, uint32_t maxval)
+static inline uint8_t eeprom_read_UIntValue8(uint16_t bit, uint16_t length, uint32_t minval, uint32_t maxval)
 {
-	return (uint8_t)_eeprom_read_UIntValue32(byte, bit, length_bits, minval, maxval, 8, NULL);
+	return (uint8_t)_eeprom_read_UIntValue32(bit, length, minval, maxval, 8, NULL);
 }
 
-static inline uint16_t eeprom_read_UIntValue16(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t minval, uint32_t maxval)
+static inline uint16_t eeprom_read_UIntValue16(uint16_t bit, uint16_t length, uint32_t minval, uint32_t maxval)
 {
-	return (uint16_t)_eeprom_read_UIntValue32(byte, bit, length_bits, minval, maxval, 16, NULL);
+	return (uint16_t)_eeprom_read_UIntValue32(bit, length, minval, maxval, 16, NULL);
 }
 
-static inline uint32_t eeprom_read_UIntValue32(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t minval, uint32_t maxval)
+static inline uint32_t eeprom_read_UIntValue32(uint16_t bit, uint16_t length, uint32_t minval, uint32_t maxval)
 {
-	return _eeprom_read_UIntValue32(byte, bit, length_bits, minval, maxval, 32, NULL);
+	return _eeprom_read_UIntValue32(bit, length, minval, maxval, 32, NULL);
 }
 
-static inline int32_t eeprom_read_IntValue32(uint16_t byte, uint8_t bit, uint16_t length_bits, int32_t minval, int32_t maxval)
+static inline int32_t eeprom_read_IntValue32(uint16_t bit, uint16_t length, int32_t minval, int32_t maxval)
 {
-	return _eeprom_read_IntValue32(byte, bit, length_bits, minval, maxval, NULL);
+	return _eeprom_read_IntValue32(bit, length, minval, maxval, NULL);
 }
 
-static inline void eeprom_write_UIntValue(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t val)
+static inline void eeprom_write_UIntValue(uint16_t bit, uint16_t length, uint32_t val)
 {
-	_eeprom_write_UIntValue(byte, bit, length_bits, val, NULL);
+	_eeprom_write_UIntValue(bit, length, val, NULL);
 }
 
-static inline void eeprom_write_IntValue(uint16_t byte, uint8_t bit, uint16_t length_bits, int32_t val)
+static inline void eeprom_write_IntValue(uint16_t bit, uint16_t length, int32_t val)
 {
 	// move the sign bit of the standard int type to the sign bit position of our variable-sized int type
-	_eeprom_write_UIntValue(byte, bit, length_bits,
-		(((val >> 31) & 1) << (length_bits - 1)) | (val & (((uint32_t)1 << (length_bits - 1)) - 1)),
+	_eeprom_write_UIntValue(bit, length,
+		(((val >> 31) & 1) << (length - 1)) | (val & (((uint32_t)1 << (length - 1)) - 1)),
 		NULL);
 }
 
 // function wrappers for ARRAY access
-static inline uint8_t array_read_UIntValue8(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t minval, uint32_t maxval, uint8_t * array)
+static inline uint8_t array_read_UIntValue8(uint16_t bit, uint16_t length, uint32_t minval, uint32_t maxval, uint8_t * array)
 {
-	return (uint8_t)_eeprom_read_UIntValue32(byte, bit, length_bits, minval, maxval, 8, array);
+	return (uint8_t)_eeprom_read_UIntValue32(bit, length, minval, maxval, 8, array);
 }
 
-static inline uint16_t array_read_UIntValue16(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t minval, uint32_t maxval, uint8_t * array)
+static inline uint16_t array_read_UIntValue16(uint16_t bit, uint16_t length, uint32_t minval, uint32_t maxval, uint8_t * array)
 {
-	return (uint16_t)_eeprom_read_UIntValue32(byte, bit, length_bits, minval, maxval, 16, array);
+	return (uint16_t)_eeprom_read_UIntValue32(bit, length, minval, maxval, 16, array);
 }
 
-static inline uint32_t array_read_UIntValue32(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t minval, uint32_t maxval, uint8_t * array)
+static inline uint32_t array_read_UIntValue32(uint16_t bit, uint16_t length, uint32_t minval, uint32_t maxval, uint8_t * array)
 {
-	return _eeprom_read_UIntValue32(byte, bit, length_bits, minval, maxval, 32, array);
+	return _eeprom_read_UIntValue32(bit, length, minval, maxval, 32, array);
 }
 
-static inline int32_t array_read_IntValue32(uint16_t byte, uint8_t bit, uint16_t length_bits, int32_t minval, int32_t maxval, uint8_t * array)
+static inline int32_t array_read_IntValue32(uint16_t bit, uint16_t length, int32_t minval, int32_t maxval, uint8_t * array)
 {
-	return _eeprom_read_IntValue32(byte, bit, length_bits, minval, maxval, array);
+	return _eeprom_read_IntValue32(bit, length, minval, maxval, array);
 }
 
-static inline void array_write_UIntValue(uint16_t byte, uint8_t bit, uint16_t length_bits, uint32_t val, uint8_t * array)
+static inline void array_write_UIntValue(uint16_t bit, uint16_t length, uint32_t val, uint8_t * array)
 {
-	_eeprom_write_UIntValue(byte, bit, length_bits, val, array);
+	_eeprom_write_UIntValue(bit, length, val, array);
 }
 
-static inline void array_write_IntValue(uint16_t byte, uint8_t bit, uint16_t length_bits, int32_t val, uint8_t * array)
+static inline void array_write_IntValue(uint16_t bit, uint16_t length, int32_t val, uint8_t * array)
 {
 	// move the sign bit of the standard int type to the sign bit position of our variable-sized int type
-	_eeprom_write_UIntValue(byte, bit, length_bits,
-		(((val >> 31) & 1) << (length_bits - 1)) | (val & (((uint32_t)1 << (length_bits - 1)) - 1)),
+	_eeprom_write_UIntValue(bit, length,
+		(((val >> 31) & 1) << (length - 1)) | (val & (((uint32_t)1 << (length - 1)) - 1)),
 		array);
 }
 

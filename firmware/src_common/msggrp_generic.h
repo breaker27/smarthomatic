@@ -96,68 +96,68 @@ static inline void pkg_header_init_generic_version_ackstatus(void)
 // Description: Different major version means incompatible changes.
 
 // Set Major (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 8, min val 0, max val 255
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 8, min val 0, max val 255
 static inline void msg_generic_version_set_major(uint32_t val)
 {
-  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 8, val, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 0, 8, val, bufx);
 }
 
 // Get Major (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 8, min val 0, max val 255
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 8, min val 0, max val 255
 static inline uint32_t msg_generic_version_get_major(void)
 {
-  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 8, 0, 255, bufx);
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 0, 8, 0, 255, bufx);
 }
 
 // Minor (UIntValue)
 // Description: Different minor number means new functionality without breaking compatibility.
 
 // Set Minor (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 8) / 8, ((uint16_t)__HEADEROFFSETBITS + 8) % 8, length bits 8, min val 0, max val 255
+// Offset: (uint16_t)__HEADEROFFSETBITS + 8, length bits 8, min val 0, max val 255
 static inline void msg_generic_version_set_minor(uint32_t val)
 {
-  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 8) / 8, ((uint16_t)__HEADEROFFSETBITS + 8) % 8, 8, val, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 8, 8, val, bufx);
 }
 
 // Get Minor (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 8) / 8, ((uint16_t)__HEADEROFFSETBITS + 8) % 8, length bits 8, min val 0, max val 255
+// Offset: (uint16_t)__HEADEROFFSETBITS + 8, length bits 8, min val 0, max val 255
 static inline uint32_t msg_generic_version_get_minor(void)
 {
-  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 8) / 8, ((uint16_t)__HEADEROFFSETBITS + 8) % 8, 8, 0, 255, bufx);
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 8, 8, 0, 255, bufx);
 }
 
 // Patch (UIntValue)
 // Description: The patch version is changed when backwards-compatible bug fixes are made.
 
 // Set Patch (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 16) / 8, ((uint16_t)__HEADEROFFSETBITS + 16) % 8, length bits 8, min val 0, max val 255
+// Offset: (uint16_t)__HEADEROFFSETBITS + 16, length bits 8, min val 0, max val 255
 static inline void msg_generic_version_set_patch(uint32_t val)
 {
-  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 16) / 8, ((uint16_t)__HEADEROFFSETBITS + 16) % 8, 8, val, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 16, 8, val, bufx);
 }
 
 // Get Patch (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 16) / 8, ((uint16_t)__HEADEROFFSETBITS + 16) % 8, length bits 8, min val 0, max val 255
+// Offset: (uint16_t)__HEADEROFFSETBITS + 16, length bits 8, min val 0, max val 255
 static inline uint32_t msg_generic_version_get_patch(void)
 {
-  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 16) / 8, ((uint16_t)__HEADEROFFSETBITS + 16) % 8, 8, 0, 255, bufx);
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 16, 8, 0, 255, bufx);
 }
 
 // Hash (UIntValue)
 // Description: The beginning of the revision ID hash (as reported by Git).
 
 // Set Hash (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 24) / 8, ((uint16_t)__HEADEROFFSETBITS + 24) % 8, length bits 32, min val 0, max val 4294967295
+// Offset: (uint16_t)__HEADEROFFSETBITS + 24, length bits 32, min val 0, max val 4294967295
 static inline void msg_generic_version_set_hash(uint32_t val)
 {
-  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 24) / 8, ((uint16_t)__HEADEROFFSETBITS + 24) % 8, 32, val, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 24, 32, val, bufx);
 }
 
 // Get Hash (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 24) / 8, ((uint16_t)__HEADEROFFSETBITS + 24) % 8, length bits 32, min val 0, max val 4294967295
+// Offset: (uint16_t)__HEADEROFFSETBITS + 24, length bits 32, min val 0, max val 4294967295
 static inline uint32_t msg_generic_version_get_hash(void)
 {
-  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 24) / 8, ((uint16_t)__HEADEROFFSETBITS + 24) % 8, 32, 0, 4294967295, bufx);
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 24, 32, 0, 4294967295, bufx);
 }
 
 
@@ -211,17 +211,17 @@ static inline void pkg_header_init_generic_batterystatus_ackstatus(void)
 // Description: The remaining capacity of the battery from 0 (empty) to 100 (full).
 
 // Set Percentage (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 7, min val 0, max val 100
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 7, min val 0, max val 100
 static inline void msg_generic_batterystatus_set_percentage(uint32_t val)
 {
-  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 7, val, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 0, 7, val, bufx);
 }
 
 // Get Percentage (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 7, min val 0, max val 100
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 7, min val 0, max val 100
 static inline uint32_t msg_generic_batterystatus_get_percentage(void)
 {
-  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 7, 0, 100, bufx);
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 0, 7, 0, 100, bufx);
 }
 
 #endif /* _MSGGRP_GENERIC_H */
