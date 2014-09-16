@@ -326,7 +326,9 @@ sub getField
   }
 
   my $obj = $dataFields{$self->{_messageGroupID} . "-" . $self->{_messageID} . "-" . $fieldName};
-  my @tmpArray = map hex("0x$_"), $self->{_messageData} =~ /(..)/g;
+  
+  # add 256 "empty" bytes to have enough data in the array because the message may be truncated
+  my @tmpArray = map hex("0x$_"), ($self->{_messageData} . ("00" x 256)) =~ /(..)/g;
 
   return $obj->getValue(\@tmpArray, $index);
 }
