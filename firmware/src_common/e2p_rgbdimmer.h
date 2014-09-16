@@ -49,7 +49,7 @@ static inline uint32_t e2p_rgbdimmer_get_basestationpacketcounter(void)
 }
 
 // BrightnessFactor (UIntValue)
-// Description: This value reduces the overall brightness. This is to easily adjust it to your needs without changing the LED series resistors.
+// Description: This value reduces the overall brightness. This is to easily adjust it to your needs without changing the LED series resistors. WARNING: It is recommended to use this only for testing, because it reduces the amount of different brightness levels. Changing the resistors is to be preferred.
 
 // Set BrightnessFactor (UIntValue)
 // Offset: 536, length bits 8, min val 1, max val 100
@@ -65,59 +65,8 @@ static inline uint8_t e2p_rgbdimmer_get_brightnessfactor(void)
   return eeprom_read_UIntValue8(536, 8, 1, 100);
 }
 
-// BrightnessTranslationTableR (ByteArray)
-// Description: These are the target values (one byte each) for the input brightness of 0, 1, ... 100% to adapt the specific brightness curve of your *red* LED. Set first byte to FF to not use it.
-
-// Set BrightnessTranslationTableR (ByteArray)
-// Offset: 544, length bits 808
-static inline void e2p_rgbdimmer_set_brightnesstranslationtabler(void *src)
-{
-  eeprom_write_block(src, (uint8_t *)((544) / 8), 101);
-}
-
-// Get BrightnessTranslationTableR (ByteArray)
-// Offset: 544, length bits 808
-static inline void e2p_rgbdimmer_get_brightnesstranslationtabler(void *dst)
-{
-  eeprom_read_block(dst, (uint8_t *)((544) / 8), 101);
-}
-
-// BrightnessTranslationTableG (ByteArray)
-// Description: These are the target values (one byte each) for the input brightness of 0, 1, ... 100% to adapt the specific brightness curve of your *green* LED. Set first byte to FF to not use it.
-
-// Set BrightnessTranslationTableG (ByteArray)
-// Offset: 1352, length bits 808
-static inline void e2p_rgbdimmer_set_brightnesstranslationtableg(void *src)
-{
-  eeprom_write_block(src, (uint8_t *)((1352) / 8), 101);
-}
-
-// Get BrightnessTranslationTableG (ByteArray)
-// Offset: 1352, length bits 808
-static inline void e2p_rgbdimmer_get_brightnesstranslationtableg(void *dst)
-{
-  eeprom_read_block(dst, (uint8_t *)((1352) / 8), 101);
-}
-
-// BrightnessTranslationTableB (ByteArray)
-// Description: These are the target values (one byte each) for the input brightness of 0, 1, ... 100% to adapt the specific brightness curve of your *blue* LED. Set first byte to FF to not use it.
-
-// Set BrightnessTranslationTableB (ByteArray)
-// Offset: 2160, length bits 808
-static inline void e2p_rgbdimmer_set_brightnesstranslationtableb(void *src)
-{
-  eeprom_write_block(src, (uint8_t *)((2160) / 8), 101);
-}
-
-// Get BrightnessTranslationTableB (ByteArray)
-// Offset: 2160, length bits 808
-static inline void e2p_rgbdimmer_get_brightnesstranslationtableb(void *dst)
-{
-  eeprom_read_block(dst, (uint8_t *)((2160) / 8), 101);
-}
-
-// Reserved area with 5224 bits
-// Offset: 2968
+// Reserved area with 7648 bits
+// Offset: 544
 
 
 #endif /* _E2P_RGBDIMMER_H */
