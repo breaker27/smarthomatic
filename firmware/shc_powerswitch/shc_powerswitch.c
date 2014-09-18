@@ -35,11 +35,9 @@
 #include "util.h"
 #include "version.h"
 
-// Don't change this, because other switch count like 8 needs other status message.
 // If support implemented, use EEPROM_SUPPORTEDSWITCHES_* E2P addresses.
-#define SWITCH_COUNT 1
+#define SWITCH_COUNT 2
 
-// TODO: Support more than one relais!
 #define RELAIS_PORT PORTC
 #define RELAIS_PIN_START 0
 
@@ -53,8 +51,8 @@
 
 uint16_t device_id;
 uint32_t station_packetcounter;
-bool switch_state[SWITCH_COUNT];
-uint16_t switch_timeout[SWITCH_COUNT];
+static bool switch_state[SWITCH_COUNT];
+static uint16_t switch_timeout[SWITCH_COUNT];
 
 uint16_t send_status_timeout = 5;
 uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly after startup
@@ -94,11 +92,21 @@ void send_power_switch_status(void)
 	inc_packetcounter();
 
 	// Set packet content
+#if SWITCH_COUNT > 1	
+	uint8_t i;
+	pkg_header_init_powerswitch_switchstateext_status();
+	for (i = 0; i < SWITCH_COUNT; i++)
+	{
+		msg_powerswitch_switchstateext_set_on(i, switch_state[i]);
+		msg_powerswitch_switchstateext_set_timeoutsec(i, switch_timeout[i]);
+	}
+#else
 	pkg_header_init_powerswitch_switchstate_status();
+	msg_powerswitch_switchstate_set_on(switch_state[0]);
+	msg_powerswitch_switchstate_set_timeoutsec(switch_timeout[0]); 
+#endif
 	pkg_header_set_senderid(device_id);
 	pkg_header_set_packetcounter(packetcounter);
-	msg_powerswitch_switchstate_set_on(switch_state[0]); // TODO: Support > 1 switch
-	msg_powerswitch_switchstate_set_timeoutsec(switch_timeout[0]); // TODO: Support > 1 switch
 	pkg_header_calc_crc32();
 
 	rfm12_send_bufx();
@@ -123,7 +131,7 @@ void send_version_status(void)
 	rfm12_send_bufx();
 }
 
-void switchRelais(int8_t num, bool on, uint16_t timeout)
+static void switchRelais(int8_t num, bool on, uint16_t timeout)
 {
 	UART_PUTF3("Switching relais %u to %u with timeout %us.\r\n", num + 1, on, timeout);
 
@@ -167,52 +175,101 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	
 	UART_PUTF("MessageID:%u;", messageid);
 
-	if (messageid != MESSAGEID_POWERSWITCH_SWITCHSTATE)
-	{
-		UART_PUTS("\r\nERR: Unsupported MessageID.\r\n");
-		return;
-	}
-
-	// "Set" or "SetGet" -> modify switch state
-	if ((messagetype == MESSAGETYPE_SET) || (messagetype == MESSAGETYPE_SETGET))
-	{
-		uint8_t i;
-		bool req_on = msg_powerswitch_switchstate_get_on();
-		uint16_t req_timeout = msg_powerswitch_switchstate_get_timeoutsec();
-
-		UART_PUTF("On:%u;", req_on);
-		UART_PUTF("TimeoutSec:%u;\r\n", req_timeout);
-
-		// react on changed state (version for more than one switch...)
-		for (i = 0; i < SWITCH_COUNT; i++)
-		{
-			switchRelais(i, req_on, req_timeout);
-		}
-	}
-
 	// remember some values before the packet buffer is destroyed
 	uint32_t acksenderid = pkg_header_get_senderid();
 	uint32_t ackpacketcounter = pkg_header_get_packetcounter();
 
 	inc_packetcounter();
 
-	// "Set" -> send "Ack"
-	if (messagetype == MESSAGETYPE_SET)
+#if SWITCH_COUNT > 1
+	if (messageid == MESSAGEID_POWERSWITCH_SWITCHSTATEEXT)
 	{
-		pkg_header_init_powerswitch_switchstate_ack();
+		// "Set" or "SetGet" -> modify switch state
+		if ((messagetype == MESSAGETYPE_SET) || (messagetype == MESSAGETYPE_SETGET))
+		{
+			uint8_t i;
+			#ifdef UART_DEBUG
+			for (i = 0; i < SWITCH_COUNT; i++)
+			{
+				bool req_on = msg_powerswitch_switchstateext_get_on(i);
+				uint16_t req_timeout = req_on ? msg_powerswitch_switchstateext_get_timeoutsec(i) : 0;
+				UART_PUTF2("On[%u]:%u;", i, req_on);
+				UART_PUTF2("TimeoutSec[%u]:%u;", i, req_timeout);
+			}
+			UART_PUTS("\r\n");
+			#endif
+			// react on changed state (version for more than one switch...)
+			for (i = 0; i < SWITCH_COUNT; i++)
+			{
+				bool req_on = msg_powerswitch_switchstateext_get_on(i);
+				uint16_t req_timeout = req_on ? msg_powerswitch_switchstateext_get_timeoutsec(i) : 0;
+				switchRelais(i, req_on, req_timeout);
+			}
+		}
 
-		UART_PUTS("Sending Ack\r\n");
+		// "Set" -> send "Ack"
+		if (messagetype == MESSAGETYPE_SET)
+		{
+			pkg_header_init_powerswitch_switchstateext_ack();
+
+			UART_PUTS("Sending Ack\r\n");
+		}
+		// "Get" or "SetGet" -> send "AckStatus"
+		else
+		{
+			uint8_t i;
+			pkg_header_init_powerswitch_switchstateext_ackstatus();
+			// set message data
+			for (i = 0; i < SWITCH_COUNT; i++)
+			{
+				msg_powerswitch_switchstateext_set_on(i, switch_state[i]);
+				msg_powerswitch_switchstateext_set_timeoutsec(i, switch_timeout[i]);
+			}
+			UART_PUTS("Sending AckStatus\r\n");
+		}
+		pkg_headerext_common_set_error(false);
 	}
-	// "Get" or "SetGet" -> send "AckStatus"
+#else	/* #if SWITCH_COUNT > 1 */
+	if (messageid == MESSAGEID_POWERSWITCH_SWITCHSTATE)
+	{
+		// "Set" or "SetGet" -> modify switch state
+		if ((messagetype == MESSAGETYPE_SET) || (messagetype == MESSAGETYPE_SETGET))
+		{
+			bool req_on = msg_powerswitch_switchstate_get_on();
+			uint16_t req_timeout = msg_powerswitch_switchstate_get_timeoutsec();
+
+			UART_PUTF("On:%u;", req_on);
+			UART_PUTF("TimeoutSec:%u;\r\n", req_timeout);
+
+			switchRelais(0, req_on, req_timeout);
+		}
+
+		// "Set" -> send "Ack"
+		if (messagetype == MESSAGETYPE_SET)
+		{
+			pkg_header_init_powerswitch_switchstate_ack();
+
+			UART_PUTS("Sending Ack\r\n");
+		}
+		// "Get" or "SetGet" -> send "AckStatus"
+		else
+		{
+			pkg_header_init_powerswitch_switchstate_ackstatus();
+			
+			// set message data
+			msg_powerswitch_switchstate_set_on(switch_state[0]);
+			msg_powerswitch_switchstate_set_timeoutsec(switch_timeout[0]);
+
+			UART_PUTS("Sending AckStatus\r\n");
+		}
+		pkg_headerext_common_set_error(false);
+	}
+#endif	/* #if SWITCH_COUNT > 1 */
 	else
 	{
-		pkg_header_init_powerswitch_switchstate_ackstatus();
-		
-		// set message data
-		msg_powerswitch_switchstate_set_on(switch_state[0] & 1); // TODO: Support > 1 switch
-		msg_powerswitch_switchstate_set_timeoutsec(switch_timeout[0]); // TODO: Support > 1 switch
-
-		UART_PUTS("Sending AckStatus\r\n");
+		UART_PUTS("\r\nERR: Unsupported MessageID.\r\n");
+		pkg_header_init_powerswitch_switchstate_ack();
+		pkg_headerext_common_set_error(true);
 	}
 
 	// set common fields
@@ -221,7 +278,6 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	
 	pkg_headerext_common_set_acksenderid(acksenderid);
 	pkg_headerext_common_set_ackpacketcounter(ackpacketcounter);
-	pkg_headerext_common_set_error(false); // FIXME: Move code for the Ack to a function and also return an Ack when errors occur before!
 	
 	pkg_header_calc_crc32();
 	
@@ -445,10 +501,11 @@ int main(void)
 			_delay_ms(20);
 		}
 
-		switch_led(switch_state[0]);
+		switch_led(switch_state[0]);// TODO: ambiguous if SWITCH_COUNT > 1
 
 		rfm12_tick();
 
+		// TODO: Multiple Buttons if SWITCH_COUNT > 1
 		button = !(BUTTON_PINPORT & (1 << BUTTON_PIN));
 		
 		if (button_debounce > 0)
@@ -470,7 +527,6 @@ int main(void)
 
 		loop++;
 	}
-	
 	// never called
 	// aes256_done(&aes_ctx);
 }
