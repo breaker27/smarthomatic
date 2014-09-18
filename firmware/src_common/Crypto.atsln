@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Atmel Studio Solution File, Format Version 11.00
+Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "Crypto", "Crypto.cproj", "{02B2F245-D775-4D2C-80F5-F809B9BF38E9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|AVR = Debug|AVR
+		Release|AVR = Release|AVR
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{02B2F245-D775-4D2C-80F5-F809B9BF38E9}.Debug|AVR.ActiveCfg = Debug|AVR
+		{02B2F245-D775-4D2C-80F5-F809B9BF38E9}.Debug|AVR.Build.0 = Debug|AVR
+		{02B2F245-D775-4D2C-80F5-F809B9BF38E9}.Release|AVR.ActiveCfg = Release|AVR
+		{02B2F245-D775-4D2C-80F5-F809B9BF38E9}.Release|AVR.Build.0 = Release|AVR
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
