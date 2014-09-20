@@ -51,7 +51,7 @@ endif
 ifeq ($(MCU),atmega328)
 	AVRDUDEMCU = m328p
 else ifeq ($(MCU),atmega168)
-	AVRDUDEMCU = m168
+	AVRDUDEMCU = m168p
 else ifeq ($(MCU),atmega329)
 	AVRDUDEMCU = m329p
 else ifeq ($(MCU),atmega169)
