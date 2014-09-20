@@ -97,7 +97,7 @@ public class FlashDialog extends JDialog
 		panel.add(l1);
 		
 		panel.add(Box.createRigidArea(new Dimension(0, 10)));
-		panel.add(new JLabel("#DEVICE# will be replaced by m328p or m168 according to e2p size"));
+		panel.add(new JLabel("#DEVICE# will be replaced by m328p or m168p according to e2p size"));
 		panel.add(new JLabel("#FILENAME# will be replaced by the e2p filename"));
 		panel.add(Box.createRigidArea(new Dimension(0, 10)));
 		panel.add(new JLabel("Default is: " + (Util.runsOnWindows() ? DEFAULT_CMD_WINDOWS : DEFAULT_CMD_LINUX)));
@@ -168,7 +168,7 @@ public class FlashDialog extends JDialog
 		}
 		else
 		{
-			cmdLineS = cmdLineS.replace("#DEVICE#", "m168");	
+			cmdLineS = cmdLineS.replace("#DEVICE#", "m168p");	
 		}
 		
 		cmdLineS = cmdLineS.replace("#FILENAME#", "\"" + e2pFilename + "\"");
