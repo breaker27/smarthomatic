@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License along
 # with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 ###########################################################################
-# $Id: 37_SHCdev.pm 6177 2014-06-29 11:09:17Z rr2000 $
+# $Id: 37_SHCdev.pm 6580 2014-09-20 09:50:45Z rr2000 $
 
 package main;
 
@@ -722,12 +722,14 @@ sub SHCdev_Send($)
     <li>statusRequest<br>
         Supported by Dimmer and PowerSwitch.
     </li><br>
-    <li>Color<br>
-        Description and details available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_Color">www.smarthomatic.org</a>
+    <li>Color &lt;ColorNumber&gt;<br>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_Color">www.smarthomatic.org</a>
+        The color palette can be found <a href="http://www.smarthomatic.org/devices/rgb_dimmer.html">here</a>
         Supported by RGB_Dimmer.
     </li><br>
-    <li>ColorAnimation<br>
-        Description and details available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_ColorAnimation">www.smarthomatic.org</a>
+    <li>ColorAnimation &lt;Repeat&gt; &lt;AutoReverse&gt; &lt;Time0&gt; &lt;ColorNumber0&gt; &lt;Time1&gt; &lt;ColorNumber1&gt; ... up to 10 time/color pairs<br>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_ColorAnimation">www.smarthomatic.org</a>
+        The color palette can be found <a href="http://www.smarthomatic.org/devices/rgb_dimmer.html">here</a>
         Supported by RGB_Dimmer.
     </li><br>
     <li><a href="#setExtensions"> set extensions</a><br>

@@ -46,7 +46,7 @@
 # 3.) Get send string: $str = $parser->getSendString($receiverID);
 # 4.) Send string to base station (over UART).
 ##########################################################################
-# $Id: SHC_parser.pm 6177 2014-06-29 11:09:17Z rr2000 $
+# $Id: SHC_parser.pm 6580 2014-09-20 09:50:45Z rr2000 $
 
 package SHC_parser;
 
