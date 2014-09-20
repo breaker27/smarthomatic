@@ -40,9 +40,9 @@
 // If support implemented, use EEPROM_SUPPORTEDSWITCHES_* E2P addresses.
 #define SWITCH_COUNT 1
 
-// TODO: Support more than one relais!
-#define RELAIS_PORT PORTC
-#define RELAIS_PIN_START 0
+#define TRIGGER_DDR DDRC
+#define TRIGGER_PIN 2
+#define TRIGGER_PORT PORTC
 
 #define BUTTON_DDR DDRD
 #define BUTTON_PORT PORTD
@@ -60,31 +60,12 @@ uint16_t switch_timeout[SWITCH_COUNT];
 uint16_t send_status_timeout = 5;
 uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly after startup
 
-void print_switch_state(void)
-{
-	uint8_t i;
+uint32_t counter_thr = 35000; // configured by user
+uint32_t counter_min = 100000; // min occurred value in current watering period
+uint32_t counter_meas = 0;
 
-	for (i = 1; i <= SWITCH_COUNT; i++)
-	{
-		UART_PUTF("Switch %u ", i);
-		
-		if (switch_state[i - 1])
-		{
-			UART_PUTS("ON");
-		}
-		else
-		{
-			UART_PUTS("OFF");
-		}
-		
-		if (switch_timeout[i - 1])
-		{		
-			UART_PUTF(" (Timeout: %us)", switch_timeout[i - 1]);
-		}
-
-		UART_PUTS("\r\n");
-	}
-}
+uint16_t wupCnt = 0; // Amount of wake-up cycles counting from the last time a measurement was done.
+uint16_t avgInt = 3; // The number of times a value is measured before an average is calculated and sent.
 
 // TODO: Move to util
 // calculate x^y
@@ -122,7 +103,19 @@ uint16_t init_wakeup(void)
 	return sec;
 }
 
-void send_humidity_temperature_status(void)
+void switch_schmitt_trigger(bool b_on)
+{
+	if (b_on)
+	{
+		sbi(TRIGGER_PORT, TRIGGER_PIN);
+	}
+	else
+	{
+		cbi(TRIGGER_PORT, TRIGGER_PIN);
+	}
+}
+
+void send_humidity_temperature_status(uint16_t hum)
 {	
 	UART_PUTS("Sending Humidity Status:\r\n");
 
@@ -132,16 +125,81 @@ void send_humidity_temperature_status(void)
 	pkg_header_init_weather_humiditytemperature_status();
 	pkg_header_set_senderid(device_id);
 	pkg_header_set_packetcounter(packetcounter);
-	msg_weather_humiditytemperature_set_humidity(500); // TODO: Calculate from counter value
+	msg_weather_humiditytemperature_set_humidity(hum);
 	msg_weather_humiditytemperature_set_temperature(0); // TODO: Read from ATMega
 	
-	UART_PUTF2("Send humidity: %u.%u%%, temperature: ", 5, 0);
+	UART_PUTF2("Send humidity: %u.%u%%, temperature: ", hum / 10, hum % 10);
 	print_signed(0);
 	UART_PUTS(" deg.C\r\n");
 
 	pkg_header_calc_crc32();
 
 	rfm12_send_bufx();
+}
+
+// Measure humidity, calculate relative value in permill and return it.
+void measure_humidity(void)
+{
+	switch_schmitt_trigger(true);
+	
+	uint16_t result;
+
+	// make PD5 an input and disable pull-ups
+	DDRD &= ~(1 << 5);
+	PORTD &= ~(1 << 5);
+
+	// clear counter
+	TCNT1H = 0x00;
+	TCNT1L = 0x00;
+
+	// configure counter and use external clock source, rising edge
+	TCCR1A = 0x00;
+	TCCR1B |= (1 << CS12) | (1 << CS11) | (1 << CS10);
+
+	_delay_ms(100);
+
+	//result = (TCNT1H << 8) | TCNT1L;
+	result = TCNT1;
+
+	TCCR1B = 0x00;  // turn counter off
+	
+	switch_schmitt_trigger(false);
+	
+	counter_meas += result;
+	wupCnt++;
+	
+	UART_PUTF2("Measurement %u, Counter %u\r\n", wupCnt, result);
+	
+	if (wupCnt == avgInt)
+	{
+		uint32_t avg = counter_meas / avgInt;
+		
+		if (avg < counter_min)
+		{
+			counter_min = avg;
+		}
+		
+		uint32_t result;
+		
+		if (avg > counter_thr)
+		{
+			result = 0;
+		}
+		else
+		{
+			result = (counter_thr - avg) * 1000 / (counter_thr - counter_min);
+		}
+		
+		UART_PUTF("Avg: %u, ", avg);
+		UART_PUTF("New min: %lu, ", counter_min);
+		UART_PUTF("Result: %lu permill\r\n", result);
+		
+		send_humidity_temperature_status(result);
+		wupCnt = 0;
+		counter_meas = 0;
+	}
+	
+	_delay_ms(100);
 }
 
 void send_version_status(void)
@@ -179,6 +237,9 @@ int main(void)
 	cbi(BUTTON_DDR, BUTTON_PIN);
 	sbi(BUTTON_PORT, BUTTON_PIN);
 	
+	// init power pin for 74HC14D
+	sbi(TRIGGER_DDR, TRIGGER_PIN);
+
 	// read packetcounter, increase by cycle and write back
 	packetcounter = e2p_generic_get_packetcounter() + PACKET_COUNTER_WRITE_CYCLE;
 	e2p_generic_set_packetcounter(packetcounter);
@@ -196,7 +257,6 @@ int main(void)
 	osccal_info();
 	UART_PUTF ("DeviceID: %u\r\n", device_id);
 	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);
-	print_switch_state();
 	
 	// init AES key
 	e2p_generic_get_aeskey(aes_key);
@@ -210,20 +270,12 @@ int main(void)
 
 	while (42)
 	{
-		UART_PUTS("AWAKE!!\r\n");
-	
 		// send status from time to time
 		send_status_timeout--;
 	
-		if (send_status_timeout == 0)
-		{
-			send_status_timeout = SEND_STATUS_EVERY_SEC;
-			send_humidity_temperature_status();
-			led_blink(200, 0, 1);
-			
-			version_status_cycle++;
-		}
-		else if (version_status_cycle >= SEND_VERSION_STATUS_CYCLE)
+		measure_humidity();
+		
+		if (version_status_cycle >= SEND_VERSION_STATUS_CYCLE)
 		{
 			version_status_cycle = 0;
 			send_version_status();
