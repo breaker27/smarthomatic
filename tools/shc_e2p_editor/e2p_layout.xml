@@ -777,7 +777,7 @@
 			<MaxVal>2000000000</MaxVal>
 		</UIntValue>
 		<Reserved>
-			<Bits>3504</Bits>
+			<Bits>7600</Bits>
 		</Reserved>
 	</Block>
 	<Block>

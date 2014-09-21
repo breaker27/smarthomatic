@@ -17,7 +17,7 @@
 #
 
 # CPU config
-MCU		       = atmega168
+MCU		       = atmega328
 F_CPU	       = 1000000
 UART_BAUD_RATE = 4800
 UART_DEBUG     = 1

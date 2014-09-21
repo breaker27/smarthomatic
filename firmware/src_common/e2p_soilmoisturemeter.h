@@ -29,7 +29,7 @@
 // E2P Block "SoilMoistureMeter"
 // =============================
 // Start offset (bit): 512
-// Overall block length: 3584 bits
+// Overall block length: 7680 bits
 
 // WakeupInterval (EnumValue)
 // Description: Decide after which time the device should be woken up by the RFM12B transceiver to measure or send values.
@@ -106,7 +106,7 @@ static inline uint32_t e2p_soilmoisturemeter_get_maxval(void)
   return eeprom_read_UIntValue32(560, 32, 0, 2000000000);
 }
 
-// Reserved area with 3504 bits
+// Reserved area with 7600 bits
 // Offset: 592
 
 
