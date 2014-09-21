@@ -115,22 +115,19 @@ void switch_schmitt_trigger(bool b_on)
 	}
 }
 
-void send_humidity_temperature_status(uint16_t hum)
+void send_humidity_status(uint16_t hum)
 {	
 	UART_PUTS("Sending Humidity Status:\r\n");
 
 	inc_packetcounter();
 
 	// Set packet content
-	pkg_header_init_weather_humiditytemperature_status();
+	pkg_header_init_weather_humidity_status();
 	pkg_header_set_senderid(device_id);
 	pkg_header_set_packetcounter(packetcounter);
-	msg_weather_humiditytemperature_set_humidity(hum);
-	msg_weather_humiditytemperature_set_temperature(0); // TODO: Read from ATMega
+	msg_weather_humidity_set_humidity(hum);
 	
-	UART_PUTF2("Send humidity: %u.%u%%, temperature: ", hum / 10, hum % 10);
-	print_signed(0);
-	UART_PUTS(" deg.C\r\n");
+	UART_PUTF2("Send humidity: %u.%u%%\r\n", hum / 10, hum % 10);
 
 	pkg_header_calc_crc32();
 
@@ -194,7 +191,7 @@ void measure_humidity(void)
 		UART_PUTF("New min: %lu, ", counter_min);
 		UART_PUTF("Result: %lu permill\r\n", result);
 		
-		send_humidity_temperature_status(result);
+		send_humidity_status(result);
 		wupCnt = 0;
 		counter_meas = 0;
 	}
@@ -225,6 +222,9 @@ int main(void)
 {
 	uint8_t loop = 0;
 	uint16_t wakeup_sec;
+	uint8_t button = 0;
+	uint8_t button_old = 0;
+	uint8_t button_debounce = 0;
 
 	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
 	_delay_ms(1000);
@@ -236,6 +236,7 @@ int main(void)
 	// init button input
 	cbi(BUTTON_DDR, BUTTON_PIN);
 	sbi(BUTTON_PORT, BUTTON_PIN);
+	
 	
 	// init power pin for 74HC14D
 	sbi(TRIGGER_DDR, TRIGGER_PIN);
@@ -266,10 +267,29 @@ int main(void)
 	rfm12_init();
 	wakeup_sec = init_wakeup();
 
+	// init interrupt for button (falling edge)
+	sbi(EICRA, ISC11);
+	sbi(EIMSK, INT1);
+	
+	// set pull-up for BUTTON_DDR
+	//sbi(BUTTON_PINPORT, BUTTON_PIN);
+	
 	sei();
 
 	while (42)
 	{
+		button = !(BUTTON_PINPORT & (1 << BUTTON_PIN));
+		
+		UART_PUTF("Button %u\r\n", button);
+		
+		if (button != button_old)
+		{
+			button_old = button;
+			button_debounce = 10;
+			
+			UART_PUTF("Button %u\r\n", button);
+		}
+		
 		// send status from time to time
 		send_status_timeout--;
 	
@@ -284,27 +304,6 @@ int main(void)
 
 		rfm12_tick();
 		
-		/*
-
-		button = !(BUTTON_PINPORT & (1 << BUTTON_PIN));
-		
-		if (button_debounce > 0)
-		{
-			button_debounce--;
-		}
-		else if (button != button_old)
-		{
-			button_old = button;
-			button_debounce = 10;
-			
-			if (button) // on button press
-			{
-				UART_PUTS("Button! ");
-				switchRelais(0, !switch_state[0], 0);
-				send_status_timeout = 15; // send status after 15s
-			}
-		}	
-*/
 		loop++;
 		
 		// Go to sleep. Wakeup by RFM12 wakeup-interrupt or pin change (if configured).
