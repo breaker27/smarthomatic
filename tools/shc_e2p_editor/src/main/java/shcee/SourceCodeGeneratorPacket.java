@@ -157,7 +157,7 @@ public class SourceCodeGeneratorPacket
 		StringBuilder funcDefsH = new StringBuilder();
 		ArrayList<String> dataFieldsH = new ArrayList<String>();
 	
-		int offsetHeader = generateDataFieldDefs(headerNode, false, 0, "pkg_header", funcDefsH, dataFieldsH, 0);
+		int offsetHeader = generateDataFieldDefs(headerNode, false, 0, "pkg_header", funcDefsH, dataFieldsH, 0, 0);
 		
 		outHeader.println(funcDefsH.toString());
 		outHeader.println("// overall length: " + offsetHeader + " bits");
@@ -354,7 +354,7 @@ public class SourceCodeGeneratorPacket
 				StringBuilder funcDefsHE = new StringBuilder();
 				ArrayList<String> dataFieldsHE = new ArrayList<String>();
 			
-				int offsetHeaderExt = generateDataFieldDefs(extensionNode, false, offset, "pkg_headerext_" + messageTypeName.toLowerCase(), funcDefsHE, dataFieldsHE, 0);
+				int offsetHeaderExt = generateDataFieldDefs(extensionNode, false, offset, "pkg_headerext_" + messageTypeName.toLowerCase(), funcDefsHE, dataFieldsHE, 0, 0);
 				
 				out.println(funcDefsHE.toString());
 				out.println("// overall length: " + offsetHeaderExt + " bits");
@@ -485,7 +485,7 @@ public class SourceCodeGeneratorPacket
 
 				StringBuilder funcDefs = new StringBuilder();
 
-				int offset2 = generateDataFieldDefs(msgNode, true, 0, "msg_" + fullMessageName, funcDefs, dataFields, 0);
+				int offset2 = generateDataFieldDefs(msgNode, true, 0, "msg_" + fullMessageName, funcDefs, dataFields, 0, 0);
 
 				out.println("");
 				
@@ -642,14 +642,18 @@ public class SourceCodeGeneratorPacket
 	}
 	
 	/**
-	 * Generate accessor functions to set the data fields for the given message.
+	 * Generate access functions to set the data fields for the given message.
 	 * @param dataNode
+	 * @param arrayStructGapBits: The number of bits between two values whose
+	 *        access function is generated. E.g. if you have an array consisting
+	 *        of the parts A (5 bits) and B (3 bits) and the access functions
+	 *        for A are generated, the arrayStructGapBits are 3.
 	 * @return
 	 * @throws TransformerException
 	 */
-	private int generateDataFieldDefs(Node dataNode, boolean useHeaderOffset, int offset, String functionPrefix, StringBuilder sb, ArrayList<String> dataFields, int arrayLength) throws TransformerException
+	private int generateDataFieldDefs(Node dataNode, boolean useHeaderOffset, int offset, String functionPrefix, StringBuilder sb, ArrayList<String> dataFields, int arrayLength, int structLengthBits) throws TransformerException
 	{
-		boolean isArray = arrayLength > 0;
+		boolean isArray = arrayLength > 0;		
 		
 		String arrayNameSuffix = isArray ? "[" + arrayLength + "]" : "";
 		String funcParam = isArray ? "uint8_t index, " : "";	
@@ -668,12 +672,19 @@ public class SourceCodeGeneratorPacket
 				String ID1 = Util.getChildNodeValue(element, "ID");
 				dataFields.add(ID1);
 				int bits = Integer.parseInt(Util.getChildNodeValue(element, "Bits"));
+				if (!isArray)
+					structLengthBits = bits;
 
 				// enum
 				NodeList enumElements = XPathAPI.selectNodeList(element, "Element");
 				
 				sb.append("// " + ID1 + " (EnumValue" + arrayNameSuffix + ")" + newline);
 				
+				if (isArray && (structLengthBits != bits))
+				{
+					sb.append("// This sub-element with " + bits + " bits is part of an element with " + structLengthBits + " bits in a structured array." + newline);
+				}
+					
 				if (!description.equals(""))
 				{
 					sb.append("// Description: " + description + newline);
@@ -696,7 +707,7 @@ public class SourceCodeGeneratorPacket
 	
 				sb.append("} " + ID1 + "Enum;" + newline + newline);
 				
-				String offsetStr = calcAccessStr(useHeaderOffset, offset, bits, isArray);
+				String offsetStr = calcAccessStr(useHeaderOffset, offset, structLengthBits, isArray);
 
 				// SET
 				
@@ -720,7 +731,7 @@ public class SourceCodeGeneratorPacket
 				sb.append("}" + newline);
 				sb.append(newline);
 				
-				offset += isArray ? bits * arrayLength : bits;
+				offset += bits;
 			}
 			else if (element.getNodeName().equals("UIntValue"))
 			{
@@ -728,11 +739,18 @@ public class SourceCodeGeneratorPacket
 				dataFields.add(ID);
 				
 				int bits = Integer.parseInt(Util.getChildNodeValue(element, "Bits"));
+				if (!isArray)
+					structLengthBits = bits;
 				String minVal = Util.getChildNodeValue(element, "MinVal");
 				String maxVal = Util.getChildNodeValue(element, "MaxVal");
 				
 				sb.append("// " + ID + " (UIntValue" + arrayNameSuffix + ")" + newline);
-				
+					
+				if (isArray && (structLengthBits != bits))
+				{
+					sb.append("// This sub-element with " + bits + " bits is part of an element with " + structLengthBits + " bits in a structured array." + newline);
+				}
+					
 				if (!description.equals(""))
 				{
 					sb.append("// Description: " + description + newline);
@@ -740,7 +758,7 @@ public class SourceCodeGeneratorPacket
 				
 				sb.append(newline);
 				
-				String offsetStr = calcAccessStr(useHeaderOffset, offset, bits, isArray);
+				String offsetStr = calcAccessStr(useHeaderOffset, offset, structLengthBits, isArray);
 
 				// SET
 				
@@ -765,7 +783,7 @@ public class SourceCodeGeneratorPacket
 				sb.append("}" + newline);
 				sb.append(newline);
 				
-				offset += isArray ? bits * arrayLength : bits;
+				offset += bits;
 
 			}
 			else if (element.getNodeName().equals("IntValue"))
@@ -774,11 +792,18 @@ public class SourceCodeGeneratorPacket
 				dataFields.add(ID);
 				
 				int bits = Integer.parseInt(Util.getChildNodeValue(element, "Bits"));
+				if (!isArray)
+					structLengthBits = bits;
 				String minVal = Util.getChildNodeValue(element, "MinVal");
 				String maxVal = Util.getChildNodeValue(element, "MaxVal");
 				
 				sb.append("// " + ID + " (IntValue" + arrayNameSuffix + ")" + newline);
 				
+				if (isArray && (structLengthBits != bits))
+				{
+					sb.append("// This sub-element with " + bits + " bits is part of an element with " + structLengthBits + " bits in a structured array." + newline);
+				}
+					
 				if (!description.equals(""))
 				{
 					sb.append("// Description: " + description + newline);
@@ -786,7 +811,7 @@ public class SourceCodeGeneratorPacket
 				
 				sb.append(newline);
 				
-				String offsetStr = calcAccessStr(useHeaderOffset, offset, bits, isArray);
+				String offsetStr = calcAccessStr(useHeaderOffset, offset, structLengthBits, isArray);
 
 				// SET
 				
@@ -811,7 +836,7 @@ public class SourceCodeGeneratorPacket
 				sb.append("}" + newline);
 				sb.append(newline);
 				
-				offset += isArray ? bits * arrayLength : bits;
+				offset += bits;
 			}
 			else if (element.getNodeName().equals("ByteArray"))
 			{
@@ -820,10 +845,17 @@ public class SourceCodeGeneratorPacket
 				
 				String ID = Util.getChildNodeValue(element, "ID");
 				String bytes = Util.getChildNodeValue(element, "Bytes");
+				if (!isArray)
+					structLengthBits = Integer.parseInt(bytes) * 8;
 				dataFields.add(ID);
 				
 				sb.append("// " + ID + " (ByteArray" + arrayNameSuffix + ")" + newline);
 				
+				if (isArray && (structLengthBits != Integer.parseInt(bytes) * 8))
+				{
+					sb.append("// This sub-element with " + bytes  + " bytes is part of an element with " + structLengthBits + " bits in a structured array." + newline);
+				}
+					
 				if (!description.equals(""))
 				{
 					sb.append("// Description: " + description + newline);
@@ -831,14 +863,31 @@ public class SourceCodeGeneratorPacket
 				
 				sb.append(newline);
 
-				String offsetStr = calcAccessStr(useHeaderOffset, offset, Integer.parseInt(bytes) * 8, isArray);
+				String offsetStr = calcAccessStr(useHeaderOffset, offset, structLengthBits, isArray);
 
+				// TODO: These functions would not work if generated.
+				// Implement them and fix the generator here if byte arrays in
+				// a message is needed.
+				
+				// SET
+				
 				sb.append("// Set " + ID + " (ByteArray)" + newline);
 				sb.append("// Offset: " + offsetStr + ", length bytes " + bytes + newline);
 				
 				sb.append("static inline void " + functionPrefix + "_set_" + ID.toLowerCase() + "(array * val)" + newline);
 				sb.append("{" + newline);
 				sb.append("  array_write_ByteArray(" + offsetStr + ", " + bytes + ", val, bufx);" + newline);
+				sb.append("}" + newline);
+				sb.append(newline);
+				
+				// GET
+
+				sb.append("// Get " + ID + " (ByteArray)" + newline);
+				sb.append("// Offset: " + offsetStr + ", length bytes " + bytes + newline);
+				
+				sb.append("static inline void " + functionPrefix + "_get_" + ID.toLowerCase() + "(" + funcParam + "void *dst)" + newline);
+				sb.append("{" + newline);
+				sb.append("  array_read_ByteArray(dst, offsetStr, " + bytes + ");" + newline);
 				sb.append("}" + newline);
 				sb.append(newline);
 				
@@ -849,9 +898,16 @@ public class SourceCodeGeneratorPacket
 				String ID = Util.getChildNodeValue(element, "ID");
 				dataFields.add(ID);
 				int bits = 1;
+				if (!isArray)
+					structLengthBits = bits;
 				
 				sb.append("// " + ID + " (BoolValue" + arrayNameSuffix + ")" + newline);
 				
+				if (isArray && (structLengthBits != bits))
+				{
+					sb.append("// This sub-element with " + bits + " bits is part of an element with " + structLengthBits + " bits in a structured array." + newline);
+				}
+					
 				if (!description.equals(""))
 				{
 					sb.append("// Description: " + description + newline);
@@ -859,7 +915,7 @@ public class SourceCodeGeneratorPacket
 				
 				sb.append(newline);
 
-				String offsetStr = calcAccessStr(useHeaderOffset, offset, 1, isArray);
+				String offsetStr = calcAccessStr(useHeaderOffset, offset, structLengthBits, isArray);
 
 				// SET
 				
@@ -883,8 +939,8 @@ public class SourceCodeGeneratorPacket
 				sb.append("  return array_read_UIntValue8(" + offsetStr + ", 1, 0, 1, bufx) == 1;" + newline);
 				sb.append("}" + newline);
 				sb.append(newline);
-				
-				offset += isArray ? bits * arrayLength : bits;
+								
+				offset += bits;
 			}
 			else if (element.getNodeName().equals("Reserved"))
 			{
@@ -896,12 +952,51 @@ public class SourceCodeGeneratorPacket
 			else if (element.getNodeName().equals("Array"))
 			{
 				int length = Integer.parseInt(Util.getChildNodeValue(element, "Length"));
+				int ovrStructLengthBits = getOvrArrayStructLen(element);
 				
-				offset += generateDataFieldDefs(element, useHeaderOffset, offset, functionPrefix, sb, dataFields, length);
+				generateDataFieldDefs(element, useHeaderOffset, offset, functionPrefix, sb, dataFields, length, ovrStructLengthBits);
+				
+				// The offset is incremented by one element in the previous "generateDataFieldDefs" call.
+				// The rest of the array size (arrayLength - 1) has to be added now. 
+				offset += ovrStructLengthBits * length; 
 			}
 		}
 
 		return offset;
+	}
+	
+	/**
+	 * For the given array node, go through all sub-elements and calculate the
+	 * overall number of bits one set of elements takes.
+	 * @return
+	 */
+	private int getOvrArrayStructLen(Node dataNode)
+	{
+		int len = 0;
+		NodeList childs = dataNode.getChildNodes();
+		
+		for (int e = 0; e < childs.getLength(); e++)
+		{
+			Node element = childs.item(e);
+			String nodeName = element.getNodeName();
+			
+			if (nodeName.equals("EnumValue")
+					|| nodeName.equals("UIntValue")
+					|| nodeName.equals("IntValue"))
+			{
+				len += Integer.parseInt(Util.getChildNodeValue(element, "Bits"));
+			}
+			else if (nodeName.equals("ByteArray"))
+			{
+				len += Integer.parseInt(Util.getChildNodeValue(element, "Bytes")) * 8;
+			}
+			else if (nodeName.equals("BoolValue"))
+			{
+				len += 1;
+			}
+		}
+		
+		return len;
 	}
 	
 	/**
@@ -915,8 +1010,8 @@ public class SourceCodeGeneratorPacket
 	private String calcAccessStr(boolean useHeaderOffset, int offset, int bits, boolean isArray)
 	{
 		String additionalOffsetPrefix = useHeaderOffset ? "(uint16_t)__HEADEROFFSETBITS + " : ""; 
-			
-		return Util.calcByteAccessStr(additionalOffsetPrefix, offset, bits, isArray) + ", " + Util.calcBitAccessStr(additionalOffsetPrefix, offset, bits, isArray);
+
+		return Util.calcAccessStr(additionalOffsetPrefix, offset, bits, isArray);
 	}
 	
 	public static String genCopyrightNotice()

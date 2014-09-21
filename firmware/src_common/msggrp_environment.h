@@ -95,17 +95,17 @@ static inline void pkg_header_init_environment_brightness_ackstatus(void)
 // Description: brightness in percent
 
 // Set Brightness (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 7, min val 0, max val 100
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 7, min val 0, max val 100
 static inline void msg_environment_brightness_set_brightness(uint32_t val)
 {
-  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 7, val, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 0, 7, val, bufx);
 }
 
 // Get Brightness (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 7, min val 0, max val 100
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 7, min val 0, max val 100
 static inline uint32_t msg_environment_brightness_get_brightness(void)
 {
-  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 7, 0, 100, bufx);
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 0, 7, 0, 100, bufx);
 }
 
 
@@ -158,17 +158,17 @@ static inline void pkg_header_init_environment_distance_ackstatus(void)
 // Description: distance in cm
 
 // Set Distance (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 14, min val 0, max val 16383
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 14, min val 0, max val 16383
 static inline void msg_environment_distance_set_distance(uint32_t val)
 {
-  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 14, val, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 0, 14, val, bufx);
 }
 
 // Get Distance (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 14, min val 0, max val 16383
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 14, min val 0, max val 16383
 static inline uint32_t msg_environment_distance_get_distance(void)
 {
-  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 14, 0, 16383, bufx);
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 0, 14, 0, 16383, bufx);
 }
 
 #endif /* _MSGGRP_ENVIRONMENT_H */

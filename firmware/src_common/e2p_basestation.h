@@ -35,37 +35,38 @@
 // Description: This is the number of AES keys to use from the AesKeys block. Limit the number to the needed amount to avoid that the base station tries decoding with every one.
 
 // Set AesKeyCount (UIntValue)
-// Byte offset: 64, bit offset: 0, length bits 8, min val 1, max val 16
+// Offset: 512, length bits 8, min val 1, max val 16
 static inline void e2p_basestation_set_aeskeycount(uint8_t val)
 {
-  eeprom_write_UIntValue(64, 0, 8, val);
+  eeprom_write_UIntValue(512, 8, val);
 }
 
 // Get AesKeyCount (UIntValue)
-// Byte offset: 64, bit offset: 0, length bits 8, min val 1, max val 16
+// Offset: 512, length bits 8, min val 1, max val 16
 static inline uint8_t e2p_basestation_get_aeskeycount(void)
 {
-  return eeprom_read_UIntValue8(64, 0, 8, 1, 16);
+  return eeprom_read_UIntValue8(512, 8, 1, 16);
 }
 
 // AesKey (ByteArray[16])
 // Description: These are all AES keys which can be used to encrypt or decrypt packages at the base station.
 
 // Set AesKey (ByteArray)
-// Byte offset: 65, bit offset: 0, length bits 256
+// Offset: 520, length bits 256
 static inline void e2p_basestation_set_aeskey(uint8_t index, void *src)
 {
-  eeprom_write_block(src, (uint8_t *)(65 + (uint16_t)index * 32), 32);
+  eeprom_write_block(src, (uint8_t *)((520 + (uint16_t)index * 256) / 8), 32);
 }
 
 // Get AesKey (ByteArray)
-// Byte offset: 65, bit offset: 0, length bits 256
+// Offset: 520, length bits 256
 static inline void e2p_basestation_get_aeskey(uint8_t index, void *dst)
 {
-  eeprom_read_block(dst, (uint8_t *)(65 + (uint16_t)index * 32), 32);
+  eeprom_read_block(dst, (uint8_t *)((520 + (uint16_t)index * 256) / 8), 32);
 }
 
 // Reserved area with 3576 bits
+// Offset: 4616
 
 
 #endif /* _E2P_BASESTATION_H */

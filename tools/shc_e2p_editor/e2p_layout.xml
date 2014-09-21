@@ -20,6 +20,10 @@
 				<Name>PowerSwitch</Name>
 			</Element>
 			<Element>
+				<Value>50</Value>
+				<Name>RGBDimmer</Name>
+			</Element>
+			<Element>
 				<Value>60</Value>
 				<Name>Dimmer</Name>
 			</Element>
@@ -605,6 +609,32 @@
 		</Array>
 		<Reserved>
 			<Bits>7456</Bits>
+		</Reserved>
+	</Block>
+	<Block>
+		<Name>RGBDimmer</Name>
+		<Description>This block contains the specific configuration data that only RGB Dimmer devices need.</Description>
+		<Restriction>
+			<RefID>DeviceType</RefID>
+			<Value>50</Value>
+		</Restriction>
+		<UIntValue>
+			<ID>BaseStationPacketCounter</ID>
+			<Description>This is the last remembered packet counter of a command from the base station. Packets with the same or lower number are ignored.</Description>
+			<Bits>24</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>16777215</MaxVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>BrightnessFactor</ID>
+			<Description>This value reduces the overall brightness. This is to easily adjust it to your needs without changing the LED series resistors. WARNING: It is recommended to use this only for testing, because it reduces the amount of different brightness levels. Changing the resistors is to be preferred.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>100</MaxVal>
+			<DefaultVal>100</DefaultVal>
+		</UIntValue>
+		<Reserved>
+			<Bits>7648</Bits>
 		</Reserved>
 	</Block>
 	<Block>

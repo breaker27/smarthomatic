@@ -97,17 +97,17 @@ static inline void pkg_header_init_weather_temperature_ackstatus(void)
 // Description: temperature [1/100 degree celsius], -50°C = -5000, 50°C = 5000
 
 // Set Temperature (IntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 16, min val -32768, max val 32767
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 16, min val -32768, max val 32767
 static inline void msg_weather_temperature_set_temperature(int32_t val)
 {
-  array_write_IntValue(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 16, val, bufx);
+  array_write_IntValue((uint16_t)__HEADEROFFSETBITS + 0, 16, val, bufx);
 }
 
 // Get Temperature (IntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 16, min val -32768, max val 32767
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 16, min val -32768, max val 32767
 static inline int32_t msg_weather_temperature_get_temperature(void)
 {
-  return array_read_IntValue32(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 16, -32768, 32767, bufx);
+  return array_read_IntValue32((uint16_t)__HEADEROFFSETBITS + 0, 16, -32768, 32767, bufx);
 }
 
 
@@ -161,34 +161,34 @@ static inline void pkg_header_init_weather_humiditytemperature_ackstatus(void)
 // Description: relative humidity permill, 0..1000 (other values not defined)
 
 // Set Humidity (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 10, min val 0, max val 1000
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 10, min val 0, max val 1000
 static inline void msg_weather_humiditytemperature_set_humidity(uint32_t val)
 {
-  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 10, val, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 0, 10, val, bufx);
 }
 
 // Get Humidity (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 10, min val 0, max val 1000
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 10, min val 0, max val 1000
 static inline uint32_t msg_weather_humiditytemperature_get_humidity(void)
 {
-  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 10, 0, 1000, bufx);
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 0, 10, 0, 1000, bufx);
 }
 
 // Temperature (IntValue)
 // Description: temperature [1/100 degree celsius], -50°C = -5000, 50°C = 5000
 
 // Set Temperature (IntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 10) / 8, ((uint16_t)__HEADEROFFSETBITS + 10) % 8, length bits 16, min val -32768, max val 32767
+// Offset: (uint16_t)__HEADEROFFSETBITS + 10, length bits 16, min val -32768, max val 32767
 static inline void msg_weather_humiditytemperature_set_temperature(int32_t val)
 {
-  array_write_IntValue(((uint16_t)__HEADEROFFSETBITS + 10) / 8, ((uint16_t)__HEADEROFFSETBITS + 10) % 8, 16, val, bufx);
+  array_write_IntValue((uint16_t)__HEADEROFFSETBITS + 10, 16, val, bufx);
 }
 
 // Get Temperature (IntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 10) / 8, ((uint16_t)__HEADEROFFSETBITS + 10) % 8, length bits 16, min val -32768, max val 32767
+// Offset: (uint16_t)__HEADEROFFSETBITS + 10, length bits 16, min val -32768, max val 32767
 static inline int32_t msg_weather_humiditytemperature_get_temperature(void)
 {
-  return array_read_IntValue32(((uint16_t)__HEADEROFFSETBITS + 10) / 8, ((uint16_t)__HEADEROFFSETBITS + 10) % 8, 16, -32768, 32767, bufx);
+  return array_read_IntValue32((uint16_t)__HEADEROFFSETBITS + 10, 16, -32768, 32767, bufx);
 }
 
 
@@ -242,34 +242,34 @@ static inline void pkg_header_init_weather_barometricpressuretemperature_ackstat
 // Description: barometric pressure in pascal
 
 // Set BarometricPressure (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 17, min val 0, max val 131071
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 17, min val 0, max val 131071
 static inline void msg_weather_barometricpressuretemperature_set_barometricpressure(uint32_t val)
 {
-  array_write_UIntValue(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 17, val, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 0, 17, val, bufx);
 }
 
 // Get BarometricPressure (UIntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, length bits 17, min val 0, max val 131071
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 17, min val 0, max val 131071
 static inline uint32_t msg_weather_barometricpressuretemperature_get_barometricpressure(void)
 {
-  return array_read_UIntValue32(((uint16_t)__HEADEROFFSETBITS + 0) / 8, ((uint16_t)__HEADEROFFSETBITS + 0) % 8, 17, 0, 131071, bufx);
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 0, 17, 0, 131071, bufx);
 }
 
 // Temperature (IntValue)
 // Description: temperature [1/100 degree celsius], -50°C = -5000, 50°C = 5000
 
 // Set Temperature (IntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 17) / 8, ((uint16_t)__HEADEROFFSETBITS + 17) % 8, length bits 16, min val -32768, max val 32767
+// Offset: (uint16_t)__HEADEROFFSETBITS + 17, length bits 16, min val -32768, max val 32767
 static inline void msg_weather_barometricpressuretemperature_set_temperature(int32_t val)
 {
-  array_write_IntValue(((uint16_t)__HEADEROFFSETBITS + 17) / 8, ((uint16_t)__HEADEROFFSETBITS + 17) % 8, 16, val, bufx);
+  array_write_IntValue((uint16_t)__HEADEROFFSETBITS + 17, 16, val, bufx);
 }
 
 // Get Temperature (IntValue)
-// Offset: ((uint16_t)__HEADEROFFSETBITS + 17) / 8, ((uint16_t)__HEADEROFFSETBITS + 17) % 8, length bits 16, min val -32768, max val 32767
+// Offset: (uint16_t)__HEADEROFFSETBITS + 17, length bits 16, min val -32768, max val 32767
 static inline int32_t msg_weather_barometricpressuretemperature_get_temperature(void)
 {
-  return array_read_IntValue32(((uint16_t)__HEADEROFFSETBITS + 17) / 8, ((uint16_t)__HEADEROFFSETBITS + 17) % 8, 16, -32768, 32767, bufx);
+  return array_read_IntValue32((uint16_t)__HEADEROFFSETBITS + 17, 16, -32768, 32767, bufx);
 }
 
 #endif /* _MSGGRP_WEATHER_H */

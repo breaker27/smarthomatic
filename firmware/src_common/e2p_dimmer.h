@@ -35,37 +35,38 @@
 // Description: This is the last remembered packet counter of a command from the base station. Packets with the same or lower number are ignored.
 
 // Set BaseStationPacketCounter (UIntValue)
-// Byte offset: 64, bit offset: 0, length bits 24, min val 0, max val 16777215
+// Offset: 512, length bits 24, min val 0, max val 16777215
 static inline void e2p_dimmer_set_basestationpacketcounter(uint32_t val)
 {
-  eeprom_write_UIntValue(64, 0, 24, val);
+  eeprom_write_UIntValue(512, 24, val);
 }
 
 // Get BaseStationPacketCounter (UIntValue)
-// Byte offset: 64, bit offset: 0, length bits 24, min val 0, max val 16777215
+// Offset: 512, length bits 24, min val 0, max val 16777215
 static inline uint32_t e2p_dimmer_get_basestationpacketcounter(void)
 {
-  return eeprom_read_UIntValue32(64, 0, 24, 0, 16777215);
+  return eeprom_read_UIntValue32(512, 24, 0, 16777215);
 }
 
 // BrightnessTranslationTable (ByteArray)
 // Description: These are the target values (one byte each) for the input brightness of 0, 1, ... 100% to adapt the specific brightness curve of your lamps. Set first byte to FF to not use it.
 
 // Set BrightnessTranslationTable (ByteArray)
-// Byte offset: 67, bit offset: 0, length bits 808
+// Offset: 536, length bits 808
 static inline void e2p_dimmer_set_brightnesstranslationtable(void *src)
 {
-  eeprom_write_block(src, (uint8_t *)(67), 101);
+  eeprom_write_block(src, (uint8_t *)((536) / 8), 101);
 }
 
 // Get BrightnessTranslationTable (ByteArray)
-// Byte offset: 67, bit offset: 0, length bits 808
+// Offset: 536, length bits 808
 static inline void e2p_dimmer_get_brightnesstranslationtable(void *dst)
 {
-  eeprom_read_block(dst, (uint8_t *)(67), 101);
+  eeprom_read_block(dst, (uint8_t *)((536) / 8), 101);
 }
 
 // Reserved area with 6848 bits
+// Offset: 1344
 
 
 #endif /* _E2P_DIMMER_H */

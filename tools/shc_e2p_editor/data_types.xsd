@@ -36,7 +36,7 @@
 						</xs:restriction>
 					</xs:simpleType>
 				</xs:element>
-				<xs:group ref="ArrayDataValue"/>
+				<xs:group ref="ArrayDataValue" maxOccurs="unbounded"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>

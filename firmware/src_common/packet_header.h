@@ -54,51 +54,51 @@ typedef enum {
 // Description: CRC32 value of byte 4..n
 
 // Set CRC32 (UIntValue)
-// Offset: 0, 0, length bits 32, min val 0, max val 4294967295
+// Offset: 0, length bits 32, min val 0, max val 4294967295
 static inline void pkg_header_set_crc32(uint32_t val)
 {
-  array_write_UIntValue(0, 0, 32, val, bufx);
+  array_write_UIntValue(0, 32, val, bufx);
 }
 
 // Get CRC32 (UIntValue)
-// Offset: 0, 0, length bits 32, min val 0, max val 4294967295
+// Offset: 0, length bits 32, min val 0, max val 4294967295
 static inline uint32_t pkg_header_get_crc32(void)
 {
-  return array_read_UIntValue32(0, 0, 32, 0, 4294967295, bufx);
+  return array_read_UIntValue32(0, 32, 0, 4294967295, bufx);
 }
 
 // SenderID (UIntValue)
 // Description: The SenderID is the DeviceID of the sending device. It's only allowed to send packets with the own DeviceID. 0 = base station, others are arbitrary.
 
 // Set SenderID (UIntValue)
-// Offset: 4, 0, length bits 12, min val 0, max val 4095
+// Offset: 32, length bits 12, min val 0, max val 4095
 static inline void pkg_header_set_senderid(uint32_t val)
 {
-  array_write_UIntValue(4, 0, 12, val, bufx);
+  array_write_UIntValue(32, 12, val, bufx);
 }
 
 // Get SenderID (UIntValue)
-// Offset: 4, 0, length bits 12, min val 0, max val 4095
+// Offset: 32, length bits 12, min val 0, max val 4095
 static inline uint32_t pkg_header_get_senderid(void)
 {
-  return array_read_UIntValue32(4, 0, 12, 0, 4095, bufx);
+  return array_read_UIntValue32(32, 12, 0, 4095, bufx);
 }
 
 // PacketCounter (UIntValue)
 // Description: The PacketCounter is counted up throughout the whole lifetime of the device and is used to make the encrypted packets differently from each other every time. Packets received with the same or lower number must be ignored per SenderID.
 
 // Set PacketCounter (UIntValue)
-// Offset: 5, 4, length bits 24, min val 0, max val 16777215
+// Offset: 44, length bits 24, min val 0, max val 16777215
 static inline void pkg_header_set_packetcounter(uint32_t val)
 {
-  array_write_UIntValue(5, 4, 24, val, bufx);
+  array_write_UIntValue(44, 24, val, bufx);
 }
 
 // Get PacketCounter (UIntValue)
-// Offset: 5, 4, length bits 24, min val 0, max val 16777215
+// Offset: 44, length bits 24, min val 0, max val 16777215
 static inline uint32_t pkg_header_get_packetcounter(void)
 {
-  return array_read_UIntValue32(5, 4, 24, 0, 16777215, bufx);
+  return array_read_UIntValue32(44, 24, 0, 16777215, bufx);
 }
 
 // MessageType (EnumValue)
@@ -114,17 +114,17 @@ typedef enum {
 } MessageTypeEnum;
 
 // Set MessageType (EnumValue)
-// Offset: 8, 4, length bits 4
+// Offset: 68, length bits 4
 static inline void pkg_header_set_messagetype(MessageTypeEnum val)
 {
-  array_write_UIntValue(8, 4, 4, val, bufx);
+  array_write_UIntValue(68, 4, val, bufx);
 }
 
 // Get MessageType (EnumValue)
-// Offset: 8, 4, length bits 4
+// Offset: 68, length bits 4
 static inline MessageTypeEnum pkg_header_get_messagetype(void)
 {
-  return array_read_UIntValue32(8, 4, 4, 0, 15, bufx);
+  return array_read_UIntValue32(68, 4, 0, 15, bufx);
 }
 
 

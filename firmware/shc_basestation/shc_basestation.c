@@ -96,17 +96,15 @@ void decode_data(uint8_t len)
 	if ((messagetype != MESSAGETYPE_GET) && (messagetype != MESSAGETYPE_ACK))
 	{
 		uint8_t i;
-		uint8_t start = __HEADEROFFSETBITS / 8;
-		uint8_t shift = __HEADEROFFSETBITS % 8;
 		uint16_t count = (((uint16_t)len * 8) - __HEADEROFFSETBITS + 7) / 8;
 	
 		//UART_PUTF4("\r\n\r\nLEN=%u, START=%u, SHIFT=%u, COUNT=%u\r\n\r\n", len, start, shift, count);
 	
 		UART_PUTS("MessageData=");
 	
-		for (i = start; i < start + count; i++)
+		for (i = 0; i < count; i++)
 		{
-			UART_PUTF("%02x", array_read_UIntValue8(i, shift, 8, 0, 255, bufx));
+			UART_PUTF("%02x", array_read_UIntValue8(__HEADEROFFSETBITS + i * 8, 8, 0, 255, bufx));
 		}
 		
 		UART_PUTS(";");
@@ -398,13 +396,15 @@ int main(void)
 			UART_PUTS("sKK0ASSSSPPPPPPEEGGMMDD...AckStatus\r\n");
 			*/
 			
-			// set header extension fields to the values given as hex string in the user input
+			// set header extension fields in bufx to the values given as hex string in the user input
+			uint16_t receiverid = 0;
 			switch (message_type)
 			{
 				case MESSAGETYPE_GET:
 				case MESSAGETYPE_SET:
 				case MESSAGETYPE_SETGET:
-					pkg_headerext_common_set_receiverid(hex_to_uint16((uint8_t *)cmdbuf, 5));
+					receiverid = hex_to_uint16((uint8_t *)cmdbuf, 5);
+					pkg_headerext_common_set_receiverid(receiverid);
 					pkg_headerext_common_set_messagegroupid(hex_to_uint8((uint8_t *)cmdbuf, 9));
 					pkg_headerext_common_set_messageid(hex_to_uint8((uint8_t *)cmdbuf, 11));
 					string_offset_data = 12;
@@ -422,31 +422,44 @@ int main(void)
 				case MESSAGETYPE_ACKSTATUS:
 					pkg_headerext_common_set_messagegroupid(hex_to_uint8((uint8_t *)cmdbuf, 17));
 					pkg_headerext_common_set_messageid(hex_to_uint8((uint8_t *)cmdbuf, 19));
-					string_offset_data = 20;
+					string_offset_data = 22;
 					break;
 			}
 
-			uint8_t data_len_raw = 0;
+			uint8_t messagedata_len_raw = 0;
 
 			// copy message data, which exists in all packets except in Get and Ack packets
 			if ((message_type != MESSAGETYPE_GET) && (message_type != MESSAGETYPE_ACK))
 			{
-				uint8_t data_len_raw = (strlen(cmdbuf) - 1 - string_offset_data) / 2;
-				//UART_PUTF("Data bytes = %u\r\n", data_len_raw);
-				
-				uint8_t start = __HEADEROFFSETBITS / 8;
-				uint8_t shift = __HEADEROFFSETBITS % 8;
+				messagedata_len_raw = (strlen(cmdbuf) - 1 - string_offset_data) / 2;
+				uint8_t messagedata_len_trunc = 0;
+				//UART_PUTF("User entered %u bytes MessageData.\r\n", messagedata_len_raw);
 
 				// copy message data, using __HEADEROFFSETBITS value and string_offset_data
-				for (i = 0; i < data_len_raw; i++)
+				for (i = 0; i < messagedata_len_raw; i++)
 				{
 					uint8_t val = hex_to_uint8((uint8_t *)cmdbuf, string_offset_data + 2 * i + 1);
-					array_write_UIntValue(start + i, shift, 8, val, bufx);
+					array_write_UIntValue(__HEADEROFFSETBITS + i * 8, 8, val, bufx);
+					
+					if (val)
+					{
+						messagedata_len_trunc = i + 1;
+					}
+				}
+				
+				// truncate message data after last byte which is not 0
+				if (messagedata_len_trunc < messagedata_len_raw)
+				{
+					UART_PUTF2("Truncate MessageData from %u to %u bytes.\r\n", messagedata_len_raw, messagedata_len_trunc);
+					messagedata_len_raw = messagedata_len_trunc;
 				}
 			}
 			
 			// round packet length to x * 16 bytes
-			uint8_t packet_len = ((uint16_t)__HEADEROFFSETBITS + (uint16_t)data_len_raw * 8) / 8;
+			// __HEADEROFFSETBITS == Header + Ext.Header length
+			// Message Data bytes = messagedata_len_raw * 8
+			//UART_PUTF("__HEADEROFFSETBITS = %d\r\n", __HEADEROFFSETBITS);
+			uint8_t packet_len = ((uint16_t)__HEADEROFFSETBITS + (uint16_t)messagedata_len_raw * 8 + 7) / 8;
 			packet_len = ((packet_len - 1) / 16 + 1) * 16;
 
 			// send packet which doesn't require an acknowledge immediately
@@ -454,8 +467,13 @@ int main(void)
 			{
 				send_packet(aes_key_nr, packet_len);
 			}
-			else // enqueue request (don't send immediately)
+			else if (receiverid == 4095)
 			{
+				UART_PUTS("Sending broadcast request without using queue.\r\n");
+				send_packet(aes_key_nr, packet_len);
+			}
+			else // enqueue request (don't send immediately)
+			{ 
 				// header size = 9 bytes!
 				if (queue_request(pkg_headerext_common_get_receiverid(), message_type, aes_key_nr, bufx + 9, packet_len - 9))
 				{

@@ -124,7 +124,7 @@ parser_test("Packet Data: SenderID=40;PacketCounter=7402;MessageType=8;MessageGr
 parser_test("Packet Data: SenderID=23;PacketCounter=414;MessageType=8;MessageGroupID=1;MessageID=2;MessageData=0042e000000000000000000000000000000000000000;");
 parser_test("Packet Data: SenderID=23;PacketCounter=307;MessageType=8;MessageGroupID=1;MessageID=2;MessageData=80458000000000000000000000000000000000000000;");
 
-## Create message string for sending
+# Create message string for sending
 
 $parser->initPacket("PowerSwitch", "SwitchState", "Set");
 $parser->setField("PowerSwitch", "SwitchState", "TimeoutSec", 8);
@@ -133,3 +133,18 @@ print "BaseStation command = " . $parser->getSendString(61) . "\n";
 
 $parser->setField("PowerSwitch", "SwitchState", "On", 1);
 print "BaseStation command = " . $parser->getSendString(61) . "\n";
+
+$parser->initPacket("Dimmer", "ColorAnimation", "Set");
+$parser->setField("Dimmer", "ColorAnimation", "Repeat", 3);
+$parser->setField("Dimmer", "ColorAnimation", "Time", 10, 0);
+$parser->setField("Dimmer", "ColorAnimation", "Color", 0, 0);
+$parser->setField("Dimmer", "ColorAnimation", "Time", 16, 1);
+$parser->setField("Dimmer", "ColorAnimation", "Color", 48, 1);
+$parser->setField("Dimmer", "ColorAnimation", "Time", 16, 2);
+$parser->setField("Dimmer", "ColorAnimation", "Color", 12, 2);
+$parser->setField("Dimmer", "ColorAnimation", "Time", 16, 3);
+$parser->setField("Dimmer", "ColorAnimation", "Color", 3, 3);
+$parser->setField("Dimmer", "ColorAnimation", "Time", 10, 4);
+$parser->setField("Dimmer", "ColorAnimation", "Color", 48, 4);
+
+print "BaseStation command = " . $parser->getSendString(50) . "\n";

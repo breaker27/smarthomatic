@@ -212,7 +212,7 @@ request_t * find_request_to_repeat(uint32_t packet_counter)
 				pkg_header_set_messagetype(request_buffer[slot].message_type);
 
 				// set header extension (incl. receiver_id) + data
-				memcpy(bufx + 9, request_buffer[slot].data, 7); // header size = 9 bytes
+				memcpy(bufx + 9, request_buffer[slot].data, request_buffer[slot].data_bytes); // header size = 9 bytes
 				
 				// remember packet counter
 				request_buffer[slot].packet_counter = packet_counter;
