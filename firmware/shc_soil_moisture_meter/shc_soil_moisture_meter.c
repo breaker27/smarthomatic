@@ -49,6 +49,8 @@
 #define BUTTON_PINPORT PIND
 #define BUTTON_PIN 3
 
+#define BUTTON (!(BUTTON_PINPORT & (1 << BUTTON_PIN)))
+
 #define SEND_STATUS_EVERY_SEC 1800 // how often should a status be sent?
 #define SEND_VERSION_STATUS_CYCLE 50 // send version status x times less than switch status (~once per day)
 
@@ -218,13 +220,15 @@ void send_version_status(void)
 	rfm12_send_bufx();
 }
 
+ISR (INT1_vect)
+{
+    /* interrupt code here */
+}
+
 int main(void)
 {
 	uint8_t loop = 0;
 	uint16_t wakeup_sec;
-	uint8_t button = 0;
-	uint8_t button_old = 0;
-	uint8_t button_debounce = 0;
 
 	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
 	_delay_ms(1000);
@@ -235,7 +239,7 @@ int main(void)
 
 	// init button input
 	cbi(BUTTON_DDR, BUTTON_PIN);
-	sbi(BUTTON_PORT, BUTTON_PIN);
+	//sbi(BUTTON_PORT, BUTTON_PIN);
 	
 	
 	// init power pin for 74HC14D
@@ -272,39 +276,54 @@ int main(void)
 	sbi(EIMSK, INT1);
 	
 	// set pull-up for BUTTON_DDR
-	//sbi(BUTTON_PINPORT, BUTTON_PIN);
+	sbi(BUTTON_PINPORT, BUTTON_PIN);
 	
 	sei();
 
 	while (42)
 	{
-		button = !(BUTTON_PINPORT & (1 << BUTTON_PIN));
-		
-		UART_PUTF("Button %u\r\n", button);
-		
-		if (button != button_old)
+		if (BUTTON)
 		{
-			button_old = button;
-			button_debounce = 10;
+			UART_PUTS("Button pressed!\r\n");
 			
-			UART_PUTF("Button %u\r\n", button);
+			uint8_t cnt = 0;
+			
+			while (BUTTON && (cnt < 250))
+			{
+				_delay_ms(10);
+				cnt++;
+			}
+			
+			if (cnt == 250)
+			{
+				UART_PUTS("Initiate measure mode!\r\n");
+				
+				while (BUTTON)
+				{
+					_delay_ms(10);
+				}
+				
+				UART_PUTS("Button released!\r\n");
+			}
 		}
-		
-		// send status from time to time
-		send_status_timeout--;
-	
-		measure_humidity();
-		
-		if (version_status_cycle >= SEND_VERSION_STATUS_CYCLE)
+		else
 		{
-			version_status_cycle = 0;
-			send_version_status();
-			led_blink(200, 0, 1);
-		}
-
-		rfm12_tick();
+			// send status from time to time
+			send_status_timeout--;
 		
-		loop++;
+			measure_humidity();
+			
+			if (version_status_cycle >= SEND_VERSION_STATUS_CYCLE)
+			{
+				version_status_cycle = 0;
+				send_version_status();
+				led_blink(200, 0, 1);
+			}
+
+			rfm12_tick();
+			
+			loop++;
+		}
 		
 		// Go to sleep. Wakeup by RFM12 wakeup-interrupt or pin change (if configured).
 		set_sleep_mode(SLEEP_MODE_PWR_DOWN);
