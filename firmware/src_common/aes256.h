@@ -28,20 +28,7 @@
 
 #include <inttypes.h>
 
-typedef struct {
-	uint8_t key[32]; 
-	uint8_t enckey[32]; 
-	uint8_t deckey[32];
-} aes256_context; 
-
-void aes256_init(aes256_context *, uint8_t * /* key */);
-void aes256_done(aes256_context *);
-void aes256_encrypt_ecb(aes256_context *, uint8_t * /* plaintext */);
-void aes256_decrypt_ecb(aes256_context *, uint8_t * /* cipertext */);
-
-extern aes256_context aes_ctx; // UF
 extern uint8_t aes_key[32]; // UF
-extern uint8_t aes_buf[16]; // UF
 
 uint8_t aes256_encrypt_cbc(uint8_t *buffer, uint8_t len); // UF
 void aes256_decrypt_cbc(uint8_t *buffer, uint8_t len); // UF

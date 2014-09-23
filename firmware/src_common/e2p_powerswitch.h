@@ -45,7 +45,7 @@ static inline void e2p_powerswitch_set_supportedswitches(uint8_t val)
 // Offset: 512, length bits 8, min val 1, max val 1
 static inline uint8_t e2p_powerswitch_get_supportedswitches(void)
 {
-  return eeprom_read_UIntValue8(512, 8, 1, 1);
+  return eeprom_read_UIntValue8(512, 8, 1, 8);
 }
 
 // BaseStationPacketCounter (UIntValue)
