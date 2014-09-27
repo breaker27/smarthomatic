@@ -124,17 +124,40 @@ ISR(ADC_vect)
 	adc_data = ADCW;
 }
 
+// Read ADC data of the given channel.
+// At channel 0..7 (ADC0..ADC7), internal reference voltage of 1.1V is used.
+// Channel 14 is used to measure the internal reference voltage of 1.1V itself,
+// with a temporary voltage reference switched to AVCC (= VCC = Battery voltage).
+// This makes calculation of the battery voltage possible without external
+// resistors.
 uint16_t read_adc(uint8_t adc_input)
 {
+	uint8_t mux = 0;
+	
 	// Set ADC input
-	ADMUX &= 0xE0;
-	ADMUX |= adc_input;
+	mux = 1 << REFS0; // 0b01100000;
+	
+	if (adc_input != 14)
+	{
+		mux |= (1 << REFS1);
+	}
+	
+	mux |= adc_input;
+	ADMUX = mux;
+	
 	// MCU sleep
 	set_sleep_mode(SLEEP_MODE_ADC);
 	sleep_mode();
 	return adc_data;
 }
 
+// Calculate current battery voltage by using it as reference voltage and measuring
+// the internal 1.1V reference voltage.
+uint16_t read_battery(void)
+{
+	//return (int)((long)read_adc(0) * 34375 / 10000 / 2); // 1.1 * 480 Ohm / 150 Ohm / 1,024
+	return (uint16_t)((uint32_t)1100 * 1024 / read_adc(14));
+}
 
 void util_init(void)
 {

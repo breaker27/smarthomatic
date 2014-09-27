@@ -54,7 +54,7 @@
 #define SRF02_POWER_PIN 5
 
 #define VERSION_MEASURING_INTERVAL_SEC 86000 // about once a day
-#define BATTERY_MEASURING_INTERVAL_SEC 28500 // about every 8 hours
+#define BATTERY_MEASURING_INTERVAL_SEC 2 // 8500 // about every 8 hours
 #define BATTERY_AVERAGING_INTERVAL 3
 
 uint8_t temperature_sensor_type = 0;
@@ -64,7 +64,7 @@ uint8_t brightness_sensor_type = 0;
 uint8_t distance_sensor_type = 0;
 uint32_t version_measInt;
 uint32_t version_wupCnt;
-uint16_t vempty = 1100; // 1.1V * 2 cells = 2.2V = min. voltage for RFM2
+uint16_t vempty = 1100; // 1.1V * 2 cells = 2.2V = min. voltage for RFM12B
 bool di_sensor_used = false;
 bool ai_sensor_used = false;
 bool di_change = false;
@@ -322,6 +322,15 @@ uint32_t power(uint32_t x, uint32_t y)
 	110010110000 // ~720896ms = 12m
 	110011011100 // ~901120ms = 15m
 	110110010010 // ~1196032ms = 20m
+	1000110001001 // ~ 30m
+	1001010001001 // ~ 1h
+	1001110001001 // ~ 2h
+	1001111001110 // ~ 3h
+	1010010001001 // ~ 4h
+	1010011001110 // ~ 6h
+	1010110001001 // ~ 8h
+	1010111001110 // ~ 12h
+	1011010001001 // ~ 16h
 	*/
 
 // Read wakeup timer value from e2p, config rfm12 and
@@ -595,7 +604,7 @@ void measure_battery_voltage(void)
 	if (!countWakeup(&battery_voltage))
 		return;
 
-	battery_voltage.val += (int)((long)read_adc(0) * 34375 / 10000 / 2); // 1.1 * 480 Ohm / 150 Ohm / 1,024
+	battery_voltage.val += read_battery();
 }
 
 void measure_brightness(void)
@@ -622,7 +631,7 @@ void average(struct measurement_t *m)
 	m->measCnt = 0;
 }
 
-void prepare_digitalpin(void)
+void prepare_digitalport(void)
 {
 	pkg_header_init_gpio_digitalpin_status();
 
@@ -637,7 +646,7 @@ void prepare_digitalpin(void)
 		{
 			UART_PUTF("%u", di[i].meas.val);
 			
-			msg_gpio_digitalpin_set_on(i, di[i].meas.val != 0);
+			msg_gpio_digitalport_set_on(i, di[i].meas.val != 0);
 		}
 		else
 		{
@@ -651,9 +660,9 @@ void prepare_digitalpin(void)
 	di_change = false;
 }
 
-void prepare_analogpin(void)
+void prepare_analogport(void)
 {
-	pkg_header_init_gpio_analogpin_status();
+	pkg_header_init_gpio_analogport_status();
 
 	UART_PUTS("Send ADC:");
 	
@@ -671,8 +680,8 @@ void prepare_analogpin(void)
 		
 			UART_PUTF2(" %u/%u", ai[i].meas.val, on);
 			
-			msg_gpio_analogpin_set_on(i, on);
-			msg_gpio_analogpin_set_voltage(i, ai[i].meas.val);
+			msg_gpio_analogport_set_on(i, on);
+			msg_gpio_analogport_set_voltage(i, ai[i].meas.val);
 			
 			ai[i].meas.val = 0;
 		}
@@ -763,7 +772,7 @@ void prepare_brightness(void)
 void prepare_battery_voltage(void)
 {
 	average(&battery_voltage);
-	battery_voltage.val = bat_percentage(battery_voltage.val, vempty);
+	battery_voltage.val = bat_percentage(battery_voltage.val / 2, vempty);
 
 	pkg_header_init_generic_batterystatus_status();
 	msg_generic_batterystatus_set_percentage(battery_voltage.val);
@@ -962,11 +971,11 @@ int main(void)
 		
 		if (di_change)
 		{
-			prepare_digitalpin();
+			prepare_digitalport();
 		}
 		else if (ai_change)
 		{
-			prepare_analogpin();
+			prepare_analogport();
 		}
 		else if (humidity.measCnt >= humidity.avgInt)
 		{

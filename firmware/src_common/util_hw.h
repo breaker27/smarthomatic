@@ -45,6 +45,7 @@ uint16_t bat_percentage(uint16_t vbat, uint16_t vempty);
 void adc_init(void);
 void adc_on(bool on);
 uint16_t read_adc(uint8_t adc_input);
+uint16_t read_battery(void);
 
 void util_init(void);
 void switch_led(bool b_on);
