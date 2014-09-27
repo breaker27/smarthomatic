@@ -25,7 +25,7 @@
 #include "uart.h"
 
 #include "../src_common/msggrp_generic.h"
-#include "../src_common/msggrp_powerswitch.h"
+#include "../src_common/msggrp_gpio.h"
 
 #include "../src_common/e2p_hardware.h"
 #include "../src_common/e2p_generic.h"
@@ -35,15 +35,12 @@
 #include "util.h"
 #include "version.h"
 
-// Don't change this, because other switch count like 8 needs other status message.
-// If support implemented, use EEPROM_SUPPORTEDSWITCHES_* E2P addresses.
-#define SWITCH_COUNT 1
+#define SWITCH_COUNT 6 // Don't change! (PC0 to PC5 are supported)
 
-// TODO: Support more than one relais!
-#define RELAIS_PORT PORTC
+#define RELAIS_PORT PORTC // TODO: Configurable pins like in env sensor
 #define RELAIS_PIN_START 0
 
-#define BUTTON_DDR DDRD
+#define BUTTON_DDR DDRD // TODO: Configurable pins like in env sensor
 #define BUTTON_PORT PORTD
 #define BUTTON_PINPORT PIND
 #define BUTTON_PIN 3
@@ -85,20 +82,27 @@ void print_switch_state(void)
 	}
 }
 
-void send_power_switch_status(void)
+void send_gpio_digitalporttimeout_status(void)
 {	
-	UART_PUTS("Sending Power Switch Status:\r\n");
+	uint8_t i;
+	
+	UART_PUTS("Sending GPIO DigitalPortTimeout Status:\r\n");
 
 	print_switch_state();
 
 	inc_packetcounter();
 
 	// Set packet content
-	pkg_header_init_powerswitch_switchstate_status();
+	pkg_header_init_gpio_digitalporttimeout_status();
 	pkg_header_set_senderid(device_id);
 	pkg_header_set_packetcounter(packetcounter);
-	msg_powerswitch_switchstate_set_on(switch_state[0]); // TODO: Support > 1 switch
-	msg_powerswitch_switchstate_set_timeoutsec(switch_timeout[0]); // TODO: Support > 1 switch
+	
+	for (i = 0; i < 8; i++)
+	{
+		msg_gpio_digitalporttimeout_set_on(i, switch_state[i]);
+		msg_gpio_digitalporttimeout_set_timeoutsec(i, switch_timeout[i]);
+	}
+
 	pkg_header_calc_crc32();
 
 	rfm12_send_bufx();
@@ -154,12 +158,60 @@ void switchRelais(int8_t num, bool on, uint16_t timeout)
 	}
 }
 
+void process_gpio_digitalport(MessageTypeEnum messagetype)
+{
+	// "Set" or "SetGet" -> modify switch state
+	if ((messagetype == MESSAGETYPE_SET) || (messagetype == MESSAGETYPE_SETGET))
+	{
+		uint8_t i;
+		
+		// react on changed state (version for more than one switch...)
+		for (i = 0; i < SWITCH_COUNT; i++)
+		{
+			bool req_on = msg_gpio_digitalporttimeout_get_on(i);
+			UART_PUTF("On:%u;", req_on);
+			switchRelais(i, req_on, 0);
+		}
+	}
+}
+
+void process_gpio_digitalpin(MessageTypeEnum messagetype)
+{
+
+}
+
+void process_gpio_digitalporttimeout(MessageTypeEnum messagetype)
+{
+	// "Set" or "SetGet" -> modify switch state
+	if ((messagetype == MESSAGETYPE_SET) || (messagetype == MESSAGETYPE_SETGET))
+	{
+		uint8_t i;
+		
+		// react on changed state (version for more than one switch...)
+		for (i = 0; i < SWITCH_COUNT; i++)
+		{
+			bool req_on = msg_gpio_digitalporttimeout_get_on(i);
+			uint16_t req_timeout = msg_gpio_digitalporttimeout_get_timeoutsec(i);
+
+			UART_PUTF("On:%u;", req_on);
+			UART_PUTF("TimeoutSec:%u;\r\n", req_timeout);
+
+			switchRelais(i, req_on, req_timeout);
+		}
+	}
+}
+
+void process_gpio_digitalpintimeout(MessageTypeEnum messagetype)
+{
+
+}
+
 // React accordingly on the MessageType, MessageGroup and MessageID.
 void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint32_t messageid)
 {
 	UART_PUTF("MessageGroupID:%u;", messagegroupid);
 	
-	if (messagegroupid != MESSAGEGROUP_POWERSWITCH)
+	if (messagegroupid != MESSAGEGROUP_GPIO)
 	{
 		UART_PUTS("\r\nERR: Unsupported MessageGroupID.\r\n");
 		return;
@@ -167,51 +219,55 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	
 	UART_PUTF("MessageID:%u;", messageid);
 
-	if (messageid != MESSAGEID_POWERSWITCH_SWITCHSTATE)
-	{
-		UART_PUTS("\r\nERR: Unsupported MessageID.\r\n");
-		return;
-	}
-
-	// "Set" or "SetGet" -> modify switch state
-	if ((messagetype == MESSAGETYPE_SET) || (messagetype == MESSAGETYPE_SETGET))
-	{
-		uint8_t i;
-		bool req_on = msg_powerswitch_switchstate_get_on();
-		uint16_t req_timeout = msg_powerswitch_switchstate_get_timeoutsec();
-
-		UART_PUTF("On:%u;", req_on);
-		UART_PUTF("TimeoutSec:%u;\r\n", req_timeout);
-
-		// react on changed state (version for more than one switch...)
-		for (i = 0; i < SWITCH_COUNT; i++)
-		{
-			switchRelais(i, req_on, req_timeout);
-		}
-	}
-
 	// remember some values before the packet buffer is destroyed
 	uint32_t acksenderid = pkg_header_get_senderid();
 	uint32_t ackpacketcounter = pkg_header_get_packetcounter();
 
+	switch (messageid)
+	{
+		case MESSAGEID_GPIO_DIGITALPORT:
+			process_gpio_digitalport(messagetype);
+			break;
+		case MESSAGEID_GPIO_DIGITALPIN:
+			process_gpio_digitalpin(messagetype);
+			break;
+		case MESSAGEID_GPIO_DIGITALPORTTIMEOUT:
+			process_gpio_digitalporttimeout(messagetype);
+			break;
+		case MESSAGEID_GPIO_DIGITALPINTIMEOUT:
+			process_gpio_digitalpintimeout(messagetype);
+			break;
+		default:
+			UART_PUTS("\r\nERR: Unsupported MessageID.\r\n");
+	}
+
 	inc_packetcounter();
+
+	// In all cases, use the digitalporttimer message as answer.
+	// It contains the data for *all* pins and *all* timer values.
 
 	// "Set" -> send "Ack"
 	if (messagetype == MESSAGETYPE_SET)
 	{
-		pkg_header_init_powerswitch_switchstate_ack();
+		pkg_header_init_gpio_digitalporttimeout_ack();
 
 		UART_PUTS("Sending Ack\r\n");
 	}
 	// "Get" or "SetGet" -> send "AckStatus"
 	else
 	{
-		pkg_header_init_powerswitch_switchstate_ackstatus();
+		pkg_header_init_gpio_digitalporttimeout_ackstatus();
 		
-		// set message data
-		msg_powerswitch_switchstate_set_on(switch_state[0] & 1); // TODO: Support > 1 switch
-		msg_powerswitch_switchstate_set_timeoutsec(switch_timeout[0]); // TODO: Support > 1 switch
-
+		uint8_t i;
+		
+		// react on changed state (version for more than one switch...)
+		for (i = 0; i < SWITCH_COUNT; i++)
+		{
+			// set message data
+			msg_gpio_digitalporttimeout_set_on(i, switch_state[i]);
+			msg_gpio_digitalporttimeout_set_timeoutsec(i, switch_timeout[i]);
+		}
+		
 		UART_PUTS("Sending AckStatus\r\n");
 	}
 
@@ -428,7 +484,7 @@ int main(void)
 			if (send_status_timeout == 0)
 			{
 				send_status_timeout = SEND_STATUS_EVERY_SEC;
-				send_power_switch_status();
+				send_gpio_digitalporttimeout_status();
 				led_blink(200, 0, 1);
 				
 				version_status_cycle++;
