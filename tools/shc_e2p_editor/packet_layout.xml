@@ -500,7 +500,7 @@
 			<MessageType>8</MessageType>
 			<MessageType>9</MessageType>
 			<MessageType>10</MessageType>
-			<Validity>test</Validity>
+			<Validity>deprecated</Validity>
 			<BoolValue>
 				<ID>On</ID>
 				<Description>Tells if the switch is on (active).</Description>
@@ -523,7 +523,7 @@
 			<MessageType>8</MessageType>
 			<MessageType>9</MessageType>
 			<MessageType>10</MessageType>
-			<Validity>test</Validity>
+			<Validity>deprecated</Validity>
 			<Array>
 				<Length>8</Length>
 				<BoolValue>
