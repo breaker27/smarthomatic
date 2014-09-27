@@ -32,20 +32,20 @@
 // Overall block length: 7680 bits
 
 // SupportedSwitches (UIntValue)
-// Description: This is a bit field about the connected switches. (Currently, only one switch is supported and the value has to be 0b00000001, but the value is for future usage.)
+// Description: This is a bit field about the connected switches.
 
 // Set SupportedSwitches (UIntValue)
-// Offset: 512, length bits 8, min val 1, max val 1
+// Offset: 512, length bits 8, min val 1, max val 6
 static inline void e2p_powerswitch_set_supportedswitches(uint8_t val)
 {
   eeprom_write_UIntValue(512, 8, val);
 }
 
 // Get SupportedSwitches (UIntValue)
-// Offset: 512, length bits 8, min val 1, max val 1
+// Offset: 512, length bits 8, min val 1, max val 6
 static inline uint8_t e2p_powerswitch_get_supportedswitches(void)
 {
-  return eeprom_read_UIntValue8(512, 8, 1, 1);
+  return eeprom_read_UIntValue8(512, 8, 1, 6);
 }
 
 // BaseStationPacketCounter (UIntValue)

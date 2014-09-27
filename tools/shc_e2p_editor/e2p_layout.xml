@@ -582,10 +582,10 @@
 		</Restriction>
 		<UIntValue>
 			<ID>SupportedSwitches</ID>
-			<Description>This is a bit field about the connected switches. (Currently, only one switch is supported and the value has to be 0b00000001, but the value is for future usage.)</Description>
+			<Description>This is a bit field about the connected switches.</Description>
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
-			<MaxVal>1</MaxVal>
+			<MaxVal>6</MaxVal>
 		</UIntValue>
 		<UIntValue>
 			<ID>BaseStationPacketCounter</ID>
