@@ -52,7 +52,8 @@
 #define BUTTON (!(BUTTON_PINPORT & (1 << BUTTON_PIN)))
 
 #define SEND_STATUS_EVERY_SEC 1800 // how often should a status be sent?
-#define SEND_VERSION_STATUS_CYCLE 50 // send version status x times less than switch status (~once per day)
+#define SEND_BATTERY_STATUS_CYCLE 15 // send version status every x wake ups
+#define SEND_VERSION_STATUS_CYCLE 50 // send version status every x wake ups
 
 uint16_t device_id;
 uint32_t station_packetcounter;
@@ -61,13 +62,16 @@ uint16_t switch_timeout[SWITCH_COUNT];
 
 uint16_t send_status_timeout = 5;
 uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly after startup
+uint8_t battery_status_cycle = SEND_BATTERY_STATUS_CYCLE - 1; // send promptly after startup
 
-uint32_t counter_thr = 35000; // configured by user
+uint32_t dry_thr;          // configured by user
 uint32_t counter_min = 100000; // min occurred value in current watering period
 uint32_t counter_meas = 0;
+bool init_mode = false;
 
 uint16_t wupCnt = 0; // Amount of wake-up cycles counting from the last time a measurement was done.
 uint16_t avgInt = 3; // The number of times a value is measured before an average is calculated and sent.
+uint16_t avgIntInit = 3;
 
 // TODO: Move to util
 // calculate x^y
@@ -84,16 +88,17 @@ uint32_t power(uint32_t x, uint32_t y)
 	return result;
 }
 
-// TODO: Move to util?
 // Read wakeup timer value from e2p, config rfm12 and
 // return the value (in seconds).
 uint16_t init_wakeup(void)
 {
-	uint16_t interval = e2p_soilmoisturemeter_get_wakeupinterval();
-	
+	uint16_t interval = init_mode ? 
+		e2p_soilmoisturemeter_get_wakeupintervalinit() :
+		e2p_soilmoisturemeter_get_wakeupinterval();
+
 	if (interval == 0) // misconficuration in E2P
 	{
-		interval = WAKEUPINTERVAL_105S;
+		interval = WAKEUPINTERVAL_1H;
 	}
 	
 	rfm12_set_wakeup_timer(interval);
@@ -117,29 +122,66 @@ void switch_schmitt_trigger(bool b_on)
 	}
 }
 
-void send_humidity_status(uint16_t hum)
-{	
-	UART_PUTS("Sending Humidity Status:\r\n");
-
+void send_version_status(void)
+{
+	UART_PUTF4("Sending Version: v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
+	
+	// Set packet content
 	inc_packetcounter();
+	pkg_header_init_generic_version_status();
+	pkg_header_set_senderid(device_id);
+	pkg_header_set_packetcounter(packetcounter);
+	msg_generic_version_set_major(VERSION_MAJOR);
+	msg_generic_version_set_minor(VERSION_MINOR);
+	msg_generic_version_set_patch(VERSION_PATCH);
+	msg_generic_version_set_hash(VERSION_HASH);
+	
+	pkg_header_calc_crc32();
+	rfm12_send_bufx();
+}
+
+void send_battery_status(void)
+{
+	adc_on(true);
+	uint16_t percentage = bat_percentage(read_battery(), 1100); // 1.1V * 2 cells = 2.2V = min. voltage for RFM12B
+	adc_on(false);
+
+	UART_PUTF("Sending battery: %u%%\r\n", percentage);
 
 	// Set packet content
+	inc_packetcounter();
+	pkg_header_init_generic_batterystatus_status();
+	pkg_header_set_senderid(device_id);
+	pkg_header_set_packetcounter(packetcounter);
+	msg_generic_batterystatus_set_percentage(percentage);
+	
+	pkg_header_calc_crc32();
+	rfm12_send_bufx();
+}
+
+void send_humidity_status(uint16_t hum)
+{	
+	UART_PUTF2("Sending humidity: %u.%u%%\r\n", hum / 10, hum % 10);
+
+	// Set packet content
+	inc_packetcounter();
 	pkg_header_init_weather_humidity_status();
 	pkg_header_set_senderid(device_id);
 	pkg_header_set_packetcounter(packetcounter);
 	msg_weather_humidity_set_humidity(hum);
 	
-	UART_PUTF2("Send humidity: %u.%u%%\r\n", hum / 10, hum % 10);
-
 	pkg_header_calc_crc32();
-
 	rfm12_send_bufx();
 }
 
 // Measure humidity, calculate relative value in permill and return it.
-void measure_humidity(void)
+// Return true, if humidity was sent.
+bool measure_humidity(void)
 {
+	bool res = false;
+	
 	switch_schmitt_trigger(true);
+	_delay_ms(10);
 	
 	uint16_t result;
 
@@ -169,55 +211,50 @@ void measure_humidity(void)
 	
 	UART_PUTF2("Measurement %u, Counter %u\r\n", wupCnt, result);
 	
-	if (wupCnt == avgInt)
+	if ((init_mode && (wupCnt == avgIntInit)) || (!init_mode && (wupCnt == avgInt)))
 	{
-		uint32_t avg = counter_meas / avgInt;
+		uint32_t avg = init_mode ? counter_meas / avgIntInit : counter_meas / avgInt;
 		
-		if (avg < counter_min)
+		if (init_mode)
 		{
-			counter_min = avg;
-		}
-		
-		uint32_t result;
-		
-		if (avg > counter_thr)
-		{
-			result = 0;
+			UART_PUTF("Init: Save avg %u as dry threshold.\r\n", avg);
+			dry_thr = avg;
+			counter_min = dry_thr - 1;
+			init_mode = false;
+			init_wakeup(); // to normal value
+			e2p_soilmoisturemeter_set_drythreshold(dry_thr);
 		}
 		else
 		{
-			result = (counter_thr - avg) * 1000 / (counter_thr - counter_min);
+			uint32_t result;
+		
+			if (avg < counter_min)
+			{
+				counter_min = avg;
+				UART_PUTF("New min: %lu, ", counter_min);
+			}
+		
+			if (avg > dry_thr)
+			{
+				result = 0;
+			}
+			else
+			{
+				result = (dry_thr - avg) * 1000 / (dry_thr - counter_min);
+			}
+		
+			UART_PUTF("Avg: %u, ", avg);
+			UART_PUTF("Result: %lu permill\r\n", result);
+			send_humidity_status(result);
+			res = true;
 		}
-		
-		UART_PUTF("Avg: %u, ", avg);
-		UART_PUTF("New min: %lu, ", counter_min);
-		UART_PUTF("Result: %lu permill\r\n", result);
-		
-		send_humidity_status(result);
+
 		wupCnt = 0;
 		counter_meas = 0;
 	}
 	
-	_delay_ms(100);
-}
-
-void send_version_status(void)
-{
-	inc_packetcounter();
-
-	UART_PUTF4("Sending Version: v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
-	
-	// Set packet content
-	pkg_header_init_generic_version_status();
-	pkg_header_set_senderid(device_id);
-	pkg_header_set_packetcounter(packetcounter);
-	msg_generic_version_set_major(VERSION_MAJOR);
-	msg_generic_version_set_minor(VERSION_MINOR);
-	msg_generic_version_set_patch(VERSION_PATCH);
-	msg_generic_version_set_hash(VERSION_HASH);
-	pkg_header_calc_crc32();
-
-	rfm12_send_bufx();
+	_delay_ms(10);
+	return res;
 }
 
 ISR (INT1_vect)
@@ -252,6 +289,21 @@ int main(void)
 	// read device id
 	device_id = e2p_generic_get_deviceid();
 
+	dry_thr = e2p_soilmoisturemeter_get_drythreshold();
+	if (dry_thr == 0) // set default value if never initialized
+	{
+		dry_thr = 40000;
+	}
+
+	counter_min = e2p_soilmoisturemeter_get_minval();
+	if (counter_min == 0) // set default value if never initialized
+	{
+		counter_min = 30000;
+	}
+
+	avgIntInit = e2p_soilmoisturemeter_get_averagingintervalinit();
+	avgInt = e2p_soilmoisturemeter_get_averaginginterval();
+
 	osccal_init();
 
 	uart_init();
@@ -262,6 +314,16 @@ int main(void)
 	osccal_info();
 	UART_PUTF ("DeviceID: %u\r\n", device_id);
 	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);
+	UART_PUTF ("AveragingInterval for initialization: %u\r\n", avgIntInit);
+	UART_PUTF ("AveragingInterval for normal operation: %u\r\n", avgInt);
+	UART_PUTF ("Dry threshold: %u\r\n", dry_thr);
+	UART_PUTF ("Min value: %u\r\n", counter_min);
+
+	adc_init();
+
+	// set DIDR for ADC channels, switch off digital input buffers to reduce ADC noise and to save power
+	DIDR0 = 62; // 63 for all channels!
+	DIDR1 = 3;
 	
 	// init AES key
 	e2p_generic_get_aeskey(aes_key);
@@ -284,6 +346,7 @@ int main(void)
 	{
 		if (BUTTON)
 		{
+			led_blink(100, 0, 1);
 			UART_PUTS("Button pressed!\r\n");
 			
 			uint8_t cnt = 0;
@@ -296,14 +359,20 @@ int main(void)
 			
 			if (cnt == 250)
 			{
-				UART_PUTS("Initiate measure mode!\r\n");
+				UART_PUTS("Long press -> initiate measure mode!\r\n");
 				
 				while (BUTTON)
 				{
-					_delay_ms(10);
+					led_blink(100, 100, 1);
 				}
+
+				init_mode = true;
+				wupCnt = 0;
+				counter_meas = 0;
+				init_wakeup(); // to usually shorter value
 				
 				UART_PUTS("Button released!\r\n");
+				_delay_ms(10);
 			}
 		}
 		else
@@ -311,13 +380,20 @@ int main(void)
 			// send status from time to time
 			send_status_timeout--;
 		
-			measure_humidity();
-			
-			if (version_status_cycle >= SEND_VERSION_STATUS_CYCLE)
+			if (!measure_humidity())
 			{
-				version_status_cycle = 0;
-				send_version_status();
-				led_blink(200, 0, 1);
+				if (battery_status_cycle >= SEND_BATTERY_STATUS_CYCLE)
+				{
+					battery_status_cycle = 0;
+					send_battery_status();
+					led_blink(200, 0, 1);
+				}
+				else if (version_status_cycle >= SEND_VERSION_STATUS_CYCLE)
+				{
+					version_status_cycle = 0;
+					send_version_status();
+					led_blink(200, 0, 1);
+				}
 			}
 
 			rfm12_tick();
