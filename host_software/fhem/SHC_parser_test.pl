@@ -90,15 +90,14 @@ sub parser_test($)
 				}
 			}
 		}
-		when('EnvSensor')
+		when('Weather')
 		{
 			given($msg)
 			{
-				when('TempHumBriStatus')
+				when('HumidityTemperature')
 				{
-					print "Temperature: " . $parser->getField("Temperature") . "\n";
 					print "Humidity: " . $parser->getField("Humidity") . "\n";
-					print "Brightness: " . $parser->getField("Brightness") . "\n";
+					print "Temperature: " . $parser->getField("Temperature") . "\n";
 				}
 			}
 		}
@@ -123,6 +122,7 @@ parser_test("Packet Data: SenderID=40;PacketCounter=7401;MessageType=8;MessageGr
 parser_test("Packet Data: SenderID=40;PacketCounter=7402;MessageType=8;MessageGroupID=0;MessageID=1;MessageData=00000000000000000000000000000000000000000000;Major=0;Minor=0;Patch=0;Hash=00000000;");
 parser_test("Packet Data: SenderID=23;PacketCounter=414;MessageType=8;MessageGroupID=1;MessageID=2;MessageData=0042e000000000000000000000000000000000000000;");
 parser_test("Packet Data: SenderID=23;PacketCounter=307;MessageType=8;MessageGroupID=1;MessageID=2;MessageData=80458000000000000000000000000000000000000000;");
+parser_test("Packet Data: SenderID=71;PacketCounter=527;MessageType=8;MessageGroupID=10;MessageID=2;MessageData=a67161000000;Humidity=66.5;Temperature=-149.72;");
 
 # Create message string for sending
 
