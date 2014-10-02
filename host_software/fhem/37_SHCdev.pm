@@ -33,26 +33,28 @@ use SHC_parser;
 my $parser = new SHC_parser();
 
 my %dev_state_icons = (
-  "PowerSwitch" => "on:on:toggle off:off:toggle set.*:light_question:off",
-  "Dimmer"      => "on:on off:off set.*:light_question:off",
-  "EnvSensor"   => undef,
-  "RGB_Dimmer"  => undef
+  "PowerSwitch"         => "on:on:toggle off:off:toggle set.*:light_question:off",
+  "Dimmer"              => "on:on off:off set.*:light_question:off",
+  "EnvSensor"           => undef,
+  "RGB_Dimmer"          => undef,
+  "Soil_Moisture_Meter" => undef
 );
 
 my %web_cmds = (
-  "PowerSwitch" => "on:off:toggle:statusRequest",
-  "Dimmer"      => "on:off:statusRequest",
-  "EnvSensor"   => undef,
-  "RGB_Dimmer"  => undef
+  "PowerSwitch"         => "on:off:toggle:statusRequest",
+  "Dimmer"              => "on:off:statusRequest",
+  "EnvSensor"           => undef,
+  "RGB_Dimmer"          => undef,
+  "Soil_Moisture_Meter" => undef
 );
 
 # Array format: [ reading1, str_format1, reading2, str_format2 ... ]
 # "on" reading translates 0 -> "off"
 #                         1 -> "on"
 my %dev_state_format = (
-  "PowerSwitch" => ["on", ""],
-  "Dimmer"      => ["on", "", "brightness", "B: "],
-  "EnvSensor"   => [    # Results in "T: 23.4 H: 27.3 Baro: 978.34 B: 45"
+  "PowerSwitch"         => ["on", ""],
+  "Dimmer"              => ["on", "", "brightness", "B: "],
+  "EnvSensor"           => [    # Results in "T: 23.4 H: 27.3 Baro: 978.34 B: 45"
     "temperature",         "T: ",
     "humidity",            "H: ",
     "barometric_pressure", "Baro: ",
@@ -61,9 +63,8 @@ my %dev_state_format = (
     "dins",                "Din: ",
     "ains",                "Ain: "
   ],
-  "RGB_Dimmer"  => [
-    "color",               "Color: "
-  ]
+  "RGB_Dimmer"          => ["color", "Color: "],
+  "Soil_Moisture_Meter" => ["humidity", "H: "]
 );
 
 # Supported set commands
@@ -71,19 +72,20 @@ my %dev_state_format = (
 # use "cmd_name:cmd_additional_info"
 #     cmd_additional_info: Description available at http://www.fhemwiki.de/wiki/DevelopmentModuleIntro#X_Set
 my %sets = (
-  "PowerSwitch" => "on:noArg off:noArg toggle:noArg statusRequest:noArg " .
-                   # Used from SetExtensions.pm
-                   "blink on-for-timer on-till off-for-timer off-till intervals",
-  "Dimmer"      => "on:noArg off:noArg toggle:noArg statusRequest:noArg pct:slider,0,1,100 ani " .
-                   # Used from SetExtensions.pm
-                   "blink on-for-timer on-till off-for-timer off-till intervals",
-  "EnvSensor"   => "",
-  "RGB_Dimmer"  => "Color " .
-                   "ColorAnimation",
-  "Custom"      => "PowerSwitch.SwitchState " .
-                   "PowerSwitch.SwitchStateExt " .
-                   "Dimmer.Brightness " .
-                   "Dimmer.Animation"
+  "PowerSwitch"         => "on:noArg off:noArg toggle:noArg statusRequest:noArg " .
+                           # Used from SetExtensions.pm
+                           "blink on-for-timer on-till off-for-timer off-till intervals",
+  "Dimmer"              => "on:noArg off:noArg toggle:noArg statusRequest:noArg pct:slider,0,1,100 ani " .
+                           # Used from SetExtensions.pm
+                           "blink on-for-timer on-till off-for-timer off-till intervals",
+  "EnvSensor"           => "",
+  "RGB_Dimmer"          => "Color " .
+                           "ColorAnimation",
+  "Soil_Moisture_Meter" => "",
+  "Custom"              => "PowerSwitch.SwitchState " .
+                           "PowerSwitch.SwitchStateExt " .
+                           "Dimmer.Brightness " .
+                           "Dimmer.Animation"
 );
 
 # Supported get commands
@@ -110,7 +112,8 @@ my %auto_devtype = (
   "PowerSwitch.SwitchState"               => "PowerSwitch",
   "Dimmer.Brightness"                     => "Dimmer",
   "Dimmer.Color"                          => "RGB_Dimmer",
-  "Dimmer.ColorAnimation"                 => "RGB_Dimmer"
+  "Dimmer.ColorAnimation"                 => "RGB_Dimmer",
+  "Weather.Humidity"                      => "Soil_Moisture_Meter"
 );
 
 sub SHCdev_Parse($$);
@@ -293,6 +296,11 @@ sub SHCdev_Parse($$)
 
           readingsBulkUpdate($rhash, "barometric_pressure", $bar);
           readingsBulkUpdate($rhash, "temperature",         $tmp);
+        }
+        when ('Humidity') {
+          my $hum = $parser->getField("Humidity") / 10;        # parser returns 1/10 percent
+
+          readingsBulkUpdate($rhash, "humidity",    $hum);
         }
       }
     }
@@ -684,6 +692,8 @@ sub SHCdev_Send($)
     <li>EnvSensor</li>
     <li>PowerSwitch</li>
     <li>Dimmer</li>
+    <li>RGB_Dimmer</li>
+    <li>Soil_Moisture_Meterr</li>
   </ul><br>
 
   <a name="SHCdev_Define"></a>
