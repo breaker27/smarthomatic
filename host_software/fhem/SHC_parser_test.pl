@@ -126,8 +126,10 @@ parser_test("Packet Data: SenderID=71;PacketCounter=527;MessageType=8;MessageGro
 
 # Create message string for sending
 
-$parser->initPacket("PowerSwitch", "SwitchState", "Set");
-$parser->setField("PowerSwitch", "SwitchState", "TimeoutSec", 8);
+$parser->initPacket("GPIO", "DigitalPinTimeout", "SetGet");
+$parser->setField("GPIO", "DigitalPinTimeout", "Pos", 3);
+$parser->setField("GPIO", "DigitalPinTimeout", "On", 1);
+$parser->setField("GPIO", "DigitalPinTimeout", "TimeoutSec", 8);
 
 print "BaseStation command = " . $parser->getSendString(61) . "\n";
 
