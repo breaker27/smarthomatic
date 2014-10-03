@@ -30,7 +30,7 @@ TARGET = shc_dimmer
 #   C			*.c
 #   Assembler	*.S
 CSRC = $(TARGET).c rfm12.c util.c uart.c aes256.c fuses.c
-ASRC =
+ASRC = ../src_common/aes_keyschedule-asm.S ../src_common/aes_enc-asm.S ../src_common/aes_dec-asm.S ../src_common/aes_sbox-asm.S ../src_common/aes_invsbox-asm.S
 FUSES = -U hfuse:w:hfuse.hex:i -U lfuse:w:lfuse.hex:i -U efuse:w:efuse.hex:i -u
 
 #******************************************************************************
