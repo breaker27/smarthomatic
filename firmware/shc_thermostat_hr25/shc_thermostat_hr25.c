@@ -22,7 +22,7 @@
 #include <string.h>
 
 #include "rfm12.h"
-#include "uart.h"
+#include "../src_common/uart.h"
 
 #include "../src_common/msggrp_powerswitch.h"
 
@@ -30,8 +30,8 @@
 #include "../src_common/e2p_generic.h"
 #include "../src_common/e2p_thermostat.h"
 
-#include "aes256.h"
-#include "util.h"
+#include "../src_common/aes256.h"
+#include "../src_common/util.h"
 #include "version.h"
 
 #define SEND_STATUS_EVERY_SEC 1800 // how often should a status be sent?

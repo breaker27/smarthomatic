@@ -23,7 +23,7 @@
 #include <avr/sleep.h>
 
 #include "rfm12.h"
-#include "uart.h"
+#include "../src_common/uart.h"
 
 #include "../src_common/msggrp_generic.h"
 #include "../src_common/msggrp_weather.h"
@@ -32,8 +32,8 @@
 #include "../src_common/e2p_generic.h"
 #include "../src_common/e2p_soilmoisturemeter.h"
 
-#include "aes256.h"
-#include "util.h"
+#include "../src_common/aes256.h"
+#include "../src_common/util.h"
 #include "version.h"
 
 // Don't change this, because other switch count like 8 needs other status message.

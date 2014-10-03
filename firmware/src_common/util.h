@@ -1,6 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013 Uwe Freese
+* Copyright (c) 2014 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -16,4 +16,6 @@
 * with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "../src_common/uart.h"
+#include "util_generic.h"
+#include "util_hw.h"
+#include "e2p_access.h"

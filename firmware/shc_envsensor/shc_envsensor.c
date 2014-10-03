@@ -23,7 +23,7 @@
 #include <avr/sleep.h>
 
 #include "rfm12.h"
-#include "uart.h"
+#include "../src_common/uart.h"
 
 #include "../src_common/msggrp_generic.h"
 #include "../src_common/msggrp_gpio.h"
@@ -40,8 +40,8 @@
 #include "bmp085.h"
 #include "srf02.h"
 
-#include "aes256.h"
-#include "util.h"
+#include "../src_common/aes256.h"
+#include "../src_common/util.h"
 #include "version.h"
 
 // Pull-up resistors that are switched on for battery and brightness measurement

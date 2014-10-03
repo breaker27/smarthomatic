@@ -22,7 +22,7 @@
 #include <string.h>
 
 #include "rfm12.h"
-#include "uart.h"
+#include "../src_common/uart.h"
 
 #include "../src_common/msggrp_generic.h"
 #include "../src_common/msggrp_gpio.h"
@@ -31,8 +31,8 @@
 #include "../src_common/e2p_generic.h"
 #include "../src_common/e2p_powerswitch.h"
 
-#include "aes256.h"
-#include "util.h"
+#include "../src_common/aes256.h"
+#include "../src_common/util.h"
 #include "version.h"
 
 #define SWITCH_COUNT 6 // Don't change! (PC0 to PC5 are supported)
