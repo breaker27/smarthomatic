@@ -745,8 +745,6 @@ int main(void)
 	// init AES key
 	e2p_generic_get_aeskey(aes_key);
 
-	led_blink(500, 500, 3);
-
 	PWM_init();
 	rfm12_init();
 	
@@ -755,6 +753,27 @@ int main(void)
 
 	clear_anim_data();
 	// test_anim_calculation(); // for debugging only
+
+	// Show colors shortly to tell user that power is connected (status LED may not be visible).
+	// In parallel, let status LED blink 3 times (as usual for SHC devices).
+	current_col = index2color(48);
+	set_PWM(current_col);
+	switch_led(true);
+	_delay_ms(500);
+	current_col = index2color(12);
+	set_PWM(current_col);
+	switch_led(false);
+	_delay_ms(500);
+	current_col = index2color(3);
+	set_PWM(current_col);
+	switch_led(true);
+	_delay_ms(500);
+	current_col = index2color(0);
+	set_PWM(current_col);
+	switch_led(false);
+	_delay_ms(500);
+
+	led_blink(500, 0, 1);
 
 	sei();
 
