@@ -134,6 +134,12 @@ void switchRelais(int8_t num, bool on, uint16_t timeout, bool dbgmsg)
 		UART_PUTF3("Switching relais %u to %u with timeout %us.\r\n", num + 1, on, timeout);
 	}
 
+	if (num >= SWITCH_COUNT)
+	{
+		UART_PUTF("\r\nRelais number %u > SWITCH_COUNT, ignoring.", num);
+		return;
+	}
+
 	bool change_state = switch_state[num] != on;
 	bool change_timeout = switch_timeout[num] != timeout;
 			
