@@ -55,5 +55,6 @@ void osccal_info(void);
 void osccal_init(void);
 void inc_packetcounter(void);
 void rfm12_send_bufx(void);
+void power_down(bool bod_disable);
 
 #endif /* _UTIL_HW_H */

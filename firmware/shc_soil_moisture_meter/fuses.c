@@ -25,8 +25,5 @@ FUSES =
 	// value 0xD1 - set EESAVE, others are default for ATMega328
 	.high = (FUSE_SPIEN & FUSE_EESAVE & FUSE_BOOTSZ1 & FUSE_BOOTSZ0),
 	// value 0xFE - set BOD to 1.8V to prevent flashing garbage accidentally
-	//.extended = FUSE_BODLEVEL0, 
-	
-	// value 0x07 - BOD disabled
-	.extended = 7
+	.extended = FUSE_BODLEVEL0, 
 };

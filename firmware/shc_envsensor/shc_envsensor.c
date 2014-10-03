@@ -1025,9 +1025,8 @@ int main(void)
 			inc_packetcounter();
 		}
 
-		// Go to sleep. Wakeup by RFM12 wakeup-interrupt or pin change (if configured).
 		pin_wakeup = false;
-		set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-        sleep_mode();
+
+		power_down(true);
 	}
 }

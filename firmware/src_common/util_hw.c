@@ -274,3 +274,22 @@ void rfm12_send_bufx(void)
 
 	rfm12_tx(aes_byte_count, 0, (uint8_t *) bufx);
 }
+
+// Go to sleep. Wakeup by RFM12 wakeup-interrupt or pin change (if configured).
+// Disable BOD according recommended procedure in sleep.h if selected.
+void power_down(bool bod_disable)
+{
+	set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+	cli();
+	sleep_enable();
+	
+	if (bod_disable)
+	{
+		sleep_bod_disable();
+	}
+
+	sei();
+	sleep_cpu();
+	sleep_disable();
+	sei();
+}
