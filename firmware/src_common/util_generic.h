@@ -31,6 +31,9 @@
 #define BUFX_LENGTH 65
 uint8_t bufx[BUFX_LENGTH];
 
+#define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
+#define MAX(X,Y) ((X) > (Y) ? (X) : (Y))
+
 // ########## Linear Interpolation
 
 uint16_t linear_interpolate16(uint16_t in, uint16_t min_in, uint16_t max_in, uint16_t min_out, uint16_t max_out);

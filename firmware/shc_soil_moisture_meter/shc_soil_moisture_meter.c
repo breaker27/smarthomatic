@@ -143,6 +143,7 @@ void send_version_status(void)
 void send_battery_status(void)
 {
 	adc_on(true);
+	_delay_ms(10);
 	uint16_t percentage = bat_percentage(read_battery(), 1100); // 1.1V * 2 cells = 2.2V = min. voltage for RFM12B
 	adc_on(false);
 
@@ -159,6 +160,7 @@ void send_battery_status(void)
 	rfm12_send_bufx();
 }
 
+// Send humidity
 void send_humidity_status(uint16_t hum)
 {	
 	UART_PUTF2("Sending humidity: %u.%u%%\r\n", hum / 10, hum % 10);
@@ -169,6 +171,24 @@ void send_humidity_status(uint16_t hum)
 	pkg_header_set_senderid(device_id);
 	pkg_header_set_packetcounter(packetcounter);
 	msg_weather_humidity_set_humidity(hum);
+	
+	pkg_header_calc_crc32();
+	rfm12_send_bufx();
+}
+
+// Send humidity and raw value as temperature (only for debugging!)
+void send_humidity_status_RAW_DBG(uint16_t hum, int16_t raw)
+{	
+	UART_PUTF2("Sending humidity: %u.%u%%\r\n", hum / 10, hum % 10);
+	UART_PUTF ("Sending temperature: %d\r\n", raw);
+
+	// Set packet content
+	inc_packetcounter();
+	pkg_header_init_weather_humiditytemperature_status();
+	pkg_header_set_senderid(device_id);
+	pkg_header_set_packetcounter(packetcounter);
+	msg_weather_humiditytemperature_set_humidity(hum);
+	msg_weather_humiditytemperature_set_temperature(raw);
 	
 	pkg_header_calc_crc32();
 	rfm12_send_bufx();
@@ -190,8 +210,7 @@ bool measure_humidity(void)
 	PORTD &= ~(1 << 5);
 
 	// clear counter
-	TCNT1H = 0x00;
-	TCNT1L = 0x00;
+	TCNT1 = 0x00;
 
 	// configure counter and use external clock source, rising edge
 	TCCR1A = 0x00;
@@ -246,6 +265,7 @@ bool measure_humidity(void)
 			UART_PUTF("Avg: %u, ", avg);
 			UART_PUTF("Result: %lu permill\r\n", result);
 			send_humidity_status(result);
+			//send_humidity_status_RAW_DBG(result, (int16_t) MIN((int32_t)avg, 30000)); // for debugging only
 			res = true;
 		}
 
@@ -382,15 +402,21 @@ int main(void)
 		
 			if (!measure_humidity())
 			{
-				if (battery_status_cycle >= SEND_BATTERY_STATUS_CYCLE)
+				if (battery_status_cycle > 0)
+					battery_status_cycle--;
+
+				if (version_status_cycle > 0)
+					version_status_cycle--;
+
+				if (battery_status_cycle == 0)
 				{
-					battery_status_cycle = 0;
+					battery_status_cycle = SEND_BATTERY_STATUS_CYCLE;
 					send_battery_status();
 					led_blink(200, 0, 1);
 				}
-				else if (version_status_cycle >= SEND_VERSION_STATUS_CYCLE)
+				else if (version_status_cycle == 0)
 				{
-					version_status_cycle = 0;
+					version_status_cycle = SEND_VERSION_STATUS_CYCLE;
 					send_version_status();
 					led_blink(200, 0, 1);
 				}
