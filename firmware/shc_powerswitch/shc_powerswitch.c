@@ -127,9 +127,12 @@ void send_version_status(void)
 	rfm12_send_bufx();
 }
 
-void switchRelais(int8_t num, bool on, uint16_t timeout)
+void switchRelais(int8_t num, bool on, uint16_t timeout, bool dbgmsg)
 {
-	UART_PUTF3("Switching relais %u to %u with timeout %us.\r\n", num + 1, on, timeout);
+	if (dbgmsg)
+	{
+		UART_PUTF3("Switching relais %u to %u with timeout %us.\r\n", num + 1, on, timeout);
+	}
 
 	bool change_state = switch_state[num] != on;
 	bool change_timeout = switch_timeout[num] != timeout;
@@ -168,16 +171,23 @@ void process_gpio_digitalport(MessageTypeEnum messagetype)
 		// react on changed state (version for more than one switch...)
 		for (i = 0; i < SWITCH_COUNT; i++)
 		{
-			bool req_on = msg_gpio_digitalporttimeout_get_on(i);
-			UART_PUTF("On:%u;", req_on);
-			switchRelais(i, req_on, 0);
+			bool req_on = msg_gpio_digitalport_get_on(i);
+			UART_PUTF2("On[%u]:%u;", i, req_on);
+			switchRelais(i, req_on, 0, false);
 		}
 	}
 }
 
 void process_gpio_digitalpin(MessageTypeEnum messagetype)
 {
-
+	// "Set" or "SetGet" -> modify switch state
+	if ((messagetype == MESSAGETYPE_SET) || (messagetype == MESSAGETYPE_SETGET))
+	{
+		uint8_t req_pos = msg_gpio_digitalpin_get_pos();
+		bool req_on = msg_gpio_digitalpin_get_on();
+		UART_PUTF2("Pos:%u;On:%u;", req_pos, req_on);
+		switchRelais(req_pos, req_on, 0, false);
+	}
 }
 
 void process_gpio_digitalporttimeout(MessageTypeEnum messagetype)
@@ -193,17 +203,26 @@ void process_gpio_digitalporttimeout(MessageTypeEnum messagetype)
 			bool req_on = msg_gpio_digitalporttimeout_get_on(i);
 			uint16_t req_timeout = msg_gpio_digitalporttimeout_get_timeoutsec(i);
 
-			UART_PUTF("On:%u;", req_on);
-			UART_PUTF("TimeoutSec:%u;\r\n", req_timeout);
+			UART_PUTF2("On[%u]:%u;", i, req_on);
+			UART_PUTF2("TimeoutSec[%u]:%u;", i, req_timeout);
 
-			switchRelais(i, req_on, req_timeout);
+			switchRelais(i, req_on, req_timeout, false);
 		}
 	}
 }
 
 void process_gpio_digitalpintimeout(MessageTypeEnum messagetype)
 {
-
+	// "Set" or "SetGet" -> modify switch state
+	if ((messagetype == MESSAGETYPE_SET) || (messagetype == MESSAGETYPE_SETGET))
+	{
+		uint8_t req_pos = msg_gpio_digitalpintimeout_get_pos();
+		bool req_on = msg_gpio_digitalpintimeout_get_on();
+		uint16_t req_timeout = msg_gpio_digitalpintimeout_get_timeoutsec();
+		UART_PUTF2("Pos:%u;On:%u;", req_pos, req_on);
+		UART_PUTF("TimeoutSec:%u;", req_timeout);
+		switchRelais(req_pos, req_on, req_timeout, false);
+	}
 }
 
 // React accordingly on the MessageType, MessageGroup and MessageID.
@@ -238,8 +257,10 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 			process_gpio_digitalpintimeout(messagetype);
 			break;
 		default:
-			UART_PUTS("\r\nERR: Unsupported MessageID.\r\n");
+			UART_PUTS("\r\nERR: Unsupported MessageID.");
 	}
+	
+	UART_PUTS("\r\n");
 
 	inc_packetcounter();
 
@@ -398,7 +419,7 @@ int main(void)
 	// read (saved) switch state from before the eventual powerloss
 	for (i = 0; i < SWITCH_COUNT; i++)
 	{
-		switchRelais(i, e2p_powerswitch_get_switchstate(i), e2p_powerswitch_get_switchtimeout(i));
+		switchRelais(i, e2p_powerswitch_get_switchstate(i), e2p_powerswitch_get_switchtimeout(i), true);
 	}
 
 	rfm12_init();
@@ -472,7 +493,7 @@ int main(void)
 					if (switch_timeout[i] == 0)
 					{
 						UART_PUTS("Timeout! ");
-						switchRelais(i, !switch_state[i], 0);
+						switchRelais(i, !switch_state[i], 0, true);
 						send_status_timeout = 1; // immediately send the status update
 					}
 				}
@@ -519,7 +540,7 @@ int main(void)
 			if (button) // on button press
 			{
 				UART_PUTS("Button! ");
-				switchRelais(0, !switch_state[0], 0);
+				switchRelais(0, !switch_state[0], 0, true);
 				send_status_timeout = 15; // send status after 15s
 			}
 		}	
