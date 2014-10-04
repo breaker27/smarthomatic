@@ -52,7 +52,7 @@ my %web_cmds = (
 # "on" reading translates 0 -> "off"
 #                         1 -> "on"
 my %dev_state_format = (
-  "PowerSwitch"         => ["on", ""],
+  "PowerSwitch"         => ["dins", "Dins: "],
   "Dimmer"              => ["on", "", "brightness", "B: "],
   "EnvSensor"           => [    # Results in "T: 23.4 H: 27.3 Baro: 978.34 B: 45"
     "temperature",         "T: ",
@@ -74,7 +74,11 @@ my %dev_state_format = (
 my %sets = (
   "PowerSwitch"         => "on:noArg off:noArg toggle:noArg statusRequest:noArg " .
                            # Used from SetExtensions.pm
-                           "blink on-for-timer on-till off-for-timer off-till intervals",
+                           "blink on-for-timer on-till off-for-timer off-till intervals " .
+                           "GPIO.DigitalPort " .
+                           "GPIO.DigitalPortTimeout " .
+                           "GPIO.DigitalPin " .
+                           "GPIO.DigitalPinTimeout ",
   "Dimmer"              => "on:noArg off:noArg toggle:noArg statusRequest:noArg pct:slider,0,1,100 ani " .
                            # Used from SetExtensions.pm
                            "blink on-for-timer on-till off-for-timer off-till intervals",
@@ -109,6 +113,7 @@ my %auto_devtype = (
   "Environment.Distance"                  => "EnvSensor",
   "GPIO.DigitalPin"                       => "EnvSensor",
   "GPIO.AnalogPin"                        => "EnvSensor",
+  "GPIO.DigitalPortTimeout"               => "PowerSwitch",
   "PowerSwitch.SwitchState"               => "PowerSwitch",
   "Dimmer.Brightness"                     => "Dimmer",
   "Dimmer.Color"                          => "RGB_Dimmer",
@@ -252,6 +257,18 @@ sub SHCdev_Parse($$)
     }
     when ('GPIO') {
       given ($msgname) {
+        when ('DigitalPortTimeout') {
+          my $pins = "";
+          for (my $i = 0 ; $i < 8 ; $i++) {
+            my $pinx = $parser->getField("On", $i);
+            my $timeoutx = $parser->getField("TimeoutSec", $i);
+            my $channel = $i + 1;
+            readingsBulkUpdate($rhash, "din" . $channel, $pinx);
+            readingsBulkUpdate($rhash, "timeout" . $channel, $timeoutx);
+            $pins .= $pinx;
+          }
+          readingsBulkUpdate($rhash, "dins", $pins);
+        }
         when ('DigitalPin') {
           my $pins = "";
           for (my $i = 0 ; $i < 8 ; $i++) {
