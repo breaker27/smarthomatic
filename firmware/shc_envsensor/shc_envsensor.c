@@ -54,7 +54,7 @@
 #define SRF02_POWER_PIN 5
 
 #define VERSION_MEASURING_INTERVAL_SEC 86000 // about once a day
-#define BATTERY_MEASURING_INTERVAL_SEC 2 // 8500 // about every 8 hours
+#define BATTERY_MEASURING_INTERVAL_SEC 28500 // about every 8 hours
 #define BATTERY_AVERAGING_INTERVAL 3
 
 uint8_t temperature_sensor_type = 0;
