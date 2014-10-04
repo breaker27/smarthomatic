@@ -52,7 +52,7 @@ my %web_cmds = (
 # "on" reading translates 0 -> "off"
 #                         1 -> "on"
 my %dev_state_format = (
-  "PowerSwitch"         => ["dins", "Dins: "],
+  "PowerSwitch"         => ["port", "Port: "],
   "Dimmer"              => ["on", "", "brightness", "B: "],
   "EnvSensor"           => [    # Results in "T: 23.4 H: 27.3 Baro: 978.34 B: 45"
     "temperature",         "T: ",
@@ -60,7 +60,7 @@ my %dev_state_format = (
     "barometric_pressure", "Baro: ",
     "brightness",          "B: ",
     "distance",            "D: ",
-    "dins",                "Din: ",
+    "port",                "Port: ",
     "ains",                "Ain: "
   ],
   "RGB_Dimmer"          => ["color", "Color: "],
@@ -260,21 +260,21 @@ sub SHCdev_Parse($$)
             my $pinx = $parser->getField("On", $i);
             my $timeoutx = $parser->getField("TimeoutSec", $i);
             my $channel = $i + 1;
-            readingsBulkUpdate($rhash, "din" . $channel, $pinx);
+            readingsBulkUpdate($rhash, "pin" . $channel, $pinx);
             readingsBulkUpdate($rhash, "timeout" . $channel, $timeoutx);
             $pins .= $pinx;
           }
-          readingsBulkUpdate($rhash, "dins", $pins);
+          readingsBulkUpdate($rhash, "port", $pins);
         }
         when ('DigitalPin') {
           my $pins = "";
           for (my $i = 0 ; $i < 8 ; $i++) {
             my $pinx = $parser->getField("On", $i);
             my $channel = $i + 1;
-            readingsBulkUpdate($rhash, "din" . $channel, $pinx);
+            readingsBulkUpdate($rhash, "pin" . $channel, $pinx);
             $pins .= $pinx;
           }
-          readingsBulkUpdate($rhash, "dins", $pins);
+          readingsBulkUpdate($rhash, "port", $pins);
         }
         when ('AnalogPin') {
           my $pins = "";
@@ -649,10 +649,10 @@ sub SHCdev_Get($@)
         }
         elsif ($arg eq "all")
         {
-          if ( defined($hash->{READINGS}{dins})
-            && defined($hash->{READINGS}{dins}{VAL}))
+          if ( defined($hash->{READINGS}{port})
+            && defined($hash->{READINGS}{port}{VAL}))
           {
-            return "$name.dins => " . $hash->{READINGS}{dins}{VAL};
+            return "$name.port => " . $hash->{READINGS}{port}{VAL};
           }
           return "Error: \"input all\" readings not yet available or not supported by device";
         }
