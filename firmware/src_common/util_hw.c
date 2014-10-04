@@ -326,15 +326,25 @@ void inc_packetcounter(void)
 
 void rfm12_send_bufx(void)
 {
-	UART_PUTS("Before encryption: ");
-	print_bytearray(bufx, __PACKETSIZEBYTES);
+	uint8_t packet_len = __PACKETSIZEBYTES;
 
-	uint8_t aes_byte_count = aes256_encrypt_cbc(bufx, __PACKETSIZEBYTES);
+	// Trim 0 bytes at the end.
+	while ((packet_len > 0) && (bufx[packet_len - 1] == 0))
+	{
+		packet_len--;
+	}
+	
+	packet_len = ((packet_len - 1) / 16 + 1) * 16;
+	
+	UART_PUTS("Before encryption: ");
+	print_bytearray(bufx, packet_len);
+
+	packet_len = aes256_encrypt_cbc(bufx, packet_len);
 
 	UART_PUTS("After encryption:  ");
-	print_bytearray(bufx, aes_byte_count);
+	print_bytearray(bufx, packet_len);
 
-	rfm12_tx(aes_byte_count, 0, (uint8_t *) bufx);
+	rfm12_tx(packet_len, 0, (uint8_t *) bufx);
 }
 
 // Go to sleep. Wakeup by RFM12 wakeup-interrupt or pin change (if configured).
