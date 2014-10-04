@@ -47,7 +47,9 @@
 #define LED_PORT PORTD
 #define LED_DDR DDRD
 
-static uint16_t adc_data;
+// Value has to be volatile, because otherwise the adc_measure function would not
+// detect that the value was changed from the ADC interrupt.
+volatile static uint16_t adc_data;
 
 // reference battery voltage (alkaline) for 100%, 90%,... 0% with end voltage 0,9V
 static short vbat_alkaline[] = {1600, 1400, 1320, 1280, 1240, 1210, 1180, 1160, 1100, 1030, 900};
@@ -95,20 +97,39 @@ uint16_t bat_percentage(uint16_t vbat, uint16_t vempty)
 	}
 }
 
+// Initialize ADV (called once after initial power on).
 void adc_init(void)
 {
-	// ADC Clock: 62.500kHz
-	// ADC Voltage Reference: Internal 1.1V, External capacitor
-	// ADC Noise Canceler Enabled
-	ADCSRB |= 0x0;
-	ADMUX = 0xc0;
-	ADCSRA = 0x8e;
+	// ADIE: A/D Interrupt enable
+	// ADPS0 / 1 / 2 Prescalers
+	// The prescaler has to be set to result in a frequency of 50kHz to 200kHz.
+	// Choose a prescaler so that frequency is as little above 50kHz as possible.
+	// CPU clock below 1.6 MHz -> Prescaler 16 -> ADPS2
+	// CPU clock below 3.2 MHz -> Prescaler 32 -> ADPS2 + ADPS0
+	// CPU clock below 6.4 MHz -> Prescaler 64 -> ADPS2 + ADPS1
+	// CPU clock above 6.4 MHz -> Prescaler 128 -> ADPS2 + ADPS1 + ADPS0
+#if (F_CPU < 1600000)
+	ADCSRA = (1 << ADIE) | (1 << ADPS2);
+#elif (F_CPU < 3200000)
+	ADCSRA = (1 << ADIE) | (1 << ADPS2) | (1 << ADPS0);
+#elif (F_CPU < 6400000)
+	ADCSRA = (1 << ADIE) | (1 << ADPS2) | (1 << ADPS1);
+#else
+	ADCSRA = (1 << ADIE) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
+#endif 
+
+	// Voltage reference selection:
+	// REFS1 = 1, REFS0 = 1 -> internal 1.1V reference (used for all ADC input pins)
+	// REFS1 = 0, REFS0 = 1 -> AVcc (used to measure battery voltage)
+	// -> In any case, REFS0 has to be 1.
+	sbi(ADMUX, REFS0);
 }
 
+// Switch on ADC before taking measurements and switch it off afterwards,
+// especially before going to power down mode.
 void adc_on(bool on)
 {
-    //ACSR = (1<<ACD);                      // disable A/D comparator
-    if (on)
+	if (on)
 	{
 		sbi(ADCSRA, ADEN);
 	}
@@ -118,10 +139,49 @@ void adc_on(bool on)
 	}
 }
 
-// Read the ADC conversion result after ADC is finished
+// Read the ADC conversion result after ADC is finished.
 ISR(ADC_vect)
 {
 	adc_data = ADCW;
+}
+
+// Make ADC conversion in ADC sleep mode.
+// If device is woken up by another interrupt, retry until an ADC conversion
+// without disturbance was possible.
+void adc_measure(void)
+{
+	set_sleep_mode(SLEEP_MODE_ADC);
+	adc_data = 0xffff;
+
+	while (true)
+	{
+		// Go into ADC sleep mode. This starts an DC conversion automatically.
+		// Device will wake up either by an ADC conversion complete interrupt
+		// or by any other interrupt (!).
+		sleep_enable();
+		sei();
+		sleep_cpu();
+		
+		// Disable interrupts immediately to make sure the ADC interrupt does
+		// not happen right here after the device was woken up by another interrupt.
+		cli();
+		
+		// Check if device was woken up by ADC interrupt and ADC value was
+		// therefore stored in adc_data.
+		if (adc_data != 0xffff)
+		{
+			break;
+		}
+
+		// If woken up by another interrupt, wait until conversion is complete
+		// and start another conversion in the loop.
+		while (ADCSRA & (1<<ADSC))
+		{
+			// NOOP
+		}
+	}
+
+	sei();
 }
 
 // Read ADC data of the given channel.
@@ -132,22 +192,24 @@ ISR(ADC_vect)
 // resistors.
 uint16_t read_adc(uint8_t adc_input)
 {
-	uint8_t mux = 0;
-	
-	// Set ADC input
-	mux = 1 << REFS0; // 0b01100000;
-	
+	// Set voltage reference.
 	if (adc_input != 14)
 	{
-		mux |= (1 << REFS1);
+		sbi(ADMUX, REFS1);
+	}
+	else
+	{
+		cbi(ADMUX, REFS1);
 	}
 	
-	mux |= adc_input;
-	ADMUX = mux;
-	
-	// MCU sleep
-	set_sleep_mode(SLEEP_MODE_ADC);
-	sleep_mode();
+	// Set input channel.
+	ADMUX = (ADMUX & 0b11110000) | adc_input;
+
+	// Make two conversions, because the first value can be wrong
+	// after changing voltage reference (also according datasheet).
+	adc_measure();
+	adc_measure();
+
 	return adc_data;
 }
 
@@ -155,7 +217,7 @@ uint16_t read_adc(uint8_t adc_input)
 // the internal 1.1V reference voltage.
 uint16_t read_battery(void)
 {
-	//return (int)((long)read_adc(0) * 34375 / 10000 / 2); // 1.1 * 480 Ohm / 150 Ohm / 1,024
+	//return (int)((long)read_adc(0) * 34375 / 10000); // using external resistors
 	return (uint16_t)((uint32_t)1100 * 1024 / read_adc(14));
 }
 
