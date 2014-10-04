@@ -753,10 +753,10 @@ sub SHCdev_Send($)
   <b>Set</b>
   <ul>
     <li>on<br>
-        Supported by Dimmer and PowerSwitch.
+        Supported by Dimmer and PowerSwitch (on always refers to pin1).
     </li><br>
     <li>off<br>
-        Supported by Dimmer, PowerSwitch.
+        Supported by Dimmer and PowerSwitch (off always refers to pin1).
     </li><br>
     <li>pct &lt;0..100&gt;<br>
         Sets the brightness in percent. Supported by Dimmer.
@@ -777,6 +777,30 @@ sub SHCdev_Send($)
         A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_ColorAnimation">www.smarthomatic.org</a>
         The color palette can be found <a href="http://www.smarthomatic.org/devices/rgb_dimmer.html">here</a>
         Supported by RGB_Dimmer.
+    </li><br>
+    <li>DigitalPin &lt;Pos&gt; &lt;On&gt;<br>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#GPIO_DigitalPin">www.smarthomatic.org</a>
+        Supported by PowerSwitch.
+    </li><br>
+    <li>DigitalPinTimeout &lt;Pos&gt; &lt;On&gt; &lt;Timeout&gt;<br>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#GPIO_DigitalPinTimeout">www.smarthomatic.org</a>
+        Supported by PowerSwitch.
+    </li><br>
+    <li>DigitalPort &lt;On&gt;<br>
+        &lt;On&gt;<br>
+        is a bit array (0 or 1) describing the port state. If less than eight bits were provided zero is assumed.
+        Example: set SHC_device DigitalPort 10110000 will set pin0, pin2 and pin3 to 1.<br>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#GPIO_DigitalPort">www.smarthomatic.org</a>
+        Supported by PowerSwitch.
+    </li><br>
+    <li>DigitalPortTimeout &lt;On&gt; &lt;Timeout0&gt; .. &lt;Timeout7&gt;<br>
+        &lt;On&gt;<br>
+        is a bit array (0 or 1) describing the port state. If less than eight bits were provided zero is assumed.
+        Example: set SHC_device DigitalPort 10110000 will set pin0, pin2 and pin3 to 1.<br>
+        &lt;Timeout0&gt; .. &lt;Timeout7&gt;<br>
+        are the timeouts for each pin. If no timeout is provided zero is assumed.
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#GPIO_DigitalPortTimeout">www.smarthomatic.org</a>
+        Supported by PowerSwitch.
     </li><br>
     <li><a href="#setExtensions"> set extensions</a><br>
         Supported by Dimmer and PowerSwitch.</li>
