@@ -86,9 +86,7 @@ my %sets = (
   "RGB_Dimmer"          => "Color " .
                            "ColorAnimation",
   "Soil_Moisture_Meter" => "",
-  "Custom"              => "PowerSwitch.SwitchState " .
-                           "PowerSwitch.SwitchStateExt " .
-                           "Dimmer.Brightness " .
+  "Custom"              => "Dimmer.Brightness " .
                            "Dimmer.Animation"
 );
 
@@ -114,7 +112,6 @@ my %auto_devtype = (
   "GPIO.DigitalPin"                       => "EnvSensor",
   "GPIO.AnalogPin"                        => "EnvSensor",
   "GPIO.DigitalPortTimeout"               => "PowerSwitch",
-  "PowerSwitch.SwitchState"               => "PowerSwitch",
   "Dimmer.Brightness"                     => "Dimmer",
   "Dimmer.Color"                          => "RGB_Dimmer",
   "Dimmer.ColorAnimation"                 => "RGB_Dimmer",
@@ -333,17 +330,6 @@ sub SHCdev_Parse($$)
         }
       }
     }
-    when ('PowerSwitch') {
-      given ($msgname) {
-        when ('SwitchState') {
-          my $on      = $parser->getField("On");
-          my $timeout = $parser->getField("TimeoutSec");
-
-          readingsBulkUpdate($rhash, "on",      $on);
-          readingsBulkUpdate($rhash, "timeout", $timeout);
-        }
-      }
-    }
     when ('Dimmer') {
       given ($msgname) {
         when ('Brightness') {
@@ -476,18 +462,18 @@ sub SHCdev_Set($@)
 
       if (!$readonly && $cmd eq 'off') {
         readingsSingleUpdate($hash, "state", "set-$cmd", 1);
-        $parser->initPacket("PowerSwitch", "SwitchState", "SetGet");
-        $parser->setField("PowerSwitch", "SwitchState", "TimeoutSec", 0);
-        $parser->setField("PowerSwitch", "SwitchState", "On",         0);
+        $parser->initPacket("GPIO", "DigitalPin", "SetGet");
+        $parser->setField("GPIO", "DigitalPin", "Pos", 0);
+        $parser->setField("GPIO", "DigitalPin", "On", 0);
         SHCdev_Send($hash);
       } elsif (!$readonly && $cmd eq 'on') {
         readingsSingleUpdate($hash, "state", "set-$cmd", 1);
-        $parser->initPacket("PowerSwitch", "SwitchState", "SetGet");
-        $parser->setField("PowerSwitch", "SwitchState", "TimeoutSec", 0);
-        $parser->setField("PowerSwitch", "SwitchState", "On",         1);
+        $parser->initPacket("GPIO", "DigitalPin", "SetGet");
+        $parser->setField("GPIO", "DigitalPin", "Pos", 0);
+        $parser->setField("GPIO", "DigitalPin", "On", 1);
         SHCdev_Send($hash);
       } elsif ($cmd eq 'statusRequest') {
-        $parser->initPacket("PowerSwitch", "SwitchState", "Get");
+        $parser->initPacket("GPIO", "DigitalPin", "Get");
         SHCdev_Send($hash);
       } elsif ($cmd eq 'DigitalPort') {
         $parser->initPacket("GPIO", "DigitalPort", "SetGet");
