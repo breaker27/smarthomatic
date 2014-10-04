@@ -75,10 +75,10 @@ my %sets = (
   "PowerSwitch"         => "on:noArg off:noArg toggle:noArg statusRequest:noArg " .
                            # Used from SetExtensions.pm
                            "blink on-for-timer on-till off-for-timer off-till intervals " .
-                           "GPIO.DigitalPort " .
-                           "GPIO.DigitalPortTimeout " .
-                           "GPIO.DigitalPin " .
-                           "GPIO.DigitalPinTimeout ",
+                           "DigitalPort " .
+                           "DigitalPortTimeout " .
+                           "DigitalPin " .
+                           "DigitalPinTimeout ",
   "Dimmer"              => "on:noArg off:noArg toggle:noArg statusRequest:noArg pct:slider,0,1,100 ani " .
                            # Used from SetExtensions.pm
                            "blink on-for-timer on-till off-for-timer off-till intervals",
@@ -488,6 +488,39 @@ sub SHCdev_Set($@)
         SHCdev_Send($hash);
       } elsif ($cmd eq 'statusRequest') {
         $parser->initPacket("PowerSwitch", "SwitchState", "Get");
+        SHCdev_Send($hash);
+      } elsif ($cmd eq 'DigitalPort') {
+        $parser->initPacket("GPIO", "DigitalPort", "SetGet");
+        # if not enough (less than 8) pinbits are available use zero as default
+        my $pinbits = $arg . "00000000";
+        for (my $i = 0 ; $i < 8 ; $i = $i + 1) {
+          $parser->setField("GPIO", "DigitalPort", "On", $i, substr($pinbits, $i , 1));
+        }
+        SHCdev_Send($hash);
+      } elsif ($cmd eq 'DigitalPortTimeout') { # TODO implement correctly
+        $parser->initPacket("GPIO", "DigitalPortTimeout", "SetGet");
+        # if not enough (less than 8) pinbits are available use zero as default
+        my $pinbits = $arg . "00000000";
+        for (my $i = 0 ; $i < 8 ; $i = $i + 1) {
+          my $pintimeout = "0";   # default value for timeout
+          if (exists  $aa[$i + 2]) {
+            $pintimeout = $aa[$i + 2];
+          }
+          Log3 $name, 3, "$name: $i: Pin: " . substr($pinbits, $i , 1) . " Timeout: $pintimeout";
+          $parser->setField("GPIO", "DigitalPortTimeout", "On", $i, substr($pinbits, $i , 1));
+          $parser->setField("GPIO", "DigitalPortTimeout", "TimeoutSec", 0, $pintimeout);
+        }
+        SHCdev_Send($hash);
+      } elsif ($cmd eq 'DigitalPin') {
+        $parser->initPacket("GPIO", "DigitalPin", "SetGet");
+        $parser->setField("GPIO", "DigitalPin", "Pos", $arg);
+        $parser->setField("GPIO", "DigitalPin", "On", $arg2);
+        SHCdev_Send($hash);
+      } elsif ($cmd eq 'DigitalPinTimeout') {
+        $parser->initPacket("GPIO", "DigitalPinTimeout", "SetGet");
+        $parser->setField("GPIO", "DigitalPinTimeout", "Pos", $arg);
+        $parser->setField("GPIO", "DigitalPinTimeout", "On", $arg2);
+        $parser->setField("GPIO", "DigitalPinTimeout", "TimeoutSec", $arg3);
         SHCdev_Send($hash);
       } else {
         return SetExtensions($hash, "", $name, @aa);
