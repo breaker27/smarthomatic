@@ -234,8 +234,6 @@ void send_dimmer_status(void)
 	pkg_header_set_senderid(device_id);
 	pkg_header_set_packetcounter(packetcounter);
 	msg_dimmer_brightness_set_brightness(bri);
-
-	pkg_header_calc_crc32();
 	
 	UART_PUTF("CRC32 is %lx (added as first 4 bytes)\r\n", getBuf32(0));
 	UART_PUTF("Brightness: %u%%\r\n", bri);
@@ -257,7 +255,6 @@ void send_version_status(void)
 	msg_generic_version_set_minor(VERSION_MINOR);
 	msg_generic_version_set_patch(VERSION_PATCH);
 	msg_generic_version_set_hash(VERSION_HASH);
-	pkg_header_calc_crc32();
 
 	rfm12_send_bufx();
 }
@@ -318,8 +315,6 @@ void process_brightness(MessageTypeEnum messagetype)
 	pkg_headerext_common_set_acksenderid(acksenderid);
 	pkg_headerext_common_set_ackpacketcounter(ackpacketcounter);
 	pkg_headerext_common_set_error(false); // FIXME: Move code for the Ack to a function and also return an Ack when errors occur before!
-	
-	pkg_header_calc_crc32();
 	
 	rfm12_send_bufx();
 }
@@ -388,8 +383,6 @@ void process_animation(MessageTypeEnum messagetype)
 	pkg_headerext_common_set_acksenderid(acksenderid);
 	pkg_headerext_common_set_ackpacketcounter(ackpacketcounter);
 	pkg_headerext_common_set_error(false); // FIXME: Move code for the Ack to a function and also return an Ack when errors occur before!
-	
-	pkg_header_calc_crc32();
 	
 	rfm12_send_bufx();
 }

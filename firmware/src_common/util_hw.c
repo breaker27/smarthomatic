@@ -324,22 +324,24 @@ void inc_packetcounter(void)
 	}
 }
 
+// Truncate trailing 0-bytes, round up to packet length of multiple of 16 bytes,
+// set CRC, encode and send packet with RFM12.
 void rfm12_send_bufx(void)
 {
-	uint8_t packet_len = __PACKETSIZEBYTES;
-
-	// Trim 0 bytes at the end.
-	while ((packet_len > 0) && (bufx[packet_len - 1] == 0))
+	while ((__PACKETSIZEBYTES > 0) && (bufx[__PACKETSIZEBYTES - 1] == 0))
 	{
-		packet_len--;
+		__PACKETSIZEBYTES--;
 	}
 	
-	packet_len = ((packet_len - 1) / 16 + 1) * 16;
+	__PACKETSIZEBYTES = ((__PACKETSIZEBYTES - 1) / 16 + 1) * 16;
+
+	uint32_t crc = crc32(bufx + 4, __PACKETSIZEBYTES - 4);
+	array_write_UIntValue(0, 32, crc, bufx);
 	
 	UART_PUTS("Before encryption: ");
-	print_bytearray(bufx, packet_len);
+	print_bytearray(bufx, __PACKETSIZEBYTES);
 
-	packet_len = aes256_encrypt_cbc(bufx, packet_len);
+	uint8_t packet_len = aes256_encrypt_cbc(bufx, __PACKETSIZEBYTES);
 
 	UART_PUTS("After encryption:  ");
 	print_bytearray(bufx, packet_len);
@@ -354,7 +356,7 @@ void power_down(bool bod_disable)
 	set_sleep_mode(SLEEP_MODE_PWR_DOWN);
 	cli();
 	sleep_enable();
-	
+
 	if (bod_disable)
 	{
 		sleep_bod_disable();

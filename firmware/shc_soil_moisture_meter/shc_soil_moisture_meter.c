@@ -135,8 +135,7 @@ void send_version_status(void)
 	msg_generic_version_set_minor(VERSION_MINOR);
 	msg_generic_version_set_patch(VERSION_PATCH);
 	msg_generic_version_set_hash(VERSION_HASH);
-	
-	pkg_header_calc_crc32();
+
 	rfm12_send_bufx();
 }
 
@@ -155,8 +154,7 @@ void send_battery_status(void)
 	pkg_header_set_senderid(device_id);
 	pkg_header_set_packetcounter(packetcounter);
 	msg_generic_batterystatus_set_percentage(percentage);
-	
-	pkg_header_calc_crc32();
+
 	rfm12_send_bufx();
 }
 
@@ -171,8 +169,7 @@ void send_humidity_status(uint16_t hum)
 	pkg_header_set_senderid(device_id);
 	pkg_header_set_packetcounter(packetcounter);
 	msg_weather_humidity_set_humidity(hum);
-	
-	pkg_header_calc_crc32();
+
 	rfm12_send_bufx();
 }
 
@@ -189,8 +186,7 @@ void send_humidity_status_RAW_DBG(uint16_t hum, int16_t raw)
 	pkg_header_set_packetcounter(packetcounter);
 	msg_weather_humiditytemperature_set_humidity(hum);
 	msg_weather_humiditytemperature_set_temperature(raw);
-	
-	pkg_header_calc_crc32();
+
 	rfm12_send_bufx();
 }
 

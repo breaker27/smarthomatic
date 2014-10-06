@@ -103,8 +103,6 @@ void send_gpio_digitalporttimeout_status(void)
 		msg_gpio_digitalporttimeout_set_timeoutsec(i, switch_timeout[i]);
 	}
 
-	pkg_header_calc_crc32();
-
 	rfm12_send_bufx();
 }
 
@@ -122,7 +120,6 @@ void send_version_status(void)
 	msg_generic_version_set_minor(VERSION_MINOR);
 	msg_generic_version_set_patch(VERSION_PATCH);
 	msg_generic_version_set_hash(VERSION_HASH);
-	pkg_header_calc_crc32();
 
 	rfm12_send_bufx();
 }
@@ -305,8 +302,6 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	pkg_headerext_common_set_acksenderid(acksenderid);
 	pkg_headerext_common_set_ackpacketcounter(ackpacketcounter);
 	pkg_headerext_common_set_error(false); // FIXME: Move code for the Ack to a function and also return an Ack when errors occur before!
-	
-	pkg_header_calc_crc32();
 	
 	rfm12_send_bufx();
 	send_status_timeout = 5;

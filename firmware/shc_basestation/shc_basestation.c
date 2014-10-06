@@ -204,9 +204,6 @@ void send_packet(uint8_t aes_key_nr, uint8_t packet_len)
 	inc_packetcounter();
 	pkg_header_set_packetcounter(packetcounter);
 
-	// set CRC32
-	pkg_header_set_crc32(crc32(bufx + 4, packet_len - 4));
-	
 	// load AES key (0 is first AES key)
 	if (aes_key_nr >= aes_key_count)
 	{
