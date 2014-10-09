@@ -165,13 +165,6 @@ public class SourceCodeGeneratorPacket
 
 		// additional helper functions
 		
-		outHeader.println("// Function to set CRC value after all data fields are set.");
-		outHeader.println("static inline void pkg_header_calc_crc32(void)");
-		outHeader.println("{");
-		outHeader.println("  pkg_header_set_crc32(crc32(bufx + 4, __PACKETSIZEBYTES - 4));");
-		outHeader.println("}");
-		outHeader.println("");
-
 		outHeader.println("// Function to check CRC value against calculated one (after reception).");
 		outHeader.println("static inline bool pkg_header_check_crc32(uint8_t packet_size_bytes)");
 		outHeader.println("{");

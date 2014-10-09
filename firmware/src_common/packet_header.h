@@ -130,12 +130,6 @@ static inline MessageTypeEnum pkg_header_get_messagetype(void)
 
 // overall length: 72 bits
 
-// Function to set CRC value after all data fields are set.
-static inline void pkg_header_calc_crc32(void)
-{
-  pkg_header_set_crc32(crc32(bufx + 4, __PACKETSIZEBYTES - 4));
-}
-
 // Function to check CRC value against calculated one (after reception).
 static inline bool pkg_header_check_crc32(uint8_t packet_size_bytes)
 {
