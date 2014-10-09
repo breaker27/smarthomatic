@@ -357,10 +357,13 @@ void power_down(bool bod_disable)
 	cli();
 	sleep_enable();
 
+// ATMega329 (thermostat) does not support BOD disable.
+#if ! defined (__AVR_ATmega329__)
 	if (bod_disable)
 	{
 		sleep_bod_disable();
 	}
+#endif
 
 	sei();
 	sleep_cpu();
