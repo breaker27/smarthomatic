@@ -261,6 +261,10 @@ sub SHCdev_Parse($$)
             my $pinx = $parser->getField("On", $i);
             my $timeoutx = $parser->getField("TimeoutSec", $i);
             my $channel = $i + 1;
+			if ($channel == 1)
+			{
+				readingsBulkUpdate($rhash, "on", $pinx);
+			}
             readingsBulkUpdate($rhash, "pin" . $channel, $pinx);
             readingsBulkUpdate($rhash, "timeout" . $channel, $timeoutx);
             $pins .= $pinx;
@@ -272,6 +276,10 @@ sub SHCdev_Parse($$)
           for (my $i = 0 ; $i < 8 ; $i++) {
             my $pinx = $parser->getField("On", $i);
             my $channel = $i + 1;
+			if ($channel == 1)
+			{
+				readingsBulkUpdate($rhash, "on", $pinx);
+			}
             readingsBulkUpdate($rhash, "pin" . $channel, $pinx);
             $pins .= $pinx;
           }
