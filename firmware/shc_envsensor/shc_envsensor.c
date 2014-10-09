@@ -633,9 +633,9 @@ void average(struct measurement_t *m)
 
 void prepare_digitalport(void)
 {
-	pkg_header_init_gpio_digitalpin_status();
+	pkg_header_init_gpio_digitalport_status();
 
-	UART_PUTS("Send GPIO: ");
+	UART_PUTS("Send DigitalPort: ");
 	
 	uint8_t i;
 	
@@ -664,7 +664,7 @@ void prepare_analogport(void)
 {
 	pkg_header_init_gpio_analogport_status();
 
-	UART_PUTS("Send ADC:");
+	UART_PUTS("Send AnalogPort:");
 	
 	uint8_t i;
 	
