@@ -97,7 +97,7 @@ void send_gpio_digitalporttimeout_status(void)
 	pkg_header_set_senderid(device_id);
 	pkg_header_set_packetcounter(packetcounter);
 	
-	for (i = 0; i < 8; i++)
+	for (i = 0; i < SWITCH_COUNT; i++)
 	{
 		msg_gpio_digitalporttimeout_set_on(i, switch_state[i]);
 		msg_gpio_digitalporttimeout_set_timeoutsec(i, switch_timeout[i]);
