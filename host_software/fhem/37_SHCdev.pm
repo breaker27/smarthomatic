@@ -109,8 +109,9 @@ my %auto_devtype = (
   "Weather.BarometricPressureTemperature" => "EnvSensor",
   "Environment.Brightness"                => "EnvSensor",
   "Environment.Distance"                  => "EnvSensor",
+  "GPIO.DigitalPort"                      => "EnvSensor",
   "GPIO.DigitalPin"                       => "EnvSensor",
-  "GPIO.AnalogPin"                        => "EnvSensor",
+  "GPIO.AnalogPort"                       => "EnvSensor",
   "GPIO.DigitalPortTimeout"               => "PowerSwitch",
   "Dimmer.Brightness"                     => "Dimmer",
   "Dimmer.Color"                          => "RGB_Dimmer",
@@ -266,7 +267,7 @@ sub SHCdev_Parse($$)
           }
           readingsBulkUpdate($rhash, "port", $pins);
         }
-        when ('DigitalPin') {
+        when ('DigitalPort') {
           my $pins = "";
           for (my $i = 0 ; $i < 8 ; $i++) {
             my $pinx = $parser->getField("On", $i);
@@ -276,7 +277,7 @@ sub SHCdev_Parse($$)
           }
           readingsBulkUpdate($rhash, "port", $pins);
         }
-        when ('AnalogPin') {
+        when ('AnalogPort') {
           my $pins = "";
           for (my $i = 0 ; $i < 5 ; $i++) {
             my $pinx_on = $parser->getField("On", $i);
