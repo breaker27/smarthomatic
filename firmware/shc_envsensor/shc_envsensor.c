@@ -159,21 +159,21 @@ uint8_t getPinStatus(uint8_t port_nr, uint8_t pin)
 void setPullUp(uint8_t port_nr, uint8_t pin)
 {
 	if (port_nr == 2)
-		sbi(PIND, pin);
+		sbi(PORTD, pin);
 	else if (port_nr == 1)
-		sbi(PINC, pin);
+		sbi(PORTC, pin);
 	else
-		sbi(PINB, pin);
+		sbi(PORTB, pin);
 }
 
 void clearPullUp(uint8_t port_nr, uint8_t pin)
 {
 	if (port_nr == 2)
-		cbi(PIND, pin);
+		cbi(PORTD, pin);
 	else if (port_nr == 1)
-		cbi(PINC, pin);
+		cbi(PORTC, pin);
 	else
-		cbi(PINB, pin);
+		cbi(PORTB, pin);
 }
 
 void init_di_sensor(void)
@@ -1025,7 +1025,6 @@ int main(void)
 		}
 
 		pin_wakeup = false;
-
-		power_down(true);
+		power_down(true); // will enable interrupts again
 	}
 }
