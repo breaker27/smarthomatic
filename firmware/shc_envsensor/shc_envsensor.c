@@ -176,6 +176,22 @@ void clearPullUp(uint8_t port_nr, uint8_t pin)
 		cbi(PORTB, pin);
 }
 
+// Save the DI state right before going to power down so another pin change interrupt causes a
+// new message if necessary.
+void remember_di_state(void)
+{
+	uint8_t i;
+	
+	for (i = 0; i < 8; i++)
+	{
+		if (di[i].pin != DI_UNUSED)
+		{
+			uint8_t stat = getPinStatus(di[i].port, di[i].pin);
+			di[i].meas.val = stat;
+		}
+	}
+}
+
 void init_di_sensor(void)
 {
 	uint8_t i;
@@ -396,7 +412,7 @@ void measure_digital_input(void)
 	// wait a little bit to let the voltage level settle down in case pullups were just switched on
 	if (wait_pullups)
 	{
-		_delay_ms(10);
+		_delay_ms(5);
 	}
 	
 	for (i = 0; i < 8; i++)
@@ -1024,7 +1040,9 @@ int main(void)
 			inc_packetcounter();
 		}
 
+		cli();
 		pin_wakeup = false;
+		remember_di_state();
 		power_down(true); // will enable interrupts again
 	}
 }
