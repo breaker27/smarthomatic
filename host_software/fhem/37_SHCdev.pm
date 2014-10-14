@@ -489,7 +489,7 @@ sub SHCdev_Set($@)
         # if not enough (less than 8) pinbits are available use zero as default
         my $pinbits = $arg . "00000000";
         for (my $i = 0 ; $i < 8 ; $i = $i + 1) {
-          $parser->setField("GPIO", "DigitalPort", "On", $i, substr($pinbits, $i , 1));
+          $parser->setField("GPIO", "DigitalPort", "On", substr($pinbits, $i , 1), $i);
         }
         SHCdev_Send($hash);
       } elsif ($cmd eq 'DigitalPortTimeout') { # TODO implement correctly
@@ -502,8 +502,8 @@ sub SHCdev_Set($@)
             $pintimeout = $aa[$i + 2];
           }
           Log3 $name, 3, "$name: $i: Pin: " . substr($pinbits, $i , 1) . " Timeout: $pintimeout";
-          $parser->setField("GPIO", "DigitalPortTimeout", "On", $i, substr($pinbits, $i , 1));
-          $parser->setField("GPIO", "DigitalPortTimeout", "TimeoutSec", 0, $pintimeout);
+          $parser->setField("GPIO", "DigitalPortTimeout", "On", substr($pinbits, $i , 1), $i);
+          $parser->setField("GPIO", "DigitalPortTimeout", "TimeoutSec", $pintimeout, $i);
         }
         SHCdev_Send($hash);
       } elsif ($cmd eq 'DigitalPin') {
