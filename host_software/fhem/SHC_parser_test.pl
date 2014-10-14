@@ -130,6 +130,14 @@ parser_test("Packet Data: SenderID=27;PacketCounter=35106;MessageType=8;MessageG
 
 # Create message string for sending
 
+$parser->initPacket("GPIO", "DigitalPort", "Set");
+$parser->setField("GPIO", "DigitalPort", "On", 1, 0);
+$parser->setField("GPIO", "DigitalPort", "On", 1, 2);
+$parser->setField("GPIO", "DigitalPort", "On", 1, 4);
+$parser->setField("GPIO", "DigitalPort", "On", 1, 6);
+
+print "BaseStation command = " . $parser->getSendString(61) . "\n";
+
 $parser->initPacket("GPIO", "DigitalPinTimeout", "SetGet");
 $parser->setField("GPIO", "DigitalPinTimeout", "Pos", 3);
 $parser->setField("GPIO", "DigitalPinTimeout", "On", 1);
