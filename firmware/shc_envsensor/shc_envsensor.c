@@ -672,10 +672,11 @@ void prepare_digitalport(void)
 			UART_PUTS("-");
 		}
 	}
+
+	UART_PUTS("\r\n");
 	
 	di[0].meas.wupCnt = 0;
-	UART_PUTS("\r\n");
-
+	di[0].meas.measCnt = 0;
 	di_change = false;
 }
 
