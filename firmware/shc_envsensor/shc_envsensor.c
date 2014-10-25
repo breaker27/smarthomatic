@@ -422,15 +422,18 @@ void measure_digital_input(void)
 			uint8_t stat = getPinStatus(di[i].port, di[i].pin);
 			
 			// if status changed in OnChange mode, remember to send immediately
-			if ((di[0].meas.measCnt >= di[0].meas.avgInt)
-				|| ((di[i].mode != DIGITALINPUTTRIGGERMODE_OFF)
-					&& (di[i].meas.val != stat)
+			if (pin_wakeup && (di[i].meas.val != stat)
 					&& ( (di[i].mode == DIGITALINPUTTRIGGERMODE_CHANGE)
 					||   ((di[i].mode == DIGITALINPUTTRIGGERMODE_UP) && (stat == 1))
 					||   ((di[i].mode == DIGITALINPUTTRIGGERMODE_DOWN) && (stat == 0)) ))
-				)
 			{
-				//UART_PUTS("Status change -> send\r\n");
+				UART_PUTF("Pin wakeup + pin change at pin %u -> send\r\n", i);
+				di_change = true;
+			}
+			// in cyclic measure mode, remember to send if avgInt reached
+			else if (di[0].meas.measCnt >= di[0].meas.avgInt)
+			{
+				UART_PUTF("Pin avgCnt reached -> send\r\n", i);
 				di_change = true;
 			}
 			
@@ -985,7 +988,11 @@ int main(void)
 		// search for value to send with avgInt reached
 		bool send = true;
 		
-		if (di_change)
+		if (pin_wakeup && !di_change) // don't send update if pin level changed in "wrong" direction
+		{
+			send = false;
+		}
+		else if (di_change)
 		{
 			prepare_digitalport();
 		}
@@ -1028,16 +1035,17 @@ int main(void)
 		
 		if (send)
 		{
+			inc_packetcounter();
+			
 			pkg_header_set_senderid(device_id);
 			pkg_header_set_packetcounter(packetcounter);
+			
 			rfm12_send_bufx();
 			rfm12_tick(); // send packet, and then WAIT SOME TIME BEFORE GOING TO SLEEP (otherwise packet would not be sent)
 
 			switch_led(1);
 			_delay_ms(200);
 			switch_led(0);
-			
-			inc_packetcounter();
 		}
 
 		cli();
