@@ -55,6 +55,8 @@
 #define SEND_BATTERY_STATUS_CYCLE 15 // send version status every x wake ups
 #define SEND_VERSION_STATUS_CYCLE 50 // send version status every x wake ups
 
+#define DENOISE_WINDOW_PERMILL 20
+
 uint16_t device_id;
 uint32_t station_packetcounter;
 bool switch_state[SWITCH_COUNT];
@@ -64,7 +66,7 @@ uint16_t send_status_timeout = 5;
 uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly after startup
 uint8_t battery_status_cycle = SEND_BATTERY_STATUS_CYCLE - 1; // send promptly after startup
 
-uint32_t dry_thr;          // configured by user
+uint32_t dry_thr;              // configured by user
 uint32_t counter_min = 100000; // min occurred value in current watering period
 uint32_t counter_meas = 0;
 bool init_mode = false;
@@ -72,6 +74,9 @@ bool init_mode = false;
 uint16_t wupCnt = 0; // Amount of wake-up cycles counting from the last time a measurement was done.
 uint16_t avgInt = 3; // The number of times a value is measured before an average is calculated and sent.
 uint16_t avgIntInit = 3;
+
+uint32_t reported_result = 0;
+bool direction_up = true;
 
 // TODO: Move to util
 // calculate x^y
@@ -241,7 +246,7 @@ bool measure_humidity(void)
 		}
 		else
 		{
-			uint32_t result;
+			int32_t result;
 		
 			if (avg < counter_min)
 			{
@@ -260,8 +265,43 @@ bool measure_humidity(void)
 		
 			UART_PUTF("Avg: %u, ", avg);
 			UART_PUTF("Result: %lu permill\r\n", result);
-			send_humidity_status(result);
-			//send_humidity_status_RAW_DBG(result, (int16_t) MIN((int32_t)avg, 30000)); // for debugging only
+			
+			// Don't change reported value if it changes within a window of
+			// some percent.
+			if (reported_result == 0)
+			{
+				reported_result = result;
+			}
+			else
+			{
+				if (direction_up)
+				{
+					if (result > reported_result)
+					{
+						reported_result = result;
+					}
+					else if (result < reported_result - DENOISE_WINDOW_PERMILL)
+					{
+						reported_result = result;
+						direction_up = false;
+					}
+				}
+				else // direction down
+				{
+					if (result < reported_result)
+					{
+						reported_result = result;
+					}
+					else if (result > reported_result + DENOISE_WINDOW_PERMILL)
+					{
+						reported_result = result;
+						direction_up = true;
+					}
+				}
+			}
+			
+			send_humidity_status(reported_result);
+			//send_humidity_status_RAW_DBG(reported_result, (int16_t) MIN((int32_t)avg, 30000)); // for debugging only
 			res = true;
 		}
 
