@@ -116,11 +116,12 @@ void decode_data(uint8_t len)
 
 				switch (messageid)
 				{
-					case MESSAGEID_GENERIC_VERSION:
-						UART_PUTF("Major=%u;", msg_generic_version_get_major());
-						UART_PUTF("Minor=%u;", msg_generic_version_get_minor());
-						UART_PUTF("Patch=%u;", msg_generic_version_get_patch());
-						UART_PUTF("Hash=%08lx;", msg_generic_version_get_hash());
+					case MESSAGEID_GENERIC_DEVICEINFO:
+						UART_PUTF("DeviceType=%u;", msg_generic_deviceinfo_get_devicetype());
+						UART_PUTF("VersionMajor=%u;", msg_generic_deviceinfo_get_versionmajor());
+						UART_PUTF("VersionMinor=%u;", msg_generic_deviceinfo_get_versionminor());
+						UART_PUTF("VersionPatch=%u;", msg_generic_deviceinfo_get_versionpatch());
+						UART_PUTF("VersionHash=%08lx;", msg_generic_deviceinfo_get_versionhash());
 						break;
 						
 					case MESSAGEID_GENERIC_BATTERYSTATUS:

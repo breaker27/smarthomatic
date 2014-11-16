@@ -34,6 +34,8 @@
 // DeviceType (EnumValue)
 // Description: The device can check with this value if the EEPROM data is meant for the actual type of device. If not, the device goes into an error mode.
 
+#ifndef _ENUM_DeviceType
+#define _ENUM_DeviceType
 typedef enum {
   DEVICETYPE_BASESTATION = 0,
   DEVICETYPE_ENVSENSOR = 20,
@@ -43,6 +45,7 @@ typedef enum {
   DEVICETYPE_SOILMOISTUREMETER = 70,
   DEVICETYPE_THERMOSTAT = 80
 } DeviceTypeEnum;
+#endif /* _ENUM_DeviceType */
 
 // Set DeviceType (EnumValue)
 // Offset: 0, length bits 8

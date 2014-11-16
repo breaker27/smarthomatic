@@ -805,13 +805,15 @@ void prepare_battery_voltage(void)
 void prepare_version(void)
 {
 	// Set packet content
-	pkg_header_init_generic_version_status();
-	msg_generic_version_set_major(VERSION_MAJOR);
-	msg_generic_version_set_minor(VERSION_MINOR);
-	msg_generic_version_set_patch(VERSION_PATCH);
-	msg_generic_version_set_hash(VERSION_HASH);
+	pkg_header_init_generic_deviceinfo_status();
+	msg_generic_deviceinfo_set_devicetype(DEVICETYPE_ENVSENSOR);
+	msg_generic_deviceinfo_set_versionmajor(VERSION_MAJOR);
+	msg_generic_deviceinfo_set_versionminor(VERSION_MINOR);
+	msg_generic_deviceinfo_set_versionpatch(VERSION_PATCH);
+	msg_generic_deviceinfo_set_versionhash(VERSION_HASH);
 
-	UART_PUTF4("Send version: v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
+	UART_PUTF("Send DeviceInfo: DeviceType %u,", DEVICETYPE_ENVSENSOR);
+	UART_PUTF4(" v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
 	
 	version_wupCnt = 0;
 }

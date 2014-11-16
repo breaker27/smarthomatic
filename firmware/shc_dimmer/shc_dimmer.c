@@ -151,6 +151,10 @@ void checkSwitchOff(void)
 	{
 		switch_off_counter = 0;
 		switchRelais(1);
+		
+		// Switching on relais (and lamp) leads to interferences.
+		// Avoid sending with RFM12 directly afterwards by making a short delay.
+		_delay_ms(250);
 	}
 }
 
@@ -245,16 +249,18 @@ void send_version_status(void)
 {
 	inc_packetcounter();
 
-	UART_PUTF4("Sending Version: v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
+	UART_PUTF("Send DeviceInfo: DeviceType %u,", DEVICETYPE_DIMMER);
+	UART_PUTF4(" v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
 	
 	// Set packet content
-	pkg_header_init_generic_version_status();
+	pkg_header_init_generic_deviceinfo_status();
 	pkg_header_set_senderid(device_id);
 	pkg_header_set_packetcounter(packetcounter);
-	msg_generic_version_set_major(VERSION_MAJOR);
-	msg_generic_version_set_minor(VERSION_MINOR);
-	msg_generic_version_set_patch(VERSION_PATCH);
-	msg_generic_version_set_hash(VERSION_HASH);
+	msg_generic_deviceinfo_set_devicetype(DEVICETYPE_DIMMER);
+	msg_generic_deviceinfo_set_versionmajor(VERSION_MAJOR);
+	msg_generic_deviceinfo_set_versionminor(VERSION_MINOR);
+	msg_generic_deviceinfo_set_versionpatch(VERSION_PATCH);
+	msg_generic_deviceinfo_set_versionhash(VERSION_HASH);
 
 	rfm12_send_bufx();
 }
@@ -723,9 +729,10 @@ int main(void)
 			led_blink(200, 0, 1);
 		}
 
+		checkSwitchOff();
+
 		rfm12_tick();
 		send_status_timeout--;
-		checkSwitchOff();
 	}
 	
 	// never called

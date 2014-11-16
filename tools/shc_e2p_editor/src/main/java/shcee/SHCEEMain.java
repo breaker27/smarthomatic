@@ -145,9 +145,7 @@ public class SHCEEMain extends JFrame {
 			{
 				e1.printStackTrace();
 			}
-		}
-		else if ((args.length == 1) && args[0].equals("/packetgen"))
-		{	
+			
 			try
 			{
 				new SourceCodeGeneratorPacket();

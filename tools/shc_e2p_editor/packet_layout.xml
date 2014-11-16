@@ -190,7 +190,7 @@
 			<MessageType>0</MessageType>
 			<MessageType>8</MessageType>
 			<MessageType>10</MessageType>
-			<Validity>test</Validity>
+			<Validity>deprecated</Validity>
 			<UIntValue>
 				<ID>Major</ID>
 				<Description>Different major version means incompatible changes.</Description>
@@ -214,6 +214,76 @@
 			</UIntValue>
 			<UIntValue>
 				<ID>Hash</ID>
+				<Description>The beginning of the revision ID hash (as reported by Git).</Description>
+				<Bits>32</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>4294967295</MaxVal>
+			</UIntValue>
+		</Message>
+		<Message>
+			<Name>DeviceInfo</Name>
+			<Description>Reports the current firmware version. Version information is only available when set in source code, which is usually only done for official builds by the build robot.</Description>
+			<MessageID>2</MessageID>
+			<MessageType>0</MessageType>
+			<MessageType>8</MessageType>
+			<MessageType>10</MessageType>
+			<Validity>test</Validity>
+			<EnumValue>
+				<ID>DeviceType</ID>
+				<Description>The device can check with this value if the EEPROM data is meant for the actual type of device. If not, the device goes into an error mode.</Description>
+				<Bits>8</Bits>
+				<Element>
+					<Value>0</Value>
+					<Name>BaseStation</Name>
+				</Element>
+				<Element>
+					<Value>20</Value>
+					<Name>EnvSensor</Name>
+				</Element>
+				<Element>
+					<Value>40</Value>
+					<Name>PowerSwitch</Name>
+				</Element>
+				<Element>
+					<Value>50</Value>
+					<Name>RGBDimmer</Name>
+				</Element>
+				<Element>
+					<Value>60</Value>
+					<Name>Dimmer</Name>
+				</Element>
+				<Element>
+					<Value>70</Value>
+					<Name>SoilMoistureMeter</Name>
+				</Element>
+				<Element>
+					<Value>80</Value>
+					<Name>Thermostat</Name>
+				</Element>
+			</EnumValue>
+			<UIntValue>
+				<ID>VersionMajor</ID>
+				<Description>Different major version means incompatible changes.</Description>
+				<Bits>8</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>255</MaxVal>
+			</UIntValue>
+			<UIntValue>
+				<ID>VersionMinor</ID>
+				<Description>Different minor number means new functionality without breaking compatibility.</Description>
+				<Bits>8</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>255</MaxVal>
+			</UIntValue>
+			<UIntValue>
+				<ID>VersionPatch</ID>
+				<Description>The patch version is changed when backwards-compatible bug fixes are made.</Description>
+				<Bits>8</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>255</MaxVal>
+			</UIntValue>
+			<UIntValue>
+				<ID>VersionHash</ID>
 				<Description>The beginning of the revision ID hash (as reported by Git).</Description>
 				<Bits>32</Bits>
 				<MinVal>0</MinVal>

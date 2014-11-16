@@ -18,6 +18,7 @@
 
 package shcee;
 
+import java.io.Console;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -685,8 +686,13 @@ public class SourceCodeGeneratorPacket
 				
 				sb.append(newline);
 				
+				sb.append("#ifndef _ENUM_" + ID1 + newline);
+				sb.append("#define _ENUM_" + ID1 + newline);
+				
 				sb.append("typedef enum {" + newline);
 	
+				Hashtable<String, String> enumDefs = new Hashtable<String, String>();
+				
 				for (int ee = 0; ee < enumElements.getLength(); ee++)
 				{
 					Node enumElement = enumElements.item(ee);
@@ -696,9 +702,14 @@ public class SourceCodeGeneratorPacket
 					String suffix = ee == enumElements.getLength() - 1 ? "" : ","; 
 					
 					sb.append("  " + name + " = " + value + suffix + newline);
+					
+					enumDefs.put(name, value);
 				}
 	
-				sb.append("} " + ID1 + "Enum;" + newline + newline);
+				sb.append("} " + ID1 + "Enum;" + newline);
+				sb.append("#endif /* _ENUM_" + ID1 + " */" + newline + newline);
+				
+				EnumDuplicateChecker.checkEnumDefinition(ID1, enumDefs);
 				
 				String offsetStr = calcAccessStr(useHeaderOffset, offset, structLengthBits, isArray);
 

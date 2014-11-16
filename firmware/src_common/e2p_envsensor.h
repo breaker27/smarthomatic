@@ -34,12 +34,15 @@
 // TemperatureSensorType (EnumValue)
 // Description: You can choose one of the supported temperature / humidity sensors.
 
+#ifndef _ENUM_TemperatureSensorType
+#define _ENUM_TemperatureSensorType
 typedef enum {
   TEMPERATURESENSORTYPE_NOSENSOR = 0,
   TEMPERATURESENSORTYPE_SHT15 = 1,
   TEMPERATURESENSORTYPE_DS7505 = 2,
   TEMPERATURESENSORTYPE_BMP085 = 3
 } TemperatureSensorTypeEnum;
+#endif /* _ENUM_TemperatureSensorType */
 
 // Set TemperatureSensorType (EnumValue)
 // Offset: 512, length bits 8
@@ -58,10 +61,13 @@ static inline TemperatureSensorTypeEnum e2p_envsensor_get_temperaturesensortype(
 // HumiditySensorType (EnumValue)
 // Description: You can choose one of the supported air humidity sensors.
 
+#ifndef _ENUM_HumiditySensorType
+#define _ENUM_HumiditySensorType
 typedef enum {
   HUMIDITYSENSORTYPE_NOSENSOR = 0,
   HUMIDITYSENSORTYPE_SHT15 = 1
 } HumiditySensorTypeEnum;
+#endif /* _ENUM_HumiditySensorType */
 
 // Set HumiditySensorType (EnumValue)
 // Offset: 520, length bits 8
@@ -80,10 +86,13 @@ static inline HumiditySensorTypeEnum e2p_envsensor_get_humiditysensortype(void)
 // BarometricSensorType (EnumValue)
 // Description: You can choose one of the supported barometric pressure sensors.
 
+#ifndef _ENUM_BarometricSensorType
+#define _ENUM_BarometricSensorType
 typedef enum {
   BAROMETRICSENSORTYPE_NOSENSOR = 0,
   BAROMETRICSENSORTYPE_BMP085 = 1
 } BarometricSensorTypeEnum;
+#endif /* _ENUM_BarometricSensorType */
 
 // Set BarometricSensorType (EnumValue)
 // Offset: 528, length bits 8
@@ -102,10 +111,13 @@ static inline BarometricSensorTypeEnum e2p_envsensor_get_barometricsensortype(vo
 // BrightnessSensorType (EnumValue)
 // Description: You can choose one of the supported light sensors.
 
+#ifndef _ENUM_BrightnessSensorType
+#define _ENUM_BrightnessSensorType
 typedef enum {
   BRIGHTNESSSENSORTYPE_NOSENSOR = 0,
   BRIGHTNESSSENSORTYPE_PHOTOCELL = 1
 } BrightnessSensorTypeEnum;
+#endif /* _ENUM_BrightnessSensorType */
 
 // Set BrightnessSensorType (EnumValue)
 // Offset: 536, length bits 8
@@ -124,10 +136,13 @@ static inline BrightnessSensorTypeEnum e2p_envsensor_get_brightnesssensortype(vo
 // DistanceSensorType (EnumValue)
 // Description: Choose one of the connected distance sensor types.
 
+#ifndef _ENUM_DistanceSensorType
+#define _ENUM_DistanceSensorType
 typedef enum {
   DISTANCESENSORTYPE_NOSENSOR = 0,
   DISTANCESENSORTYPE_SRF02 = 1
 } DistanceSensorTypeEnum;
+#endif /* _ENUM_DistanceSensorType */
 
 // Set DistanceSensorType (EnumValue)
 // Offset: 544, length bits 8
@@ -149,6 +164,8 @@ static inline DistanceSensorTypeEnum e2p_envsensor_get_distancesensortype(void)
 // WakeupInterval (EnumValue)
 // Description: Decide after which time the device should be woken up by the RFM12B transceiver to measure or send values.
 
+#ifndef _ENUM_WakeupInterval
+#define _ENUM_WakeupInterval
 typedef enum {
   WAKEUPINTERVAL_2S = 1018,
   WAKEUPINTERVAL_4S = 1274,
@@ -172,6 +189,7 @@ typedef enum {
   WAKEUPINTERVAL_15M = 3292,
   WAKEUPINTERVAL_20M = 3474
 } WakeupIntervalEnum;
+#endif /* _ENUM_WakeupInterval */
 
 // Set WakeupInterval (EnumValue)
 // Offset: 1024, length bits 16
@@ -431,6 +449,8 @@ static inline uint8_t e2p_envsensor_get_analoginputaveraginginterval(void)
 // DigitalInputPin (EnumValue[8])
 // Description: You can choose up to 8 GPIO pins as digital input. The enum values are counting through every pin from port B, C and D, leaving out the pins that are not accessible because otherwise used.
 
+#ifndef _ENUM_DigitalInputPin
+#define _ENUM_DigitalInputPin
 typedef enum {
   DIGITALINPUTPIN_UNUSED = 0,
   DIGITALINPUTPIN_PB1 = 2,
@@ -447,6 +467,7 @@ typedef enum {
   DIGITALINPUTPIN_PD5 = 22,
   DIGITALINPUTPIN_PD6 = 23
 } DigitalInputPinEnum;
+#endif /* _ENUM_DigitalInputPin */
 
 // Set DigitalInputPin (EnumValue)
 // Offset: 1536, length bits 8
@@ -482,12 +503,15 @@ static inline bool e2p_envsensor_get_digitalinputpullupresistor(uint8_t index)
 // DigitalInputTriggerMode (EnumValue[8])
 // Description: The mode decides how the device detects changes and when a new message is sent. Off means the value is sent after a full cycle time only. In any other case, the device wakes up immediately after a change. A status is then sent either when the level is going up, down or on change.
 
+#ifndef _ENUM_DigitalInputTriggerMode
+#define _ENUM_DigitalInputTriggerMode
 typedef enum {
   DIGITALINPUTTRIGGERMODE_OFF = 0,
   DIGITALINPUTTRIGGERMODE_UP = 1,
   DIGITALINPUTTRIGGERMODE_DOWN = 2,
   DIGITALINPUTTRIGGERMODE_CHANGE = 3
 } DigitalInputTriggerModeEnum;
+#endif /* _ENUM_DigitalInputTriggerMode */
 
 // Set DigitalInputTriggerMode (EnumValue)
 // Offset: 1664, length bits 8
@@ -509,6 +533,8 @@ static inline DigitalInputTriggerModeEnum e2p_envsensor_get_digitalinputtriggerm
 // AnalogInputPin (EnumValue[5])
 // Description: You can choose up to 5 ADC pins as analog input. The enum values are a reduced set of the ones from the digital input.
 
+#ifndef _ENUM_AnalogInputPin
+#define _ENUM_AnalogInputPin
 typedef enum {
   ANALOGINPUTPIN_UNUSED = 0,
   ANALOGINPUTPIN_PC1 = 10,
@@ -517,6 +543,7 @@ typedef enum {
   ANALOGINPUTPIN_PC4 = 13,
   ANALOGINPUTPIN_PC5 = 14
 } AnalogInputPinEnum;
+#endif /* _ENUM_AnalogInputPin */
 
 // Set AnalogInputPin (EnumValue)
 // Offset: 2048, length bits 8
@@ -535,12 +562,15 @@ static inline AnalogInputPinEnum e2p_envsensor_get_analoginputpin(uint8_t index)
 // AnalogInputTriggerMode (EnumValue[5])
 // Description: The mode decides how the device detects changes and when a new message is sent. The voltage level is measured in the configured interval. When the mode is set to off, the status is only sent after a full averaging cycle. In the other modes, a status is sent when the level is going up, down or changes according to the trigger level.
 
+#ifndef _ENUM_AnalogInputTriggerMode
+#define _ENUM_AnalogInputTriggerMode
 typedef enum {
   ANALOGINPUTTRIGGERMODE_OFF = 0,
   ANALOGINPUTTRIGGERMODE_UP = 1,
   ANALOGINPUTTRIGGERMODE_DOWN = 2,
   ANALOGINPUTTRIGGERMODE_CHANGE = 3
 } AnalogInputTriggerModeEnum;
+#endif /* _ENUM_AnalogInputTriggerMode */
 
 // Set AnalogInputTriggerMode (EnumValue)
 // Offset: 2088, length bits 8

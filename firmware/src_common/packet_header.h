@@ -104,6 +104,8 @@ static inline uint32_t pkg_header_get_packetcounter(void)
 // MessageType (EnumValue)
 // Description: The message type influences the behaviour with sending the packet. E.g. requests are acknowledged.
 
+#ifndef _ENUM_MessageType
+#define _ENUM_MessageType
 typedef enum {
   MESSAGETYPE_GET = 0,
   MESSAGETYPE_SET = 1,
@@ -112,6 +114,7 @@ typedef enum {
   MESSAGETYPE_ACK = 9,
   MESSAGETYPE_ACKSTATUS = 10
 } MessageTypeEnum;
+#endif /* _ENUM_MessageType */
 
 // Set MessageType (EnumValue)
 // Offset: 68, length bits 4

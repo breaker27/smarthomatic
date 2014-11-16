@@ -34,6 +34,8 @@
 // WakeupIntervalInit (EnumValue)
 // Description: Decide about the interval between two measurements when the device is in initialization mode (after button press) to remember the dry threshold value.
 
+#ifndef _ENUM_WakeupIntervalInit
+#define _ENUM_WakeupIntervalInit
 typedef enum {
   WAKEUPINTERVALINIT_10S = 1692,
   WAKEUPINTERVALINIT_60S = 2421,
@@ -52,6 +54,7 @@ typedef enum {
   WAKEUPINTERVALINIT_12H = 5582,
   WAKEUPINTERVALINIT_16H = 5769
 } WakeupIntervalInitEnum;
+#endif /* _ENUM_WakeupIntervalInit */
 
 // Set WakeupIntervalInit (EnumValue)
 // Offset: 512, length bits 16
@@ -87,6 +90,8 @@ static inline uint8_t e2p_soilmoisturemeter_get_averagingintervalinit(void)
 // WakeupInterval (EnumValue)
 // Description: Decide after which time the device should be woken up by the RFM12B transceiver to measure values in normal operation.
 
+#ifndef _ENUM_WakeupInterval
+#define _ENUM_WakeupInterval
 typedef enum {
   WAKEUPINTERVAL_10S = 1692,
   WAKEUPINTERVAL_60S = 2421,
@@ -105,6 +110,7 @@ typedef enum {
   WAKEUPINTERVAL_12H = 5582,
   WAKEUPINTERVAL_16H = 5769
 } WakeupIntervalEnum;
+#endif /* _ENUM_WakeupInterval */
 
 // Set WakeupInterval (EnumValue)
 // Offset: 536, length bits 16
