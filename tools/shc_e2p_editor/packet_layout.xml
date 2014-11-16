@@ -222,7 +222,7 @@
 		</Message>
 		<Message>
 			<Name>DeviceInfo</Name>
-			<Description>Reports the current firmware version. Version information is only available when set in source code, which is usually only done for official builds by the build robot.</Description>
+			<Description>Reports DeviceType and current firmware version. Version information is only available when set in source code, which is usually only done for official builds by the build robot.</Description>
 			<MessageID>2</MessageID>
 			<MessageType>0</MessageType>
 			<MessageType>8</MessageType>
@@ -230,7 +230,7 @@
 			<Validity>test</Validity>
 			<EnumValue>
 				<ID>DeviceType</ID>
-				<Description>The device can check with this value if the EEPROM data is meant for the actual type of device. If not, the device goes into an error mode.</Description>
+				<Description>The DeviceType can be used to adapt the behavior or representation of the SHC device at the server software (e.g. FHEM).</Description>
 				<Bits>8</Bits>
 				<Element>
 					<Value>0</Value>
