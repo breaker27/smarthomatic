@@ -117,14 +117,18 @@ void PWM_init(void)
 
 	// OC0A (Red LED): Fast PWM, 8 Bit, TOP = 0xFF = 255, non inverting output
 	// OC0B (Green LED): Fast PWM, 8 Bit, TOP = 0xFF = 255, non inverting output
-	TCCR0A = (1 << WGM00) | (1 << COM0A1) | (1 << COM0B1);
+	TCCR0A = (1 << WGM01) | (1 << WGM00) | (1 << COM0A1) | (1 << COM0B1);
 
 	// OC1A (Blue LED): Fast PWM, 8 Bit, TOP = 0xFF = 255, non inverting output
-	TCCR1A = (1 << WGM10) | (1 << COM1A1);
+	TCCR1A = (1 << WGM12) | (1 << WGM10) | (1 << COM1A1);
 
-	// Clock source for both timers = I/O clock, no prescaler
-	TCCR0B = (1 << CS00);
-	TCCR1B = (1 << CS10);
+	// Clock source for both timers = I/O clock, 1/256 prescaler -> ~ 120 Hz
+	//TCCR0B = (1 << CS02);
+	//TCCR1B = (1 << CS12);
+
+	// Clock source for both timers = I/O clock, 1/64 prescaler -> ~ 480 Hz
+	TCCR0B = (1 << CS01) | (1 << CS00);
+	TCCR1B = (1 << CS11) | (1 << CS10);
 }
 
 // Timer2 (8 Bit) is used for accurate counting of the animation time.
