@@ -39,7 +39,7 @@
 #include "lm75.h"
 #include "bmp085.h"
 #include "srf02.h"
-
+#include "htu21d.h"
 #include "aes256.h"
 #include "util.h"
 #include "version.h"
@@ -510,7 +510,7 @@ void sht11_measure_loop(void)
 
 void measure_temperature_i2c(void)
 {
-	if ((temperature_sensor_type != TEMPERATURESENSORTYPE_DS7505) && (temperature_sensor_type != TEMPERATURESENSORTYPE_BMP085))
+	if ((temperature_sensor_type != TEMPERATURESENSORTYPE_DS7505) && (temperature_sensor_type != TEMPERATURESENSORTYPE_BMP085) && (temperature_sensor_type!=TEMPERATURESENSORTYPE_HTU21D))
 		return;
 
 	if (!countWakeup(&temperature))
@@ -527,6 +527,11 @@ void measure_temperature_i2c(void)
 	{
 		temperature.val += bmp085_meas_temp();
 	}
+	else if (temperature_sensor_type == TEMPERATURESENSORTYPE_HTU21D)
+	{
+		temperature.val += htu21d_readTemperature();
+	}
+	
 }
 
 void measure_temperature_other(void)
@@ -541,7 +546,7 @@ void measure_temperature_other(void)
 	temperature.val += sht11_get_tmp();
 }
 
-void measure_humidity_other(void)
+void measure_humidity_i2c(void)
 {
 	if (humidity_sensor_type == HUMIDITYSENSORTYPE_NOSENSOR)
 		return;
@@ -549,14 +554,23 @@ void measure_humidity_other(void)
 	if (!countWakeup(&humidity))
 		return;
 
+	if (humidity_sensor_type == HUMIDITYSENSORTYPE_HTU21D)
+	{
+		humidity.val += htu21d_readHumidity();
+		//UART_PUTF("Humidity sum: %d.\r\n", humidity.val);
+	}
+}
+
+void measure_humidity_other(void)
+{
+	if (humidity_sensor_type == HUMIDITYSENSORTYPE_NOSENSOR || humidity_sensor_type == HUMIDITYSENSORTYPE_HTU21D)
+		return;
+
+	if (!countWakeup(&humidity))
+		return;
+
 	if (humidity_sensor_type == HUMIDITYSENSORTYPE_SHT15)
 	{
-		// actually measure if not done already while getting temperature
-		if (temperature_sensor_type != TEMPERATURESENSORTYPE_SHT15)
-		{
-			sht11_measure_loop();
-		}
-	
 		humidity.val += sht11_get_hum();
 	}
 }
@@ -690,6 +704,9 @@ void prepare_analogpin(void)
 
 void prepare_humiditytemperature(void)
 {
+	//UART_PUTF("Humidity before average: %d.\r\n", humidity.val);
+	//UART_PUTF("Humidity measCnt: %d.\r\n", humidity.measCnt);
+	
 	average(&humidity); // in 100 * % rel.
 	average(&temperature);
 
@@ -899,8 +916,11 @@ int main(void)
 	bool srf02_connected = distance_sensor_type == DISTANCESENSORTYPE_SRF02;
 	bool measure_other_i2c = (temperature_sensor_type == TEMPERATURESENSORTYPE_DS7505)
 		|| (temperature_sensor_type == TEMPERATURESENSORTYPE_BMP085)
-		|| (barometric_sensor_type == BAROMETRICSENSORTYPE_BMP085);
+		|| (barometric_sensor_type == BAROMETRICSENSORTYPE_BMP085)
+		|| (temperature_sensor_type == TEMPERATURESENSORTYPE_HTU21D)
+		|| (humidity_sensor_type == HUMIDITYSENSORTYPE_HTU21D);
 
+    uint8_t sendValueIdx=0;
 	while (42)
 	{
 		if (pin_wakeup)
@@ -937,6 +957,7 @@ int main(void)
 				measure_temperature_i2c();
 				measure_barometric_pressure_i2c();
 				measure_distance_i2c();
+				measure_humidity_i2c();
 				i2c_disable();
 
 				if (needs_power)
@@ -959,46 +980,77 @@ int main(void)
 
 		// search for value to send with avgInt reached
 		bool send = true;
-		
-		if (di_change)
+
+		switch(++sendValueIdx)
 		{
-			prepare_digitalpin();
-		}
-		else if (ai_change)
-		{
-			prepare_analogpin();
-		}
-		else if (humidity.measCnt >= humidity.avgInt)
-		{
-			prepare_humiditytemperature();
-		}
-		else if (barometric_pressure.measCnt >= barometric_pressure.avgInt)
-		{
-			prepare_barometricpressuretemperature();
-		}
-		else if (temperature.measCnt >= temperature.avgInt)
-		{
-			prepare_temperature();
-		}
-		else if (distance.measCnt >= distance.avgInt)
-		{
-			prepare_distance();
-		}
-		else if (brightness.measCnt >= brightness.avgInt)
-		{
-			prepare_brightness();
-		}
-		else if (battery_voltage.measCnt >= battery_voltage.avgInt)
-		{
-			prepare_battery_voltage();
-		}
-		else if (version_wupCnt >= version_measInt)
-		{
-			prepare_version();
-		}
-		else
-		{
-			send = false;
+			case 1:
+				if (di_change)
+				{
+					prepare_digitalpin();
+					break;
+				}
+				++sendValueIdx;
+			case 2:
+				if (ai_change)
+				{
+					prepare_analogpin();
+					break;
+				}
+				++sendValueIdx;
+			case 3:
+				if (humidity.measCnt >= humidity.avgInt)
+				{
+					prepare_humiditytemperature();
+					break;
+				}
+				++sendValueIdx;
+			case 4:
+			if (barometric_pressure.measCnt >= barometric_pressure.avgInt)
+				{
+					prepare_barometricpressuretemperature();
+					break;
+				}
+				++sendValueIdx;			
+			case 5:
+			if (temperature.measCnt >= temperature.avgInt)
+				{
+					prepare_temperature();
+					break;
+				}
+				++sendValueIdx;			
+			case 6:
+				if (distance.measCnt >= distance.avgInt)
+				{
+					prepare_distance();
+					break;
+				}
+				++sendValueIdx;			
+			case 7:
+				if (brightness.measCnt >= brightness.avgInt)
+				{
+					prepare_brightness();
+					break;
+				}
+				++sendValueIdx;			
+			case 8:
+				if (battery_voltage.measCnt >= battery_voltage.avgInt)
+				{
+					prepare_battery_voltage();
+					break;
+				}
+				++sendValueIdx;
+			case 9:
+				if (version_wupCnt >= version_measInt)
+				{
+					prepare_version();
+					sendValueIdx=0;
+					break;
+				}	
+				++sendValueIdx;
+			default:
+				send=false;
+				sendValueIdx=0;
+				break;
 		}
 		
 		if (send)

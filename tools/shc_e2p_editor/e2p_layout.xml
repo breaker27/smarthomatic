@@ -127,6 +127,10 @@
 				<Value>3</Value>
 				<Name>BMP085</Name>
 			</Element>
+			<Element>
+				<Value>4</Value>
+				<Name>HTU21D</Name>
+			</Element>
 		</EnumValue>
 		<EnumValue>
 			<ID>HumiditySensorType</ID>
@@ -139,6 +143,10 @@
 			<Element>
 				<Value>1</Value>
 				<Name>SHT15</Name>
+			</Element>
+			<Element>
+				<Value>2</Value>
+				<Name>HTU21D</Name>
 			</Element>
 		</EnumValue>
 		<EnumValue>
