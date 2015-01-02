@@ -14354,7 +14354,7 @@ naming: grid - package width</description>
 <part name="C6" library="capacitor-wima" deviceset="C" device="2,5-3" value="220n"/>
 <part name="GND5" library="supply1" deviceset="GND" device=""/>
 <part name="D7" library="diode" deviceset="1N4148" device="DO35-7" value="1N4148"/>
-<part name="SJ1" library="jumper" deviceset="SJ" device="W" value="ISP VCC"/>
+<part name="SJ1" library="jumper" deviceset="SJ" device="" value="ISP VCC"/>
 <part name="P+5" library="supply1" deviceset="VCC" device=""/>
 </parts>
 <sheets>
@@ -14362,8 +14362,8 @@ naming: grid - package width</description>
 <plain>
 <frame x1="-83.82" y1="-101.6" x2="96.52" y2="93.98" columns="8" rows="5" layer="97"/>
 <text x="12.7" y="-76.2" size="3.81" layer="97">smarthomatic Dimmer</text>
-<text x="63.5" y="-81.28" size="2.1844" layer="97">Date: 01.01.2015</text>
-<text x="12.7" y="-81.28" size="2.1844" layer="97">Rev 1.1</text>
+<text x="63.5" y="-81.28" size="2.1844" layer="97">Date: 02.01.2015</text>
+<text x="12.7" y="-81.28" size="2.1844" layer="97">Rev 1.2</text>
 <text x="12.7" y="-86.36" size="2.1844" layer="97">Copyright (c) Uwe Freese, www.smarthomatic.org</text>
 </plain>
 <instances>

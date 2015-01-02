@@ -64,7 +64,7 @@
 <wire x1="-5.715" y1="40.63" x2="-5.715" y2="0" width="0" layer="20"/>
 <text x="81.68021875" y="3.898665625" size="1.778" layer="25" font="vector" rot="R90">smarthomatic</text>
 <text x="85.476909375" y="12.837490625" size="1.27" layer="25" font="vector" rot="R90">Dimmer 1</text>
-<text x="4.5279" y="37.7094375" size="1.27" layer="25">Rev 1.1</text>
+<text x="4.5279" y="37.7094375" size="1.27" layer="25">Rev 1.2</text>
 <text x="65.0875" y="35.8775" size="1.778" layer="25" rot="MR0">+</text>
 <rectangle x1="87.237196875" y1="7.536375" x2="87.318196875" y2="7.54215625" layer="25" rot="R90"/>
 <rectangle x1="85.332396875" y1="9.527975" x2="89.222996875" y2="9.53375625" layer="25" rot="R90"/>
@@ -4274,42 +4274,25 @@ Source: http://ecb.omron.com.sg/pdf/relay/power/G6D.pdf</description>
 <description>&lt;b&gt;Jumpers&lt;/b&gt;&lt;p&gt;
 &lt;author&gt;Created by librarian@cadsoft.de&lt;/author&gt;</description>
 <packages>
-<package name="SJW">
+<package name="SJ">
 <description>&lt;b&gt;Solder jumper&lt;/b&gt;</description>
-<wire x1="1.905" y1="-1.524" x2="-1.905" y2="-1.524" width="0.1524" layer="21"/>
-<wire x1="1.905" y1="1.524" x2="2.159" y2="1.27" width="0.1524" layer="21" curve="-90"/>
-<wire x1="-2.159" y1="1.27" x2="-1.905" y2="1.524" width="0.1524" layer="21" curve="-90"/>
-<wire x1="-2.159" y1="-1.27" x2="-1.905" y2="-1.524" width="0.1524" layer="21" curve="90"/>
-<wire x1="1.905" y1="-1.524" x2="2.159" y2="-1.27" width="0.1524" layer="21" curve="90"/>
-<wire x1="2.159" y1="-1.27" x2="2.159" y2="1.27" width="0.1524" layer="21"/>
-<wire x1="-2.159" y1="-1.27" x2="-2.159" y2="1.27" width="0.1524" layer="21"/>
-<wire x1="-1.905" y1="1.524" x2="1.905" y2="1.524" width="0.1524" layer="21"/>
-<wire x1="0.762" y1="0.762" x2="0.762" y2="-0.762" width="0.1524" layer="51"/>
-<wire x1="-0.762" y1="0.762" x2="-0.762" y2="-0.762" width="0.1524" layer="51"/>
-<wire x1="1.524" y1="0" x2="2.032" y2="0" width="0.1524" layer="51"/>
-<wire x1="-1.524" y1="0" x2="-2.032" y2="0" width="0.1524" layer="51"/>
-<wire x1="0.762" y1="0.762" x2="0.762" y2="-0.762" width="0.1524" layer="51" curve="-180"/>
-<wire x1="-0.762" y1="0.762" x2="-0.762" y2="-0.762" width="0.1524" layer="51" curve="180"/>
-<smd name="1" x="-1.27" y="0" dx="1.27" dy="2.54" layer="1"/>
-<smd name="2" x="1.27" y="0" dx="1.27" dy="2.54" layer="1"/>
-<text x="-2.159" y="1.778" size="1.27" layer="25" ratio="10">&gt;NAME</text>
-<text x="1" y="0" size="0.02" layer="27">&gt;VALUE</text>
-<rectangle x1="0.762" y1="-0.762" x2="1.016" y2="0.762" layer="51"/>
-<rectangle x1="1.016" y1="-0.635" x2="1.27" y2="0.635" layer="51"/>
-<rectangle x1="1.27" y1="-0.508" x2="1.397" y2="0.508" layer="51"/>
-<rectangle x1="1.397" y1="-0.254" x2="1.524" y2="0.254" layer="51"/>
-<rectangle x1="-1.016" y1="-0.762" x2="-0.762" y2="0.762" layer="51"/>
-<rectangle x1="-1.27" y1="-0.635" x2="-1.016" y2="0.635" layer="51"/>
-<rectangle x1="-1.397" y1="-0.508" x2="-1.27" y2="0.508" layer="51"/>
-<rectangle x1="-1.524" y1="-0.254" x2="-1.397" y2="0.254" layer="51"/>
-<rectangle x1="0.9652" y1="-0.7112" x2="1.0922" y2="-0.5842" layer="51"/>
-<rectangle x1="1.3462" y1="-0.3556" x2="1.4732" y2="-0.2286" layer="51"/>
-<rectangle x1="1.3462" y1="0.2032" x2="1.4732" y2="0.3302" layer="51"/>
-<rectangle x1="0.9652" y1="0.5842" x2="1.0922" y2="0.7112" layer="51"/>
-<rectangle x1="-1.0922" y1="-0.7112" x2="-0.9652" y2="-0.5842" layer="51"/>
-<rectangle x1="-1.4478" y1="-0.3302" x2="-1.3208" y2="-0.2032" layer="51"/>
-<rectangle x1="-1.4732" y1="0.2032" x2="-1.3462" y2="0.3302" layer="51"/>
-<rectangle x1="-1.1176" y1="0.5842" x2="-0.9906" y2="0.7112" layer="51"/>
+<wire x1="1.397" y1="-1.016" x2="-1.397" y2="-1.016" width="0.1524" layer="21"/>
+<wire x1="1.397" y1="1.016" x2="1.651" y2="0.762" width="0.1524" layer="21" curve="-90"/>
+<wire x1="-1.651" y1="0.762" x2="-1.397" y2="1.016" width="0.1524" layer="21" curve="-90"/>
+<wire x1="-1.651" y1="-0.762" x2="-1.397" y2="-1.016" width="0.1524" layer="21" curve="90"/>
+<wire x1="1.397" y1="-1.016" x2="1.651" y2="-0.762" width="0.1524" layer="21" curve="90"/>
+<wire x1="1.651" y1="-0.762" x2="1.651" y2="0.762" width="0.1524" layer="21"/>
+<wire x1="-1.651" y1="-0.762" x2="-1.651" y2="0.762" width="0.1524" layer="21"/>
+<wire x1="-1.397" y1="1.016" x2="1.397" y2="1.016" width="0.1524" layer="21"/>
+<wire x1="1.016" y1="0" x2="1.524" y2="0" width="0.1524" layer="51"/>
+<wire x1="-1.016" y1="0" x2="-1.524" y2="0" width="0.1524" layer="51"/>
+<wire x1="-0.254" y1="-0.127" x2="-0.254" y2="0.127" width="1.27" layer="51" curve="-180" cap="flat"/>
+<wire x1="0.254" y1="0.127" x2="0.254" y2="-0.127" width="1.27" layer="51" curve="-180" cap="flat"/>
+<smd name="1" x="-0.762" y="0" dx="1.1684" dy="1.6002" layer="1"/>
+<smd name="2" x="0.762" y="0" dx="1.1684" dy="1.6002" layer="1"/>
+<text x="-1.651" y="1.143" size="1.27" layer="25" ratio="10">&gt;NAME</text>
+<text x="0.4001" y="0" size="0.02" layer="27">&gt;VALUE</text>
+<rectangle x1="-0.0762" y1="-0.9144" x2="0.0762" y2="0.9144" layer="29"/>
 </package>
 </packages>
 </library>
@@ -4659,9 +4642,9 @@ design rules under a new name.</description>
 <attribute name="NAME" x="50.8" y="33.5915" size="1.27" layer="25" ratio="10" rot="R90"/>
 <attribute name="VALUE" x="54.737" y="27.8765" size="1.27" layer="27" ratio="10" rot="R90"/>
 </element>
-<element name="SJ1" library="jumper" package="SJW" value="ISP VCC" x="62.23" y="17.78" smashed="yes" rot="R270">
-<attribute name="NAME" x="60.071" y="20.5105" size="1.27" layer="25" ratio="10"/>
-<attribute name="VALUE" x="62.23" y="16.78" size="0.02" layer="27" rot="R270"/>
+<element name="SJ1" library="jumper" package="SJ" value="ISP VCC" x="62.23" y="18.415" smashed="yes" rot="R270">
+<attribute name="NAME" x="60.071" y="21.1455" size="1.27" layer="25" ratio="10"/>
+<attribute name="VALUE" x="62.23" y="17.415" size="0.02" layer="27" rot="R270"/>
 </element>
 </elements>
 <signals>
@@ -4815,9 +4798,8 @@ design rules under a new name.</description>
 <wire x1="75.2475" y1="36.5125" x2="76.2" y2="36.5125" width="0.4064" layer="16"/>
 <wire x1="76.2" y1="36.5125" x2="76.2" y2="33.02" width="0.4064" layer="16"/>
 <contactref element="SJ1" pad="2"/>
-<wire x1="62.23" y1="16.51" x2="62.23" y2="15.24" width="0.4064" layer="1"/>
-<via x="62.23" y="15.24" extent="1-16" drill="0.6" shape="square"/>
-<wire x1="62.23" y1="15.24" x2="62.23" y2="16.51" width="0.4064" layer="16"/>
+<wire x1="62.23" y1="17.653" x2="62.23" y2="16.51" width="0.4064" layer="1"/>
+<via x="62.23" y="16.51" extent="1-16" drill="0.6" shape="square"/>
 </signal>
 <signal name="N$3">
 <contactref element="IC1" pad="17"/>
@@ -5117,6 +5099,7 @@ design rules under a new name.</description>
 <contactref element="JP1" pad="2"/>
 <contactref element="SJ1" pad="1"/>
 <wire x1="66.675" y1="19.05" x2="62.23" y2="19.05" width="0.4064" layer="1"/>
+<wire x1="62.23" y1="19.05" x2="62.23" y2="19.177" width="0.4064" layer="1"/>
 </signal>
 </signals>
 </board>
