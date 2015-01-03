@@ -39,6 +39,7 @@
 #include "lm75.h"
 #include "bmp085.h"
 #include "srf02.h"
+#include "onewire.h"
 
 #include "../src_common/aes256.h"
 #include "../src_common/util.h"
@@ -65,6 +66,8 @@ uint8_t distance_sensor_type = 0;
 uint32_t version_measInt;
 uint32_t version_wupCnt;
 uint16_t vempty = 1100; // 1.1V * 2 cells = 2.2V = min. voltage for RFM12B
+uint8_t rom_id[8]; // for 1-wire
+
 bool di_sensor_used = false;
 bool ai_sensor_used = false;
 bool di_change = false;
@@ -557,6 +560,17 @@ void measure_temperature_i2c(void)
 	}
 }
 
+void measure_temperature_1wire(void)
+{
+	if (temperature_sensor_type != TEMPERATURESENSORTYPE_DS18S20)
+		return;
+		
+	if (!countWakeup(&temperature))
+		return;
+
+	temperature.val += onewire_get_temperature(rom_id);
+}
+
 void measure_temperature_other(void)
 {
 	if (temperature_sensor_type != TEMPERATURESENSORTYPE_SHT15)
@@ -902,6 +916,24 @@ int main(void)
 	  sht11_init();
 	  vempty = 1200; // 1.2V * 2 cells = 2.4V = min. voltage for SHT15
 	}
+	else if (temperature_sensor_type == TEMPERATURESENSORTYPE_DS18S20)
+	{
+		onewire_init();
+		bool res = onewire_get_rom_id(rom_id);
+		
+		if (res) // error, no slave found
+		{
+			while (1)
+			{
+				led_blink(50, 50, 1);
+			}
+		}
+		
+		UART_PUTS("1-wire ROM ID: ");
+		print_bytearray(rom_id, 8);
+		
+		vempty = 1500; // 1.5V * 2 cells = 3.0V = min. voltage for DS18S20
+	}
 	
 	UART_PUTF3("Min. battery voltage: %umV (measInt %u, avgInt %u)\r\n", vempty, battery_voltage.measInt, battery_voltage.avgInt);
 
@@ -982,6 +1014,7 @@ int main(void)
 			}
 			
 			// measure other values, non-I2C devices
+			measure_temperature_1wire();
 			measure_temperature_other();
 			measure_humidity_other();
 			

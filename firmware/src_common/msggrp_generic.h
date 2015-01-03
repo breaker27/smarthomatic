@@ -170,7 +170,7 @@ static inline uint32_t msg_generic_version_get_hash(void)
 // Validity: test
 // Length w/o Header + HeaderExtension: 64 bits
 // Data fields: DeviceType, VersionMajor, VersionMinor, VersionPatch, VersionHash
-// Description: Reports the current firmware version. Version information is only available when set in source code, which is usually only done for official builds by the build robot.
+// Description: Reports DeviceType and current firmware version. Version information is only available when set in source code, which is usually only done for official builds by the build robot.
 
 // Function to initialize header for the MessageType "Get".
 static inline void pkg_header_init_generic_deviceinfo_get(void)
@@ -209,7 +209,7 @@ static inline void pkg_header_init_generic_deviceinfo_ackstatus(void)
 }
 
 // DeviceType (EnumValue)
-// Description: The device can check with this value if the EEPROM data is meant for the actual type of device. If not, the device goes into an error mode.
+// Description: The DeviceType can be used to adapt the behavior or representation of the SHC device at the server software (e.g. FHEM).
 
 #ifndef _ENUM_DeviceType
 #define _ENUM_DeviceType

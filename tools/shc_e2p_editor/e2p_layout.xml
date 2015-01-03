@@ -131,6 +131,10 @@
 				<Value>3</Value>
 				<Name>BMP085</Name>
 			</Element>
+			<Element>
+				<Value>4</Value>
+				<Name>DS18S20</Name>
+			</Element>
 		</EnumValue>
 		<EnumValue>
 			<ID>HumiditySensorType</ID>
