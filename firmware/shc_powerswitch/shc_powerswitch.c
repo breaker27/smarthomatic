@@ -350,7 +350,7 @@ void process_packet(uint8_t len)
 	}
 	
 	// check device id
-	uint8_t rcv_id = pkg_headerext_common_get_receiverid();
+	uint16_t rcv_id = pkg_headerext_common_get_receiverid();
 
 	UART_PUTF("ReceiverID:%u;", rcv_id);
 	
