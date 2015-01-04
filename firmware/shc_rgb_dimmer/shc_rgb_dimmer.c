@@ -528,14 +528,43 @@ void test_anim_calculation(void)
 	while (42) {}
 }
 
-// React accordingly on the MessageType, MessageGroup and MessageID.
-void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint32_t messageid)
+void send_ack(uint32_t acksenderid, uint32_t ackpacketcounter, bool error)
 {
+	// any message can be used as ack, because they are the same anyway
+	if (error)
+	{
+		UART_PUTS("Send error Ack\r\n");
+		pkg_header_init_dimmer_coloranimation_ack();
+	}
+
+	inc_packetcounter();
+	
+	// set common fields
+	pkg_header_set_senderid(device_id);
+	pkg_header_set_packetcounter(packetcounter);
+	
+	pkg_headerext_common_set_acksenderid(acksenderid);
+	pkg_headerext_common_set_ackpacketcounter(ackpacketcounter);
+	pkg_headerext_common_set_error(error);
+	
+	rfm12_send_bufx();
+}
+
+// Process a request to this device.
+// React accordingly on the MessageType, MessageGroup and MessageID
+// and send an Ack in any case. It may be an error ack if request is not supported.
+void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint32_t messageid)
+{
+	// remember some values before the packet buffer is destroyed
+	uint32_t acksenderid = pkg_header_get_senderid();
+	uint32_t ackpacketcounter = pkg_header_get_packetcounter();
+
 	UART_PUTF("MessageGroupID:%u;", messagegroupid);
 	
 	if (messagegroupid != MESSAGEGROUP_DIMMER)
 	{
 		UART_PUTS("\r\nERR: Unsupported MessageGroupID.\r\n");
+		send_ack(acksenderid, ackpacketcounter, true);
 		return;
 	}
 	
@@ -544,6 +573,7 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	if ((messageid != MESSAGEID_DIMMER_COLOR) && (messageid != MESSAGEID_DIMMER_COLORANIMATION))
 	{
 		UART_PUTS("\r\nERR: Unsupported MessageID.\r\n");
+		send_ack(acksenderid, ackpacketcounter, true);
 		return;
 	}
 
@@ -589,12 +619,6 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 
 	UART_PUTS("\r\n");
 
-	// remember some values before the packet buffer is destroyed
-	uint32_t acksenderid = pkg_header_get_senderid();
-	uint32_t ackpacketcounter = pkg_header_get_packetcounter();
-
-	inc_packetcounter();
-
 	// "Set" -> send "Ack"
 	if (messagetype == MESSAGETYPE_SET)
 	{
@@ -637,18 +661,12 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		UART_PUTS("Sending AckStatus\r\n");
 	}
 
-	// set common fields
-	pkg_header_set_senderid(device_id);
-	pkg_header_set_packetcounter(packetcounter);
-	
-	pkg_headerext_common_set_acksenderid(acksenderid);
-	pkg_headerext_common_set_ackpacketcounter(ackpacketcounter);
-	pkg_headerext_common_set_error(false); // FIXME: Move code for the Ack to a function and also return an Ack when errors occur before!
-	
-	rfm12_send_bufx();
+	send_ack(acksenderid, ackpacketcounter, false);
 	send_status_timeout = 15;
 }
 
+// Check if incoming message is a legitimate request for this device.
+// If not, ignore it.
 void process_packet(uint8_t len)
 {
 	// Set packet content
@@ -705,7 +723,7 @@ void process_packet(uint8_t len)
 	uint32_t messagegroupid = pkg_headerext_common_get_messagegroupid();
 	uint32_t messageid = pkg_headerext_common_get_messageid();
 	
-	process_message(messagetype, messagegroupid, messageid);
+	process_request(messagetype, messagegroupid, messageid);
 }
 
 int main(void)

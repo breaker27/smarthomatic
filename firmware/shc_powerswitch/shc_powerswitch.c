@@ -230,22 +230,47 @@ void process_gpio_digitalpintimeout(MessageTypeEnum messagetype)
 	}
 }
 
-// React accordingly on the MessageType, MessageGroup and MessageID.
-void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint32_t messageid)
+void send_ack(uint32_t acksenderid, uint32_t ackpacketcounter, bool error)
 {
+	// any message can be used as ack, because they are the same anyway
+	if (error)
+	{
+		UART_PUTS("Send error Ack\r\n");
+		pkg_header_init_gpio_digitalporttimeout_ack();
+	}
+
+	inc_packetcounter();
+	
+	// set common fields
+	pkg_header_set_senderid(device_id);
+	pkg_header_set_packetcounter(packetcounter);
+	
+	pkg_headerext_common_set_acksenderid(acksenderid);
+	pkg_headerext_common_set_ackpacketcounter(ackpacketcounter);
+	pkg_headerext_common_set_error(error);
+	
+	rfm12_send_bufx();
+}
+
+// Process a request to this device.
+// React accordingly on the MessageType, MessageGroup and MessageID
+// and send an Ack in any case. It may be an error ack if request is not supported.
+void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint32_t messageid)
+{
+	// remember some values before the packet buffer is destroyed
+	uint32_t acksenderid = pkg_header_get_senderid();
+	uint32_t ackpacketcounter = pkg_header_get_packetcounter();
+	
 	UART_PUTF("MessageGroupID:%u;", messagegroupid);
 	
 	if (messagegroupid != MESSAGEGROUP_GPIO)
 	{
 		UART_PUTS("\r\nERR: Unsupported MessageGroupID.\r\n");
+		send_ack(acksenderid, ackpacketcounter, true);
 		return;
 	}
 	
 	UART_PUTF("MessageID:%u;", messageid);
-
-	// remember some values before the packet buffer is destroyed
-	uint32_t acksenderid = pkg_header_get_senderid();
-	uint32_t ackpacketcounter = pkg_header_get_packetcounter();
 
 	switch (messageid)
 	{
@@ -263,11 +288,11 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 			break;
 		default:
 			UART_PUTS("\r\nERR: Unsupported MessageID.");
+			send_ack(acksenderid, ackpacketcounter, true);
+			return;
 	}
 	
 	UART_PUTS("\r\n");
-
-	inc_packetcounter();
 
 	// In all cases, use the digitalporttimer message as answer.
 	// It contains the data for *all* pins and *all* timer values.
@@ -297,18 +322,12 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		UART_PUTS("Sending AckStatus\r\n");
 	}
 
-	// set common fields
-	pkg_header_set_senderid(device_id);
-	pkg_header_set_packetcounter(packetcounter);
-	
-	pkg_headerext_common_set_acksenderid(acksenderid);
-	pkg_headerext_common_set_ackpacketcounter(ackpacketcounter);
-	pkg_headerext_common_set_error(false); // FIXME: Move code for the Ack to a function and also return an Ack when errors occur before!
-	
-	rfm12_send_bufx();
+	send_ack(acksenderid, ackpacketcounter, false);
 	send_status_timeout = 5;
 }
 
+// Check if incoming message is a legitimate request for this device.
+// If not, ignore it.
 void process_packet(uint8_t len)
 {
 	pkg_header_adjust_offset();
@@ -364,7 +383,7 @@ void process_packet(uint8_t len)
 	uint32_t messagegroupid = pkg_headerext_common_get_messagegroupid();
 	uint32_t messageid = pkg_headerext_common_get_messageid();
 	
-	process_message(messagetype, messagegroupid, messageid);
+	process_request(messagetype, messagegroupid, messageid);
 }
 
 int main(void)
