@@ -171,7 +171,6 @@ bool _onewire_send_cmd(uint8_t * id_array, uint8_t cmd)
 	
 	if (onewire_reset())
 	{
-		enable_global_interrupts();
 		return true;
 	}
 
@@ -198,18 +197,32 @@ int16_t onewire_get_temperature(uint8_t * id_array)
 	disable_global_interrupts();
 	
 	// command 0x44 = "convert T"
-	_onewire_send_cmd(id_array, 0x44);
+	if (_onewire_send_cmd(id_array, 0x44))
+	{
+		enable_global_interrupts();
+		return NO_TEMPERATURE;
+	}
 
-	_delay_ms(500);
+	enable_global_interrupts();
+
+	_delay_ms(800);
+
+	disable_global_interrupts();
 
 	// command 0xbe = "Read Scratchpad"
-	_onewire_send_cmd(id_array, 0xbe);
+	if (_onewire_send_cmd(id_array, 0xbe))
+	{
+		enable_global_interrupts();
+		return NO_TEMPERATURE;
+	}
 
 	// store scratchpad (temperature value)
 	for (i = 0; i < 8; i++)
 	{
 		tmp[i] = onewire_read_byte();
 	}
+
+	enable_global_interrupts();
 	
 	// calculate temperature according datasheet
 	if (tmp[1] == 0)
@@ -219,6 +232,5 @@ int16_t onewire_get_temperature(uint8_t * id_array)
 	
 	res = (int16_t)((int32_t)res * 100 / 2 - 25 + ((int32_t)tmp[7] - tmp[6]) * 100 / tmp[7]);
 	
-	enable_global_interrupts();
 	return res;
 }
