@@ -39,6 +39,7 @@
 #include "lm75.h"
 #include "bmp085.h"
 #include "srf02.h"
+#include "htu21d.h"
 #include "onewire.h"
 
 #include "../src_common/aes256.h"
@@ -541,7 +542,9 @@ void sht11_measure_loop(void)
 
 void measure_temperature_i2c(void)
 {
-	if ((temperature_sensor_type != TEMPERATURESENSORTYPE_DS7505) && (temperature_sensor_type != TEMPERATURESENSORTYPE_BMP085))
+	if ((temperature_sensor_type != TEMPERATURESENSORTYPE_DS7505)
+		&& (temperature_sensor_type != TEMPERATURESENSORTYPE_BMP085)
+		&& (temperature_sensor_type != TEMPERATURESENSORTYPE_HTU21D))
 		return;
 
 	if (!countWakeup(&temperature))
@@ -557,6 +560,10 @@ void measure_temperature_i2c(void)
 	else if (temperature_sensor_type == TEMPERATURESENSORTYPE_BMP085)
 	{
 		temperature.val += bmp085_meas_temp();
+	}
+	else if (temperature_sensor_type == TEMPERATURESENSORTYPE_HTU21D)
+	{
+		temperature.val += htu21d_meas_temp();
 	}
 }
 
@@ -583,9 +590,20 @@ void measure_temperature_other(void)
 	temperature.val += sht11_get_tmp();
 }
 
+void measure_humidity_i2c(void)
+{
+	if (humidity_sensor_type != HUMIDITYSENSORTYPE_HTU21D)
+		return;
+
+	if (!countWakeup(&humidity))
+		return;
+
+	humidity.val += htu21d_meas_hum();
+}
+
 void measure_humidity_other(void)
 {
-	if (humidity_sensor_type == HUMIDITYSENSORTYPE_NOSENSOR)
+	if (humidity_sensor_type != HUMIDITYSENSORTYPE_SHT15)
 		return;
 
 	if (!countWakeup(&humidity))
@@ -739,8 +757,8 @@ void prepare_humiditytemperature(void)
 	pkg_header_init_weather_humiditytemperature_status();
 	msg_weather_humiditytemperature_set_humidity(humidity.val / 10); // in permill
 	msg_weather_humiditytemperature_set_temperature(temperature.val);
-	
-	UART_PUTF2("Send humidity: %u.%u%%, temperature: ", humidity.val / 100, humidity.val % 100);
+
+	UART_PUTF2("Send humidity: %u.%u%%, temperature: ", (uint16_t)(humidity.val / 100), (uint16_t)(humidity.val % 100));
 	print_signed(temperature.val);
 	UART_PUTS(" deg.C\r\n");
 
@@ -867,7 +885,7 @@ int main(void)
 	
 	UART_PUTS ("\r\n");
 	UART_PUTF4("smarthomatic EnvSensor v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
-	UART_PUTS("(c) 2012..2014 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTS("(c) 2012..2015 Uwe Freese, www.smarthomatic.org\r\n");
 	osccal_info();
 	UART_PUTF ("Device ID: %u\r\n", device_id);
 	UART_PUTF ("Packet counter: %lu\r\n", packetcounter);
@@ -962,7 +980,9 @@ int main(void)
 	bool srf02_connected = distance_sensor_type == DISTANCESENSORTYPE_SRF02;
 	bool measure_other_i2c = (temperature_sensor_type == TEMPERATURESENSORTYPE_DS7505)
 		|| (temperature_sensor_type == TEMPERATURESENSORTYPE_BMP085)
-		|| (barometric_sensor_type == BAROMETRICSENSORTYPE_BMP085);
+		|| (barometric_sensor_type == BAROMETRICSENSORTYPE_BMP085)
+		|| (temperature_sensor_type == TEMPERATURESENSORTYPE_HTU21D)
+		|| (humidity_sensor_type == HUMIDITYSENSORTYPE_HTU21D);
 
 	while (42)
 	{
@@ -998,6 +1018,7 @@ int main(void)
 
 				i2c_enable();
 				measure_temperature_i2c();
+				measure_humidity_i2c();
 				measure_barometric_pressure_i2c();
 				measure_distance_i2c();
 				i2c_disable();

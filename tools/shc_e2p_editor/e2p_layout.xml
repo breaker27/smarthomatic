@@ -135,6 +135,10 @@
 				<Value>4</Value>
 				<Name>DS18S20</Name>
 			</Element>
+			<Element>
+				<Value>5</Value>
+				<Name>HTU21D</Name>
+			</Element>
 		</EnumValue>
 		<EnumValue>
 			<ID>HumiditySensorType</ID>
@@ -147,6 +151,10 @@
 			<Element>
 				<Value>1</Value>
 				<Name>SHT15</Name>
+			</Element>
+			<Element>
+				<Value>2</Value>
+				<Name>HTU21D</Name>
 			</Element>
 		</EnumValue>
 		<EnumValue>
