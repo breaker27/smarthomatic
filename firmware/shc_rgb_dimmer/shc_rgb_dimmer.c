@@ -260,7 +260,7 @@ void set_animation_fixed_color(uint8_t color_index)
 	sei();
 }
 
-void send_version_status(void)
+void send_deviceinfo_status(void)
 {
 	inc_packetcounter();
 
@@ -838,7 +838,7 @@ int main(void)
 			else if (version_status_cycle >= SEND_VERSION_STATUS_CYCLE)
 			{
 				version_status_cycle = 0;
-				send_version_status();
+				send_deviceinfo_status();
 				led_blink(200, 0, 1);
 			}
 		}

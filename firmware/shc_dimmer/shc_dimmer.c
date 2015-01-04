@@ -245,7 +245,7 @@ void send_dimmer_status(void)
 	rfm12_send_bufx();
 }
 
-void send_version_status(void)
+void send_deviceinfo_status(void)
 {
 	inc_packetcounter();
 
@@ -725,7 +725,7 @@ int main(void)
 		else if (version_status_cycle >= SEND_VERSION_STATUS_CYCLE)
 		{
 			version_status_cycle = 0;
-			send_version_status();
+			send_deviceinfo_status();
 			led_blink(200, 0, 1);
 		}
 

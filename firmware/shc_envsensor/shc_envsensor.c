@@ -834,7 +834,7 @@ void prepare_battery_voltage(void)
 	battery_voltage.val = 0;
 }
 
-void prepare_version(void)
+void prepare_deviceinfo(void)
 {
 	// Set packet content
 	pkg_header_init_generic_deviceinfo_status();
@@ -1083,7 +1083,7 @@ int main(void)
 		}
 		else if (version_wupCnt >= version_measInt)
 		{
-			prepare_version();
+			prepare_deviceinfo();
 		}
 		else
 		{

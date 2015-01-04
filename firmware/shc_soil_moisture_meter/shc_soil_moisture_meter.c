@@ -127,7 +127,7 @@ void switch_schmitt_trigger(bool b_on)
 	}
 }
 
-void send_version_status(void)
+void send_deviceinfo_status(void)
 {
 	UART_PUTF("Send DeviceInfo: DeviceType %u,", DEVICETYPE_SOILMOISTUREMETER);
 	UART_PUTF4(" v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
@@ -455,7 +455,7 @@ int main(void)
 				else if (version_status_cycle == 0)
 				{
 					version_status_cycle = SEND_VERSION_STATUS_CYCLE;
-					send_version_status();
+					send_deviceinfo_status();
 					led_blink(200, 0, 1);
 				}
 			}
