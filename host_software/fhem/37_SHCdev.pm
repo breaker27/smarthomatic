@@ -36,16 +36,16 @@ my %dev_state_icons = (
   "PowerSwitch"         => "on:on:toggle off:off:toggle set.*:light_question:off",
   "Dimmer"              => "on:on off:off set.*:light_question:off",
   "EnvSensor"           => undef,
-  "RGB_Dimmer"          => undef,
-  "Soil_Moisture_Meter" => undef
+  "RGBDimmer"           => undef,
+  "SoilMoistureMeter"   => undef
 );
 
 my %web_cmds = (
   "PowerSwitch"         => "on:off:toggle:statusRequest",
   "Dimmer"              => "on:off:statusRequest",
   "EnvSensor"           => undef,
-  "RGB_Dimmer"          => undef,
-  "Soil_Moisture_Meter" => undef
+  "RGBDimmer"           => undef,
+  "SoilMoistureMeter"   => undef
 );
 
 # Array format: [ reading1, str_format1, reading2, str_format2 ... ]
@@ -63,8 +63,8 @@ my %dev_state_format = (
     "port",                "Port: ",
     "ains",                "Ain: "
   ],
-  "RGB_Dimmer"          => ["color", "Color: "],
-  "Soil_Moisture_Meter" => ["humidity", "H: "]
+  "RGBDimmer"           => ["color", "Color: "],
+  "SoilMoistureMeter"   => ["humidity", "H: "]
 );
 
 # Supported set commands
@@ -83,9 +83,9 @@ my %sets = (
                            # Used from SetExtensions.pm
                            "blink on-for-timer on-till off-for-timer off-till intervals",
   "EnvSensor"           => "",
-  "RGB_Dimmer"          => "Color " .
+  "RGBDimmer"           => "Color " .
                            "ColorAnimation",
-  "Soil_Moisture_Meter" => "",
+  "SoilMoistureMeter"   => "",
   "Custom"              => "Dimmer.Brightness " .
                            "Dimmer.Animation"
 );
@@ -96,27 +96,8 @@ my %gets = (
   "PowerSwitch" => "",
   "Dimmer"      => "",
   "EnvSensor"   => "din:all,1,2,3,4,5,6,7,8 ain:all,1,2,3,4,5 ain_volt:1,2,3,4,5",
-  "RGB_Dimmer"  => "",
+  "RGBDimmer"   => "",
   "Custom"      => ""
-);
-
-# Hashtable for automatic device type assignment
-# Format:
-# "MessageGroupName:MessageName" => "Auto Device Type"
-my %auto_devtype = (
-  "Weather.Temperature"                   => "EnvSensor",
-  "Weather.HumidityTemperature"           => "EnvSensor",
-  "Weather.BarometricPressureTemperature" => "EnvSensor",
-  "Environment.Brightness"                => "EnvSensor",
-  "Environment.Distance"                  => "EnvSensor",
-  "GPIO.DigitalPort"                      => "EnvSensor",
-  "GPIO.DigitalPin"                       => "EnvSensor",
-  "GPIO.AnalogPort"                       => "EnvSensor",
-  "GPIO.DigitalPortTimeout"               => "PowerSwitch",
-  "Dimmer.Brightness"                     => "Dimmer",
-  "Dimmer.Color"                          => "RGB_Dimmer",
-  "Dimmer.ColorAnimation"                 => "RGB_Dimmer",
-  "Weather.Humidity"                      => "Soil_Moisture_Meter"
 );
 
 sub SHCdev_Parse($$);
@@ -136,7 +117,7 @@ sub SHCdev_Initialize($)
                        ." readonly:1"
                        ." forceOn:1"
                        ." $readingFnAttributes"
-                       ." devtype:EnvSensor,Dimmer,PowerSwitch,RGB_Dimmer";
+                       ." devtype:EnvSensor,Dimmer,PowerSwitch,RGBDimmer,SoilMoistureMeter";
 }
 
 #####################################
@@ -240,9 +221,6 @@ sub SHCdev_Parse($$)
   given ($msggroupname) {
     when ('Generic') {
       given ($msgname) {
-        when ('BatteryStatus') {
-          readingsBulkUpdate($rhash, "battery", $parser->getField("Percentage"));
-        }
         when ('Version') {
           my $major = $parser->getField("Major");
           my $minor = $parser->getField("Minor");
@@ -250,6 +228,25 @@ sub SHCdev_Parse($$)
           my $vhash = $parser->getField("Hash");
 
           readingsBulkUpdate($rhash, "version", "$major.$minor.$patch-$vhash");
+        }
+		when ('DeviceInfo') {
+		  my $devtype = $parser->getField("DeviceType");
+          my $major = $parser->getField("VersionMajor");
+          my $minor = $parser->getField("VersionMinor");
+          my $patch = $parser->getField("VersionPatch");
+          my $vhash = $parser->getField("VersionHash");
+
+		  # Assign device type
+		  my $devtypeOld = AttrVal( $rname, "devtype", undef );
+		  if (!defined($devtypeOld)) {
+			$attr{$rname}{devtype} = $devtype;
+			Log3 $name, 3, "$rname: Assign device type = " . $attr{$rname}{devtype};
+		  }
+
+          readingsBulkUpdate($rhash, "version", "$major.$minor.$patch-$vhash");
+        }
+		when ('BatteryStatus') {
+          readingsBulkUpdate($rhash, "battery", $parser->getField("Percentage"));
         }
       }
     }
@@ -366,13 +363,6 @@ sub SHCdev_Parse($$)
         }
       }
     }
-  }
-
-  # Autoassign device type
-  my $devtype = AttrVal( $rname, "devtype", undef );
-  if (!defined($devtype) && (defined($auto_devtype{"$msggroupname.$msgname"}))) {
-    $attr{$rname}{devtype} = $auto_devtype{"$msggroupname.$msgname"};
-    Log3 $name, 3, "$rname: Autoassign device type = " . $attr{$rname}{devtype};
   }
 
   # If the devtype is defined add, if not already done, the according webCmds and devStateIcons
@@ -572,7 +562,7 @@ sub SHCdev_Set($@)
         return SetExtensions($hash, "", $name, @aa);
       }
     }
-    when ('RGB_Dimmer') {
+    when ('RGBDimmer') {
       if ($cmd eq 'Color') {
         #TODO Verify argument values
         my $color = $arg;
@@ -737,8 +727,8 @@ sub SHCdev_Send($)
     <li>EnvSensor</li>
     <li>PowerSwitch</li>
     <li>Dimmer</li>
-    <li>RGB_Dimmer</li>
-    <li>Soil_Moisture_Meterr</li>
+    <li>RGBDimmer</li>
+    <li>SoilMoistureMeter</li>
   </ul><br>
 
   <a name="SHCdev_Define"></a>
@@ -780,12 +770,12 @@ sub SHCdev_Send($)
     <li>Color &lt;ColorNumber&gt;<br>
         A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_Color">www.smarthomatic.org</a>
         The color palette can be found <a href="http://www.smarthomatic.org/devices/rgb_dimmer.html">here</a>
-        Supported by RGB_Dimmer.
+        Supported by RGBDimmer.
     </li><br>
     <li>ColorAnimation &lt;Repeat&gt; &lt;AutoReverse&gt; &lt;Time0&gt; &lt;ColorNumber0&gt; &lt;Time1&gt; &lt;ColorNumber1&gt; ... up to 10 time/color pairs<br>
         A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_ColorAnimation">www.smarthomatic.org</a>
         The color palette can be found <a href="http://www.smarthomatic.org/devices/rgb_dimmer.html">here</a>
-        Supported by RGB_Dimmer.
+        Supported by RGBDimmer.
     </li><br>
     <li>DigitalPin &lt;Pos&gt; &lt;On&gt;<br>
         A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#GPIO_DigitalPin">www.smarthomatic.org</a>
@@ -843,7 +833,7 @@ sub SHCdev_Send($)
   <ul>
     <li>devtype<br>
       The device type determines the command set, default web commands and the
-      default devStateicon. Currently supported are: EnvSensor, Dimmer, PowerSwitch, RGB_Dimmer.<br><br>
+      default devStateicon. Currently supported are: EnvSensor, Dimmer, PowerSwitch, RGBDimmer, SoilMoistureMeter.<br><br>
 
       Note: If the device is not set manually, it will be determined automatically
       on reception of a device type specific message. For example: If a
