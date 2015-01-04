@@ -452,16 +452,6 @@ int main(void)
 				UART_PUTS("Decrypted bytes: ");
 				print_bytearray(bufx, len);
 
-				/*
-				uint32_t assumed_crc = getBuf32(0);
-				uint32_t actual_crc = crc32(bufx + 4, len - 4);
-				
-				UART_PUTF("Received CRC32 would be %lx\r\n", assumed_crc);
-				UART_PUTF("Re-calculated CRC32 is  %lx\r\n", actual_crc);
-
-				if (assumed_crc != actual_crc)
-				*/
-				
 				if (!pkg_header_check_crc32(len))
 				{
 					UART_PUTS("Received garbage (CRC wrong after decryption).\r\n");
@@ -469,7 +459,7 @@ int main(void)
 				else
 				{
 					process_packet(len);
-				}				
+				}
 			}
 
 			// tell the implementation that the buffer can be reused for the next data.
