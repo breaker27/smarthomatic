@@ -62,9 +62,8 @@ uint32_t station_packetcounter;
 bool switch_state[SWITCH_COUNT];
 uint16_t switch_timeout[SWITCH_COUNT];
 
-uint16_t send_status_timeout = 5;
-uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly after startup
-uint8_t battery_status_cycle = SEND_BATTERY_STATUS_CYCLE - 1; // send promptly after startup
+uint8_t version_status_cycle = 1; // send promptly after startup
+uint8_t battery_status_cycle = 1; // send promptly after startup
 
 uint32_t dry_thr;              // configured by user
 uint32_t counter_min = 100000; // min occurred value in current watering period
@@ -127,26 +126,23 @@ void switch_schmitt_trigger(bool b_on)
 	}
 }
 
-void send_deviceinfo_status(void)
+// Prepare message with device info
+void prepare_deviceinfo_status(void)
 {
 	UART_PUTF("Send DeviceInfo: DeviceType %u,", DEVICETYPE_SOILMOISTUREMETER);
 	UART_PUTF4(" v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
 
 	// Set packet content
-	inc_packetcounter();
 	pkg_header_init_generic_deviceinfo_status();
-	pkg_header_set_senderid(device_id);
-	pkg_header_set_packetcounter(packetcounter);
 	msg_generic_deviceinfo_set_devicetype(DEVICETYPE_SOILMOISTUREMETER);
 	msg_generic_deviceinfo_set_versionmajor(VERSION_MAJOR);
 	msg_generic_deviceinfo_set_versionminor(VERSION_MINOR);
 	msg_generic_deviceinfo_set_versionpatch(VERSION_PATCH);
 	msg_generic_deviceinfo_set_versionhash(VERSION_HASH);
-
-	rfm12_send_bufx();
 }
 
-void send_battery_status(void)
+// Prepare message for battery
+void prepare_battery_status(void)
 {
 	adc_on(true);
 	_delay_ms(10);
@@ -156,45 +152,30 @@ void send_battery_status(void)
 	UART_PUTF("Sending battery: %u%%\r\n", percentage);
 
 	// Set packet content
-	inc_packetcounter();
 	pkg_header_init_generic_batterystatus_status();
-	pkg_header_set_senderid(device_id);
-	pkg_header_set_packetcounter(packetcounter);
 	msg_generic_batterystatus_set_percentage(percentage);
-
-	rfm12_send_bufx();
 }
 
-// Send humidity
-void send_humidity_status(uint16_t hum)
+// Prepare message for humidity
+void prepare_humidity_status(uint16_t hum)
 {	
 	UART_PUTF2("Sending humidity: %u.%u%%\r\n", hum / 10, hum % 10);
 
 	// Set packet content
-	inc_packetcounter();
 	pkg_header_init_weather_humidity_status();
-	pkg_header_set_senderid(device_id);
-	pkg_header_set_packetcounter(packetcounter);
 	msg_weather_humidity_set_humidity(hum);
-
-	rfm12_send_bufx();
 }
 
-// Send humidity and raw value as temperature (only for debugging!)
-void send_humidity_status_RAW_DBG(uint16_t hum, int16_t raw)
+// Prepare message for humidity and raw value as temperature (only for debugging!)
+void prepare_humidity_status_RAW_DBG(uint16_t hum, int16_t raw)
 {	
 	UART_PUTF2("Sending humidity: %u.%u%%\r\n", hum / 10, hum % 10);
 	UART_PUTF ("Sending temperature: %d\r\n", raw);
 
 	// Set packet content
-	inc_packetcounter();
 	pkg_header_init_weather_humiditytemperature_status();
-	pkg_header_set_senderid(device_id);
-	pkg_header_set_packetcounter(packetcounter);
 	msg_weather_humiditytemperature_set_humidity(hum);
 	msg_weather_humiditytemperature_set_temperature(raw);
-
-	rfm12_send_bufx();
 }
 
 // Measure humidity, calculate relative value in permill and return it.
@@ -302,8 +283,8 @@ bool measure_humidity(void)
 				}
 			}
 			
-			send_humidity_status(reported_result);
-			//send_humidity_status_RAW_DBG(reported_result, (int16_t) MIN((int32_t)avg, 30000)); // for debugging only
+			prepare_humidity_status(reported_result);
+			//prepare_humidity_status_RAW_DBG(reported_result, (int16_t) MIN((int32_t)avg, 30000)); // for debugging only
 			res = true;
 		}
 
@@ -322,8 +303,8 @@ ISR (INT1_vect)
 
 int main(void)
 {
-	uint8_t loop = 0;
 	uint16_t wakeup_sec;
+	bool send;
 
 	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
 	_delay_ms(1000);
@@ -439,8 +420,7 @@ int main(void)
 		}
 		else
 		{
-			// send status from time to time
-			send_status_timeout--;
+			send = true;
 		
 			if (!measure_humidity())
 			{
@@ -450,23 +430,36 @@ int main(void)
 				if (version_status_cycle > 0)
 					version_status_cycle--;
 
-				if (battery_status_cycle == 0)
-				{
-					battery_status_cycle = SEND_BATTERY_STATUS_CYCLE;
-					send_battery_status();
-					led_blink(200, 0, 1);
-				}
-				else if (version_status_cycle == 0)
+				if (version_status_cycle == 0)
 				{
 					version_status_cycle = SEND_VERSION_STATUS_CYCLE;
-					send_deviceinfo_status();
-					led_blink(200, 0, 1);
+					prepare_deviceinfo_status();
+				}
+				else if (battery_status_cycle == 0)
+				{
+					battery_status_cycle = SEND_BATTERY_STATUS_CYCLE;
+					prepare_battery_status();
+				}
+				else
+				{
+					send = false;
 				}
 			}
 
-			rfm12_tick();
-			
-			loop++;
+			if (send)
+			{
+				inc_packetcounter();
+				
+				pkg_header_set_senderid(device_id);
+				pkg_header_set_packetcounter(packetcounter);
+				
+				rfm12_send_bufx();
+				rfm12_tick(); // send packet, and then WAIT SOME TIME BEFORE GOING TO SLEEP (otherwise packet would not be sent)
+
+				switch_led(1);
+				_delay_ms(200);
+				switch_led(0);
+			}
 		}
 		
 		power_down(true);
