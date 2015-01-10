@@ -40,9 +40,9 @@
 // If support implemented, use EEPROM_SUPPORTEDSWITCHES_* E2P addresses.
 #define SWITCH_COUNT 1
 
-#define TRIGGER_DDR DDRC
-#define TRIGGER_PIN 2
-#define TRIGGER_PORT PORTC
+#define TRIGGERPWR_DDR DDRC
+#define TRIGGERPWR_PIN 2
+#define TRIGGERPWR_PORT PORTC
 
 #define BUTTON_DDR DDRD
 #define BUTTON_PORT PORTD
@@ -119,11 +119,11 @@ void switch_schmitt_trigger(bool b_on)
 {
 	if (b_on)
 	{
-		sbi(TRIGGER_PORT, TRIGGER_PIN);
+		sbi(TRIGGERPWR_PORT, TRIGGERPWR_PIN);
 	}
 	else
 	{
-		cbi(TRIGGER_PORT, TRIGGER_PIN);
+		cbi(TRIGGERPWR_PORT, TRIGGERPWR_PIN);
 	}
 }
 
@@ -331,14 +331,9 @@ int main(void)
 	util_init();
 	
 	check_eeprom_compatibility(DEVICETYPE_SOILMOISTUREMETER);
-
-	// init button input
-	cbi(BUTTON_DDR, BUTTON_PIN);
-	//sbi(BUTTON_PORT, BUTTON_PIN);
 	
-	
-	// init power pin for 74HC14D
-	sbi(TRIGGER_DDR, TRIGGER_PIN);
+	// configure power pin for 74HC14D as output
+	sbi(TRIGGERPWR_DDR, TRIGGERPWR_PIN);
 
 	// read packetcounter, increase by cycle and write back
 	packetcounter = e2p_generic_get_packetcounter() + PACKET_COUNTER_WRITE_CYCLE;
@@ -379,12 +374,24 @@ int main(void)
 
 	adc_init();
 
-	// set DIDR for ADC channels, switch off digital input buffers to reduce ADC noise and to save power
-	DIDR0 = 62; // 63 for all channels!
-	DIDR1 = 3;
-	
 	// init AES key
 	e2p_generic_get_aeskey(aes_key);
+
+	// set pull-up for BUTTON_DDR
+	sbi(BUTTON_PORT, BUTTON_PIN);
+	_delay_ms(10);
+
+	// set DIDR for all ADC channels and AINs, switch off digital input buffers to reduce ADC noise and to save power
+	DIDR0 = 63;
+	DIDR1 = 3;
+	
+	// If button pressed at start up, go to sleep for idle power consumption test.
+	// Don't communicate with RFM12, which may not have been connected yet.
+	if (BUTTON)
+	{
+		led_blink(50, 50, 20);
+		power_down(true);
+	}
 
 	led_blink(500, 500, 3);
 
@@ -394,9 +401,6 @@ int main(void)
 	// init interrupt for button (falling edge)
 	sbi(EICRA, ISC11);
 	sbi(EIMSK, INT1);
-	
-	// set pull-up for BUTTON_DDR
-	sbi(BUTTON_PINPORT, BUTTON_PIN);
 	
 	sei();
 
