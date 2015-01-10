@@ -760,7 +760,7 @@
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>16</MaxVal>
-			<DefaultVal>5</DefaultVal>
+			<DefaultVal>6</DefaultVal>
 		</UIntValue>
 		<EnumValue>
 			<ID>WakeupInterval</ID>
@@ -830,7 +830,7 @@
 				<Value>5769</Value>
 				<Name>16h</Name>
 			</Element>
-			<DefaultVal>5070</DefaultVal>
+			<DefaultVal>4489</DefaultVal>
 		</EnumValue>
 		<UIntValue>
 			<ID>AveragingInterval</ID>
@@ -838,7 +838,7 @@
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>16</MaxVal>
-			<DefaultVal>3</DefaultVal>
+			<DefaultVal>6</DefaultVal>
 		</UIntValue>
 		<UIntValue>
 			<ID>DryThreshold</ID>
