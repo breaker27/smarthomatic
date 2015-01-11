@@ -36,10 +36,6 @@
 #include "../src_common/util.h"
 #include "version.h"
 
-// Don't change this, because other switch count like 8 needs other status message.
-// If support implemented, use EEPROM_SUPPORTEDSWITCHES_* E2P addresses.
-#define SWITCH_COUNT 1
-
 #define TRIGGERPWR_DDR DDRC
 #define TRIGGERPWR_PIN 2
 #define TRIGGERPWR_PORT PORTC
@@ -51,16 +47,13 @@
 
 #define BUTTON (!(BUTTON_PINPORT & (1 << BUTTON_PIN)))
 
-#define SEND_STATUS_EVERY_SEC 1800 // how often should a status be sent?
-#define SEND_BATTERY_STATUS_CYCLE 15 // send version status every x wake ups
+#define SEND_BATTERY_STATUS_CYCLE 25 // send version status every x wake ups
 #define SEND_VERSION_STATUS_CYCLE 50 // send version status every x wake ups
 
 #define DENOISE_WINDOW_PERMILL 20
 
 uint16_t device_id;
 uint32_t station_packetcounter;
-bool switch_state[SWITCH_COUNT];
-uint16_t switch_timeout[SWITCH_COUNT];
 
 uint8_t version_status_cycle = 1; // send promptly after startup
 uint8_t battery_status_cycle = 1; // send promptly after startup
@@ -212,8 +205,8 @@ bool measure_humidity(void)
 	counter_meas += result;
 	wupCnt++;
 	
-	UART_PUTF2("Measurement %u, Counter %u\r\n", wupCnt, result);
-	
+	UART_PUTF3("Init mode %u, Measurement %u, Counter %u\r\n", init_mode, wupCnt, result);
+
 	if ((init_mode && (wupCnt == avgIntInit)) || (!init_mode && (wupCnt == avgInt)))
 	{
 		uint32_t avg = init_mode ? counter_meas / avgIntInit : counter_meas / avgInt;
@@ -421,6 +414,8 @@ int main(void)
 		else
 		{
 			send = true;
+
+			//UART_PUTF("version_status_cycle = %u\r\n", version_status_cycle);
 		
 			if (!measure_humidity())
 			{
@@ -456,9 +451,7 @@ int main(void)
 				rfm12_send_bufx();
 				rfm12_tick(); // send packet, and then WAIT SOME TIME BEFORE GOING TO SLEEP (otherwise packet would not be sent)
 
-				switch_led(1);
-				_delay_ms(200);
-				switch_led(0);
+				led_blink(200, 0, 1);
 			}
 		}
 		
