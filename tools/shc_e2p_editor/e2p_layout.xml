@@ -212,7 +212,7 @@
 				<Name>4s</Name>
 			</Element>
 			<Element>
-				<Value>1840</Value>
+				<Value>1467</Value>
 				<Name>6s</Name>
 			</Element>
 			<Element>
@@ -257,7 +257,7 @@
 			</Element>
 			<Element>
 				<Value>2538</Value>
-				<Name>120s</Name>
+				<Name>2m</Name>
 			</Element>
 			<Element>
 				<Value>2736</Value>
@@ -694,11 +694,11 @@
 			</Element>
 			<Element>
 				<Value>2421</Value>
-				<Name>60s</Name>
+				<Name>1m</Name>
 			</Element>
 			<Element>
 				<Value>2538</Value>
-				<Name>120s</Name>
+				<Name>2m</Name>
 			</Element>
 			<Element>
 				<Value>2794</Value>
@@ -717,39 +717,39 @@
 				<Name>20m</Name>
 			</Element>
 			<Element>
-				<Value>4489</Value>
+				<Value>3548</Value>
 				<Name>30m</Name>
 			</Element>
 			<Element>
-				<Value>4745</Value>
+				<Value>3804</Value>
 				<Name>1h</Name>
 			</Element>
 			<Element>
-				<Value>5001</Value>
+				<Value>4060</Value>
 				<Name>2h</Name>
 			</Element>
 			<Element>
-				<Value>5070</Value>
+				<Value>4261</Value>
 				<Name>3h</Name>
 			</Element>
 			<Element>
-				<Value>5257</Value>
+				<Value>4316</Value>
 				<Name>4h</Name>
 			</Element>
 			<Element>
-				<Value>5326</Value>
+				<Value>4517</Value>
 				<Name>6h</Name>
 			</Element>
 			<Element>
-				<Value>5513</Value>
+				<Value>4572</Value>
 				<Name>8h</Name>
 			</Element>
 			<Element>
-				<Value>5582</Value>
+				<Value>4773</Value>
 				<Name>12h</Name>
 			</Element>
 			<Element>
-				<Value>5769</Value>
+				<Value>4828</Value>
 				<Name>16h</Name>
 			</Element>
 			<DefaultVal>3050</DefaultVal>
@@ -772,11 +772,11 @@
 			</Element>
 			<Element>
 				<Value>2421</Value>
-				<Name>60s</Name>
+				<Name>1m</Name>
 			</Element>
 			<Element>
 				<Value>2538</Value>
-				<Name>120s</Name>
+				<Name>2m</Name>
 			</Element>
 			<Element>
 				<Value>2794</Value>
@@ -795,42 +795,42 @@
 				<Name>20m</Name>
 			</Element>
 			<Element>
-				<Value>4489</Value>
+				<Value>3548</Value>
 				<Name>30m</Name>
 			</Element>
 			<Element>
-				<Value>4745</Value>
+				<Value>3804</Value>
 				<Name>1h</Name>
 			</Element>
 			<Element>
-				<Value>5001</Value>
+				<Value>4060</Value>
 				<Name>2h</Name>
 			</Element>
 			<Element>
-				<Value>5070</Value>
+				<Value>4261</Value>
 				<Name>3h</Name>
 			</Element>
 			<Element>
-				<Value>5257</Value>
+				<Value>4316</Value>
 				<Name>4h</Name>
 			</Element>
 			<Element>
-				<Value>5326</Value>
+				<Value>4517</Value>
 				<Name>6h</Name>
 			</Element>
 			<Element>
-				<Value>5513</Value>
+				<Value>4572</Value>
 				<Name>8h</Name>
 			</Element>
 			<Element>
-				<Value>5582</Value>
+				<Value>4773</Value>
 				<Name>12h</Name>
 			</Element>
 			<Element>
-				<Value>5769</Value>
+				<Value>4828</Value>
 				<Name>16h</Name>
 			</Element>
-			<DefaultVal>4489</DefaultVal>
+			<DefaultVal>3548</DefaultVal>
 		</EnumValue>
 		<UIntValue>
 			<ID>AveragingInterval</ID>
