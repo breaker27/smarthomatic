@@ -8,20 +8,20 @@
 </settings>
 <grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
 <layers>
-<layer number="1" name="Top" color="4" fill="1" visible="no" active="no"/>
-<layer number="16" name="Bottom" color="1" fill="1" visible="no" active="no"/>
-<layer number="17" name="Pads" color="2" fill="1" visible="no" active="no"/>
-<layer number="18" name="Vias" color="2" fill="1" visible="no" active="no"/>
-<layer number="19" name="Unrouted" color="6" fill="1" visible="no" active="no"/>
-<layer number="20" name="Dimension" color="15" fill="1" visible="no" active="no"/>
-<layer number="21" name="tPlace" color="7" fill="1" visible="no" active="no"/>
-<layer number="22" name="bPlace" color="7" fill="1" visible="no" active="no"/>
-<layer number="23" name="tOrigins" color="15" fill="1" visible="no" active="no"/>
-<layer number="24" name="bOrigins" color="15" fill="1" visible="no" active="no"/>
-<layer number="25" name="tNames" color="7" fill="1" visible="no" active="no"/>
-<layer number="26" name="bNames" color="7" fill="1" visible="no" active="no"/>
-<layer number="27" name="tValues" color="7" fill="1" visible="no" active="no"/>
-<layer number="28" name="bValues" color="7" fill="1" visible="no" active="no"/>
+<layer number="1" name="Top" color="4" fill="1" visible="yes" active="no"/>
+<layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="no"/>
+<layer number="17" name="Pads" color="2" fill="1" visible="yes" active="no"/>
+<layer number="18" name="Vias" color="2" fill="1" visible="yes" active="no"/>
+<layer number="19" name="Unrouted" color="6" fill="1" visible="yes" active="no"/>
+<layer number="20" name="Dimension" color="15" fill="1" visible="yes" active="no"/>
+<layer number="21" name="tPlace" color="7" fill="1" visible="yes" active="no"/>
+<layer number="22" name="bPlace" color="7" fill="1" visible="yes" active="no"/>
+<layer number="23" name="tOrigins" color="15" fill="1" visible="yes" active="no"/>
+<layer number="24" name="bOrigins" color="15" fill="1" visible="yes" active="no"/>
+<layer number="25" name="tNames" color="7" fill="1" visible="yes" active="no"/>
+<layer number="26" name="bNames" color="7" fill="1" visible="yes" active="no"/>
+<layer number="27" name="tValues" color="7" fill="1" visible="yes" active="no"/>
+<layer number="28" name="bValues" color="7" fill="1" visible="yes" active="no"/>
 <layer number="29" name="tStop" color="7" fill="3" visible="no" active="no"/>
 <layer number="30" name="bStop" color="7" fill="6" visible="no" active="no"/>
 <layer number="31" name="tCream" color="7" fill="4" visible="no" active="no"/>
@@ -30,8 +30,8 @@
 <layer number="34" name="bFinish" color="6" fill="6" visible="no" active="no"/>
 <layer number="35" name="tGlue" color="7" fill="4" visible="no" active="no"/>
 <layer number="36" name="bGlue" color="7" fill="5" visible="no" active="no"/>
-<layer number="37" name="tTest" color="7" fill="1" visible="no" active="no"/>
-<layer number="38" name="bTest" color="7" fill="1" visible="no" active="no"/>
+<layer number="37" name="tTest" color="7" fill="1" visible="yes" active="no"/>
+<layer number="38" name="bTest" color="7" fill="1" visible="yes" active="no"/>
 <layer number="39" name="tKeepout" color="4" fill="11" visible="no" active="no"/>
 <layer number="40" name="bKeepout" color="1" fill="11" visible="no" active="no"/>
 <layer number="41" name="tRestrict" color="4" fill="10" visible="no" active="no"/>
@@ -39,13 +39,13 @@
 <layer number="43" name="vRestrict" color="2" fill="10" visible="no" active="no"/>
 <layer number="44" name="Drills" color="7" fill="1" visible="no" active="no"/>
 <layer number="45" name="Holes" color="7" fill="1" visible="no" active="no"/>
-<layer number="46" name="Milling" color="3" fill="1" visible="no" active="no"/>
-<layer number="47" name="Measures" color="7" fill="1" visible="no" active="no"/>
-<layer number="48" name="Document" color="7" fill="1" visible="no" active="no"/>
-<layer number="49" name="Reference" color="7" fill="1" visible="no" active="no"/>
-<layer number="50" name="dxf" color="7" fill="1" visible="no" active="no"/>
-<layer number="51" name="tDocu" color="7" fill="1" visible="no" active="no"/>
-<layer number="52" name="bDocu" color="7" fill="1" visible="no" active="no"/>
+<layer number="46" name="Milling" color="3" fill="1" visible="yes" active="no"/>
+<layer number="47" name="Measures" color="7" fill="1" visible="yes" active="no"/>
+<layer number="48" name="Document" color="7" fill="1" visible="yes" active="no"/>
+<layer number="49" name="Reference" color="7" fill="1" visible="yes" active="no"/>
+<layer number="50" name="dxf" color="7" fill="1" visible="yes" active="no"/>
+<layer number="51" name="tDocu" color="7" fill="1" visible="yes" active="no"/>
+<layer number="52" name="bDocu" color="7" fill="1" visible="yes" active="no"/>
 <layer number="91" name="Nets" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="92" name="Busses" color="1" fill="1" visible="yes" active="yes"/>
 <layer number="93" name="Pins" color="2" fill="1" visible="no" active="yes"/>
@@ -9118,31 +9118,32 @@ Metric Code Size 5664</description>
 </library>
 <library name="shc_mini_isp">
 <packages>
-<package name="PINHD_1X5_1.27">
+<package name="PINHD_1X6_1.27">
 <pad name="RESET" x="0" y="2.54" drill="0.5" shape="octagon"/>
 <pad name="MOSI" x="0" y="1.27" drill="0.5" shape="octagon"/>
 <pad name="MISO" x="0" y="0" drill="0.5" shape="octagon"/>
 <pad name="SCK" x="0" y="-1.27" drill="0.5" shape="octagon"/>
 <pad name="GND" x="0" y="-2.54" drill="0.5" shape="octagon"/>
-<text x="-1.27" y="4.445" size="1.27" layer="25">&gt;NAME</text>
+<text x="-1.27" y="5.715" size="1.27" layer="25">&gt;NAME</text>
 <text x="-1.27" y="-5.715" size="1.27" layer="27">&gt;VALUE</text>
-<wire x1="-1.27" y1="3.81" x2="1.27" y2="3.81" width="0.127" layer="21"/>
-<wire x1="1.27" y1="3.81" x2="1.27" y2="1.27" width="0.127" layer="21"/>
+<wire x1="-1.27" y1="5.08" x2="1.27" y2="5.08" width="0.127" layer="21"/>
+<wire x1="1.27" y1="5.08" x2="1.27" y2="1.27" width="0.127" layer="21"/>
 <wire x1="1.27" y1="1.27" x2="1.27" y2="-3.81" width="0.127" layer="21"/>
 <wire x1="1.27" y1="-3.81" x2="-1.27" y2="-3.81" width="0.127" layer="21"/>
 <wire x1="-1.27" y1="-3.81" x2="-1.27" y2="1.27" width="0.127" layer="21"/>
 <text x="-1.5875" y="-2.8575" size="1.016" layer="21" rot="R90">1</text>
 <rectangle x1="-1.27" y1="-3.81" x2="1.27" y2="-1.905" layer="21"/>
-<wire x1="-1.27" y1="1.27" x2="-1.27" y2="3.81" width="0.127" layer="21"/>
+<wire x1="-1.27" y1="1.27" x2="-1.27" y2="5.08" width="0.127" layer="21"/>
+<pad name="VCC" x="0" y="3.81" drill="0.5" shape="octagon"/>
 </package>
 </packages>
 <symbols>
 <symbol name="SHC_MINI_ISP">
 <description>smarthomatic mini ISP connector</description>
 <wire x1="-6.35" y1="7.62" x2="3.81" y2="7.62" width="0.254" layer="94"/>
-<wire x1="3.81" y1="7.62" x2="3.81" y2="-7.62" width="0.254" layer="94"/>
-<wire x1="3.81" y1="-7.62" x2="-6.35" y2="-7.62" width="0.254" layer="94"/>
-<wire x1="-6.35" y1="-7.62" x2="-6.35" y2="7.62" width="0.254" layer="94"/>
+<wire x1="3.81" y1="7.62" x2="3.81" y2="-10.16" width="0.254" layer="94"/>
+<wire x1="3.81" y1="-10.16" x2="-6.35" y2="-10.16" width="0.254" layer="94"/>
+<wire x1="-6.35" y1="-10.16" x2="-6.35" y2="7.62" width="0.254" layer="94"/>
 <text x="-6.35" y="13.716" size="1.27" layer="97">smarthomatic</text>
 <pin name="GND@1" x="-2.54" y="5.08" length="middle" direction="pwr"/>
 <pin name="2" x="-2.54" y="2.54" length="middle" direction="out"/>
@@ -9151,7 +9152,8 @@ Metric Code Size 5664</description>
 <pin name="5" x="-2.54" y="-5.08" length="middle" direction="out"/>
 <text x="-6.35" y="11.176" size="1.27" layer="97">mini ISP connector</text>
 <text x="-6.35" y="8.382" size="1.778" layer="95">&gt;NAME</text>
-<text x="-6.35" y="-10.16" size="1.778" layer="96">&gt;VALUE</text>
+<text x="-6.35" y="-12.7" size="1.778" layer="96">&gt;VALUE</text>
+<pin name="VCC@6" x="-2.54" y="-7.62" length="middle" direction="pwr"/>
 </symbol>
 </symbols>
 <devicesets>
@@ -9161,13 +9163,14 @@ Metric Code Size 5664</description>
 <gate name="G$1" symbol="SHC_MINI_ISP" x="0" y="0"/>
 </gates>
 <devices>
-<device name="" package="PINHD_1X5_1.27">
+<device name="" package="PINHD_1X6_1.27">
 <connects>
 <connect gate="G$1" pin="2" pad="SCK"/>
 <connect gate="G$1" pin="3" pad="MISO"/>
 <connect gate="G$1" pin="4" pad="MOSI"/>
 <connect gate="G$1" pin="5" pad="RESET"/>
 <connect gate="G$1" pin="GND@1" pad="GND"/>
+<connect gate="G$1" pin="VCC@6" pad="VCC"/>
 </connects>
 <technologies>
 <technology name="P"/>
@@ -9313,9 +9316,11 @@ Metric Code Size 5664</description>
 <circle x="0" y="0" radius="10.198" width="0.127" layer="21"/>
 <smd name="VCC1" x="-13.0625" y="0" dx="5.08" dy="5.08" layer="1"/>
 <smd name="VCC2" x="13.0625" y="0" dx="5.08" dy="5.08" layer="1"/>
-<text x="-5" y="4" size="1.27" layer="25" ratio="10">&gt;NAME</text>
-<text x="-5" y="6" size="1.27" layer="27" ratio="10">&gt;VALUE</text>
+<text x="8.7" y="-3.73" size="1.27" layer="25" ratio="10" rot="R90">&gt;NAME</text>
+<text x="-7.27" y="-3.73" size="1.27" layer="27" ratio="10" rot="R90">&gt;VALUE</text>
 <smd name="GND" x="0" y="0" dx="12.7" dy="12.7" layer="1"/>
+<rectangle x1="-16.1925" y1="-3.175" x2="-9.8425" y2="3.175" layer="41"/>
+<rectangle x1="9.8425" y1="-3.175" x2="16.1925" y2="3.175" layer="41"/>
 </package>
 </packages>
 <symbols>
@@ -9354,6 +9359,109 @@ Metric Code Size 5664</description>
 </deviceset>
 </devicesets>
 </library>
+<library name="jumper">
+<description>&lt;b&gt;Jumpers&lt;/b&gt;&lt;p&gt;
+&lt;author&gt;Created by librarian@cadsoft.de&lt;/author&gt;</description>
+<packages>
+<package name="SJ">
+<description>&lt;b&gt;Solder jumper&lt;/b&gt;</description>
+<wire x1="1.397" y1="-1.016" x2="-1.397" y2="-1.016" width="0.1524" layer="21"/>
+<wire x1="1.397" y1="1.016" x2="1.651" y2="0.762" width="0.1524" layer="21" curve="-90"/>
+<wire x1="-1.651" y1="0.762" x2="-1.397" y2="1.016" width="0.1524" layer="21" curve="-90"/>
+<wire x1="-1.651" y1="-0.762" x2="-1.397" y2="-1.016" width="0.1524" layer="21" curve="90"/>
+<wire x1="1.397" y1="-1.016" x2="1.651" y2="-0.762" width="0.1524" layer="21" curve="90"/>
+<wire x1="1.651" y1="-0.762" x2="1.651" y2="0.762" width="0.1524" layer="21"/>
+<wire x1="-1.651" y1="-0.762" x2="-1.651" y2="0.762" width="0.1524" layer="21"/>
+<wire x1="-1.397" y1="1.016" x2="1.397" y2="1.016" width="0.1524" layer="21"/>
+<wire x1="1.016" y1="0" x2="1.524" y2="0" width="0.1524" layer="51"/>
+<wire x1="-1.016" y1="0" x2="-1.524" y2="0" width="0.1524" layer="51"/>
+<wire x1="-0.254" y1="-0.127" x2="-0.254" y2="0.127" width="1.27" layer="51" curve="-180" cap="flat"/>
+<wire x1="0.254" y1="0.127" x2="0.254" y2="-0.127" width="1.27" layer="51" curve="-180" cap="flat"/>
+<smd name="1" x="-0.762" y="0" dx="1.1684" dy="1.6002" layer="1"/>
+<smd name="2" x="0.762" y="0" dx="1.1684" dy="1.6002" layer="1"/>
+<text x="-1.651" y="1.143" size="1.27" layer="25" ratio="10">&gt;NAME</text>
+<text x="0.4001" y="0" size="0.02" layer="27">&gt;VALUE</text>
+<rectangle x1="-0.0762" y1="-0.9144" x2="0.0762" y2="0.9144" layer="29"/>
+</package>
+<package name="SJW">
+<description>&lt;b&gt;Solder jumper&lt;/b&gt;</description>
+<wire x1="1.905" y1="-1.524" x2="-1.905" y2="-1.524" width="0.1524" layer="21"/>
+<wire x1="1.905" y1="1.524" x2="2.159" y2="1.27" width="0.1524" layer="21" curve="-90"/>
+<wire x1="-2.159" y1="1.27" x2="-1.905" y2="1.524" width="0.1524" layer="21" curve="-90"/>
+<wire x1="-2.159" y1="-1.27" x2="-1.905" y2="-1.524" width="0.1524" layer="21" curve="90"/>
+<wire x1="1.905" y1="-1.524" x2="2.159" y2="-1.27" width="0.1524" layer="21" curve="90"/>
+<wire x1="2.159" y1="-1.27" x2="2.159" y2="1.27" width="0.1524" layer="21"/>
+<wire x1="-2.159" y1="-1.27" x2="-2.159" y2="1.27" width="0.1524" layer="21"/>
+<wire x1="-1.905" y1="1.524" x2="1.905" y2="1.524" width="0.1524" layer="21"/>
+<wire x1="0.762" y1="0.762" x2="0.762" y2="-0.762" width="0.1524" layer="51"/>
+<wire x1="-0.762" y1="0.762" x2="-0.762" y2="-0.762" width="0.1524" layer="51"/>
+<wire x1="1.524" y1="0" x2="2.032" y2="0" width="0.1524" layer="51"/>
+<wire x1="-1.524" y1="0" x2="-2.032" y2="0" width="0.1524" layer="51"/>
+<wire x1="0.762" y1="0.762" x2="0.762" y2="-0.762" width="0.1524" layer="51" curve="-180"/>
+<wire x1="-0.762" y1="0.762" x2="-0.762" y2="-0.762" width="0.1524" layer="51" curve="180"/>
+<smd name="1" x="-1.27" y="0" dx="1.27" dy="2.54" layer="1"/>
+<smd name="2" x="1.27" y="0" dx="1.27" dy="2.54" layer="1"/>
+<text x="-2.159" y="1.778" size="1.27" layer="25" ratio="10">&gt;NAME</text>
+<text x="1" y="0" size="0.02" layer="27">&gt;VALUE</text>
+<rectangle x1="0.762" y1="-0.762" x2="1.016" y2="0.762" layer="51"/>
+<rectangle x1="1.016" y1="-0.635" x2="1.27" y2="0.635" layer="51"/>
+<rectangle x1="1.27" y1="-0.508" x2="1.397" y2="0.508" layer="51"/>
+<rectangle x1="1.397" y1="-0.254" x2="1.524" y2="0.254" layer="51"/>
+<rectangle x1="-1.016" y1="-0.762" x2="-0.762" y2="0.762" layer="51"/>
+<rectangle x1="-1.27" y1="-0.635" x2="-1.016" y2="0.635" layer="51"/>
+<rectangle x1="-1.397" y1="-0.508" x2="-1.27" y2="0.508" layer="51"/>
+<rectangle x1="-1.524" y1="-0.254" x2="-1.397" y2="0.254" layer="51"/>
+<rectangle x1="0.9652" y1="-0.7112" x2="1.0922" y2="-0.5842" layer="51"/>
+<rectangle x1="1.3462" y1="-0.3556" x2="1.4732" y2="-0.2286" layer="51"/>
+<rectangle x1="1.3462" y1="0.2032" x2="1.4732" y2="0.3302" layer="51"/>
+<rectangle x1="0.9652" y1="0.5842" x2="1.0922" y2="0.7112" layer="51"/>
+<rectangle x1="-1.0922" y1="-0.7112" x2="-0.9652" y2="-0.5842" layer="51"/>
+<rectangle x1="-1.4478" y1="-0.3302" x2="-1.3208" y2="-0.2032" layer="51"/>
+<rectangle x1="-1.4732" y1="0.2032" x2="-1.3462" y2="0.3302" layer="51"/>
+<rectangle x1="-1.1176" y1="0.5842" x2="-0.9906" y2="0.7112" layer="51"/>
+</package>
+</packages>
+<symbols>
+<symbol name="SJ">
+<wire x1="0.381" y1="0.635" x2="0.381" y2="-0.635" width="1.27" layer="94" curve="-180" cap="flat"/>
+<wire x1="-0.381" y1="-0.635" x2="-0.381" y2="0.635" width="1.27" layer="94" curve="-180" cap="flat"/>
+<wire x1="2.54" y1="0" x2="1.651" y2="0" width="0.1524" layer="94"/>
+<wire x1="-2.54" y1="0" x2="-1.651" y2="0" width="0.1524" layer="94"/>
+<text x="-2.54" y="2.54" size="1.778" layer="95">&gt;NAME</text>
+<text x="-2.54" y="-3.81" size="1.778" layer="96">&gt;VALUE</text>
+<pin name="2" x="5.08" y="0" visible="pad" length="short" direction="pas" swaplevel="1" rot="R180"/>
+<pin name="1" x="-5.08" y="0" visible="pad" length="short" direction="pas" swaplevel="1"/>
+</symbol>
+</symbols>
+<devicesets>
+<deviceset name="SJ" prefix="SJ" uservalue="yes">
+<description>SMD solder &lt;b&gt;JUMPER&lt;/b&gt;</description>
+<gates>
+<gate name="1" symbol="SJ" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="SJ">
+<connects>
+<connect gate="1" pin="1" pad="1"/>
+<connect gate="1" pin="2" pad="2"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+<device name="W" package="SJW">
+<connects>
+<connect gate="1" pin="1" pad="1"/>
+<connect gate="1" pin="2" pad="2"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+</devicesets>
+</library>
 </libraries>
 <attributes>
 </attributes>
@@ -9373,10 +9481,9 @@ Metric Code Size 5664</description>
 <part name="P+3" library="supply1" deviceset="VCC" device=""/>
 <part name="JP2" library="pinhead" deviceset="PINHD-1X1" device="" value="ANT"/>
 <part name="IC3" library="74xx-eu" deviceset="74*14" device="D" technology="HC"/>
-<part name="R1" library="rcl" deviceset="R-EU_" device="R0603" value="220R"/>
-<part name="R4" library="rcl" deviceset="R-EU_" device="R0603" value="1M"/>
+<part name="R1" library="rcl" deviceset="R-EU_" device="R0603" value="560R"/>
+<part name="R2" library="rcl" deviceset="R-EU_" device="R0603" value="1M"/>
 <part name="R3" library="rcl" deviceset="R-EU_" device="R0603" value="100k"/>
-<part name="R2" library="rcl" deviceset="R-EU_" device="R0603" value="220R"/>
 <part name="GND4" library="supply1" deviceset="GND" device=""/>
 <part name="GND5" library="supply1" deviceset="GND" device=""/>
 <part name="C1" library="resistor" deviceset="C-EU" device="C0603" value="1µF"/>
@@ -9385,14 +9492,16 @@ Metric Code Size 5664</description>
 <part name="LED1" library="led" deviceset="LED" device="3MM" value="2mA"/>
 <part name="S1" library="switch-omron-smd" deviceset="LSG" device="" value="SET"/>
 <part name="JP3" library="pinhead" deviceset="PINHD-1X1" device="" value="TX"/>
+<part name="SJ1" library="jumper" deviceset="SJ" device="" value="VCC"/>
+<part name="P+4" library="supply1" deviceset="VCC" device=""/>
 </parts>
 <sheets>
 <sheet>
 <plain>
 <frame x1="-66.04" y1="-40.64" x2="154.94" y2="119.38" columns="8" rows="5" layer="97"/>
 <text x="63.5" y="104.14" size="3.81" layer="97">smarthomatic Soil Moisture Meter</text>
-<text x="114.3" y="99.06" size="2.1844" layer="97">Date: 01.01.2015</text>
-<text x="63.5" y="99.06" size="2.1844" layer="97">Rev 1.1</text>
+<text x="114.3" y="99.06" size="2.1844" layer="97">Date: 01.02.2015</text>
+<text x="63.5" y="99.06" size="2.1844" layer="97">Rev 1.2</text>
 <text x="63.5" y="93.98" size="2.1844" layer="97">Copyright (c) Uwe Freese, www.smarthomatic.org</text>
 <rectangle x1="33.02" y1="86.36" x2="38.1" y2="91.44" layer="97"/>
 <rectangle x1="33.02" y1="78.74" x2="38.1" y2="83.82" layer="97"/>
@@ -9414,9 +9523,8 @@ Metric Code Size 5664</description>
 <instance part="IC3" gate="E" x="10.16" y="101.6"/>
 <instance part="IC3" gate="F" x="45.72" y="101.6"/>
 <instance part="R1" gate="G$1" x="58.42" y="5.08"/>
-<instance part="R4" gate="G$1" x="101.6" y="12.7" rot="R90"/>
+<instance part="R2" gate="G$1" x="101.6" y="12.7" rot="R90"/>
 <instance part="R3" gate="G$1" x="-22.86" y="63.5"/>
-<instance part="R2" gate="G$1" x="63.5" y="71.12" rot="R270"/>
 <instance part="GND4" gate="1" x="-38.1" y="93.98"/>
 <instance part="GND5" gate="1" x="60.96" y="12.7"/>
 <instance part="C1" gate="G$1" x="-38.1" y="5.08"/>
@@ -9426,6 +9534,8 @@ Metric Code Size 5664</description>
 <instance part="LED1" gate="G$1" x="71.12" y="5.08" rot="R90"/>
 <instance part="S1" gate="G$1" x="50.8" y="15.24" rot="R270"/>
 <instance part="JP3" gate="G$1" x="43.18" y="20.32"/>
+<instance part="SJ1" gate="1" x="76.2" y="-25.4"/>
+<instance part="P+4" gate="VCC" x="63.5" y="-25.4" rot="R90"/>
 </instances>
 <busses>
 </busses>
@@ -9495,7 +9605,7 @@ Metric Code Size 5664</description>
 <pinref part="IC2" gate="G$1" pin="FSK/DATA/NFFS"/>
 <wire x1="101.6" y1="27.94" x2="101.6" y2="22.86" width="0.1524" layer="91"/>
 <wire x1="101.6" y1="17.78" x2="101.6" y2="22.86" width="0.1524" layer="91"/>
-<pinref part="R4" gate="G$1" pin="2"/>
+<pinref part="R2" gate="G$1" pin="2"/>
 </segment>
 <segment>
 <pinref part="P+3" gate="VCC" pin="VCC"/>
@@ -9528,6 +9638,11 @@ Metric Code Size 5664</description>
 <wire x1="-43.942" y1="10.16" x2="-43.942" y2="12.7" width="0.1524" layer="91"/>
 <wire x1="-43.942" y1="12.7" x2="-45.72" y2="12.7" width="0.1524" layer="91"/>
 <junction x="-45.72" y="12.7"/>
+</segment>
+<segment>
+<pinref part="P+4" gate="VCC" pin="VCC"/>
+<pinref part="SJ1" gate="1" pin="1"/>
+<wire x1="66.04" y1="-25.4" x2="71.12" y2="-25.4" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$3" class="0">
@@ -9591,7 +9706,7 @@ Metric Code Size 5664</description>
 <wire x1="106.68" y1="0" x2="106.68" y2="27.94" width="0.1524" layer="91"/>
 <wire x1="35.56" y1="0" x2="101.6" y2="0" width="0.1524" layer="91"/>
 <junction x="101.6" y="0"/>
-<pinref part="R4" gate="G$1" pin="1"/>
+<pinref part="R2" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="N$15" class="0">
@@ -9654,16 +9769,11 @@ Metric Code Size 5664</description>
 <net name="N$10" class="0">
 <segment>
 <pinref part="IC3" gate="C" pin="O"/>
-<pinref part="R2" gate="G$1" pin="1"/>
 <wire x1="55.88" y1="76.2" x2="63.5" y2="76.2" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="N$11" class="0">
-<segment>
 <pinref part="IC1" gate="1" pin="PD5(T1/OC0B/PCINT21)"/>
 <wire x1="35.56" y1="10.16" x2="63.5" y2="10.16" width="0.1524" layer="91"/>
 <wire x1="63.5" y1="10.16" x2="63.5" y2="66.04" width="0.1524" layer="91"/>
-<pinref part="R2" gate="G$1" pin="2"/>
+<wire x1="63.5" y1="76.2" x2="63.5" y2="66.04" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$17" class="0">
@@ -9704,6 +9814,13 @@ Metric Code Size 5664</description>
 <pinref part="JP3" gate="G$1" pin="1"/>
 </segment>
 </net>
+<net name="N$1" class="0">
+<segment>
+<pinref part="SJ1" gate="1" pin="2"/>
+<pinref part="JP1" gate="G$1" pin="VCC@6"/>
+<wire x1="81.28" y1="-25.4" x2="91.44" y2="-25.4" width="0.1524" layer="91"/>
+</segment>
+</net>
 </nets>
 </sheet>
 </sheets>
@@ -9714,6 +9831,7 @@ Metric Code Size 5664</description>
 <approved hash="104,1,-45.72,86.36,IC3P,VCC,N$20,,,"/>
 <approved hash="104,1,-45.72,10.16,BAT,VCC1,VCC,,,"/>
 <approved hash="104,1,-43.942,10.16,BAT,VCC2,VCC,,,"/>
+<approved hash="104,1,91.44,-25.4,JP1,VCC,N$1,,,"/>
 </errors>
 </schematic>
 </drawing>
