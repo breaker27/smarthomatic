@@ -34,6 +34,16 @@
 
 //#define SREG_I 7 // global interrupt enable bit in SREG
 
+// detect sensor type by family code in ROM ID
+#define ONEWIRE_FAMILY_CODE_DS18S20    0x10
+#define ONEWIRE_FAMILY_CODE_DS18B20    0x28
+
+// one-wire commands
+#define CMD_READ_ROM                   0x33
+#define CMD_MATCH_ROM                  0x55
+#define CMD_CONVERT_T                  0x44
+#define CMD_READ_SCRATCHPAD            0xbe
+
 bool onewire_error = false;
 bool onewire_global_interrupts_enabled;
 
@@ -152,8 +162,7 @@ bool onewire_get_rom_id(uint8_t * id_array)
 		return true;
 	}
 
-	// command 0x33 = "read ROM"
-	onewire_write_byte(0x33);
+	onewire_write_byte(CMD_READ_ROM);
 
 	// store answer (ROM ID)
 	for (i = 0; i < 8; i++)
@@ -174,8 +183,7 @@ bool _onewire_send_cmd(uint8_t * id_array, uint8_t cmd)
 		return true;
 	}
 
-	// command 0x55 = "match ROM"
-	onewire_write_byte(0x55);
+	onewire_write_byte(CMD_MATCH_ROM);
 
 	// send ROM ID
 	for (i = 0; i < 8; i++)
@@ -196,8 +204,7 @@ int16_t onewire_get_temperature(uint8_t * id_array)
 
 	disable_global_interrupts();
 	
-	// command 0x44 = "convert T"
-	if (_onewire_send_cmd(id_array, 0x44))
+	if (_onewire_send_cmd(id_array, CMD_CONVERT_T))
 	{
 		enable_global_interrupts();
 		return NO_TEMPERATURE;
@@ -209,8 +216,7 @@ int16_t onewire_get_temperature(uint8_t * id_array)
 
 	disable_global_interrupts();
 
-	// command 0xbe = "Read Scratchpad"
-	if (_onewire_send_cmd(id_array, 0xbe))
+	if (_onewire_send_cmd(id_array, CMD_READ_SCRATCHPAD))
 	{
 		enable_global_interrupts();
 		return NO_TEMPERATURE;
@@ -224,13 +230,37 @@ int16_t onewire_get_temperature(uint8_t * id_array)
 
 	enable_global_interrupts();
 	
-	// calculate temperature according datasheet
-	if (tmp[1] == 0)
-		res = tmp[0];
-	else
-		res = -256 + tmp[0];
-	
-	res = (int16_t)((int32_t)res * 100 / 2 - 25 + ((int32_t)tmp[7] - tmp[6]) * 100 / tmp[7]);
-	
+	// Calculate temperature according datasheet.
+	// Detect sensor type by family code.
+	switch (id_array[0])
+	{
+		case ONEWIRE_FAMILY_CODE_DS18S20:
+			// get temperature raw value considering sign bits
+			if (tmp[1] == 0)
+				res = tmp[0];
+			else
+				res = -256 + tmp[0];
+			
+			// calculate temperate using COUNT_PER_C and COUNT_REMAIN for higher resolution
+			res = (int16_t)((int32_t)res * 100 / 2 - 25 + ((int32_t)tmp[7] - tmp[6]) * 100 / tmp[7]);
+			break;
+			
+		case ONEWIRE_FAMILY_CODE_DS18B20:
+			// get temperature raw value
+			res = ((uint16_t)(tmp[1] & 0b00000111) << 8) + tmp[0];
+			
+			// clear undefined bits if lower resolution is configured in DS18B20 e2p
+			uint8_t undefined_bits = 3 - ((tmp[4] >> 5) & 3);
+			res = res & (0b1111111111111111 << undefined_bits);
+			
+			if (tmp[1] >> 7 == 1)
+				res = -4096 + res;
+
+			res = (int16_t)((int32_t)res * 625 / 100);
+			break;
+			
+		default: res = NO_TEMPERATURE;
+	}
+
 	return res;
 }

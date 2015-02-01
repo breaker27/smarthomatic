@@ -18,8 +18,8 @@
 */
 
 /*
-* This 1-wire lib defines some high level functions to access the DS18S20
-* temperature sensor. It currently supports only one sensor.
+* This 1-wire lib defines some high level functions to access the DS18S20 and
+* DS18B20 temperature sensors. It currently supports only one sensor.
 *
 * Internal low level functions which implement the communication according to
 * the 1-wire protocol are in the *.c file.
@@ -46,7 +46,7 @@ extern void onewire_init(void);
 // Returns true if an error occurred (no slave found).
 extern bool onewire_get_rom_id(uint8_t * id_array);
 
-// Get temperature from the DS18S20 with the given ROM ID in 1/100°C.
+// Get temperature from the DS18S20/DS18B20 with the given ROM ID in 1/100°C.
 // Returns NO_TEMPERATURE in case of an error.
 extern int16_t onewire_get_temperature(uint8_t * id_array);
 
