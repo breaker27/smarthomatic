@@ -572,7 +572,7 @@ void measure_temperature_i2c(void)
 
 void measure_temperature_1wire(void)
 {
-	if (temperature_sensor_type != TEMPERATURESENSORTYPE_DS18S20)
+	if (temperature_sensor_type != TEMPERATURESENSORTYPE_DS18X20)
 		return;
 		
 	if (!countWakeup(&temperature))
@@ -937,7 +937,7 @@ int main(void)
 	  sht11_init();
 	  vempty = 1200; // 1.2V * 2 cells = 2.4V = min. voltage for SHT15
 	}
-	else if (temperature_sensor_type == TEMPERATURESENSORTYPE_DS18S20)
+	else if (temperature_sensor_type == TEMPERATURESENSORTYPE_DS18X20)
 	{
 		onewire_init();
 		bool res = onewire_get_rom_id(rom_id);
@@ -953,7 +953,7 @@ int main(void)
 		UART_PUTS("1-wire ROM ID: ");
 		print_bytearray(rom_id, 8);
 		
-		vempty = 1500; // 1.5V * 2 cells = 3.0V = min. voltage for DS18S20
+		vempty = 1500; // 1.5V * 2 cells = 3.0V = min. voltage for DS18X20
 	}
 	
 	UART_PUTF3("Min. battery voltage: %umV (measInt %u, avgInt %u)\r\n", vempty, battery_voltage.measInt, battery_voltage.avgInt);

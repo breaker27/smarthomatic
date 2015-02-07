@@ -133,7 +133,7 @@
 			</Element>
 			<Element>
 				<Value>4</Value>
-				<Name>DS18S20</Name>
+				<Name>DS18x20</Name>
 			</Element>
 			<Element>
 				<Value>5</Value>
