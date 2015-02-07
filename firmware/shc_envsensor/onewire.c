@@ -248,13 +248,13 @@ int16_t onewire_get_temperature(uint8_t * id_array)
 		case ONEWIRE_FAMILY_CODE_DS18B20:
 			// get temperature raw value
 			res = ((uint16_t)(tmp[1] & 0b00000111) << 8) + tmp[0];
-			
+
 			// clear undefined bits if lower resolution is configured in DS18B20 e2p
 			uint8_t undefined_bits = 3 - ((tmp[4] >> 5) & 3);
 			res = res & (0b1111111111111111 << undefined_bits);
 			
 			if (tmp[1] >> 7 == 1)
-				res = -4096 + res;
+				res = -2048 + res;
 
 			res = (int16_t)((int32_t)res * 625 / 100);
 			break;
