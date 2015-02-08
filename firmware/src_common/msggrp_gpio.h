@@ -41,23 +41,26 @@
 
 // ENUM for MessageIDs of this MessageGroup
 typedef enum {
-  MESSAGEID_GPIO_DIGITALPIN = 1,
-  MESSAGEID_GPIO_ANALOGPIN = 2
+  MESSAGEID_GPIO_DIGITALPORT = 1,
+  MESSAGEID_GPIO_DIGITALPORTTIMEOUT = 2,
+  MESSAGEID_GPIO_DIGITALPIN = 5,
+  MESSAGEID_GPIO_DIGITALPINTIMEOUT = 6,
+  MESSAGEID_GPIO_ANALOGPORT = 10
 } GPIO_MessageIDEnum;
 
 
-// Message "gpio_digitalpin"
-// -------------------------
+// Message "gpio_digitalport"
+// --------------------------
 // MessageGroupID: 1
 // MessageID: 1
 // Possible MessageTypes: Get, Set, SetGet, Status, Ack, AckStatus
 // Validity: test
 // Length w/o Header + HeaderExtension: 8 bits
 // Data fields: On
-// Description: This is the state of up to 8 pins.
+// Description: This is the state of the complete digital port, containing up to 8 pins.
 
 // Function to initialize header for the MessageType "Get".
-static inline void pkg_header_init_gpio_digitalpin_get(void)
+static inline void pkg_header_init_gpio_digitalport_get(void)
 {
   memset(&bufx[0], 0, sizeof(bufx));
   pkg_header_set_messagetype(0);
@@ -69,7 +72,7 @@ static inline void pkg_header_init_gpio_digitalpin_get(void)
 }
 
 // Function to initialize header for the MessageType "Set".
-static inline void pkg_header_init_gpio_digitalpin_set(void)
+static inline void pkg_header_init_gpio_digitalport_set(void)
 {
   memset(&bufx[0], 0, sizeof(bufx));
   pkg_header_set_messagetype(1);
@@ -81,7 +84,7 @@ static inline void pkg_header_init_gpio_digitalpin_set(void)
 }
 
 // Function to initialize header for the MessageType "SetGet".
-static inline void pkg_header_init_gpio_digitalpin_setget(void)
+static inline void pkg_header_init_gpio_digitalport_setget(void)
 {
   memset(&bufx[0], 0, sizeof(bufx));
   pkg_header_set_messagetype(2);
@@ -93,12 +96,227 @@ static inline void pkg_header_init_gpio_digitalpin_setget(void)
 }
 
 // Function to initialize header for the MessageType "Status".
-static inline void pkg_header_init_gpio_digitalpin_status(void)
+static inline void pkg_header_init_gpio_digitalport_status(void)
 {
   memset(&bufx[0], 0, sizeof(bufx));
   pkg_header_set_messagetype(8);
   pkg_headerext_status_set_messagegroupid(1);
   pkg_headerext_status_set_messageid(1);
+  __HEADEROFFSETBITS = 83;
+  __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 8;
+}
+
+// Function to initialize header for the MessageType "Ack".
+static inline void pkg_header_init_gpio_digitalport_ack(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(9);
+  __HEADEROFFSETBITS = 109;
+  __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 9;
+}
+
+// Function to initialize header for the MessageType "AckStatus".
+static inline void pkg_header_init_gpio_digitalport_ackstatus(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(10);
+  pkg_headerext_ackstatus_set_messagegroupid(1);
+  pkg_headerext_ackstatus_set_messageid(1);
+  __HEADEROFFSETBITS = 120;
+  __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 10;
+}
+
+// On (BoolValue[8])
+// Description: Tells if the pin is on (at high level) or not (low level).
+
+// Set On (BoolValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1, length bits 1
+static inline void msg_gpio_digitalport_set_on(uint8_t index, bool val)
+{
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1, 1, val ? 1 : 0, bufx);
+}
+
+// Get On (BoolValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1, length bits 1
+static inline bool msg_gpio_digitalport_get_on(uint8_t index)
+{
+  return array_read_UIntValue8((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1, 1, 0, 1, bufx) == 1;
+}
+
+
+// Message "gpio_digitalporttimeout"
+// ---------------------------------
+// MessageGroupID: 1
+// MessageID: 2
+// Possible MessageTypes: Get, Set, SetGet, Status, Ack, AckStatus
+// Validity: test
+// Length w/o Header + HeaderExtension: 136 bits
+// Data fields: On, TimeoutSec
+// Description: This is the state of the complete digital port, containing up to 8 pins, including a timeout value per pin.
+
+// Function to initialize header for the MessageType "Get".
+static inline void pkg_header_init_gpio_digitalporttimeout_get(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(0);
+  pkg_headerext_get_set_messagegroupid(1);
+  pkg_headerext_get_set_messageid(2);
+  __HEADEROFFSETBITS = 95;
+  __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 0;
+}
+
+// Function to initialize header for the MessageType "Set".
+static inline void pkg_header_init_gpio_digitalporttimeout_set(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(1);
+  pkg_headerext_set_set_messagegroupid(1);
+  pkg_headerext_set_set_messageid(2);
+  __HEADEROFFSETBITS = 95;
+  __PACKETSIZEBYTES = 32;
+  __MESSAGETYPE = 1;
+}
+
+// Function to initialize header for the MessageType "SetGet".
+static inline void pkg_header_init_gpio_digitalporttimeout_setget(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(2);
+  pkg_headerext_setget_set_messagegroupid(1);
+  pkg_headerext_setget_set_messageid(2);
+  __HEADEROFFSETBITS = 95;
+  __PACKETSIZEBYTES = 32;
+  __MESSAGETYPE = 2;
+}
+
+// Function to initialize header for the MessageType "Status".
+static inline void pkg_header_init_gpio_digitalporttimeout_status(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(8);
+  pkg_headerext_status_set_messagegroupid(1);
+  pkg_headerext_status_set_messageid(2);
+  __HEADEROFFSETBITS = 83;
+  __PACKETSIZEBYTES = 32;
+  __MESSAGETYPE = 8;
+}
+
+// Function to initialize header for the MessageType "Ack".
+static inline void pkg_header_init_gpio_digitalporttimeout_ack(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(9);
+  __HEADEROFFSETBITS = 109;
+  __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 9;
+}
+
+// Function to initialize header for the MessageType "AckStatus".
+static inline void pkg_header_init_gpio_digitalporttimeout_ackstatus(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(10);
+  pkg_headerext_ackstatus_set_messagegroupid(1);
+  pkg_headerext_ackstatus_set_messageid(2);
+  __HEADEROFFSETBITS = 120;
+  __PACKETSIZEBYTES = 32;
+  __MESSAGETYPE = 10;
+}
+
+// On (BoolValue[8])
+// This sub-element with 1 bits is part of an element with 17 bits in a structured array.
+// Description: Tells if the pin is on (at high level) or not (low level).
+
+// Set On (BoolValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 17, length bits 1
+static inline void msg_gpio_digitalporttimeout_set_on(uint8_t index, bool val)
+{
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 17, 1, val ? 1 : 0, bufx);
+}
+
+// Get On (BoolValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 17, length bits 1
+static inline bool msg_gpio_digitalporttimeout_get_on(uint8_t index)
+{
+  return array_read_UIntValue8((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 17, 1, 0, 1, bufx) == 1;
+}
+
+// TimeoutSec (UIntValue[8])
+// This sub-element with 16 bits is part of an element with 17 bits in a structured array.
+// Description: The time after which the switch is automatically toggled again. Use 0 to disable this.
+
+// Set TimeoutSec (UIntValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 1 + (uint16_t)index * 17, length bits 16, min val 0, max val 65535
+static inline void msg_gpio_digitalporttimeout_set_timeoutsec(uint8_t index, uint32_t val)
+{
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 1 + (uint16_t)index * 17, 16, val, bufx);
+}
+
+// Get TimeoutSec (UIntValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 1 + (uint16_t)index * 17, length bits 16, min val 0, max val 65535
+static inline uint32_t msg_gpio_digitalporttimeout_get_timeoutsec(uint8_t index)
+{
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 1 + (uint16_t)index * 17, 16, 0, 65535, bufx);
+}
+
+
+// Message "gpio_digitalpin"
+// -------------------------
+// MessageGroupID: 1
+// MessageID: 5
+// Possible MessageTypes: Get, Set, SetGet, Status, Ack, AckStatus
+// Validity: test
+// Length w/o Header + HeaderExtension: 4 bits
+// Data fields: Pos, On
+// Description: This represents the state of one pin of the digital port.
+
+// Function to initialize header for the MessageType "Get".
+static inline void pkg_header_init_gpio_digitalpin_get(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(0);
+  pkg_headerext_get_set_messagegroupid(1);
+  pkg_headerext_get_set_messageid(5);
+  __HEADEROFFSETBITS = 95;
+  __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 0;
+}
+
+// Function to initialize header for the MessageType "Set".
+static inline void pkg_header_init_gpio_digitalpin_set(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(1);
+  pkg_headerext_set_set_messagegroupid(1);
+  pkg_headerext_set_set_messageid(5);
+  __HEADEROFFSETBITS = 95;
+  __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 1;
+}
+
+// Function to initialize header for the MessageType "SetGet".
+static inline void pkg_header_init_gpio_digitalpin_setget(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(2);
+  pkg_headerext_setget_set_messagegroupid(1);
+  pkg_headerext_setget_set_messageid(5);
+  __HEADEROFFSETBITS = 95;
+  __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 2;
+}
+
+// Function to initialize header for the MessageType "Status".
+static inline void pkg_header_init_gpio_digitalpin_status(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(8);
+  pkg_headerext_status_set_messagegroupid(1);
+  pkg_headerext_status_set_messageid(5);
   __HEADEROFFSETBITS = 83;
   __PACKETSIZEBYTES = 16;
   __MESSAGETYPE = 8;
@@ -120,90 +338,107 @@ static inline void pkg_header_init_gpio_digitalpin_ackstatus(void)
   memset(&bufx[0], 0, sizeof(bufx));
   pkg_header_set_messagetype(10);
   pkg_headerext_ackstatus_set_messagegroupid(1);
-  pkg_headerext_ackstatus_set_messageid(1);
+  pkg_headerext_ackstatus_set_messageid(5);
   __HEADEROFFSETBITS = 120;
   __PACKETSIZEBYTES = 16;
   __MESSAGETYPE = 10;
 }
 
-// On (BoolValue[8])
+// Pos (UIntValue)
+// Description: The number of the pin in the port.
+
+// Set Pos (UIntValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 3, min val 0, max val 7
+static inline void msg_gpio_digitalpin_set_pos(uint32_t val)
+{
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 0, 3, val, bufx);
+}
+
+// Get Pos (UIntValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 3, min val 0, max val 7
+static inline uint32_t msg_gpio_digitalpin_get_pos(void)
+{
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 0, 3, 0, 7, bufx);
+}
+
+// On (BoolValue)
 // Description: Tells if the pin is on (at high level) or not (low level).
 
 // Set On (BoolValue)
-// Offset: (uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1, length bits 1
-static inline void msg_gpio_digitalpin_set_on(uint8_t index, bool val)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 3, length bits 1
+static inline void msg_gpio_digitalpin_set_on(bool val)
 {
-  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1, 1, val ? 1 : 0, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 3, 1, val ? 1 : 0, bufx);
 }
 
 // Get On (BoolValue)
-// Offset: (uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1, length bits 1
-static inline bool msg_gpio_digitalpin_get_on(uint8_t index)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 3, length bits 1
+static inline bool msg_gpio_digitalpin_get_on(void)
 {
-  return array_read_UIntValue8((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1, 1, 0, 1, bufx) == 1;
+  return array_read_UIntValue8((uint16_t)__HEADEROFFSETBITS + 3, 1, 0, 1, bufx) == 1;
 }
 
 
-// Message "gpio_analogpin"
-// ------------------------
+// Message "gpio_digitalpintimeout"
+// --------------------------------
 // MessageGroupID: 1
-// MessageID: 2
+// MessageID: 6
 // Possible MessageTypes: Get, Set, SetGet, Status, Ack, AckStatus
 // Validity: test
-// Length w/o Header + HeaderExtension: 96 bits
-// Data fields: On, Voltage
-// Description: This is the voltage of up to 8 ADC channels. The ATMega328 in the PDIP package has only 6 ADCs and one ADC may be blocked by the battery voltage measurement, so there may be less than 8 ADC values reported depending on the device and configuration.
+// Length w/o Header + HeaderExtension: 20 bits
+// Data fields: Pos, On, TimeoutSec
+// Description: This represents the state of one pin of the digital port, including a timeout value.
 
 // Function to initialize header for the MessageType "Get".
-static inline void pkg_header_init_gpio_analogpin_get(void)
+static inline void pkg_header_init_gpio_digitalpintimeout_get(void)
 {
   memset(&bufx[0], 0, sizeof(bufx));
   pkg_header_set_messagetype(0);
   pkg_headerext_get_set_messagegroupid(1);
-  pkg_headerext_get_set_messageid(2);
+  pkg_headerext_get_set_messageid(6);
   __HEADEROFFSETBITS = 95;
   __PACKETSIZEBYTES = 16;
   __MESSAGETYPE = 0;
 }
 
 // Function to initialize header for the MessageType "Set".
-static inline void pkg_header_init_gpio_analogpin_set(void)
+static inline void pkg_header_init_gpio_digitalpintimeout_set(void)
 {
   memset(&bufx[0], 0, sizeof(bufx));
   pkg_header_set_messagetype(1);
   pkg_headerext_set_set_messagegroupid(1);
-  pkg_headerext_set_set_messageid(2);
+  pkg_headerext_set_set_messageid(6);
   __HEADEROFFSETBITS = 95;
-  __PACKETSIZEBYTES = 32;
+  __PACKETSIZEBYTES = 16;
   __MESSAGETYPE = 1;
 }
 
 // Function to initialize header for the MessageType "SetGet".
-static inline void pkg_header_init_gpio_analogpin_setget(void)
+static inline void pkg_header_init_gpio_digitalpintimeout_setget(void)
 {
   memset(&bufx[0], 0, sizeof(bufx));
   pkg_header_set_messagetype(2);
   pkg_headerext_setget_set_messagegroupid(1);
-  pkg_headerext_setget_set_messageid(2);
+  pkg_headerext_setget_set_messageid(6);
   __HEADEROFFSETBITS = 95;
-  __PACKETSIZEBYTES = 32;
+  __PACKETSIZEBYTES = 16;
   __MESSAGETYPE = 2;
 }
 
 // Function to initialize header for the MessageType "Status".
-static inline void pkg_header_init_gpio_analogpin_status(void)
+static inline void pkg_header_init_gpio_digitalpintimeout_status(void)
 {
   memset(&bufx[0], 0, sizeof(bufx));
   pkg_header_set_messagetype(8);
   pkg_headerext_status_set_messagegroupid(1);
-  pkg_headerext_status_set_messageid(2);
+  pkg_headerext_status_set_messageid(6);
   __HEADEROFFSETBITS = 83;
-  __PACKETSIZEBYTES = 32;
+  __PACKETSIZEBYTES = 16;
   __MESSAGETYPE = 8;
 }
 
 // Function to initialize header for the MessageType "Ack".
-static inline void pkg_header_init_gpio_analogpin_ack(void)
+static inline void pkg_header_init_gpio_digitalpintimeout_ack(void)
 {
   memset(&bufx[0], 0, sizeof(bufx));
   pkg_header_set_messagetype(9);
@@ -213,49 +448,183 @@ static inline void pkg_header_init_gpio_analogpin_ack(void)
 }
 
 // Function to initialize header for the MessageType "AckStatus".
-static inline void pkg_header_init_gpio_analogpin_ackstatus(void)
+static inline void pkg_header_init_gpio_digitalpintimeout_ackstatus(void)
 {
   memset(&bufx[0], 0, sizeof(bufx));
   pkg_header_set_messagetype(10);
   pkg_headerext_ackstatus_set_messagegroupid(1);
-  pkg_headerext_ackstatus_set_messageid(2);
+  pkg_headerext_ackstatus_set_messageid(6);
+  __HEADEROFFSETBITS = 120;
+  __PACKETSIZEBYTES = 32;
+  __MESSAGETYPE = 10;
+}
+
+// Pos (UIntValue)
+// Description: The number of the pin in the port.
+
+// Set Pos (UIntValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 3, min val 0, max val 7
+static inline void msg_gpio_digitalpintimeout_set_pos(uint32_t val)
+{
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 0, 3, val, bufx);
+}
+
+// Get Pos (UIntValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 3, min val 0, max val 7
+static inline uint32_t msg_gpio_digitalpintimeout_get_pos(void)
+{
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 0, 3, 0, 7, bufx);
+}
+
+// On (BoolValue)
+// Description: Tells if the pin is on (at high level) or not (low level).
+
+// Set On (BoolValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 3, length bits 1
+static inline void msg_gpio_digitalpintimeout_set_on(bool val)
+{
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 3, 1, val ? 1 : 0, bufx);
+}
+
+// Get On (BoolValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 3, length bits 1
+static inline bool msg_gpio_digitalpintimeout_get_on(void)
+{
+  return array_read_UIntValue8((uint16_t)__HEADEROFFSETBITS + 3, 1, 0, 1, bufx) == 1;
+}
+
+// TimeoutSec (UIntValue)
+// Description: The time after which the switch is automatically toggled again. Use 0 to disable this.
+
+// Set TimeoutSec (UIntValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 4, length bits 16, min val 0, max val 65535
+static inline void msg_gpio_digitalpintimeout_set_timeoutsec(uint32_t val)
+{
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 4, 16, val, bufx);
+}
+
+// Get TimeoutSec (UIntValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 4, length bits 16, min val 0, max val 65535
+static inline uint32_t msg_gpio_digitalpintimeout_get_timeoutsec(void)
+{
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 4, 16, 0, 65535, bufx);
+}
+
+
+// Message "gpio_analogport"
+// -------------------------
+// MessageGroupID: 1
+// MessageID: 10
+// Possible MessageTypes: Get, Set, SetGet, Status, Ack, AckStatus
+// Validity: test
+// Length w/o Header + HeaderExtension: 96 bits
+// Data fields: On, Voltage
+// Description: This is the voltage of up to 8 ADC channels. The ATMega328 in the PDIP package has only 6 ADCs and one ADC may be blocked by the battery voltage measurement, so there may be less than 8 ADC values reported depending on the device and configuration.
+
+// Function to initialize header for the MessageType "Get".
+static inline void pkg_header_init_gpio_analogport_get(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(0);
+  pkg_headerext_get_set_messagegroupid(1);
+  pkg_headerext_get_set_messageid(10);
+  __HEADEROFFSETBITS = 95;
+  __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 0;
+}
+
+// Function to initialize header for the MessageType "Set".
+static inline void pkg_header_init_gpio_analogport_set(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(1);
+  pkg_headerext_set_set_messagegroupid(1);
+  pkg_headerext_set_set_messageid(10);
+  __HEADEROFFSETBITS = 95;
+  __PACKETSIZEBYTES = 32;
+  __MESSAGETYPE = 1;
+}
+
+// Function to initialize header for the MessageType "SetGet".
+static inline void pkg_header_init_gpio_analogport_setget(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(2);
+  pkg_headerext_setget_set_messagegroupid(1);
+  pkg_headerext_setget_set_messageid(10);
+  __HEADEROFFSETBITS = 95;
+  __PACKETSIZEBYTES = 32;
+  __MESSAGETYPE = 2;
+}
+
+// Function to initialize header for the MessageType "Status".
+static inline void pkg_header_init_gpio_analogport_status(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(8);
+  pkg_headerext_status_set_messagegroupid(1);
+  pkg_headerext_status_set_messageid(10);
+  __HEADEROFFSETBITS = 83;
+  __PACKETSIZEBYTES = 32;
+  __MESSAGETYPE = 8;
+}
+
+// Function to initialize header for the MessageType "Ack".
+static inline void pkg_header_init_gpio_analogport_ack(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(9);
+  __HEADEROFFSETBITS = 109;
+  __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 9;
+}
+
+// Function to initialize header for the MessageType "AckStatus".
+static inline void pkg_header_init_gpio_analogport_ackstatus(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(10);
+  pkg_headerext_ackstatus_set_messagegroupid(1);
+  pkg_headerext_ackstatus_set_messageid(10);
   __HEADEROFFSETBITS = 120;
   __PACKETSIZEBYTES = 32;
   __MESSAGETYPE = 10;
 }
 
 // On (BoolValue[8])
+// This sub-element with 1 bits is part of an element with 12 bits in a structured array.
 // Description: Tells if the pin is on (voltage over trigger threshold) or not.
 
 // Set On (BoolValue)
-// Offset: (uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1, length bits 1
-static inline void msg_gpio_analogpin_set_on(uint8_t index, bool val)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 12, length bits 1
+static inline void msg_gpio_analogport_set_on(uint8_t index, bool val)
 {
-  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1, 1, val ? 1 : 0, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 12, 1, val ? 1 : 0, bufx);
 }
 
 // Get On (BoolValue)
-// Offset: (uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1, length bits 1
-static inline bool msg_gpio_analogpin_get_on(uint8_t index)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 12, length bits 1
+static inline bool msg_gpio_analogport_get_on(uint8_t index)
 {
-  return array_read_UIntValue8((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 1, 1, 0, 1, bufx) == 1;
+  return array_read_UIntValue8((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 12, 1, 0, 1, bufx) == 1;
 }
 
 // Voltage (UIntValue[8])
+// This sub-element with 11 bits is part of an element with 12 bits in a structured array.
 // Description: This is the voltage level in mV.
 
 // Set Voltage (UIntValue)
-// Offset: (uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 11, length bits 11, min val 0, max val 1100
-static inline void msg_gpio_analogpin_set_voltage(uint8_t index, uint32_t val)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 1 + (uint16_t)index * 12, length bits 11, min val 0, max val 1100
+static inline void msg_gpio_analogport_set_voltage(uint8_t index, uint32_t val)
 {
-  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 11, 11, val, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 1 + (uint16_t)index * 12, 11, val, bufx);
 }
 
 // Get Voltage (UIntValue)
-// Offset: (uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 11, length bits 11, min val 0, max val 1100
-static inline uint32_t msg_gpio_analogpin_get_voltage(uint8_t index)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 1 + (uint16_t)index * 12, length bits 11, min val 0, max val 1100
+static inline uint32_t msg_gpio_analogport_get_voltage(uint8_t index)
 {
-  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 8 + (uint16_t)index * 11, 11, 0, 1100, bufx);
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 1 + (uint16_t)index * 12, 11, 0, 1100, bufx);
 }
 
 #endif /* _MSGGRP_GPIO_H */

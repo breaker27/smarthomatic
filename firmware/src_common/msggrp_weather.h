@@ -43,7 +43,8 @@
 typedef enum {
   MESSAGEID_WEATHER_TEMPERATURE = 1,
   MESSAGEID_WEATHER_HUMIDITYTEMPERATURE = 2,
-  MESSAGEID_WEATHER_BAROMETRICPRESSURETEMPERATURE = 3
+  MESSAGEID_WEATHER_BAROMETRICPRESSURETEMPERATURE = 3,
+  MESSAGEID_WEATHER_HUMIDITY = 4
 } WEATHER_MessageIDEnum;
 
 
@@ -270,6 +271,70 @@ static inline void msg_weather_barometricpressuretemperature_set_temperature(int
 static inline int32_t msg_weather_barometricpressuretemperature_get_temperature(void)
 {
   return array_read_IntValue32((uint16_t)__HEADEROFFSETBITS + 17, 16, -32768, 32767, bufx);
+}
+
+
+// Message "weather_humidity"
+// --------------------------
+// MessageGroupID: 10
+// MessageID: 4
+// Possible MessageTypes: Get, Status, AckStatus
+// Validity: test
+// Length w/o Header + HeaderExtension: 10 bits
+// Data fields: Humidity
+// Description: This is a message containing humidity.
+
+// Function to initialize header for the MessageType "Get".
+static inline void pkg_header_init_weather_humidity_get(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(0);
+  pkg_headerext_get_set_messagegroupid(10);
+  pkg_headerext_get_set_messageid(4);
+  __HEADEROFFSETBITS = 95;
+  __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 0;
+}
+
+// Function to initialize header for the MessageType "Status".
+static inline void pkg_header_init_weather_humidity_status(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(8);
+  pkg_headerext_status_set_messagegroupid(10);
+  pkg_headerext_status_set_messageid(4);
+  __HEADEROFFSETBITS = 83;
+  __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 8;
+}
+
+// Function to initialize header for the MessageType "AckStatus".
+static inline void pkg_header_init_weather_humidity_ackstatus(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(10);
+  pkg_headerext_ackstatus_set_messagegroupid(10);
+  pkg_headerext_ackstatus_set_messageid(4);
+  __HEADEROFFSETBITS = 120;
+  __PACKETSIZEBYTES = 32;
+  __MESSAGETYPE = 10;
+}
+
+// Humidity (UIntValue)
+// Description: relative humidity permill, 0..1000 (other values not defined)
+
+// Set Humidity (UIntValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 10, min val 0, max val 1000
+static inline void msg_weather_humidity_set_humidity(uint32_t val)
+{
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 0, 10, val, bufx);
+}
+
+// Get Humidity (UIntValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 10, min val 0, max val 1000
+static inline uint32_t msg_weather_humidity_get_humidity(void)
+{
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 0, 10, 0, 1000, bufx);
 }
 
 #endif /* _MSGGRP_WEATHER_H */

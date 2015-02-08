@@ -21,7 +21,7 @@
 # You should have received a copy of the GNU General Public License along
 # with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 ##########################################################################
-# $Id: SHC_datafields.pm 6177 2014-06-29 11:09:17Z rr2000 $
+# $Id: SHC_datafields.pm 6580 2014-09-20 09:50:45Z rr2000 $
 
 package SHC_util;
 
@@ -150,19 +150,16 @@ sub getInt($$$)
 {
   my ($byteArrayRef, $offset, $length_bits) = @_;
 
-  # FIX ME! DOES NOT WORK WITH NEGATIVE VALUES!
-
   $x = getUInt($byteArrayRef, $offset, $length_bits);
 
-  # If MSB is 1 (value is negative interpreted as signed int),
-  # set all higher bits also to 1.
-  if ((($x >> ($length_bits - 1)) & 1) == 1) {
-    $x = $x | ~((1 << ($length_bits - 1)) - 1);
+  if ($x >= 2 ** ($length_bits - 1))
+  {
+  	$x = $x - 2 ** $length_bits;
   }
 
-  $y = $x;
+# DEBUG print "UInt = " . $x . ", length_bits = " . length_bits . "\r\n";
 
-  return $y;
+  return $x;
 }
 
 # ----------- UIntValue class -----------
@@ -219,14 +216,14 @@ sub getValue
 {
   my ($self, $byteArrayRef, $index) = @_;
 
-  return SHC_util::getUInt($byteArrayRef, $self->{_offset} + $self->{_arrayElementBits} * $index, $self->{_bits});
+  return SHC_util::getInt($byteArrayRef, $self->{_offset} + $self->{_arrayElementBits} * $index, $self->{_bits});
 }
 
 sub setValue
 {
   my ($self, $byteArrayRef, $value, $index) = @_;
 
-  SHC_util::setUInt($byteArrayRef, $self->{_offset} + $self->{_arrayElementBits} * $index, $self->{_bits}, $value);
+  SHC_util::setInt($byteArrayRef, $self->{_offset} + $self->{_arrayElementBits} * $index, $self->{_bits}, $value);
 }
 
 # ----------- BoolValue class -----------

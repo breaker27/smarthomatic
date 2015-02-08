@@ -28,6 +28,10 @@
 				<Name>Dimmer</Name>
 			</Element>
 			<Element>
+				<Value>70</Value>
+				<Name>SoilMoistureMeter</Name>
+			</Element>
+			<Element>
 				<Value>80</Value>
 				<Name>Thermostat</Name>
 			</Element>
@@ -127,6 +131,14 @@
 				<Value>3</Value>
 				<Name>BMP085</Name>
 			</Element>
+			<Element>
+				<Value>4</Value>
+				<Name>DS18x20</Name>
+			</Element>
+			<Element>
+				<Value>5</Value>
+				<Name>HTU21D</Name>
+			</Element>
 		</EnumValue>
 		<EnumValue>
 			<ID>HumiditySensorType</ID>
@@ -139,6 +151,10 @@
 			<Element>
 				<Value>1</Value>
 				<Name>SHT15</Name>
+			</Element>
+			<Element>
+				<Value>2</Value>
+				<Name>HTU21D</Name>
 			</Element>
 		</EnumValue>
 		<EnumValue>
@@ -196,7 +212,7 @@
 				<Name>4s</Name>
 			</Element>
 			<Element>
-				<Value>1840</Value>
+				<Value>1467</Value>
 				<Name>6s</Name>
 			</Element>
 			<Element>
@@ -241,7 +257,7 @@
 			</Element>
 			<Element>
 				<Value>2538</Value>
-				<Name>120s</Name>
+				<Name>2m</Name>
 			</Element>
 			<Element>
 				<Value>2736</Value>
@@ -578,10 +594,10 @@
 		</Restriction>
 		<UIntValue>
 			<ID>SupportedSwitches</ID>
-			<Description>This is a bit field about the connected switches. (Currently, only one switch is supported and the value has to be 0b00000001, but the value is for future usage.)</Description>
+			<Description>This is a bit field about the connected switches.</Description>
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
-			<MaxVal>1</MaxVal>
+			<MaxVal>6</MaxVal>
 		</UIntValue>
 		<UIntValue>
 			<ID>BaseStationPacketCounter</ID>
@@ -659,6 +675,187 @@
 		</ByteArray>
 		<Reserved>
 			<Bits>6848</Bits>
+		</Reserved>
+	</Block>
+	<Block>
+		<Name>SoilMoistureMeter</Name>
+		<Description>This device can measure the humidity of soil to estimate if watering of plants is necessary.</Description>
+		<Restriction>
+			<RefID>DeviceType</RefID>
+			<Value>70</Value>
+		</Restriction>
+		<EnumValue>
+			<ID>WakeupIntervalInit</ID>
+			<Description>Decide about the interval between two measurements when the device is in initialization mode (after button press) to remember the dry threshold value.</Description>
+			<Bits>16</Bits>
+			<Element>
+				<Value>1692</Value>
+				<Name>10s</Name>
+			</Element>
+			<Element>
+				<Value>2421</Value>
+				<Name>1m</Name>
+			</Element>
+			<Element>
+				<Value>2538</Value>
+				<Name>2m</Name>
+			</Element>
+			<Element>
+				<Value>2794</Value>
+				<Name>4m</Name>
+			</Element>
+			<Element>
+				<Value>3050</Value>
+				<Name>8m</Name>
+			</Element>
+			<Element>
+				<Value>3292</Value>
+				<Name>15m</Name>
+			</Element>
+			<Element>
+				<Value>3474</Value>
+				<Name>20m</Name>
+			</Element>
+			<Element>
+				<Value>3548</Value>
+				<Name>30m</Name>
+			</Element>
+			<Element>
+				<Value>3804</Value>
+				<Name>1h</Name>
+			</Element>
+			<Element>
+				<Value>4060</Value>
+				<Name>2h</Name>
+			</Element>
+			<Element>
+				<Value>4261</Value>
+				<Name>3h</Name>
+			</Element>
+			<Element>
+				<Value>4316</Value>
+				<Name>4h</Name>
+			</Element>
+			<Element>
+				<Value>4517</Value>
+				<Name>6h</Name>
+			</Element>
+			<Element>
+				<Value>4572</Value>
+				<Name>8h</Name>
+			</Element>
+			<Element>
+				<Value>4773</Value>
+				<Name>12h</Name>
+			</Element>
+			<Element>
+				<Value>4828</Value>
+				<Name>16h</Name>
+			</Element>
+			<DefaultVal>3050</DefaultVal>
+		</EnumValue>
+		<UIntValue>
+			<ID>AveragingIntervalInit</ID>
+			<Description>The number of values whose average is calculated before the dry threshold is remembered.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>16</MaxVal>
+			<DefaultVal>6</DefaultVal>
+		</UIntValue>
+		<EnumValue>
+			<ID>WakeupInterval</ID>
+			<Description>Decide after which time the device should be woken up by the RFM12B transceiver to measure values in normal operation.</Description>
+			<Bits>16</Bits>
+			<Element>
+				<Value>1692</Value>
+				<Name>10s</Name>
+			</Element>
+			<Element>
+				<Value>2421</Value>
+				<Name>1m</Name>
+			</Element>
+			<Element>
+				<Value>2538</Value>
+				<Name>2m</Name>
+			</Element>
+			<Element>
+				<Value>2794</Value>
+				<Name>4m</Name>
+			</Element>
+			<Element>
+				<Value>3050</Value>
+				<Name>8m</Name>
+			</Element>
+			<Element>
+				<Value>3292</Value>
+				<Name>15m</Name>
+			</Element>
+			<Element>
+				<Value>3474</Value>
+				<Name>20m</Name>
+			</Element>
+			<Element>
+				<Value>3548</Value>
+				<Name>30m</Name>
+			</Element>
+			<Element>
+				<Value>3804</Value>
+				<Name>1h</Name>
+			</Element>
+			<Element>
+				<Value>4060</Value>
+				<Name>2h</Name>
+			</Element>
+			<Element>
+				<Value>4261</Value>
+				<Name>3h</Name>
+			</Element>
+			<Element>
+				<Value>4316</Value>
+				<Name>4h</Name>
+			</Element>
+			<Element>
+				<Value>4517</Value>
+				<Name>6h</Name>
+			</Element>
+			<Element>
+				<Value>4572</Value>
+				<Name>8h</Name>
+			</Element>
+			<Element>
+				<Value>4773</Value>
+				<Name>12h</Name>
+			</Element>
+			<Element>
+				<Value>4828</Value>
+				<Name>16h</Name>
+			</Element>
+			<DefaultVal>3548</DefaultVal>
+		</EnumValue>
+		<UIntValue>
+			<ID>AveragingInterval</ID>
+			<Description>The number of values whose average is calculated before the current humidity is calculated and sent.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>16</MaxVal>
+			<DefaultVal>6</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>DryThreshold</ID>
+			<Description>This is the dry threshold and maximum counter value that should happen.</Description>
+			<Bits>16</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>65535</MaxVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>MinVal</ID>
+			<Description>This is the minimum counter value measured in the current watering cycle when the soil is wet.</Description>
+			<Bits>16</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>65535</MaxVal>
+		</UIntValue>
+		<Reserved>
+			<Bits>7584</Bits>
 		</Reserved>
 	</Block>
 	<Block>

@@ -23,7 +23,7 @@
 #include <avr/sleep.h>
 
 #include "rfm12.h"
-#include "uart.h"
+#include "../src_common/uart.h"
 
 #include "../src_common/msggrp_generic.h"
 #include "../src_common/msggrp_gpio.h"
@@ -39,9 +39,11 @@
 #include "lm75.h"
 #include "bmp085.h"
 #include "srf02.h"
+#include "htu21d.h"
+#include "onewire.h"
 
-#include "aes256.h"
-#include "util.h"
+#include "../src_common/aes256.h"
+#include "../src_common/util.h"
 #include "version.h"
 
 // Pull-up resistors that are switched on for battery and brightness measurement
@@ -64,7 +66,9 @@ uint8_t brightness_sensor_type = 0;
 uint8_t distance_sensor_type = 0;
 uint32_t version_measInt;
 uint32_t version_wupCnt;
-uint16_t vempty = 1100; // 1.1V * 2 cells = 2.2V = min. voltage for RFM2
+uint16_t vempty = 1100; // 1.1V * 2 cells = 2.2V = min. voltage for RFM12B
+uint8_t rom_id[8]; // for 1-wire
+
 bool di_sensor_used = false;
 bool ai_sensor_used = false;
 bool di_change = false;
@@ -159,21 +163,37 @@ uint8_t getPinStatus(uint8_t port_nr, uint8_t pin)
 void setPullUp(uint8_t port_nr, uint8_t pin)
 {
 	if (port_nr == 2)
-		sbi(PIND, pin);
+		sbi(PORTD, pin);
 	else if (port_nr == 1)
-		sbi(PINC, pin);
+		sbi(PORTC, pin);
 	else
-		sbi(PINB, pin);
+		sbi(PORTB, pin);
 }
 
 void clearPullUp(uint8_t port_nr, uint8_t pin)
 {
 	if (port_nr == 2)
-		cbi(PIND, pin);
+		cbi(PORTD, pin);
 	else if (port_nr == 1)
-		cbi(PINC, pin);
+		cbi(PORTC, pin);
 	else
-		cbi(PINB, pin);
+		cbi(PORTB, pin);
+}
+
+// Save the DI state right before going to power down so another pin change interrupt causes a
+// new message if necessary.
+void remember_di_state(void)
+{
+	uint8_t i;
+	
+	for (i = 0; i < 8; i++)
+	{
+		if (di[i].pin != DI_UNUSED)
+		{
+			uint8_t stat = getPinStatus(di[i].port, di[i].pin);
+			di[i].meas.val = stat;
+		}
+	}
 }
 
 void init_di_sensor(void)
@@ -299,29 +319,41 @@ uint32_t power(uint32_t x, uint32_t y)
 	return result;
 }
 
-	/*
-	01111111010 // ~2000ms
-	10011111010 // ~4000ms
-	b11100110000 // ~6s
-	10111111010 // ~8000ms
-	11010011100 // ~9984ms
-	11011101010 // ~14976ms
-	11110011100 // ~19968ms
-	b11111000000 // ~24576ms
-	11111101011 // ~30080ms
-	100010110000 // ~45056ms
-	0100101110101 // ~59904ms
-	100110010010 // ~74752ms
-	100110110000 // ~90112ms
-	100111001101 // ~104960ms
-	100111101010 // ~119808ms
-	101010110000 // ~180224ms = 3m
-	101011101010 // ~239616ms = 4m
-	101110010010 // ~299008ms = 5m
-	101111101010 // ~479232ms = 8m
-	110010110000 // ~720896ms = 12m
-	110011011100 // ~901120ms = 15m
-	110110010010 // ~1196032ms = 20m
+	/* Wake-up time is calculated as T = M * 2 ^ R [ms]
+	Value is saved as RRRRRMMMMMMMM
+	
+	   Binary       Decimal     ms    equals
+	0001111111010   1018       2000      2s
+	0010011111010   1274       4000      4s
+	0010110111011   1467       5984     ~6s
+	0010111111010   1530       8000      8s
+	0011010011100   1692       9984    ~10s
+	0011011101010   1770      14976    ~15s
+	0011110011100   1948      19968    ~20s
+	0011111000000   1984      24576    ~25s
+	0011111101011   2027      30080    ~30s
+	0100010110000   2224      45056    ~45s
+	0100101110101   2421      59904    ~60s
+	0100110010010   2450      74752    ~75s
+	0100110110000   2480      90112    ~90s
+	0100111001101   2509     104960   ~105s
+	0100111101010   2538     119808     ~2m
+	0101010110000   2736     180224     ~3m
+	0101011101010   2794     239616     ~4m
+	0101110010010   2962     299008     ~5m
+	0101111101010   3050     479232     ~8m
+	0110010110000   3248     720896    ~12m
+	0110011011100   3292     901120    ~15m
+	0110110010010   3474    1196032    ~20m
+	0110111011100   3548    1802240    ~30m
+	0111011011100   3804    3604480     ~1h
+	0111111011100   4060    7208960     ~2h
+	1000010100101   4261   10813440     ~3h
+	1000011011100   4316   14417920     ~4h
+	1000110100101   4517   21626880     ~6h
+	1000111011100   4572   28835840     ~8h
+	1001010100101   4773   43253760    ~12h
+	1001011011100   4828   57671680    ~16h
 	*/
 
 // Read wakeup timer value from e2p, config rfm12 and
@@ -387,7 +419,7 @@ void measure_digital_input(void)
 	// wait a little bit to let the voltage level settle down in case pullups were just switched on
 	if (wait_pullups)
 	{
-		_delay_ms(10);
+		_delay_ms(5);
 	}
 	
 	for (i = 0; i < 8; i++)
@@ -397,15 +429,18 @@ void measure_digital_input(void)
 			uint8_t stat = getPinStatus(di[i].port, di[i].pin);
 			
 			// if status changed in OnChange mode, remember to send immediately
-			if ((di[0].meas.measCnt >= di[0].meas.avgInt)
-				|| ((di[i].mode != DIGITALINPUTTRIGGERMODE_OFF)
-					&& (di[i].meas.val != stat)
+			if (pin_wakeup && (di[i].meas.val != stat)
 					&& ( (di[i].mode == DIGITALINPUTTRIGGERMODE_CHANGE)
 					||   ((di[i].mode == DIGITALINPUTTRIGGERMODE_UP) && (stat == 1))
 					||   ((di[i].mode == DIGITALINPUTTRIGGERMODE_DOWN) && (stat == 0)) ))
-				)
 			{
-				//UART_PUTS("Status change -> send\r\n");
+				UART_PUTF("Pin wakeup + pin change at pin %u -> send\r\n", i);
+				di_change = true;
+			}
+			// in cyclic measure mode, remember to send if avgInt reached
+			else if (di[0].meas.measCnt >= di[0].meas.avgInt)
+			{
+				UART_PUTF("Pin avgCnt reached -> send\r\n", i);
 				di_change = true;
 			}
 			
@@ -510,7 +545,9 @@ void sht11_measure_loop(void)
 
 void measure_temperature_i2c(void)
 {
-	if ((temperature_sensor_type != TEMPERATURESENSORTYPE_DS7505) && (temperature_sensor_type != TEMPERATURESENSORTYPE_BMP085))
+	if ((temperature_sensor_type != TEMPERATURESENSORTYPE_DS7505)
+		&& (temperature_sensor_type != TEMPERATURESENSORTYPE_BMP085)
+		&& (temperature_sensor_type != TEMPERATURESENSORTYPE_HTU21D))
 		return;
 
 	if (!countWakeup(&temperature))
@@ -527,6 +564,21 @@ void measure_temperature_i2c(void)
 	{
 		temperature.val += bmp085_meas_temp();
 	}
+	else if (temperature_sensor_type == TEMPERATURESENSORTYPE_HTU21D)
+	{
+		temperature.val += htu21d_meas_temp();
+	}
+}
+
+void measure_temperature_1wire(void)
+{
+	if (temperature_sensor_type != TEMPERATURESENSORTYPE_DS18X20)
+		return;
+		
+	if (!countWakeup(&temperature))
+		return;
+
+	temperature.val += onewire_get_temperature(rom_id);
 }
 
 void measure_temperature_other(void)
@@ -541,9 +593,20 @@ void measure_temperature_other(void)
 	temperature.val += sht11_get_tmp();
 }
 
+void measure_humidity_i2c(void)
+{
+	if (humidity_sensor_type != HUMIDITYSENSORTYPE_HTU21D)
+		return;
+
+	if (!countWakeup(&humidity))
+		return;
+
+	humidity.val += htu21d_meas_hum();
+}
+
 void measure_humidity_other(void)
 {
-	if (humidity_sensor_type == HUMIDITYSENSORTYPE_NOSENSOR)
+	if (humidity_sensor_type != HUMIDITYSENSORTYPE_SHT15)
 		return;
 
 	if (!countWakeup(&humidity))
@@ -595,7 +658,7 @@ void measure_battery_voltage(void)
 	if (!countWakeup(&battery_voltage))
 		return;
 
-	battery_voltage.val += (int)((long)read_adc(0) * 34375 / 10000 / 2); // 1.1 * 480 Ohm / 150 Ohm / 1,024
+	battery_voltage.val += read_battery();
 }
 
 void measure_brightness(void)
@@ -622,11 +685,11 @@ void average(struct measurement_t *m)
 	m->measCnt = 0;
 }
 
-void prepare_digitalpin(void)
+void prepare_digitalport(void)
 {
-	pkg_header_init_gpio_digitalpin_status();
+	pkg_header_init_gpio_digitalport_status();
 
-	UART_PUTS("Send GPIO: ");
+	UART_PUTS("Send DigitalPort: ");
 	
 	uint8_t i;
 	
@@ -637,25 +700,26 @@ void prepare_digitalpin(void)
 		{
 			UART_PUTF("%u", di[i].meas.val);
 			
-			msg_gpio_digitalpin_set_on(i, di[i].meas.val != 0);
+			msg_gpio_digitalport_set_on(i, di[i].meas.val != 0);
 		}
 		else
 		{
 			UART_PUTS("-");
 		}
 	}
+
+	UART_PUTS("\r\n");
 	
 	di[0].meas.wupCnt = 0;
-	UART_PUTS("\r\n");
-
+	di[0].meas.measCnt = 0;
 	di_change = false;
 }
 
-void prepare_analogpin(void)
+void prepare_analogport(void)
 {
-	pkg_header_init_gpio_analogpin_status();
+	pkg_header_init_gpio_analogport_status();
 
-	UART_PUTS("Send ADC:");
+	UART_PUTS("Send AnalogPort:");
 	
 	uint8_t i;
 	
@@ -671,8 +735,8 @@ void prepare_analogpin(void)
 		
 			UART_PUTF2(" %u/%u", ai[i].meas.val, on);
 			
-			msg_gpio_analogpin_set_on(i, on);
-			msg_gpio_analogpin_set_voltage(i, ai[i].meas.val);
+			msg_gpio_analogport_set_on(i, on);
+			msg_gpio_analogport_set_voltage(i, ai[i].meas.val);
 			
 			ai[i].meas.val = 0;
 		}
@@ -696,8 +760,8 @@ void prepare_humiditytemperature(void)
 	pkg_header_init_weather_humiditytemperature_status();
 	msg_weather_humiditytemperature_set_humidity(humidity.val / 10); // in permill
 	msg_weather_humiditytemperature_set_temperature(temperature.val);
-	
-	UART_PUTF2("Send humidity: %u.%u%%, temperature: ", humidity.val / 100, humidity.val % 100);
+
+	UART_PUTF2("Send humidity: %u.%u%%, temperature: ", (uint16_t)(humidity.val / 100), (uint16_t)(humidity.val % 100));
 	print_signed(temperature.val);
 	UART_PUTS(" deg.C\r\n");
 
@@ -763,7 +827,7 @@ void prepare_brightness(void)
 void prepare_battery_voltage(void)
 {
 	average(&battery_voltage);
-	battery_voltage.val = bat_percentage(battery_voltage.val, vempty);
+	battery_voltage.val = bat_percentage(battery_voltage.val / 2, vempty);
 
 	pkg_header_init_generic_batterystatus_status();
 	msg_generic_batterystatus_set_percentage(battery_voltage.val);
@@ -773,16 +837,18 @@ void prepare_battery_voltage(void)
 	battery_voltage.val = 0;
 }
 
-void prepare_version(void)
+void prepare_deviceinfo(void)
 {
 	// Set packet content
-	pkg_header_init_generic_version_status();
-	msg_generic_version_set_major(VERSION_MAJOR);
-	msg_generic_version_set_minor(VERSION_MINOR);
-	msg_generic_version_set_patch(VERSION_PATCH);
-	msg_generic_version_set_hash(VERSION_HASH);
+	pkg_header_init_generic_deviceinfo_status();
+	msg_generic_deviceinfo_set_devicetype(DEVICETYPE_ENVSENSOR);
+	msg_generic_deviceinfo_set_versionmajor(VERSION_MAJOR);
+	msg_generic_deviceinfo_set_versionminor(VERSION_MINOR);
+	msg_generic_deviceinfo_set_versionpatch(VERSION_PATCH);
+	msg_generic_deviceinfo_set_versionhash(VERSION_HASH);
 
-	UART_PUTF4("Send version: v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
+	UART_PUTF("Send DeviceInfo: DeviceType %u,", DEVICETYPE_ENVSENSOR);
+	UART_PUTF4(" v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
 	
 	version_wupCnt = 0;
 }
@@ -822,7 +888,7 @@ int main(void)
 	
 	UART_PUTS ("\r\n");
 	UART_PUTF4("smarthomatic EnvSensor v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
-	UART_PUTS("(c) 2012..2014 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTS("(c) 2012..2015 Uwe Freese, www.smarthomatic.org\r\n");
 	osccal_info();
 	UART_PUTF ("Device ID: %u\r\n", device_id);
 	UART_PUTF ("Packet counter: %lu\r\n", packetcounter);
@@ -871,6 +937,24 @@ int main(void)
 	  sht11_init();
 	  vempty = 1200; // 1.2V * 2 cells = 2.4V = min. voltage for SHT15
 	}
+	else if (temperature_sensor_type == TEMPERATURESENSORTYPE_DS18X20)
+	{
+		onewire_init();
+		bool res = onewire_get_rom_id(rom_id);
+		
+		if (res) // error, no slave found
+		{
+			while (1)
+			{
+				led_blink(50, 50, 1);
+			}
+		}
+		
+		UART_PUTS("1-wire ROM ID: ");
+		print_bytearray(rom_id, 8);
+		
+		vempty = 1500; // 1.5V * 2 cells = 3.0V = min. voltage for DS18X20
+	}
 	
 	UART_PUTF3("Min. battery voltage: %umV (measInt %u, avgInt %u)\r\n", vempty, battery_voltage.measInt, battery_voltage.avgInt);
 
@@ -899,7 +983,9 @@ int main(void)
 	bool srf02_connected = distance_sensor_type == DISTANCESENSORTYPE_SRF02;
 	bool measure_other_i2c = (temperature_sensor_type == TEMPERATURESENSORTYPE_DS7505)
 		|| (temperature_sensor_type == TEMPERATURESENSORTYPE_BMP085)
-		|| (barometric_sensor_type == BAROMETRICSENSORTYPE_BMP085);
+		|| (barometric_sensor_type == BAROMETRICSENSORTYPE_BMP085)
+		|| (temperature_sensor_type == TEMPERATURESENSORTYPE_HTU21D)
+		|| (humidity_sensor_type == HUMIDITYSENSORTYPE_HTU21D);
 
 	while (42)
 	{
@@ -935,6 +1021,7 @@ int main(void)
 
 				i2c_enable();
 				measure_temperature_i2c();
+				measure_humidity_i2c();
 				measure_barometric_pressure_i2c();
 				measure_distance_i2c();
 				i2c_disable();
@@ -951,6 +1038,7 @@ int main(void)
 			}
 			
 			// measure other values, non-I2C devices
+			measure_temperature_1wire();
 			measure_temperature_other();
 			measure_humidity_other();
 			
@@ -960,13 +1048,17 @@ int main(void)
 		// search for value to send with avgInt reached
 		bool send = true;
 		
-		if (di_change)
+		if (pin_wakeup && !di_change) // don't send update if pin level changed in "wrong" direction
 		{
-			prepare_digitalpin();
+			send = false;
+		}
+		else if (di_change)
+		{
+			prepare_digitalport();
 		}
 		else if (ai_change)
 		{
-			prepare_analogpin();
+			prepare_analogport();
 		}
 		else if (humidity.measCnt >= humidity.avgInt)
 		{
@@ -994,7 +1086,7 @@ int main(void)
 		}
 		else if (version_wupCnt >= version_measInt)
 		{
-			prepare_version();
+			prepare_deviceinfo();
 		}
 		else
 		{
@@ -1003,22 +1095,20 @@ int main(void)
 		
 		if (send)
 		{
+			inc_packetcounter();
+			
 			pkg_header_set_senderid(device_id);
 			pkg_header_set_packetcounter(packetcounter);
-			pkg_header_calc_crc32();
+			
 			rfm12_send_bufx();
 			rfm12_tick(); // send packet, and then WAIT SOME TIME BEFORE GOING TO SLEEP (otherwise packet would not be sent)
 
-			switch_led(1);
-			_delay_ms(200);
-			switch_led(0);
-			
-			inc_packetcounter();
+			led_blink(200, 0, 1);
 		}
 
-		// Go to sleep. Wakeup by RFM12 wakeup-interrupt or pin change (if configured).
+		cli();
 		pin_wakeup = false;
-		set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-        sleep_mode();
+		remember_di_state();
+		power_down(true); // will enable interrupts again
 	}
 }

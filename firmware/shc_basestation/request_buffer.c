@@ -17,8 +17,8 @@
 */
 
 #include "request_buffer.h"
-#include "uart.h"
-#include "util.h"
+#include "../src_common/uart.h"
+#include "../src_common/util.h"
 #include <string.h>
 
 #include "../src_common/msggrp_generic.h"

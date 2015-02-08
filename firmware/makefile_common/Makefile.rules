@@ -30,11 +30,11 @@ ALL_CFLAGS += -DUART_BAUD_RATE=$(UART_BAUD_RATE)UL
 ALL_CFLAGS += -O$(OPT)
 ALL_CFLAGS += -mmcu=$(MCU) -I. 
 ALL_CFLAGS += $(CFLAGS) 
-ALL_CFLAGS += -Wa,-adhlns=$(<:%.c=$(OBJDIR)/%.lst)
-ALL_CFLAGS += -MD -MP -MF $(<:%.c=$(OBJDIR)/%.d)
+ALL_CFLAGS += -Wa,-adhlns=$(OBJDIR)/$(notdir $(<:%.c=%.lst))
+ALL_CFLAGS += -MD -MP -MF $(OBJDIR)/$(notdir $(<:%.c=/%.d))
 ALL_ASFLAGS = -mmcu=$(MCU) -I. -x assembler-with-cpp 
 ALL_ASFLAGS += $(ASFLAGS)
-ALL_ASFLAGS += -Wa,-adhlns=$(<:%.S=$(OBJDIR)/%.lst),-gstabs
+ALL_ASFLAGS += -Wa,-adhlns=$(OBJDIR)/$(notdir $(<:%.S=%.lst)),-gstabs
 ALL_LDFLAGS = $(LDFLAGS)
 ALL_LDFLAGS += -Wl,-Map=$(OBJDIR)/$(TARGET).map,--cref
 
@@ -51,7 +51,7 @@ endif
 ifeq ($(MCU),atmega328)
 	AVRDUDEMCU = m328p
 else ifeq ($(MCU),atmega168)
-	AVRDUDEMCU = m168
+	AVRDUDEMCU = m168p
 else ifeq ($(MCU),atmega329)
 	AVRDUDEMCU = m329p
 else ifeq ($(MCU),atmega169)
@@ -81,26 +81,24 @@ $(OBJDIR)/%.sym: $(OBJDIR)/%.elf
 .SECONDARY: $(OBJDIR)/$(TARGET).elf
 .PRECIOUS: $(OBJ)
 $(OBJDIR)/$(TARGET).elf: $(OBJ)
-	@mkdir -p $(dir $@)
-	$(CC) $(ALL_CFLAGS) $^ --output $@ $(ALL_LDFLAGS)
-
+	@mkdir -p $(OBJDIR)
+	$(CC) $(ALL_CFLAGS) $(addprefix $(OBJDIR)/, $(notdir $^)) --output $(OBJDIR)/$(notdir $@) $(ALL_LDFLAGS)
 
 # Compile: create object files from C source files.
 $(OBJDIR)/%.o : %.c
-	@mkdir -p $(dir $@)
-	$(CC) -c $(ALL_CFLAGS) $< -o $@
+	@mkdir -p $(OBJDIR)
+	$(CC) -c $(ALL_CFLAGS) $< -o $(OBJDIR)/$(notdir $@)
 
 # Compile: create assembler files from C source files.
 $(OBJDIR)/%.s : %.c
-	@mkdir -p $(dir $@)
-	$(CC) -S $(ALL_CFLAGS) $< -o $@
+	@mkdir -p $(OBJDIR)
+	$(CC) -S $(ALL_CFLAGS) $< -o $(OBJDIR)/$(notdir $@)
 
 
 # Assemble: create object files from assembler source files.
 $(OBJDIR)/%.o : %.S
-	@mkdir -p $(dir $@)
-	$(CC) -c $(ALL_ASFLAGS) $< -o $@
-
+	@mkdir -p $(OBJDIR)
+	$(CC) -c $(ALL_ASFLAGS) $< -o $(OBJDIR)/$(notdir $@)
 
 # Create preprocessed source for use in sending a bug report.
 $(OBJDIR)/%.i : %.c

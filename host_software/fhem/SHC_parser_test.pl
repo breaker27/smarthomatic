@@ -76,6 +76,10 @@ sub parser_test($)
 			{
 				when('DigitalPin')
 				{
+					print "Pin " . $parser->getField("Pos") . ": " . $parser->getField("On") . "\n";
+				}
+				when('DigitalPort')
+				{
 					for (my $i = 0; $i < 8; $i++)
 					{
 						print "Pin " . $i . ": " . $parser->getField("On", $i) . "\n";
@@ -90,15 +94,18 @@ sub parser_test($)
 				}
 			}
 		}
-		when('EnvSensor')
+		when('Weather')
 		{
 			given($msg)
 			{
-				when('TempHumBriStatus')
+				when('HumidityTemperature')
 				{
-					print "Temperature: " . $parser->getField("Temperature") . "\n";
 					print "Humidity: " . $parser->getField("Humidity") . "\n";
-					print "Brightness: " . $parser->getField("Brightness") . "\n";
+					print "Temperature: " . ($parser->getField("Temperature") / 100) . "\n";
+				}
+				when('Temperature')
+				{
+					print "Temperature: " . ($parser->getField("Temperature") / 100) . "\n";
 				}
 			}
 		}
@@ -123,11 +130,24 @@ parser_test("Packet Data: SenderID=40;PacketCounter=7401;MessageType=8;MessageGr
 parser_test("Packet Data: SenderID=40;PacketCounter=7402;MessageType=8;MessageGroupID=0;MessageID=1;MessageData=00000000000000000000000000000000000000000000;Major=0;Minor=0;Patch=0;Hash=00000000;");
 parser_test("Packet Data: SenderID=23;PacketCounter=414;MessageType=8;MessageGroupID=1;MessageID=2;MessageData=0042e000000000000000000000000000000000000000;");
 parser_test("Packet Data: SenderID=23;PacketCounter=307;MessageType=8;MessageGroupID=1;MessageID=2;MessageData=80458000000000000000000000000000000000000000;");
+parser_test("Packet Data: SenderID=71;PacketCounter=527;MessageType=8;MessageGroupID=10;MessageID=2;MessageData=a67161000000;Humidity=66.5;Temperature=-149.72;");
+parser_test("Packet Data: SenderID=27;PacketCounter=35106;MessageType=8;MessageGroupID=1;MessageID=1;MessageData=800000000000;");
+parser_test("Packet Data: SenderID=21;PacketCounter=680;MessageType=8;MessageGroupID=10;MessageID=1;MessageData=de7b00000000;Temperature=-85.81;");
 
 # Create message string for sending
 
-$parser->initPacket("PowerSwitch", "SwitchState", "Set");
-$parser->setField("PowerSwitch", "SwitchState", "TimeoutSec", 8);
+$parser->initPacket("GPIO", "DigitalPort", "Set");
+$parser->setField("GPIO", "DigitalPort", "On", 1, 0);
+$parser->setField("GPIO", "DigitalPort", "On", 1, 2);
+$parser->setField("GPIO", "DigitalPort", "On", 1, 4);
+$parser->setField("GPIO", "DigitalPort", "On", 1, 6);
+
+print "BaseStation command = " . $parser->getSendString(61) . "\n";
+
+$parser->initPacket("GPIO", "DigitalPinTimeout", "SetGet");
+$parser->setField("GPIO", "DigitalPinTimeout", "Pos", 3);
+$parser->setField("GPIO", "DigitalPinTimeout", "On", 1);
+$parser->setField("GPIO", "DigitalPinTimeout", "TimeoutSec", 8);
 
 print "BaseStation command = " . $parser->getSendString(61) . "\n";
 

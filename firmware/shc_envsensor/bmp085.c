@@ -21,7 +21,7 @@
 #include "config.h"
 #include "i2c.h"
 //#include "uart.h"
-#include "util.h"
+#include "../src_common/util.h"
 
 
 #define BMP085_I2C_ADR					0x77

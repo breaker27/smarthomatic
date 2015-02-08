@@ -17,8 +17,9 @@
 */
 
 #include "e2p_access.h"
+#include "util_generic.h"
 
-#define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
+// #define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
 
 #ifdef UNITTEST
 

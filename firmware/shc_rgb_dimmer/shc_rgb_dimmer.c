@@ -22,7 +22,7 @@
 #include <string.h>
 
 #include "rfm12.h"
-#include "uart.h"
+#include "../src_common/uart.h"
 
 #include "../src_common/msggrp_generic.h"
 #include "../src_common/msggrp_dimmer.h"
@@ -31,8 +31,8 @@
 #include "../src_common/e2p_generic.h"
 #include "../src_common/e2p_rgbdimmer.h"
 
-#include "aes256.h"
-#include "util.h"
+#include "../src_common/aes256.h"
+#include "../src_common/util.h"
 #include "version.h"
 
 #define RGBLED_DDR DDRD
@@ -117,14 +117,18 @@ void PWM_init(void)
 
 	// OC0A (Red LED): Fast PWM, 8 Bit, TOP = 0xFF = 255, non inverting output
 	// OC0B (Green LED): Fast PWM, 8 Bit, TOP = 0xFF = 255, non inverting output
-	TCCR0A = (1 << WGM00) | (1 << COM0A1) | (1 << COM0B1);
+	TCCR0A = (1 << WGM01) | (1 << WGM00) | (1 << COM0A1) | (1 << COM0B1);
 
 	// OC1A (Blue LED): Fast PWM, 8 Bit, TOP = 0xFF = 255, non inverting output
-	TCCR1A = (1 << WGM10) | (1 << COM1A1);
+	TCCR1A = (1 << WGM12) | (1 << WGM10) | (1 << COM1A1);
 
-	// Clock source for both timers = I/O clock, no prescaler
-	TCCR0B = (1 << CS00);
-	TCCR1B = (1 << CS10);
+	// Clock source for both timers = I/O clock, 1/256 prescaler -> ~ 120 Hz
+	//TCCR0B = (1 << CS02);
+	//TCCR1B = (1 << CS12);
+
+	// Clock source for both timers = I/O clock, 1/64 prescaler -> ~ 480 Hz
+	TCCR0B = (1 << CS01) | (1 << CS00);
+	TCCR1B = (1 << CS11) | (1 << CS10);
 }
 
 // Timer2 (8 Bit) is used for accurate counting of the animation time.
@@ -256,21 +260,22 @@ void set_animation_fixed_color(uint8_t color_index)
 	sei();
 }
 
-void send_version_status(void)
+void send_deviceinfo_status(void)
 {
 	inc_packetcounter();
 
-	UART_PUTF4("Sending Version: v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
+	UART_PUTF("Send DeviceInfo: DeviceType %u,", DEVICETYPE_RGBDIMMER);
+	UART_PUTF4(" v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
 	
 	// Set packet content
-	pkg_header_init_generic_version_status();
+	pkg_header_init_generic_deviceinfo_status();
 	pkg_header_set_senderid(device_id);
 	pkg_header_set_packetcounter(packetcounter);
-	msg_generic_version_set_major(VERSION_MAJOR);
-	msg_generic_version_set_minor(VERSION_MINOR);
-	msg_generic_version_set_patch(VERSION_PATCH);
-	msg_generic_version_set_hash(VERSION_HASH);
-	pkg_header_calc_crc32();
+	msg_generic_deviceinfo_set_devicetype(DEVICETYPE_RGBDIMMER);
+	msg_generic_deviceinfo_set_versionmajor(VERSION_MAJOR);
+	msg_generic_deviceinfo_set_versionminor(VERSION_MINOR);
+	msg_generic_deviceinfo_set_versionpatch(VERSION_PATCH);
+	msg_generic_deviceinfo_set_versionhash(VERSION_HASH);
 
 	rfm12_send_bufx();
 }
@@ -312,7 +317,6 @@ void send_status(void)
 
 	pkg_header_set_senderid(device_id);
 	pkg_header_set_packetcounter(packetcounter);
-	pkg_header_calc_crc32();
 	rfm12_send_bufx();
 }
 
@@ -524,14 +528,43 @@ void test_anim_calculation(void)
 	while (42) {}
 }
 
-// React accordingly on the MessageType, MessageGroup and MessageID.
-void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint32_t messageid)
+void send_ack(uint32_t acksenderid, uint32_t ackpacketcounter, bool error)
 {
+	// any message can be used as ack, because they are the same anyway
+	if (error)
+	{
+		UART_PUTS("Send error Ack\r\n");
+		pkg_header_init_dimmer_coloranimation_ack();
+	}
+
+	inc_packetcounter();
+	
+	// set common fields
+	pkg_header_set_senderid(device_id);
+	pkg_header_set_packetcounter(packetcounter);
+	
+	pkg_headerext_common_set_acksenderid(acksenderid);
+	pkg_headerext_common_set_ackpacketcounter(ackpacketcounter);
+	pkg_headerext_common_set_error(error);
+	
+	rfm12_send_bufx();
+}
+
+// Process a request to this device.
+// React accordingly on the MessageType, MessageGroup and MessageID
+// and send an Ack in any case. It may be an error ack if request is not supported.
+void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint32_t messageid)
+{
+	// remember some values before the packet buffer is destroyed
+	uint32_t acksenderid = pkg_header_get_senderid();
+	uint32_t ackpacketcounter = pkg_header_get_packetcounter();
+
 	UART_PUTF("MessageGroupID:%u;", messagegroupid);
 	
 	if (messagegroupid != MESSAGEGROUP_DIMMER)
 	{
 		UART_PUTS("\r\nERR: Unsupported MessageGroupID.\r\n");
+		send_ack(acksenderid, ackpacketcounter, true);
 		return;
 	}
 	
@@ -540,6 +573,7 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	if ((messageid != MESSAGEID_DIMMER_COLOR) && (messageid != MESSAGEID_DIMMER_COLORANIMATION))
 	{
 		UART_PUTS("\r\nERR: Unsupported MessageID.\r\n");
+		send_ack(acksenderid, ackpacketcounter, true);
 		return;
 	}
 
@@ -585,12 +619,6 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 
 	UART_PUTS("\r\n");
 
-	// remember some values before the packet buffer is destroyed
-	uint32_t acksenderid = pkg_header_get_senderid();
-	uint32_t ackpacketcounter = pkg_header_get_packetcounter();
-
-	inc_packetcounter();
-
 	// "Set" -> send "Ack"
 	if (messagetype == MESSAGETYPE_SET)
 	{
@@ -633,20 +661,12 @@ void process_message(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		UART_PUTS("Sending AckStatus\r\n");
 	}
 
-	// set common fields
-	pkg_header_set_senderid(device_id);
-	pkg_header_set_packetcounter(packetcounter);
-	
-	pkg_headerext_common_set_acksenderid(acksenderid);
-	pkg_headerext_common_set_ackpacketcounter(ackpacketcounter);
-	pkg_headerext_common_set_error(false); // FIXME: Move code for the Ack to a function and also return an Ack when errors occur before!
-	
-	pkg_header_calc_crc32();
-	
-	rfm12_send_bufx();
+	send_ack(acksenderid, ackpacketcounter, false);
 	send_status_timeout = 15;
 }
 
+// Check if incoming message is a legitimate request for this device.
+// If not, ignore it.
 void process_packet(uint8_t len)
 {
 	// Set packet content
@@ -689,7 +709,7 @@ void process_packet(uint8_t len)
 	}
 	
 	// check device id
-	uint8_t rcv_id = pkg_headerext_common_get_receiverid();
+	uint16_t rcv_id = pkg_headerext_common_get_receiverid();
 
 	UART_PUTF("ReceiverID:%u;", rcv_id);
 	
@@ -703,7 +723,7 @@ void process_packet(uint8_t len)
 	uint32_t messagegroupid = pkg_headerext_common_get_messagegroupid();
 	uint32_t messageid = pkg_headerext_common_get_messageid();
 	
-	process_message(messagetype, messagegroupid, messageid);
+	process_request(messagetype, messagegroupid, messageid);
 }
 
 int main(void)
@@ -745,8 +765,6 @@ int main(void)
 	// init AES key
 	e2p_generic_get_aeskey(aes_key);
 
-	led_blink(500, 500, 3);
-
 	PWM_init();
 	rfm12_init();
 	
@@ -755,6 +773,27 @@ int main(void)
 
 	clear_anim_data();
 	// test_anim_calculation(); // for debugging only
+
+	// Show colors shortly to tell user that power is connected (status LED may not be visible).
+	// In parallel, let status LED blink 3 times (as usual for SHC devices).
+	current_col = index2color(48);
+	set_PWM(current_col);
+	switch_led(true);
+	_delay_ms(500);
+	current_col = index2color(12);
+	set_PWM(current_col);
+	switch_led(false);
+	_delay_ms(500);
+	current_col = index2color(3);
+	set_PWM(current_col);
+	switch_led(true);
+	_delay_ms(500);
+	current_col = index2color(0);
+	set_PWM(current_col);
+	switch_led(false);
+	_delay_ms(500);
+
+	led_blink(500, 0, 1);
 
 	sei();
 
@@ -817,7 +856,7 @@ int main(void)
 			else if (version_status_cycle >= SEND_VERSION_STATUS_CYCLE)
 			{
 				version_status_cycle = 0;
-				send_version_status();
+				send_deviceinfo_status();
 				led_blink(200, 0, 1);
 			}
 		}

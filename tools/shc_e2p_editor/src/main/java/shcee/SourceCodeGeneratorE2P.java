@@ -18,11 +18,11 @@
 
 package shcee;
 
-import java.io.Console;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Hashtable;
 
 import javax.swing.JOptionPane;
 import javax.xml.transform.TransformerException;
@@ -188,8 +188,13 @@ public class SourceCodeGeneratorE2P
 				
 				NodeList enumElements = XPathAPI.selectNodeList(element, "Element");
 				
+				sb.append("#ifndef _ENUM_" + ID1 + newline);
+				sb.append("#define _ENUM_" + ID1 + newline);
+				
 				sb.append("typedef enum {" + newline);
 
+				Hashtable<String, String> enumDefs = new Hashtable<String, String>();
+				
 				for (int ee = 0; ee < enumElements.getLength(); ee++)
 				{
 					Node enumElement = enumElements.item(ee);
@@ -199,10 +204,14 @@ public class SourceCodeGeneratorE2P
 					String suffix = ee == enumElements.getLength() - 1 ? "" : ","; 
 					
 					sb.append("  " + name + " = " + value + suffix + newline);
+					
+					enumDefs.put(name, value);
 				}
 
 				sb.append("} " + ID1 + "Enum;" + newline);
-				sb.append(newline);
+				sb.append("#endif /* _ENUM_" + ID1 + " */" + newline + newline);
+				
+				EnumDuplicateChecker.checkEnumDefinition(ID1, enumDefs);
 				
 				String accessStr = Util.calcAccessStr("", offset, bits, isArray);
 				

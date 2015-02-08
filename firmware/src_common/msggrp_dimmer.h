@@ -228,10 +228,13 @@ static inline void pkg_header_init_dimmer_animation_ackstatus(void)
 // AnimationMode (EnumValue)
 // Description: If a time is set, use this animation mode to change the brightness over time (none = leave at start state for the whole time and switch to end state at the end).
 
+#ifndef _ENUM_AnimationMode
+#define _ENUM_AnimationMode
 typedef enum {
   ANIMATIONMODE_NONE = 0,
   ANIMATIONMODE_LINEAR = 1
 } AnimationModeEnum;
+#endif /* _ENUM_AnimationMode */
 
 // Set AnimationMode (EnumValue)
 // Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 2
