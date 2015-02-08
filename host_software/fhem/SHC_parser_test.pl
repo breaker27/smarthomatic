@@ -84,7 +84,8 @@ sub parser_test($)
 					{
 						print "Pin " . $i . ": " . $parser->getField("On", $i) . "\n";
 					}
-				}when('AnalogPin')
+				}
+				when('AnalogPin')
 				{
 					for (my $i = 0; $i < 8; $i++)
 					{
@@ -100,7 +101,11 @@ sub parser_test($)
 				when('HumidityTemperature')
 				{
 					print "Humidity: " . $parser->getField("Humidity") . "\n";
-					print "Temperature: " . $parser->getField("Temperature") . "\n";
+					print "Temperature: " . ($parser->getField("Temperature") / 100) . "\n";
+				}
+				when('Temperature')
+				{
+					print "Temperature: " . ($parser->getField("Temperature") / 100) . "\n";
 				}
 			}
 		}
@@ -127,6 +132,7 @@ parser_test("Packet Data: SenderID=23;PacketCounter=414;MessageType=8;MessageGro
 parser_test("Packet Data: SenderID=23;PacketCounter=307;MessageType=8;MessageGroupID=1;MessageID=2;MessageData=80458000000000000000000000000000000000000000;");
 parser_test("Packet Data: SenderID=71;PacketCounter=527;MessageType=8;MessageGroupID=10;MessageID=2;MessageData=a67161000000;Humidity=66.5;Temperature=-149.72;");
 parser_test("Packet Data: SenderID=27;PacketCounter=35106;MessageType=8;MessageGroupID=1;MessageID=1;MessageData=800000000000;");
+parser_test("Packet Data: SenderID=21;PacketCounter=680;MessageType=8;MessageGroupID=10;MessageID=1;MessageData=de7b00000000;Temperature=-85.81;");
 
 # Create message string for sending
 
