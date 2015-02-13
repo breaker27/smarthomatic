@@ -143,6 +143,16 @@ void timer2_init(void)
 
 void set_PWM(struct rgb_color_t color)
 {
+    if (color.r == 0 || brightness_factor == 0) {
+        TCCR0A &= ~(1 << COM0A1);
+    } else if (!(TCCR0A & (1<<COM0A1))) {
+        TCCR0A |= (1 << COM0A1);
+    }
+    if (color.g == 0 || brightness_factor == 0) {
+        TCCR0A &= ~(1 << COM0B1);
+    } else if (!(TCCR0A & (1<<COM0B1))) {
+        TCCR0A |= (1 << COM0B1);
+    }
 	OCR0A = (uint16_t)(pwm_transl[color.r]) * brightness_factor / 100;
 	OCR0B = (uint16_t)(pwm_transl[color.g]) * brightness_factor / 100;
 	OCR1A = (uint16_t)(pwm_transl[color.b]) * brightness_factor / 100;
