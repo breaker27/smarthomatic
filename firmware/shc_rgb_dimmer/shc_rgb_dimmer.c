@@ -580,8 +580,11 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	
 	UART_PUTF("MessageID:%u;", messageid);
 
-	if ((messageid != MESSAGEID_DIMMER_COLOR) && (messageid != MESSAGEID_DIMMER_COLORANIMATION))
-	{
+	if (
+        (messageid != MESSAGEID_DIMMER_COLOR)
+        && (messageid != MESSAGEID_DIMMER_COLORANIMATION)
+        && (messageid != MESSAGEID_DIMMER_BRIGHTNESS)
+    ) {
 		UART_PUTS("\r\nERR: Unsupported MessageID.\r\n");
 		send_ack(acksenderid, ackpacketcounter, true);
 		return;
@@ -619,7 +622,13 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 			
 			sei();
 		}
-		else
+		else if (messageid == MESSAGEID_DIMMER_BRIGHTNESS)
+        {
+            brightness_factor = msg_dimmer_brightness_get_brightness();
+            UART_PUTF("Brightness:%u;", brightness_factor);
+            update_current_col();
+        }
+        else if (messageid == MESSAGEID_DIMMER_COLOR)
 		{
 			uint8_t color = msg_dimmer_color_get_color();
 			UART_PUTF("Color:%u;", color);
@@ -636,10 +645,14 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		{
 			pkg_header_init_dimmer_coloranimation_ack();
 		}
-		else
+		else if (messageid == MESSAGEID_DIMMER_COLOR)
 		{
 			pkg_header_init_dimmer_color_ack();
 		}
+        else if (messageid == MESSAGEID_DIMMER_BRIGHTNESS)
+        {
+            pkg_header_init_dimmer_brightness_ack();
+        }
 
 		UART_PUTS("Sending Ack\r\n");
 	}
@@ -661,11 +674,16 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 			msg_dimmer_coloranimation_set_repeat(repeat);
 			msg_dimmer_coloranimation_set_autoreverse(autoreverse);
 		}
-		else
+		else if (messageid == MESSAGEID_DIMMER_COLOR)
 		{
 			pkg_header_init_dimmer_color_ackstatus();
 			msg_dimmer_color_set_color(anim_col_i[0]);
 		}
+        else if (messageid == MESSAGEID_DIMMER_BRIGHTNESS)
+        {
+            pkg_header_init_dimmer_brightness_ackstatus();
+            msg_dimmer_brightness_set_brightness(brightness_factor);
+        }
 		
 		// set message data
 		UART_PUTS("Sending AckStatus\r\n");
