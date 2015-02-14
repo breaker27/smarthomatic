@@ -456,7 +456,7 @@ sub SHCdev_Set($@)
       # is able to do this as well. Even more it supports intervals, off-for-timer, off-till ...
 
       if ($cmd eq 'toggle') {
-        $cmd = ReadingsVal($name, "state", "on") eq "off" ? "on" : "off";
+        $cmd = ReadingsVal($name, "state", "on") ~~ m/......0......./ ? "on" : "off";
       }
 
       if (!$readonly && $cmd eq 'off') {
