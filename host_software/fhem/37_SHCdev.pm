@@ -719,7 +719,7 @@ sub SHCdev_Send($)
 <h3>SHCdev</h3>
 <ul>
   SHC is the device module that supports several device types available 
-  at <a href="http://http://www.smarthomatic.org">www.smarthomatic.org</a>.<br><br>
+  at <a href="http://www.smarthomatic.org">www.smarthomatic.org</a>.<br><br>
 
   These device are connected to the FHEM server through the SHC base station (<a href="#SHC">SHC</a>).<br><br>
   Currently supported are:<br>
