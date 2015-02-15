@@ -33,11 +33,11 @@ use SHC_parser;
 my $parser = new SHC_parser();
 
 my %dev_state_icons = (
-  "PowerSwitch"         => "on:on:toggle off:off:toggle set.*:light_question:off",
+  "PowerSwitch"         => ".*10000000:on:off .*00000000:off:on set.*:light_question:off",
   "Dimmer"              => "on:on off:off set.*:light_question:off",
   "EnvSensor"           => undef,
   "RGBDimmer"           => undef,
-  "SoilMoistureMeter"   => undef
+  "SoilMoistureMeter"   => ".*H:\s\d\..*:ampel_rot"
 );
 
 my %web_cmds = (
@@ -456,7 +456,7 @@ sub SHCdev_Set($@)
       # is able to do this as well. Even more it supports intervals, off-for-timer, off-till ...
 
       if ($cmd eq 'toggle') {
-        $cmd = ReadingsVal($name, "state", "on") eq "off" ? "on" : "off";
+		$cmd = ReadingsVal($name, "on", "0") eq "0" ? "on" : "off";
       }
 
       if (!$readonly && $cmd eq 'off') {
@@ -719,7 +719,7 @@ sub SHCdev_Send($)
 <h3>SHCdev</h3>
 <ul>
   SHC is the device module that supports several device types available 
-  at <a href="http://http://www.smarthomatic.org">www.smarthomatic.org</a>.<br><br>
+  at <a href="http://www.smarthomatic.org">www.smarthomatic.org</a>.<br><br>
 
   These device are connected to the FHEM server through the SHC base station (<a href="#SHC">SHC</a>).<br><br>
   Currently supported are:<br>
