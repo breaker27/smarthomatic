@@ -441,7 +441,7 @@ int main(void)
 	// read (saved) switch state from before the eventual powerloss
 	for (i = 0; i < SWITCH_COUNT; i++)
 	{
-		switchRelais(i, e2p_powerswitch_get_switchstate(i), e2p_powerswitch_get_switchtimeout(i), true);
+		switchRelais(i, e2p_powerswitch_get_switchstate(i), 0, true);
 	}
 
 	rfm12_init();
