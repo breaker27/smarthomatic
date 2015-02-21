@@ -139,13 +139,9 @@ void switchRelais(int8_t num, bool on, uint16_t timeout, bool dbgmsg)
 		return;
 	}
 
-	bool change_state = switch_state[num] != on;
-	bool change_timeout = switch_timeout[num] != timeout;
-			
-	if (change_state)
+	if (switch_state[num] != on)
 	{
 		switch_state[num] = on;
-		e2p_powerswitch_set_switchstate(num, on);
 		
 		if (on)
 		{
@@ -159,9 +155,18 @@ void switchRelais(int8_t num, bool on, uint16_t timeout, bool dbgmsg)
 		}
 	}
 	
-	if (change_timeout)
+	if (e2p_powerswitch_get_switchstate(num) != on)
+	{
+		e2p_powerswitch_set_switchstate(num, on);
+	}
+	
+	if (switch_timeout[num] != timeout)
 	{
 		switch_timeout[num] = timeout;
+	}
+
+	if (e2p_powerswitch_get_switchtimeout(num) != timeout)
+	{
 		e2p_powerswitch_set_switchtimeout(num, timeout);
 	}
 }
