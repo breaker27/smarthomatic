@@ -37,7 +37,7 @@ my %dev_state_icons = (
   "Dimmer"              => "on:on off:off set.*:light_question:off",
   "EnvSensor"           => undef,
   "RGBDimmer"           => undef,
-  "SoilMoistureMeter"   => ".*H:\s\d\..*:ampel_rot"
+  "SoilMoistureMeter"   => ".*H:\\s\\d\\..*:ampel_rot"
 );
 
 my %web_cmds = (
