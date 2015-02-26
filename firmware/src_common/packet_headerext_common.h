@@ -31,6 +31,7 @@
 #include "packet_headerext_ackstatus.h"
 #include "packet_headerext_ack.h"
 #include "packet_headerext_status.h"
+#include "packet_headerext_setgetsave.h"
 #include "packet_headerext_setget.h"
 #include "packet_headerext_set.h"
 #include "packet_headerext_get.h"
@@ -58,6 +59,9 @@ static void pkg_header_adjust_offset(void)
       break;
     case MESSAGETYPE_STATUS:
       __HEADEROFFSETBITS = 83;
+      break;
+    case MESSAGETYPE_SETGETSAVE:
+      __HEADEROFFSETBITS = 95;
       break;
     case MESSAGETYPE_SETGET:
       __HEADEROFFSETBITS = 95;
@@ -121,6 +125,9 @@ static void pkg_headerext_common_set_messageid(uint32_t val)
     case MESSAGETYPE_STATUS:
       pkg_headerext_status_set_messageid(val);
       break;
+    case MESSAGETYPE_SETGETSAVE:
+      pkg_headerext_setgetsave_set_messageid(val);
+      break;
     case MESSAGETYPE_SETGET:
       pkg_headerext_setget_set_messageid(val);
       break;
@@ -147,6 +154,9 @@ static uint32_t pkg_headerext_common_get_messageid(void)
       break;
     case MESSAGETYPE_STATUS:
       return pkg_headerext_status_get_messageid();
+      break;
+    case MESSAGETYPE_SETGETSAVE:
+      return pkg_headerext_setgetsave_get_messageid();
       break;
     case MESSAGETYPE_SETGET:
       return pkg_headerext_setget_get_messageid();
@@ -207,6 +217,9 @@ static void pkg_headerext_common_set_receiverid(uint32_t val)
 {
   switch (__MESSAGETYPE)
   {
+    case MESSAGETYPE_SETGETSAVE:
+      pkg_headerext_setgetsave_set_receiverid(val);
+      break;
     case MESSAGETYPE_SETGET:
       pkg_headerext_setget_set_receiverid(val);
       break;
@@ -228,6 +241,9 @@ static uint32_t pkg_headerext_common_get_receiverid(void)
 {
   switch (__MESSAGETYPE)
   {
+    case MESSAGETYPE_SETGETSAVE:
+      return pkg_headerext_setgetsave_get_receiverid();
+      break;
     case MESSAGETYPE_SETGET:
       return pkg_headerext_setget_get_receiverid();
       break;
@@ -256,6 +272,9 @@ static void pkg_headerext_common_set_messagegroupid(uint32_t val)
     case MESSAGETYPE_STATUS:
       pkg_headerext_status_set_messagegroupid(val);
       break;
+    case MESSAGETYPE_SETGETSAVE:
+      pkg_headerext_setgetsave_set_messagegroupid(val);
+      break;
     case MESSAGETYPE_SETGET:
       pkg_headerext_setget_set_messagegroupid(val);
       break;
@@ -282,6 +301,9 @@ static uint32_t pkg_headerext_common_get_messagegroupid(void)
       break;
     case MESSAGETYPE_STATUS:
       return pkg_headerext_status_get_messagegroupid();
+      break;
+    case MESSAGETYPE_SETGETSAVE:
+      return pkg_headerext_setgetsave_get_messagegroupid();
       break;
     case MESSAGETYPE_SETGET:
       return pkg_headerext_setget_get_messagegroupid();

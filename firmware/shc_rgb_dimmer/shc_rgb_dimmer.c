@@ -635,6 +635,33 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 
 		UART_PUTS("Sending Ack\r\n");
 	}
+	else if (messagetype == MESSAGETYPE_SETGETSAVE)
+	{
+		if (messageid == MESSAGEID_DIMMER_COLOR)
+		{
+			uint8_t color = msg_dimmer_color_get_color();
+			UART_PUTF("\nColor:%u;", color);
+			set_animation_fixed_color(color);
+
+			e2p_rgbdimmer_set_color(color);
+
+			pkg_header_init_dimmer_color_ackstatus();
+			msg_dimmer_color_set_color(anim_col_i[0]);
+			UART_PUTS("Sending AckStatus\r\n");
+		}
+		else if (messageid == MESSAGEID_DIMMER_BRIGHTNESS)
+		{
+			brightness_factor = msg_dimmer_brightness_get_brightness();
+			UART_PUTF("\nBrightness:%u;", brightness_factor);
+			update_current_col();
+
+			e2p_rgbdimmer_set_brightnessfactor(brightness_factor);
+
+			pkg_header_init_dimmer_brightness_ackstatus();
+			msg_dimmer_brightness_set_brightness(brightness_factor);
+			UART_PUTS("Sending AckStatus\r\n");
+		}
+	}
 	// "Get" or "SetGet" -> send "AckStatus"
 	else
 	{
@@ -704,7 +731,7 @@ void process_packet(uint8_t len)
 	MessageTypeEnum messagetype = pkg_header_get_messagetype();
 	UART_PUTF("MessageType:%u;", messagetype);
 	
-	if ((messagetype != MESSAGETYPE_GET) && (messagetype != MESSAGETYPE_SET) && (messagetype != MESSAGETYPE_SETGET))
+	if ((messagetype != MESSAGETYPE_GET) && (messagetype != MESSAGETYPE_SET) && (messagetype != MESSAGETYPE_SETGET) && (messagetype != MESSAGETYPE_SETGETSAVE))
 	{
 		UART_PUTS("\r\nERR: Unsupported MessageType.\r\n");
 		return;

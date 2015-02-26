@@ -401,6 +401,7 @@ int main(void)
 				case MESSAGETYPE_GET:
 				case MESSAGETYPE_SET:
 				case MESSAGETYPE_SETGET:
+				case MESSAGETYPE_SETGETSAVE:
 					receiverid = hex_to_uint16((uint8_t *)cmdbuf, 5);
 					pkg_headerext_common_set_receiverid(receiverid);
 					pkg_headerext_common_set_messagegroupid(hex_to_uint8((uint8_t *)cmdbuf, 9));
@@ -461,7 +462,7 @@ int main(void)
 			packet_len = ((packet_len - 1) / 16 + 1) * 16;
 
 			// send packet which doesn't require an acknowledge immediately
-			if ((message_type != MESSAGETYPE_GET) && (message_type != MESSAGETYPE_SET) && (message_type != MESSAGETYPE_SETGET))
+			if ((message_type != MESSAGETYPE_GET) && (message_type != MESSAGETYPE_SET) && (message_type != MESSAGETYPE_SETGET) && (message_type != MESSAGETYPE_SETGETSAVE))
 			{
 				send_packet(aes_key_nr, packet_len);
 			}

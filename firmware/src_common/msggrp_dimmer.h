@@ -29,6 +29,7 @@
 #include "packet_headerext_ackstatus.h"
 #include "packet_headerext_ack.h"
 #include "packet_headerext_status.h"
+#include "packet_headerext_setgetsave.h"
 #include "packet_headerext_setget.h"
 #include "packet_headerext_set.h"
 #include "packet_headerext_get.h"
@@ -51,7 +52,7 @@ typedef enum {
 // ---------------------------
 // MessageGroupID: 60
 // MessageID: 1
-// Possible MessageTypes: Get, Set, SetGet, Status, Ack, AckStatus
+// Possible MessageTypes: Get, Set, SetGet, SetGetSave, Status, Ack, AckStatus
 // Validity: test
 // Length w/o Header + HeaderExtension: 7 bits
 // Data fields: Brightness
@@ -91,6 +92,18 @@ static inline void pkg_header_init_dimmer_brightness_setget(void)
   __HEADEROFFSETBITS = 95;
   __PACKETSIZEBYTES = 16;
   __MESSAGETYPE = 2;
+}
+
+// Function to initialize header for the MessageType "SetGetSave".
+static inline void pkg_header_init_dimmer_brightness_setgetsave(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(7);
+  pkg_headerext_setgetsave_set_messagegroupid(60);
+  pkg_headerext_setgetsave_set_messageid(1);
+  __HEADEROFFSETBITS = 95;
+  __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 7;
 }
 
 // Function to initialize header for the MessageType "Status".
@@ -306,7 +319,7 @@ static inline uint32_t msg_dimmer_animation_get_endbrightness(void)
 // ----------------------
 // MessageGroupID: 60
 // MessageID: 10
-// Possible MessageTypes: Get, Set, SetGet, Status, Ack, AckStatus
+// Possible MessageTypes: Get, Set, SetGet, SetGetSave, Status, Ack, AckStatus
 // Validity: test
 // Length w/o Header + HeaderExtension: 6 bits
 // Data fields: Color
@@ -346,6 +359,18 @@ static inline void pkg_header_init_dimmer_color_setget(void)
   __HEADEROFFSETBITS = 95;
   __PACKETSIZEBYTES = 16;
   __MESSAGETYPE = 2;
+}
+
+// Function to initialize header for the MessageType "SetGetSave".
+static inline void pkg_header_init_dimmer_color_setgetsave(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(7);
+  pkg_headerext_setgetsave_set_messagegroupid(60);
+  pkg_headerext_setgetsave_set_messageid(10);
+  __HEADEROFFSETBITS = 95;
+  __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 7;
 }
 
 // Function to initialize header for the MessageType "Status".
