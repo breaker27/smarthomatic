@@ -797,6 +797,10 @@ int main(void)
 
 	led_blink(500, 0, 1);
 
+	UART_PUTF ("Default color #%u\r\n", e2p_rgbdimmer_get_color());
+	current_col = index2color(e2p_rgbdimmer_get_color());
+	set_PWM(current_col);
+
 	sei();
 
 	while (42)

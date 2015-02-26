@@ -65,8 +65,25 @@ static inline uint8_t e2p_rgbdimmer_get_brightnessfactor(void)
   return eeprom_read_UIntValue8(536, 8, 1, 100);
 }
 
-// Reserved area with 7648 bits
-// Offset: 544
+// Color (UIntValue)
+// Description: This Value is the default color.
+
+// Set Color (UIntValue)
+// Offset: 544, length bits 6, min val 0, max val 63
+static inline void e2p_rgbdimmer_set_color(uint8_t val)
+{
+  eeprom_write_UIntValue(544, 6, val);
+}
+
+// Get Color (UIntValue)
+// Offset: 544, length bits 6, min val 0, max val 63
+static inline uint8_t e2p_rgbdimmer_get_color(void)
+{
+  return eeprom_read_UIntValue8(544, 6, 0, 63);
+}
+
+// Reserved area with 7642 bits
+// Offset: 550
 
 
 #endif /* _E2P_RGBDIMMER_H */
