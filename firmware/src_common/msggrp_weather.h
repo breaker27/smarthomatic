@@ -29,6 +29,7 @@
 #include "packet_headerext_ackstatus.h"
 #include "packet_headerext_ack.h"
 #include "packet_headerext_status.h"
+#include "packet_headerext_setgetsave.h"
 #include "packet_headerext_setget.h"
 #include "packet_headerext_set.h"
 #include "packet_headerext_get.h"
@@ -95,7 +96,7 @@ static inline void pkg_header_init_weather_temperature_ackstatus(void)
 }
 
 // Temperature (IntValue)
-// Description: temperature [1/100 degree celsius], -50캜 = -5000, 50캜 = 5000
+// Description: temperature [1/100 degree celsius], -50째C = -5000, 50째C = 5000
 
 // Set Temperature (IntValue)
 // Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 16, min val -32768, max val 32767
@@ -176,7 +177,7 @@ static inline uint32_t msg_weather_humiditytemperature_get_humidity(void)
 }
 
 // Temperature (IntValue)
-// Description: temperature [1/100 degree celsius], -50캜 = -5000, 50캜 = 5000
+// Description: temperature [1/100 degree celsius], -50째C = -5000, 50째C = 5000
 
 // Set Temperature (IntValue)
 // Offset: (uint16_t)__HEADEROFFSETBITS + 10, length bits 16, min val -32768, max val 32767
@@ -257,7 +258,7 @@ static inline uint32_t msg_weather_barometricpressuretemperature_get_barometricp
 }
 
 // Temperature (IntValue)
-// Description: temperature [1/100 degree celsius], -50캜 = -5000, 50캜 = 5000
+// Description: temperature [1/100 degree celsius], -50째C = -5000, 50째C = 5000
 
 // Set Temperature (IntValue)
 // Offset: (uint16_t)__HEADEROFFSETBITS + 17, length bits 16, min val -32768, max val 32767

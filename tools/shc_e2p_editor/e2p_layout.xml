@@ -649,8 +649,16 @@
 			<MaxVal>100</MaxVal>
 			<DefaultVal>100</DefaultVal>
 		</UIntValue>
+		<UIntValue>
+			<ID>Color</ID>
+			<Description>This Value is the default color.</Description>
+			<Bits>6</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>63</MaxVal>
+			<DefaultVal>0</DefaultVal>
+		</UIntValue>
 		<Reserved>
-			<Bits>7648</Bits>
+			<Bits>7642</Bits>
 		</Reserved>
 	</Block>
 	<Block>
