@@ -33,7 +33,7 @@ use SHC_parser;
 my $parser = new SHC_parser();
 
 my %dev_state_icons = (
-  "PowerSwitch"         => ".*10000000:on:off .*00000000:off:on set.*:light_question:off",
+  "PowerSwitch"         => ".*1\\d{7}:on:off .*0\\d{7}:off:on set.*:light_question:off",
   "Dimmer"              => "on:on off:off set.*:light_question:off",
   "EnvSensor"           => undef,
   "RGBDimmer"           => undef,
