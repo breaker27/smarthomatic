@@ -958,7 +958,8 @@ int main(void)
 	
 	UART_PUTF3("Min. battery voltage: %umV (measInt %u, avgInt %u)\r\n", vempty, battery_voltage.measInt, battery_voltage.avgInt);
 
-	if (barometric_sensor_type == BAROMETRICSENSORTYPE_BMP085 || temperature_sensor_type == TEMPERATURESENSORTYPE_BMP085)
+	if ((barometric_sensor_type == BAROMETRICSENSORTYPE_BMP085)
+		|| (temperature_sensor_type == TEMPERATURESENSORTYPE_BMP085))
 	{
 		i2c_enable();
 		bmp085_init();
