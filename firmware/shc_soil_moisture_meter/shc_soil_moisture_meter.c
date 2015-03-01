@@ -205,7 +205,8 @@ bool measure_humidity(void)
 	counter_meas += result;
 	wupCnt++;
 	
-	UART_PUTF3("Init mode %u, Measurement %u, Counter %u\r\n", init_mode, wupCnt, result);
+	UART_PUTF4("Init mode %u, Measurement %u/%u, Counter %u\r\n",
+		init_mode, wupCnt, init_mode ? avgIntInit : avgInt , result);
 
 	if ((init_mode && (wupCnt == avgIntInit)) || (!init_mode && (wupCnt == avgInt)))
 	{
@@ -338,7 +339,7 @@ int main(void)
 
 	UART_PUTS ("\r\n");
 	UART_PUTF4("smarthomatic Soil Moisture Meter v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
-	UART_PUTS("(c) 2014 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTS("(c) 2014..2015 Uwe Freese, www.smarthomatic.org\r\n");
 	osccal_info();
 	UART_PUTF ("DeviceID: %u\r\n", device_id);
 	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);
