@@ -115,20 +115,14 @@ void PWM_init(void)
 	GRN_DDR |= (1 << GRN_PIN);
 	BLU_DDR |= (1 << BLU_PIN);
 
-	// OC0A (Red LED): Fast PWM, 8 Bit, TOP = 0xFF = 255, inverting output
-	// OC0B (Green LED): Fast PWM, 8 Bit, TOP = 0xFF = 255, non inverting output
-	// Inverting mode is used to make sure that the LEDs are off with the extreme value of 255 for OCRxx.
-	// (This is not the case using non-inverting mode and a value of 0.)
-	TCCR0A = (1 << WGM01) | (1 << WGM00) | (1 << COM0A1) | (1 << COM0A0) | (1 << COM0B1)| (1 << COM0B0);
+	// OC0A (Red LED): Phase correct PWM, 8 Bit, TOP = 0xFF = 255, non-inverting output
+	// OC0B (Green LED): Phase correct PWM, 8 Bit, TOP = 0xFF = 255, non-inverting output
+	TCCR0A = (1 << WGM00) | (1 << COM0A1) | (1 << COM0B1);
 
-	// OC1A (Blue LED): Fast PWM, 8 Bit, TOP = 0xFF = 255, inverting output
-	TCCR1A = (1 << WGM12) | (1 << WGM10) | (1 << COM1A1)| (1 << COM1A0);
+	// OC1A (Blue LED): Phase correct PWM, 8 Bit, TOP = 0xFF = 255, non-inverting output
+	TCCR1A = (1 << WGM10) | (1 << COM1A1);
 
-	// Clock source for both timers = I/O clock, 1/256 prescaler -> ~ 120 Hz
-	//TCCR0B = (1 << CS02);
-	//TCCR1B = (1 << CS12);
-
-	// Clock source for both timers = I/O clock, 1/64 prescaler -> ~ 480 Hz
+	// Clock source for both timers = I/O clock, 1/64 prescaler -> ~ 240 Hz
 	TCCR0B = (1 << CS01) | (1 << CS00);
 	TCCR1B = (1 << CS11) | (1 << CS10);
 }
@@ -145,9 +139,9 @@ void timer2_init(void)
 
 void set_PWM(struct rgb_color_t color)
 {
-	OCR0A = 255 - (uint16_t)(pwm_transl[color.r]) * brightness_factor / 100;
-	OCR0B = 255 - (uint16_t)(pwm_transl[color.g]) * brightness_factor / 100;
-	OCR1A = 255 - (uint16_t)(pwm_transl[color.b]) * brightness_factor / 100;
+	OCR0A = (uint16_t)(pwm_transl[color.r]) * brightness_factor / 100;
+	OCR0B = (uint16_t)(pwm_transl[color.g]) * brightness_factor / 100;
+	OCR1A = (uint16_t)(pwm_transl[color.b]) * brightness_factor / 100;
 }
 
 // Calculate an RGB value out of the index color.
