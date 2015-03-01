@@ -854,8 +854,16 @@
 			<MinVal>0</MinVal>
 			<MaxVal>65535</MaxVal>
 		</UIntValue>
+		<UIntValue>
+			<ID>SmoothingPercentage</ID>
+			<Description>This is the size of a moving window in which the absolute humidity (0 to 100 percent) is smoothed. This is necessary because the raw values typically show some short term variation, depending on external circumstances (plant in sunlight or above radiator). The variation also depends on the thickness of isolation above the sensor plates.</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>30</MaxVal>
+			<DefaultVal>8</DefaultVal>
+		</UIntValue>
 		<Reserved>
-			<Bits>7584</Bits>
+			<Bits>7576</Bits>
 		</Reserved>
 	</Block>
 	<Block>

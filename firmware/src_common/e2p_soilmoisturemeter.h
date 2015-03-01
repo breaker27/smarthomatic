@@ -177,8 +177,25 @@ static inline uint16_t e2p_soilmoisturemeter_get_minval(void)
   return eeprom_read_UIntValue16(576, 16, 0, 65535);
 }
 
-// Reserved area with 7584 bits
-// Offset: 592
+// SmoothingPercentage (UIntValue)
+// Description: This is the size of a moving window in which the absolute humidity (0 to 100 percent) is smoothed. This is necessary because the raw values typically show some short term variation, depending on external circumstances (plant in sunlight or above radiator). The variation also depends on the thickness of isolation above the sensor plates.
+
+// Set SmoothingPercentage (UIntValue)
+// Offset: 592, length bits 8, min val 0, max val 30
+static inline void e2p_soilmoisturemeter_set_smoothingpercentage(uint8_t val)
+{
+  eeprom_write_UIntValue(592, 8, val);
+}
+
+// Get SmoothingPercentage (UIntValue)
+// Offset: 592, length bits 8, min val 0, max val 30
+static inline uint8_t e2p_soilmoisturemeter_get_smoothingpercentage(void)
+{
+  return eeprom_read_UIntValue8(592, 8, 0, 30);
+}
+
+// Reserved area with 7576 bits
+// Offset: 600
 
 
 #endif /* _E2P_SOILMOISTUREMETER_H */

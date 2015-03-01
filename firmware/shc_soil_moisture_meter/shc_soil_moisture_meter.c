@@ -50,8 +50,6 @@
 #define SEND_BATTERY_STATUS_CYCLE 25 // send version status every x wake ups
 #define SEND_VERSION_STATUS_CYCLE 50 // send version status every x wake ups
 
-#define DENOISE_WINDOW_PERMILL 20
-
 uint16_t device_id;
 uint32_t station_packetcounter;
 
@@ -69,6 +67,8 @@ uint16_t avgIntInit = 3;
 
 uint32_t reported_result = 0;
 bool direction_up = true;
+
+uint8_t smoothing_percentage;
 
 // TODO: Move to util
 // calculate x^y
@@ -256,7 +256,7 @@ bool measure_humidity(void)
 					{
 						reported_result = result;
 					}
-					else if (result < reported_result - DENOISE_WINDOW_PERMILL)
+					else if (result < reported_result - smoothing_percentage * 10)
 					{
 						reported_result = result;
 						direction_up = false;
@@ -268,7 +268,7 @@ bool measure_humidity(void)
 					{
 						reported_result = result;
 					}
-					else if (result > reported_result + DENOISE_WINDOW_PERMILL)
+					else if (result > reported_result + smoothing_percentage * 10)
 					{
 						reported_result = result;
 						direction_up = true;
@@ -330,6 +330,7 @@ int main(void)
 
 	avgIntInit = e2p_soilmoisturemeter_get_averagingintervalinit();
 	avgInt = e2p_soilmoisturemeter_get_averaginginterval();
+	smoothing_percentage = e2p_soilmoisturemeter_get_smoothingpercentage();
 
 	osccal_init();
 
@@ -345,6 +346,7 @@ int main(void)
 	UART_PUTF ("AveragingInterval for normal operation: %u\r\n", avgInt);
 	UART_PUTF ("Dry threshold: %u\r\n", dry_thr);
 	UART_PUTF ("Min value: %u\r\n", counter_min);
+	UART_PUTF ("Smoothing percentage: %u\r\n", smoothing_percentage);
 
 	adc_init();
 
