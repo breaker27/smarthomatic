@@ -12139,14 +12139,15 @@ W = angled&lt;p&gt;
 <part name="JP12" library="pinhead" deviceset="PINHD-1X1" device="" value="PD3"/>
 <part name="JP13" library="pinhead" deviceset="PINHD-1X1" device="" value="PB7"/>
 <part name="JP14" library="pinhead" deviceset="PINHD-1X1" device="" value="PD0"/>
+<part name="R9" library="rcl" deviceset="R-EU_" device="0207/7" value="4k7"/>
 </parts>
 <sheets>
 <sheet>
 <plain>
 <frame x1="-60.96" y1="-53.34" x2="132.08" y2="88.9" columns="8" rows="5" layer="97"/>
 <text x="40.64" y="-33.02" size="3.81" layer="97">smarthomatic Generic Midi 1</text>
-<text x="96.52" y="-38.1" size="2.1844" layer="97">Date: 23.08.2014</text>
-<text x="40.64" y="-38.1" size="2.1844" layer="97">Rev 1.2</text>
+<text x="96.52" y="-38.1" size="2.1844" layer="97">Date: 01.01.2015</text>
+<text x="40.64" y="-38.1" size="2.1844" layer="97">Rev 1.3</text>
 <text x="40.64" y="-43.18" size="2.1844" layer="97">Copyright (c) Uwe Freese, www.smarthomatic.org</text>
 </plain>
 <instances>
@@ -12179,10 +12180,11 @@ W = angled&lt;p&gt;
 <instance part="JP8" gate="G$1" x="40.64" y="20.32"/>
 <instance part="R7" gate="G$1" x="48.26" y="25.4" rot="R270"/>
 <instance part="R8" gate="G$1" x="43.18" y="27.94" rot="R270"/>
-<instance part="JP11" gate="G$1" x="66.04" y="12.7"/>
+<instance part="JP11" gate="G$1" x="71.12" y="12.7"/>
 <instance part="JP12" gate="G$1" x="50.8" y="15.24"/>
 <instance part="JP13" gate="G$1" x="-43.18" y="25.4" rot="R180"/>
 <instance part="JP14" gate="G$1" x="38.1" y="27.94"/>
+<instance part="R9" gate="G$1" x="58.42" y="15.24" rot="R180"/>
 </instances>
 <busses>
 </busses>
@@ -12290,6 +12292,8 @@ W = angled&lt;p&gt;
 <junction x="48.26" y="20.32"/>
 <junction x="53.34" y="20.32"/>
 <pinref part="JP2" gate="1" pin="6"/>
+<pinref part="R9" gate="G$1" pin="2"/>
+<wire x1="53.34" y1="15.24" x2="53.34" y2="20.32" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$3" class="0">
@@ -12497,6 +12501,10 @@ W = angled&lt;p&gt;
 <wire x1="30.48" y1="12.7" x2="58.42" y2="12.7" width="0.1524" layer="91"/>
 <wire x1="58.42" y1="12.7" x2="60.96" y2="12.7" width="0.1524" layer="91"/>
 <wire x1="60.96" y1="12.7" x2="63.5" y2="12.7" width="0.1524" layer="91"/>
+<pinref part="R9" gate="G$1" pin="1"/>
+<wire x1="63.5" y1="12.7" x2="68.58" y2="12.7" width="0.1524" layer="91"/>
+<wire x1="63.5" y1="15.24" x2="63.5" y2="12.7" width="0.1524" layer="91"/>
+<junction x="63.5" y="12.7"/>
 </segment>
 </net>
 <net name="N$23" class="0">

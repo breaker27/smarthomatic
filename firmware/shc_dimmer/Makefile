@@ -29,8 +29,8 @@ TARGET = shc_dimmer
 # Source files (C dependencies are automatically generated).
 #   C			*.c
 #   Assembler	*.S
-CSRC = $(TARGET).c rfm12.c util.c uart.c aes256.c fuses.c
-ASRC =
+CSRC = $(TARGET).c rfm12.c ../src_common/util.c ../src_common/uart.c ../src_common/aes256.c fuses.c
+ASRC = ../src_common/aes_keyschedule-asm.S ../src_common/aes_enc-asm.S ../src_common/aes_dec-asm.S ../src_common/aes_sbox-asm.S ../src_common/aes_invsbox-asm.S
 FUSES = -U hfuse:w:hfuse.hex:i -U lfuse:w:lfuse.hex:i -U efuse:w:efuse.hex:i -u
 
 #******************************************************************************

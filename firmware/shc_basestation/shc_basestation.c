@@ -22,7 +22,7 @@
 #include <string.h>
 
 #include "rfm12.h"
-#include "uart.h"
+#include "../src_common/uart.h"
 
 #include "../src_common/msggrp_generic.h"
 #include "../src_common/msggrp_weather.h"
@@ -32,8 +32,8 @@
 #include "../src_common/e2p_generic.h"
 #include "../src_common/e2p_basestation.h"
 
-#include "aes256.h"
-#include "util.h"
+#include "../src_common/aes256.h"
+#include "../src_common/util.h"
 #include "request_buffer.h"
 #include "version.h"
 
@@ -116,11 +116,12 @@ void decode_data(uint8_t len)
 
 				switch (messageid)
 				{
-					case MESSAGEID_GENERIC_VERSION:
-						UART_PUTF("Major=%u;", msg_generic_version_get_major());
-						UART_PUTF("Minor=%u;", msg_generic_version_get_minor());
-						UART_PUTF("Patch=%u;", msg_generic_version_get_patch());
-						UART_PUTF("Hash=%08lx;", msg_generic_version_get_hash());
+					case MESSAGEID_GENERIC_DEVICEINFO:
+						UART_PUTF("DeviceType=%u;", msg_generic_deviceinfo_get_devicetype());
+						UART_PUTF("VersionMajor=%u;", msg_generic_deviceinfo_get_versionmajor());
+						UART_PUTF("VersionMinor=%u;", msg_generic_deviceinfo_get_versionminor());
+						UART_PUTF("VersionPatch=%u;", msg_generic_deviceinfo_get_versionpatch());
+						UART_PUTF("VersionHash=%08lx;", msg_generic_deviceinfo_get_versionhash());
 						break;
 						
 					case MESSAGEID_GENERIC_BATTERYSTATUS:
@@ -204,9 +205,6 @@ void send_packet(uint8_t aes_key_nr, uint8_t packet_len)
 	inc_packetcounter();
 	pkg_header_set_packetcounter(packetcounter);
 
-	// set CRC32
-	pkg_header_set_crc32(crc32(bufx + 4, packet_len - 4));
-	
 	// load AES key (0 is first AES key)
 	if (aes_key_nr >= aes_key_count)
 	{

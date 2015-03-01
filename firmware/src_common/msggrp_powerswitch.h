@@ -50,7 +50,7 @@ typedef enum {
 // MessageGroupID: 20
 // MessageID: 1
 // Possible MessageTypes: Get, Set, SetGet, Status, Ack, AckStatus
-// Validity: test
+// Validity: deprecated
 // Length w/o Header + HeaderExtension: 17 bits
 // Data fields: On, TimeoutSec
 // Description: This is the state of the relais and its timeout value.
@@ -165,7 +165,7 @@ static inline uint32_t msg_powerswitch_switchstate_get_timeoutsec(void)
 // MessageGroupID: 20
 // MessageID: 2
 // Possible MessageTypes: Get, Set, SetGet, Status, Ack, AckStatus
-// Validity: test
+// Validity: deprecated
 // Length w/o Header + HeaderExtension: 136 bits
 // Data fields: On, TimeoutSec
 // Description: This is the state of up to 8 relais and its timeout values.

@@ -42,6 +42,7 @@
 // ENUM for MessageIDs of this MessageGroup
 typedef enum {
   MESSAGEID_GENERIC_VERSION = 1,
+  MESSAGEID_GENERIC_DEVICEINFO = 2,
   MESSAGEID_GENERIC_BATTERYSTATUS = 5
 } GENERIC_MessageIDEnum;
 
@@ -51,7 +52,7 @@ typedef enum {
 // MessageGroupID: 0
 // MessageID: 1
 // Possible MessageTypes: Get, Status, AckStatus
-// Validity: test
+// Validity: deprecated
 // Length w/o Header + HeaderExtension: 56 bits
 // Data fields: Major, Minor, Patch, Hash
 // Description: Reports the current firmware version. Version information is only available when set in source code, which is usually only done for official builds by the build robot.
@@ -158,6 +159,151 @@ static inline void msg_generic_version_set_hash(uint32_t val)
 static inline uint32_t msg_generic_version_get_hash(void)
 {
   return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 24, 32, 0, 4294967295, bufx);
+}
+
+
+// Message "generic_deviceinfo"
+// ----------------------------
+// MessageGroupID: 0
+// MessageID: 2
+// Possible MessageTypes: Get, Status, AckStatus
+// Validity: test
+// Length w/o Header + HeaderExtension: 64 bits
+// Data fields: DeviceType, VersionMajor, VersionMinor, VersionPatch, VersionHash
+// Description: Reports DeviceType and current firmware version. Version information is only available when set in source code, which is usually only done for official builds by the build robot.
+
+// Function to initialize header for the MessageType "Get".
+static inline void pkg_header_init_generic_deviceinfo_get(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(0);
+  pkg_headerext_get_set_messagegroupid(0);
+  pkg_headerext_get_set_messageid(2);
+  __HEADEROFFSETBITS = 95;
+  __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 0;
+}
+
+// Function to initialize header for the MessageType "Status".
+static inline void pkg_header_init_generic_deviceinfo_status(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(8);
+  pkg_headerext_status_set_messagegroupid(0);
+  pkg_headerext_status_set_messageid(2);
+  __HEADEROFFSETBITS = 83;
+  __PACKETSIZEBYTES = 32;
+  __MESSAGETYPE = 8;
+}
+
+// Function to initialize header for the MessageType "AckStatus".
+static inline void pkg_header_init_generic_deviceinfo_ackstatus(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(10);
+  pkg_headerext_ackstatus_set_messagegroupid(0);
+  pkg_headerext_ackstatus_set_messageid(2);
+  __HEADEROFFSETBITS = 120;
+  __PACKETSIZEBYTES = 32;
+  __MESSAGETYPE = 10;
+}
+
+// DeviceType (EnumValue)
+// Description: The DeviceType can be used to adapt the behavior or representation of the SHC device at the server software (e.g. FHEM).
+
+#ifndef _ENUM_DeviceType
+#define _ENUM_DeviceType
+typedef enum {
+  DEVICETYPE_BASESTATION = 0,
+  DEVICETYPE_ENVSENSOR = 20,
+  DEVICETYPE_POWERSWITCH = 40,
+  DEVICETYPE_RGBDIMMER = 50,
+  DEVICETYPE_DIMMER = 60,
+  DEVICETYPE_SOILMOISTUREMETER = 70,
+  DEVICETYPE_THERMOSTAT = 80
+} DeviceTypeEnum;
+#endif /* _ENUM_DeviceType */
+
+// Set DeviceType (EnumValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 8
+static inline void msg_generic_deviceinfo_set_devicetype(DeviceTypeEnum val)
+{
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 0, 8, val, bufx);
+}
+
+// Get DeviceType (EnumValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 8
+static inline DeviceTypeEnum msg_generic_deviceinfo_get_devicetype(void)
+{
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 0, 8, 0, 255, bufx);
+}
+
+// VersionMajor (UIntValue)
+// Description: Different major version means incompatible changes.
+
+// Set VersionMajor (UIntValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 8, length bits 8, min val 0, max val 255
+static inline void msg_generic_deviceinfo_set_versionmajor(uint32_t val)
+{
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 8, 8, val, bufx);
+}
+
+// Get VersionMajor (UIntValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 8, length bits 8, min val 0, max val 255
+static inline uint32_t msg_generic_deviceinfo_get_versionmajor(void)
+{
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 8, 8, 0, 255, bufx);
+}
+
+// VersionMinor (UIntValue)
+// Description: Different minor number means new functionality without breaking compatibility.
+
+// Set VersionMinor (UIntValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 16, length bits 8, min val 0, max val 255
+static inline void msg_generic_deviceinfo_set_versionminor(uint32_t val)
+{
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 16, 8, val, bufx);
+}
+
+// Get VersionMinor (UIntValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 16, length bits 8, min val 0, max val 255
+static inline uint32_t msg_generic_deviceinfo_get_versionminor(void)
+{
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 16, 8, 0, 255, bufx);
+}
+
+// VersionPatch (UIntValue)
+// Description: The patch version is changed when backwards-compatible bug fixes are made.
+
+// Set VersionPatch (UIntValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 24, length bits 8, min val 0, max val 255
+static inline void msg_generic_deviceinfo_set_versionpatch(uint32_t val)
+{
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 24, 8, val, bufx);
+}
+
+// Get VersionPatch (UIntValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 24, length bits 8, min val 0, max val 255
+static inline uint32_t msg_generic_deviceinfo_get_versionpatch(void)
+{
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 24, 8, 0, 255, bufx);
+}
+
+// VersionHash (UIntValue)
+// Description: The beginning of the revision ID hash (as reported by Git).
+
+// Set VersionHash (UIntValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 32, length bits 32, min val 0, max val 4294967295
+static inline void msg_generic_deviceinfo_set_versionhash(uint32_t val)
+{
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 32, 32, val, bufx);
+}
+
+// Get VersionHash (UIntValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 32, length bits 32, min val 0, max val 4294967295
+static inline uint32_t msg_generic_deviceinfo_get_versionhash(void)
+{
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 32, 32, 0, 4294967295, bufx);
 }
 
 

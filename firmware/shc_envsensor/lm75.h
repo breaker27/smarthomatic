@@ -19,7 +19,7 @@
 #ifndef _LM75_H
 #define _LM75_H
 
-#include "util.h"
+#include "../src_common/util.h"
 
 /*
  * This driver is supposed to support many members of the LM75 familiy.

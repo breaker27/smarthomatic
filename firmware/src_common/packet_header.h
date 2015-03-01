@@ -104,6 +104,8 @@ static inline uint32_t pkg_header_get_packetcounter(void)
 // MessageType (EnumValue)
 // Description: The message type influences the behaviour with sending the packet. E.g. requests are acknowledged.
 
+#ifndef _ENUM_MessageType
+#define _ENUM_MessageType
 typedef enum {
   MESSAGETYPE_GET = 0,
   MESSAGETYPE_SET = 1,
@@ -112,6 +114,7 @@ typedef enum {
   MESSAGETYPE_ACK = 9,
   MESSAGETYPE_ACKSTATUS = 10
 } MessageTypeEnum;
+#endif /* _ENUM_MessageType */
 
 // Set MessageType (EnumValue)
 // Offset: 68, length bits 4
@@ -129,12 +132,6 @@ static inline MessageTypeEnum pkg_header_get_messagetype(void)
 
 
 // overall length: 72 bits
-
-// Function to set CRC value after all data fields are set.
-static inline void pkg_header_calc_crc32(void)
-{
-  pkg_header_set_crc32(crc32(bufx + 4, __PACKETSIZEBYTES - 4));
-}
 
 // Function to check CRC value against calculated one (after reception).
 static inline bool pkg_header_check_crc32(uint8_t packet_size_bytes)

@@ -22,7 +22,7 @@
 #include <string.h>
 
 #include "rfm12.h"
-#include "uart.h"
+#include "../src_common/uart.h"
 
 #include "../src_common/msggrp_generic.h"
 #include "../src_common/msggrp_dimmer.h"
@@ -31,8 +31,8 @@
 #include "../src_common/e2p_generic.h"
 #include "../src_common/e2p_dimmer.h"
 
-#include "aes256.h"
-#include "util.h"
+#include "../src_common/aes256.h"
+#include "../src_common/util.h"
 #include "version.h"
 
 //#define UART_DEBUG_CALCULATIONS
@@ -151,6 +151,10 @@ void checkSwitchOff(void)
 	{
 		switch_off_counter = 0;
 		switchRelais(1);
+		
+		// Switching on relais (and lamp) leads to interferences.
+		// Avoid sending with RFM12 directly afterwards by making a short delay.
+		_delay_ms(250);
 	}
 }
 
@@ -234,8 +238,6 @@ void send_dimmer_status(void)
 	pkg_header_set_senderid(device_id);
 	pkg_header_set_packetcounter(packetcounter);
 	msg_dimmer_brightness_set_brightness(bri);
-
-	pkg_header_calc_crc32();
 	
 	UART_PUTF("CRC32 is %lx (added as first 4 bytes)\r\n", getBuf32(0));
 	UART_PUTF("Brightness: %u%%\r\n", bri);
@@ -243,26 +245,49 @@ void send_dimmer_status(void)
 	rfm12_send_bufx();
 }
 
-void send_version_status(void)
+void send_deviceinfo_status(void)
 {
 	inc_packetcounter();
 
-	UART_PUTF4("Sending Version: v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
+	UART_PUTF("Send DeviceInfo: DeviceType %u,", DEVICETYPE_DIMMER);
+	UART_PUTF4(" v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
 	
 	// Set packet content
-	pkg_header_init_generic_version_status();
+	pkg_header_init_generic_deviceinfo_status();
 	pkg_header_set_senderid(device_id);
 	pkg_header_set_packetcounter(packetcounter);
-	msg_generic_version_set_major(VERSION_MAJOR);
-	msg_generic_version_set_minor(VERSION_MINOR);
-	msg_generic_version_set_patch(VERSION_PATCH);
-	msg_generic_version_set_hash(VERSION_HASH);
-	pkg_header_calc_crc32();
+	msg_generic_deviceinfo_set_devicetype(DEVICETYPE_DIMMER);
+	msg_generic_deviceinfo_set_versionmajor(VERSION_MAJOR);
+	msg_generic_deviceinfo_set_versionminor(VERSION_MINOR);
+	msg_generic_deviceinfo_set_versionpatch(VERSION_PATCH);
+	msg_generic_deviceinfo_set_versionhash(VERSION_HASH);
 
 	rfm12_send_bufx();
 }
 
-// process message "brightness"
+void send_ack(uint32_t acksenderid, uint32_t ackpacketcounter, bool error)
+{
+	// any message can be used as ack, because they are the same anyway
+	if (error)
+	{
+		UART_PUTS("Send error Ack\r\n");
+		pkg_header_init_dimmer_animation_ack();
+	}
+
+	inc_packetcounter();
+	
+	// set common fields
+	pkg_header_set_senderid(device_id);
+	pkg_header_set_packetcounter(packetcounter);
+	
+	pkg_headerext_common_set_acksenderid(acksenderid);
+	pkg_headerext_common_set_ackpacketcounter(ackpacketcounter);
+	pkg_headerext_common_set_error(error);
+	
+	rfm12_send_bufx();
+}
+
+// process request "brightness"
 void process_brightness(MessageTypeEnum messagetype)
 {
 	// "Set" or "SetGet" -> modify dimmer state and abort any running animation
@@ -291,8 +316,6 @@ void process_brightness(MessageTypeEnum messagetype)
 	uint32_t acksenderid = pkg_header_get_senderid();
 	uint32_t ackpacketcounter = pkg_header_get_packetcounter();
 
-	inc_packetcounter();
-
 	// "Set" -> send "Ack"
 	if (messagetype == MESSAGETYPE_SET)
 	{
@@ -311,20 +334,10 @@ void process_brightness(MessageTypeEnum messagetype)
 		UART_PUTS("Sending AckStatus\r\n");
 	}
 
-	// set common fields
-	pkg_header_set_senderid(device_id);
-	pkg_header_set_packetcounter(packetcounter);
-	
-	pkg_headerext_common_set_acksenderid(acksenderid);
-	pkg_headerext_common_set_ackpacketcounter(ackpacketcounter);
-	pkg_headerext_common_set_error(false); // FIXME: Move code for the Ack to a function and also return an Ack when errors occur before!
-	
-	pkg_header_calc_crc32();
-	
-	rfm12_send_bufx();
+	send_ack(acksenderid, ackpacketcounter, false);
 }
 
-// process message "animation"
+// process request "animation"
 void process_animation(MessageTypeEnum messagetype)
 {
 	// "Set" or "SetGet" -> modify dimmer state and start new animation
@@ -358,8 +371,6 @@ void process_animation(MessageTypeEnum messagetype)
 	uint32_t acksenderid = pkg_header_get_senderid();
 	uint32_t ackpacketcounter = pkg_header_get_packetcounter();
 
-	inc_packetcounter();
-
 	// "Set" -> send "Ack"
 	if (messagetype == MESSAGETYPE_SET)
 	{
@@ -381,17 +392,7 @@ void process_animation(MessageTypeEnum messagetype)
 		UART_PUTS("Sending AckStatus\r\n");
 	}
 
-	// set common fields
-	pkg_header_set_senderid(device_id);
-	pkg_header_set_packetcounter(packetcounter);
-	
-	pkg_headerext_common_set_acksenderid(acksenderid);
-	pkg_headerext_common_set_ackpacketcounter(ackpacketcounter);
-	pkg_headerext_common_set_error(false); // FIXME: Move code for the Ack to a function and also return an Ack when errors occur before!
-	
-	pkg_header_calc_crc32();
-	
-	rfm12_send_bufx();
+	send_ack(acksenderid, ackpacketcounter, false);
 }
 
 void process_packet(uint8_t len)
@@ -435,7 +436,7 @@ void process_packet(uint8_t len)
 	}
 	
 	// check device id
-	uint8_t rcv_id = pkg_headerext_common_get_receiverid();
+	uint16_t rcv_id = pkg_headerext_common_get_receiverid();
 
 	UART_PUTF("ReceiverID:%u;", rcv_id);
 	
@@ -444,6 +445,10 @@ void process_packet(uint8_t len)
 		UART_PUTS("\r\nWRN: DeviceID does not match.\r\n");
 		return;
 	}
+	
+	// remember some values before the packet buffer is destroyed
+	uint32_t acksenderid = pkg_header_get_senderid();
+	uint32_t ackpacketcounter = pkg_header_get_packetcounter();
 	
 	// check MessageGroup + MessageID
 	uint32_t messagegroupid = pkg_headerext_common_get_messagegroupid();
@@ -454,6 +459,7 @@ void process_packet(uint8_t len)
 	if (messagegroupid != MESSAGEGROUP_DIMMER)
 	{
 		UART_PUTS("\r\nERR: Unsupported MessageGroupID.\r\n");
+		send_ack(acksenderid, ackpacketcounter, true);
 		return;
 	}
 	
@@ -469,6 +475,7 @@ void process_packet(uint8_t len)
 			break;
 		default:
 			UART_PUTS("ERR: Unsupported MessageID.\r\n");
+			send_ack(acksenderid, ackpacketcounter, true);
 			break;
 	}
 	
@@ -726,13 +733,14 @@ int main(void)
 		else if (version_status_cycle >= SEND_VERSION_STATUS_CYCLE)
 		{
 			version_status_cycle = 0;
-			send_version_status();
+			send_deviceinfo_status();
 			led_blink(200, 0, 1);
 		}
 
+		checkSwitchOff();
+
 		rfm12_tick();
 		send_status_timeout--;
-		checkSwitchOff();
 	}
 	
 	// never called

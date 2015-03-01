@@ -18,6 +18,7 @@
 
 package shcee;
 
+import java.io.Console;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -165,13 +166,6 @@ public class SourceCodeGeneratorPacket
 
 		// additional helper functions
 		
-		outHeader.println("// Function to set CRC value after all data fields are set.");
-		outHeader.println("static inline void pkg_header_calc_crc32(void)");
-		outHeader.println("{");
-		outHeader.println("  pkg_header_set_crc32(crc32(bufx + 4, __PACKETSIZEBYTES - 4));");
-		outHeader.println("}");
-		outHeader.println("");
-
 		outHeader.println("// Function to check CRC value against calculated one (after reception).");
 		outHeader.println("static inline bool pkg_header_check_crc32(uint8_t packet_size_bytes)");
 		outHeader.println("{");
@@ -692,8 +686,13 @@ public class SourceCodeGeneratorPacket
 				
 				sb.append(newline);
 				
+				sb.append("#ifndef _ENUM_" + ID1 + newline);
+				sb.append("#define _ENUM_" + ID1 + newline);
+				
 				sb.append("typedef enum {" + newline);
 	
+				Hashtable<String, String> enumDefs = new Hashtable<String, String>();
+				
 				for (int ee = 0; ee < enumElements.getLength(); ee++)
 				{
 					Node enumElement = enumElements.item(ee);
@@ -703,9 +702,14 @@ public class SourceCodeGeneratorPacket
 					String suffix = ee == enumElements.getLength() - 1 ? "" : ","; 
 					
 					sb.append("  " + name + " = " + value + suffix + newline);
+					
+					enumDefs.put(name, value);
 				}
 	
-				sb.append("} " + ID1 + "Enum;" + newline + newline);
+				sb.append("} " + ID1 + "Enum;" + newline);
+				sb.append("#endif /* _ENUM_" + ID1 + " */" + newline + newline);
+				
+				EnumDuplicateChecker.checkEnumDefinition(ID1, enumDefs);
 				
 				String offsetStr = calcAccessStr(useHeaderOffset, offset, structLengthBits, isArray);
 

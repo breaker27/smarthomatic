@@ -45,6 +45,7 @@ uint16_t bat_percentage(uint16_t vbat, uint16_t vempty);
 void adc_init(void);
 void adc_on(bool on);
 uint16_t read_adc(uint8_t adc_input);
+uint16_t read_battery(void);
 
 void util_init(void);
 void switch_led(bool b_on);
@@ -54,5 +55,6 @@ void osccal_info(void);
 void osccal_init(void);
 void inc_packetcounter(void);
 void rfm12_send_bufx(void);
+void power_down(bool bod_disable);
 
 #endif /* _UTIL_HW_H */
