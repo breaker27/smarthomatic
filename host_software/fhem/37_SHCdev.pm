@@ -65,7 +65,7 @@ my %dev_state_format = (
   ],
   "RGBDimmer"           => [
     "color",               "Color: ",
-    "brightness",	       "Brightness: "
+    "brightness",          "Brightness: "
   ],
   "SoilMoistureMeter"   => ["humidity", "H: "]
 );
