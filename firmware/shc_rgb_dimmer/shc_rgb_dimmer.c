@@ -48,7 +48,8 @@ uint32_t station_packetcounter;
 uint16_t send_status_timeout = 15;
 uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly after startup
 
-uint8_t brightness_factor;
+uint8_t brightness_factor;            // fixed, from e2p
+uint8_t user_brightness_factor = 100; // additional brightness changeable by brightness message
 
 #define RED_PIN 6
 #define GRN_PIN 5
@@ -139,9 +140,9 @@ void timer2_init(void)
 
 void set_PWM(struct rgb_color_t color)
 {
-	OCR0A = (uint16_t)(pwm_transl[color.r]) * brightness_factor / 100;
-	OCR0B = (uint16_t)(pwm_transl[color.g]) * brightness_factor / 100;
-	OCR1A = (uint16_t)(pwm_transl[color.b]) * brightness_factor / 100;
+	OCR0A = (uint32_t)(pwm_transl[color.r]) * brightness_factor * user_brightness_factor / 10000;
+	OCR0B = (uint32_t)(pwm_transl[color.g]) * brightness_factor * user_brightness_factor / 10000;
+	OCR1A = (uint32_t)(pwm_transl[color.b]) * brightness_factor * user_brightness_factor / 10000;
 }
 
 // Calculate an RGB value out of the index color.
@@ -580,7 +581,7 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	{
 		if (messageid == MESSAGEID_DIMMER_BRIGHTNESS)
 		{
-			//brightness_factor = msg_dimmer_brightness_get_brightness();
+			user_brightness_factor = msg_dimmer_brightness_get_brightness();
 			UART_PUTF("Brightness:%u;", brightness_factor);
 			update_current_col();
 		}
@@ -647,7 +648,7 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		if (messageid == MESSAGEID_DIMMER_BRIGHTNESS)
 		{
 			pkg_header_init_dimmer_brightness_ackstatus();
-			msg_dimmer_brightness_set_brightness(brightness_factor);
+			msg_dimmer_brightness_set_brightness(user_brightness_factor);
 		}
 		else if (messageid == MESSAGEID_DIMMER_COLOR)
 		{
@@ -772,7 +773,7 @@ int main(void)
 	UART_PUTF ("DeviceID: %u\r\n", device_id);
 	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);
 	UART_PUTF ("Last received base station PacketCounter: %u\r\n\r\n", station_packetcounter);
-	UART_PUTF ("Brightness factor: %u%%\r\n", brightness_factor);
+	UART_PUTF ("E2P brightness factor: %u%%\r\n", brightness_factor);
 
 	// init AES key
 	e2p_generic_get_aeskey(aes_key);
