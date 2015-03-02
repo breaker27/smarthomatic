@@ -39,8 +39,8 @@
 #define RGBLED_PORT PORTD
 #define RGBLED_PINPORT PIND
 
-#define SEND_STATUS_EVERY_SEC 1800 // how often should a status be sent?
-#define SEND_VERSION_STATUS_CYCLE 50 // send version status x times less than switch status (~once per day)
+#define SEND_STATUS_EVERY_SEC 2400 // how often should a status be sent?
+#define SEND_VERSION_STATUS_CYCLE 35 // send version status x times less than switch status (~once per day)
 
 uint16_t device_id;
 uint32_t station_packetcounter;
@@ -273,6 +273,22 @@ void send_deviceinfo_status(void)
 	msg_generic_deviceinfo_set_versionminor(VERSION_MINOR);
 	msg_generic_deviceinfo_set_versionpatch(VERSION_PATCH);
 	msg_generic_deviceinfo_set_versionhash(VERSION_HASH);
+
+	rfm12_send_bufx();
+}
+
+// Send brightness status
+void send_brightness_status(void)
+{
+	inc_packetcounter();
+
+	UART_PUTF("Sending color status: color: %u\r\n", anim_col_i[0]);
+
+	// Set packet content
+	pkg_header_init_dimmer_brightness_status();
+	pkg_header_set_senderid(device_id);
+	pkg_header_set_packetcounter(packetcounter);
+	msg_dimmer_brightness_set_brightness(user_brightness_factor);
 
 	rfm12_send_bufx();
 }
@@ -858,7 +874,12 @@ int main(void)
 			// send status from time to time
 			send_status_timeout--;
 		
-			if (send_status_timeout == 0)
+			if (send_status_timeout == 8)
+			{
+				send_brightness_status();
+				led_blink(200, 0, 1);
+			}
+			else if (send_status_timeout == 0)
 			{
 				send_status_timeout = SEND_STATUS_EVERY_SEC;
 				send_status();
