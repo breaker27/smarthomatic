@@ -63,7 +63,10 @@ my %dev_state_format = (
     "port",                "Port: ",
     "ains",                "Ain: "
   ],
-  "RGBDimmer"           => ["color", "Color: "],
+  "RGBDimmer"           => [
+    "color",               "Color: ",
+    "brightness",	       "Brightness: "
+  ],
   "SoilMoistureMeter"   => ["humidity", "H: "]
 );
 
@@ -78,13 +81,14 @@ my %sets = (
                            "DigitalPort " .
                            "DigitalPortTimeout " .
                            "DigitalPin " .
-                           "DigitalPinTimeout ",
+                           "DigitalPinTimeout",
   "Dimmer"              => "on:noArg off:noArg toggle:noArg statusRequest:noArg pct:slider,0,1,100 ani " .
                            # Used from SetExtensions.pm
                            "blink on-for-timer on-till off-for-timer off-till intervals",
   "EnvSensor"           => "",
   "RGBDimmer"           => "Color " .
-                           "ColorAnimation",
+                           "ColorAnimation " .
+                           "Dimmer.Brightness:slider,0,1,100",
   "SoilMoistureMeter"   => "",
   "Custom"              => "Dimmer.Brightness " .
                            "Dimmer.Animation"
@@ -604,6 +608,16 @@ sub SHCdev_Set($@)
           $parser->setField("Dimmer", "ColorAnimation", "Color", $curcolor, $i);
         }
         readingsSingleUpdate($hash, "state", "set-coloranimation", 1);
+        SHCdev_Send($hash);
+      } elsif ($cmd eq 'Dimmer.Brightness') {
+        my $brightness = $arg;
+
+        # DEBUG
+        # Log3 $name, 3, "$name: Args: $arg, $arg2, $arg3, $brightness";
+
+        readingsSingleUpdate($hash, "state", "set-brightness:$brightness", 1);
+        $parser->initPacket("Dimmer", "Brightness", "SetGet");
+        $parser->setField("Dimmer", "Brightness", "Brightness", $brightness);
         SHCdev_Send($hash);
       } else {
         return SetExtensions($hash, "", $name, @aa);
