@@ -566,17 +566,31 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	
 	UART_PUTF("MessageID:%u;", messageid);
 
-	if ((messageid != MESSAGEID_DIMMER_COLOR) && (messageid != MESSAGEID_DIMMER_COLORANIMATION))
+	if ((messageid != MESSAGEID_DIMMER_BRIGHTNESS)
+		&& (messageid != MESSAGEID_DIMMER_COLOR)
+		&& (messageid != MESSAGEID_DIMMER_COLORANIMATION))
 	{
 		UART_PUTS("\r\nERR: Unsupported MessageID.\r\n");
 		send_ack(acksenderid, ackpacketcounter, true);
 		return;
 	}
 
-	// "Set" or "SetGet" -> modify color
+	// "Set" or "SetGet" -> modify brightness/color/animation
 	if ((messagetype == MESSAGETYPE_SET) || (messagetype == MESSAGETYPE_SETGET))
 	{
-		if (messageid == MESSAGEID_DIMMER_COLORANIMATION)
+		if (messageid == MESSAGEID_DIMMER_BRIGHTNESS)
+		{
+			//brightness_factor = msg_dimmer_brightness_get_brightness();
+			UART_PUTF("Brightness:%u;", brightness_factor);
+			update_current_col();
+		}
+		else if (messageid == MESSAGEID_DIMMER_COLOR)
+		{
+			uint8_t color = msg_dimmer_color_get_color();
+			UART_PUTF("Color:%u;", color);
+			set_animation_fixed_color(color);
+		}
+		else // MESSAGEID_DIMMER_COLORANIMATION
 		{
 			uint8_t i;
 			
@@ -605,12 +619,6 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 			
 			sei();
 		}
-		else
-		{
-			uint8_t color = msg_dimmer_color_get_color();
-			UART_PUTF("Color:%u;", color);
-			set_animation_fixed_color(color);
-		}
 	}
 
 	UART_PUTS("\r\n");
@@ -618,13 +626,17 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	// "Set" -> send "Ack"
 	if (messagetype == MESSAGETYPE_SET)
 	{
-		if (messageid == MESSAGEID_DIMMER_COLORANIMATION)
+		if (messageid == MESSAGEID_DIMMER_BRIGHTNESS)
 		{
-			pkg_header_init_dimmer_coloranimation_ack();
+			pkg_header_init_dimmer_brightness_ack();
 		}
-		else
+		else if (messageid == MESSAGEID_DIMMER_COLOR)
 		{
 			pkg_header_init_dimmer_color_ack();
+		}
+		else // MESSAGEID_DIMMER_COLORANIMATION
+		{
+			pkg_header_init_dimmer_coloranimation_ack();
 		}
 
 		UART_PUTS("Sending Ack\r\n");
@@ -632,7 +644,17 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	// "Get" or "SetGet" -> send "AckStatus"
 	else
 	{
-		if (messageid == MESSAGEID_DIMMER_COLORANIMATION)
+		if (messageid == MESSAGEID_DIMMER_BRIGHTNESS)
+		{
+			pkg_header_init_dimmer_brightness_ackstatus();
+			msg_dimmer_brightness_set_brightness(brightness_factor);
+		}
+		else if (messageid == MESSAGEID_DIMMER_COLOR)
+		{
+			pkg_header_init_dimmer_color_ackstatus();
+			msg_dimmer_color_set_color(anim_col_i[0]);
+		}
+		else // MESSAGEID_DIMMER_COLORANIMATION
 		{
 			uint8_t i;
 
@@ -647,13 +669,7 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 			msg_dimmer_coloranimation_set_repeat(repeat);
 			msg_dimmer_coloranimation_set_autoreverse(autoreverse);
 		}
-		else
-		{
-			pkg_header_init_dimmer_color_ackstatus();
-			msg_dimmer_color_set_color(anim_col_i[0]);
-		}
-		
-		// set message data
+
 		UART_PUTS("Sending AckStatus\r\n");
 	}
 
