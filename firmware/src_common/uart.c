@@ -26,9 +26,9 @@
 #include "util.h"
 
 // This buffer is used for sending strings over UART using UART_PUT... functions.
-char uartbuf[65]; 
+char uartbuf[128];
 
-#ifdef UART_RX	
+#ifdef UART_RX
 	// All received bytes from UART are stored in this buffer by the interrupt routine. This is a ringbuffer.
 	// No characters which will not make sense as a command are filtered out here.
 	#define RXBUF_LENGTH 60
@@ -115,6 +115,24 @@ void uart_putstr_P(PGM_P str)
 		uart_putc(tmp);
 		str++;
 	}
+#endif // UART_DEBUG
+}
+
+void uart_putstr_P_B(PGM_P str)
+{
+#ifdef UART_DEBUG
+	char tmp;
+	uint8_t oldlen = strlen(uartbuf);
+	uint8_t i = 0;
+
+	while ((tmp = pgm_read_byte(str)))
+	{
+		uartbuf[oldlen + i] = tmp;
+		str++;
+		i++;
+	}
+	
+	uartbuf[oldlen + i] = 0;
 #endif // UART_DEBUG
 }
 

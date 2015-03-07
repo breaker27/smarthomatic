@@ -26,7 +26,7 @@
 
 #include "../src_common/msggrp_generic.h"
 #include "../src_common/msggrp_weather.h"
-#include "../src_common/msggrp_powerswitch.h"
+#include "../src_common/msggrp_gpio.h"
 
 #include "../src_common/e2p_hardware.h"
 #include "../src_common/e2p_generic.h"
@@ -54,7 +54,7 @@ uint8_t aes_key_count;
 // of all packets must be known at the PC program that's processing the data.
 void decode_data(uint8_t len)
 {
-	uint32_t u32, messagegroupid, messageid;
+	uint32_t messagegroupid, messageid;
 	uint16_t u16;
 	
 	pkg_header_adjust_offset();
@@ -63,15 +63,17 @@ void decode_data(uint8_t len)
 	uint32_t packetcounter = pkg_header_get_packetcounter();
 	MessageTypeEnum messagetype = pkg_header_get_messagetype();
 
-	UART_PUTF("Packet Data: SenderID=%u;", senderid);
-	UART_PUTF("PacketCounter=%lu;", packetcounter);
-	UART_PUTF("MessageType=%u;", messagetype);
+	uartbuf[0] = 0;
+	UART_PUTF_B("Packet Data: SenderID=%u;", senderid);
+	UART_PUTF_B("Packet Data: SenderID=%u;", senderid);
+	UART_PUTF_B("PacketCounter=%lu;", packetcounter);
+	UART_PUTF_B("MessageType=%u;", messagetype);
 
 	// show ReceiverID for all requests
 	if ((messagetype == MESSAGETYPE_GET) || (messagetype == MESSAGETYPE_SET) || (messagetype == MESSAGETYPE_SETGET))
 	{
 		uint16_t receiverid = pkg_headerext_common_get_receiverid();
-		UART_PUTF("ReceiverID=%u;", receiverid);
+		UART_PUTF_B("ReceiverID=%u;", receiverid);
 	}
 	
 	uint16_t acksenderid = 65000;
@@ -83,9 +85,9 @@ void decode_data(uint8_t len)
 		acksenderid = pkg_headerext_common_get_acksenderid();
 		ackpacketcounter = pkg_headerext_common_get_ackpacketcounter();
 		uint8_t error = pkg_headerext_common_get_error();
-		UART_PUTF("AckSenderID=%u;", acksenderid);
-		UART_PUTF("AckPacketCounter=%lu;", ackpacketcounter);
-		UART_PUTF("Error=%u;", error);
+		UART_PUTF_B("AckSenderID=%u;", acksenderid);
+		UART_PUTF_B("AckPacketCounter=%lu;", ackpacketcounter);
+		UART_PUTF_B("Error=%u;", error);
 	}
 
 	// show MessageGroupID and MessageID for all MessageTypes except "Ack"
@@ -93,8 +95,8 @@ void decode_data(uint8_t len)
 	{
 		messagegroupid = pkg_headerext_common_get_messagegroupid();
 		messageid = pkg_headerext_common_get_messageid();
-		UART_PUTF("MessageGroupID=%u;", messagegroupid);
-		UART_PUTF("MessageID=%u;", messageid);
+		UART_PUTF_B("MessageGroupID=%u;", messagegroupid);
+		UART_PUTF_B("MessageID=%u;", messageid);
 	}
 	
 	// show raw message data for all MessageTypes with data (= all except "Get" and "Ack")
@@ -105,14 +107,19 @@ void decode_data(uint8_t len)
 	
 		//UART_PUTF4("\r\n\r\nLEN=%u, START=%u, SHIFT=%u, COUNT=%u\r\n\r\n", len, start, shift, count);
 	
-		UART_PUTS("MessageData=");
+		UART_PUTS_B("MessageData=");
 	
 		for (i = 0; i < count; i++)
 		{
-			UART_PUTF("%02x", array_read_UIntValue8(__HEADEROFFSETBITS + i * 8, 8, 0, 255, bufx));
+			UART_PUTF_B("%02x", array_read_UIntValue8(__HEADEROFFSETBITS + i * 8, 8, 0, 255, bufx));
 		}
 		
-		UART_PUTS(";");
+		UART_PUTS_B(";");
+
+		// calculate CRC of string in buffer and print it at the end
+		uint32_t crc = crc32((uint8_t *)uartbuf, strlen(uartbuf));
+		UART_SEND_BUF;
+		UART_PUTF("%08lx\r\n", crc); // print CRC32
 
 		// additionally decode the message data for a small number of messages
 		switch (messagegroupid)
@@ -122,15 +129,15 @@ void decode_data(uint8_t len)
 				switch (messageid)
 				{
 					case MESSAGEID_GENERIC_DEVICEINFO:
-						UART_PUTF("DeviceType=%u;", msg_generic_deviceinfo_get_devicetype());
+						UART_PUTF("Detected Generic_DeviceInfo_Status: DeviceType=%u;", msg_generic_deviceinfo_get_devicetype());
 						UART_PUTF("VersionMajor=%u;", msg_generic_deviceinfo_get_versionmajor());
 						UART_PUTF("VersionMinor=%u;", msg_generic_deviceinfo_get_versionminor());
 						UART_PUTF("VersionPatch=%u;", msg_generic_deviceinfo_get_versionpatch());
-						UART_PUTF("VersionHash=%08lx;", msg_generic_deviceinfo_get_versionhash());
+						UART_PUTF("VersionHash=%08lx;\r\n", msg_generic_deviceinfo_get_versionhash());
 						break;
 						
 					case MESSAGEID_GENERIC_BATTERYSTATUS:
-						UART_PUTF("Percentage=%u;", msg_generic_batterystatus_get_percentage());
+						UART_PUTF("Detected Generic_BatteryStatus_Status: Percentage=%u;\r\n", msg_generic_batterystatus_get_percentage());
 						break;
 						
 					/*DateTime Status:
@@ -149,21 +156,15 @@ void decode_data(uint8_t len)
 				switch (messageid)
 				{
 					case MESSAGEID_WEATHER_TEMPERATURE:
-						UART_PUTS("Temperature=");
+						UART_PUTS("Detected Weather_Temperature_Status: Temperature=");
 						print_signed(msg_weather_temperature_get_temperature());
-						UART_PUTS(";");
+						UART_PUTS(";\r\n");
 						break;
 					case MESSAGEID_WEATHER_HUMIDITYTEMPERATURE:
 						u16 = msg_weather_humiditytemperature_get_humidity();
-						UART_PUTF2("Humidity=%u.%u;Temperature=", u16 / 10, u16 % 10);
+						UART_PUTF2("Detected Weather_HumidityTemperature_Status: Humidity=%u.%u;Temperature=", u16 / 10, u16 % 10);
 						print_signed(msg_weather_humiditytemperature_get_temperature());
-						UART_PUTS(";");
-						break;
-					case MESSAGEID_WEATHER_BAROMETRICPRESSURETEMPERATURE:
-						u32 = msg_weather_barometricpressuretemperature_get_barometricpressure();
-						UART_PUTF("Pressure=%ld;Temperature=", u32);
-						print_signed(msg_weather_barometricpressuretemperature_get_temperature());
-						UART_PUTS(";");
+						UART_PUTS(";\r\n");
 						break;
 					default:
 						break;
@@ -171,13 +172,26 @@ void decode_data(uint8_t len)
 				
 				break;
 
-			case MESSAGEGROUP_POWERSWITCH:
+			case MESSAGEGROUP_GPIO:
 				
 				switch (messageid)
 				{
-					case MESSAGEID_POWERSWITCH_SWITCHSTATE:
-						UART_PUTF("On=%u;", msg_powerswitch_switchstate_get_on());
-						UART_PUTF("TimeoutSec=%u;", msg_powerswitch_switchstate_get_timeoutsec());
+					case MESSAGEID_GPIO_DIGITALPORT:
+						UART_PUTS("Detected GPIO_DigitalPort_Status: ");
+						for (u16 = 0; u16 < 8; u16++)
+						{
+							UART_PUTF2("On[%u]=%u;", u16, msg_gpio_digitalport_get_on(u16));
+						}
+						UART_PUTS("\r\n");
+						break;
+					case MESSAGEID_GPIO_DIGITALPORTTIMEOUT:
+						UART_PUTS("Detected GPIO_DigitalPortTimeout_Status: ");
+						for (u16 = 0; u16 < 8; u16++)
+						{
+							UART_PUTF2("On[%u]=%u;", u16, msg_gpio_digitalporttimeout_get_on(u16));
+							UART_PUTF2("TimeoutSec[%u]=%u;", u16, msg_gpio_digitalporttimeout_get_timeoutsec(u16));
+						}
+						UART_PUTS("\r\n");
 						break;
 					default:
 						break;
@@ -189,8 +203,6 @@ void decode_data(uint8_t len)
 				break;
 		}
 	}
-
-	UART_PUTS("\r\n");
 	
 	// Detect and process Acknowledges to base station, whose requests have to be removed from the request queue
 	if ((messagetype == MESSAGETYPE_ACK) || (messagetype == MESSAGETYPE_ACKSTATUS))
@@ -256,7 +268,7 @@ int main(void)
 	
 	UART_PUTS("\r\n");
 	UART_PUTF4("smarthomatic Base Station v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
-	UART_PUTS("(c) 2012..2014 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTS("(c) 2012..2015 Uwe Freese, www.smarthomatic.org\r\n");
 	UART_PUTF("Device ID: %u\r\n", device_id);
 	UART_PUTF("Packet counter: %lu\r\n", packetcounter);
 	UART_PUTF("AES key count: %u\r\n", aes_key_count);
