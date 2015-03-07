@@ -291,7 +291,7 @@ void remove_request(uint16_t sender_id, uint16_t request_sender_id, uint32_t pac
 					// delete request queue entry if no more packets in this queue_request
 					if (request_queue[rq_slot][1] == SLOT_UNUSED)
 					{
-						UART_PUTF("Request queue %u is now empty.\r\n", rq_slot);
+						UART_PUTF("Request Queue %u is now empty.\r\n", rq_slot);
 						request_queue[rq_slot][0] = SLOT_UNUSED;
 					}
 					
