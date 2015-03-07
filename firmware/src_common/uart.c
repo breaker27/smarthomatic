@@ -220,7 +220,7 @@ void process_rxbuf(void)
 			{
 				cmdbuf[bytes_pos] = input;
 				bytes_pos++;
-				UART_PUTF4("*** Received character %c (ASCII %u) = value 0x%x, %u bytes to go. ***\r\n", input, input, hex_to_byte(input), bytes_to_read - bytes_pos);
+				UART_PUTF3("*** %c = value 0x%x, %u bytes to go. ***\r\n", input, hex_to_byte(input), bytes_to_read - bytes_pos);
 			}
 			else
 			{
