@@ -41,6 +41,8 @@
 #define LED_PORT PORTD
 #define LED_DDR DDRD
 
+#define LOOP_CNT_QUEUE 50 // cycle in which the request queue is checked for a request (don't change! it's 1s)
+
 uint16_t device_id;
 uint8_t aes_key_count;
 
@@ -482,6 +484,8 @@ int main(void)
 					UART_PUTS("Warning! Request queue full. Packet will not be sent.\r\n");
 				}
 
+				loop = LOOP_CNT_QUEUE; // set counter to make main loop send packet immediately
+
 				print_request_queue();
 			}
 		
@@ -494,7 +498,7 @@ int main(void)
 		}
 
 		// flash LED every second to show the device is alive
-		if (loop == 50)
+		if (loop == LOOP_CNT_QUEUE)
 		{
 			led_blink(10, 10, 1);
 			
@@ -504,9 +508,10 @@ int main(void)
 
 			if (request != 0) // if request to repeat was found in queue
 			{
-				UART_PUTS("Repeating request.\r\n");					
+				UART_PUTS("Repeating request.\r\n");
 				send_packet((*request).aes_key, (*request).data_bytes + 9); // header size = 9 bytes!
 				print_request_queue();
+				//led_dbg(6);
 			}
 			
 			// Auto-send something for debugging purposes...
