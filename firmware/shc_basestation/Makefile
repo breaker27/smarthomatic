@@ -19,6 +19,7 @@
 # CPU config
 MCU		       = atmega328
 F_CPU	       = 20000000
+# baud rate in makefile is ignored, because it is configured by e2p
 UART_BAUD_RATE = 19200
 
 # never remove this, because the base station needs the UART

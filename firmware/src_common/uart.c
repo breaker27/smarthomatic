@@ -61,24 +61,30 @@ ISR(USART_RX_vect)
 
 #endif // UART_RX
 
-void uart_init(void)
+// configure UART using a specific UBBR value
+void uart_init_ubbr(uint16_t ubrr_val)
 {
 #ifdef UART_DEBUG
-	PORTD |= 0x01;				            // Pullup an RXD an
+	PORTD |= 0x01;                          // switch on pull-up on RXD
 
- 	UCSR0B |= (1 << TXEN0);			        // UART TX einschalten
- 	UCSR0C |= (1 << USBS0) | (3 << UCSZ00);	// Asynchron 8N1
- 	UCSR0B |= (1 << RXEN0 );			    // Uart RX einschalten
+ 	UCSR0B |= (1 << TXEN0);                 // turn on UART TX
+ 	UCSR0C |= (1 << USBS0) | (3 << UCSZ00); // asynchronous mode 8N1
+ 	UCSR0B |= (1 << RXEN0 );                // turn on UART RX
  
- 	UBRR0H = (uint8_t)((UBRR_VAL) >> 8);
- 	UBRR0L = (uint8_t)((UBRR_VAL) & 0xFF);
+ 	UBRR0H = (uint8_t)(ubrr_val >> 8);
+ 	UBRR0L = (uint8_t)(ubrr_val & 0xFF);
 
 #ifdef UART_RX
-	// activate rx IRQ
-	UCSR0B |= (1 << RXCIE0);
+	UCSR0B |= (1 << RXCIE0);                // activate rx IRQ
 #endif // UART_RX
 
 #endif // UART_DEBUG
+}
+
+// configure UART using UBBR_VAL from makefile
+void uart_init(void)
+{
+	uart_init_ubbr(UBRR_VAL);
 }
 
 #ifdef UART_DEBUG
@@ -230,6 +236,7 @@ void process_rxbuf(void)
 			if (bytes_pos == bytes_to_read)
 			{
 				cmdbuf[bytes_pos] = '\0';
+				//led_dbg(1);
 				process_cmd();
 			}
 		}	

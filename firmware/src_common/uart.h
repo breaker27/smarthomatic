@@ -33,8 +33,8 @@
 #define BAUD_REAL (F_CPU / (16l * (UBRR_VAL + 1)))                             // real baudrate
 #define BAUD_ERROR ((BAUD_REAL * 1000l) / UART_BAUD_RATE)                      // error in promille, 1000 = optimum
 
-#if ((BAUD_ERROR < 990) || (BAUD_ERROR > 1010))
-	#error Systematic UART baud rate is greater than 1% and therefore too high!
+#if ((BAUD_ERROR < 985) || (BAUD_ERROR > 1015))
+	#error Systematic UART baud rate error is greater than 1,5% and therefore too high!
 #endif 
 
 #ifdef UART_DEBUG
@@ -59,6 +59,7 @@ extern char uartbuf[];
 	extern bool send_data_avail;
 #endif
 
+void uart_init_ubbr(uint16_t ubrr_val);
 void uart_init(void);
 void uart_putstr(char * str);
 void uart_putstr_P(PGM_P str);

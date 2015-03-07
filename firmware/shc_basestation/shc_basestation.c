@@ -43,6 +43,9 @@
 
 #define LOOP_CNT_QUEUE 50 // cycle in which the request queue is checked for a request (don't change! it's 1s)
 
+#define UBRR_VAL_19200 64
+#define UBRR_VAL_115200 10
+
 uint16_t device_id;
 uint8_t aes_key_count;
 
@@ -227,6 +230,7 @@ int main(void)
 {
 	uint8_t aes_key_nr;
 	uint8_t loop = 0;
+	bool uart_high_speed;
 	
 	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
 	_delay_ms(1000);
@@ -246,13 +250,17 @@ int main(void)
 
 	device_id = e2p_generic_get_deviceid();
 
-	uart_init();
+	// configure UART
+	uart_high_speed = e2p_basestation_get_uartbaudrate() == UARTBAUDRATE_115200;
+	uart_init_ubbr(uart_high_speed ? UBRR_VAL_115200 : UBRR_VAL_19200);
+	
 	UART_PUTS("\r\n");
 	UART_PUTF4("smarthomatic Base Station v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
 	UART_PUTS("(c) 2012..2014 Uwe Freese, www.smarthomatic.org\r\n");
 	UART_PUTF("Device ID: %u\r\n", device_id);
 	UART_PUTF("Packet counter: %lu\r\n", packetcounter);
 	UART_PUTF("AES key count: %u\r\n", aes_key_count);
+	UART_PUTF("UART baud rate: %lu\r\n", uart_high_speed ? 115200 : 19200);
 	UART_PUTS("Waiting for incoming data. Press h for help.\r\n\r\n");
 
 	led_blink(500, 500, 3);
@@ -507,12 +515,11 @@ int main(void)
 			{
 				UART_PUTS("Repeating request.\r\n");
 				send_packet((*request).aes_key, (*request).data_bytes + 9); // header size = 9 bytes!
+				//led_dbg(5);
 				rfm12_tick();
 				led_blink(200, 0, 1);
 				
-				//led_dbg(2);
 				print_request_queue();
-				//led_dbg(6);
 			}
 			else
 			{

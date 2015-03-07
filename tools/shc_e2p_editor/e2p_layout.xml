@@ -100,8 +100,22 @@
 				<Bytes>32</Bytes>
 			</ByteArray>
 		</Array>
+		<EnumValue>
+			<ID>UartBaudRate</ID>
+			<Description>Select which baud rate to use for communication with the base station. Use 19200 (0,2% baud rate error @20 MHz) for standard speed, which should work with any connected device. Use 115200 (1,4% baud rate error @20 MHz) to speed up communication to the base station.</Description>
+			<Bits>8</Bits>
+			<Element>
+				<Value>19</Value>
+				<Name>19200</Name>
+			</Element>
+			<Element>
+				<Value>115</Value>
+				<Name>115200</Name>
+			</Element>
+			<DefaultVal>19</DefaultVal>
+		</EnumValue>
 		<Reserved>
-			<Bits>3576</Bits>
+			<Bits>3568</Bits>
 		</Reserved>
 	</Block>
 	<Block>
