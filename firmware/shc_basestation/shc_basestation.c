@@ -218,12 +218,12 @@ void send_packet(uint8_t aes_key_nr, uint8_t packet_len)
 	
 	e2p_basestation_get_aeskey(aes_key_nr, aes_key);
 	
-	// show info
-	decode_data(packet_len);
-
 	// encrypt and send
 	__PACKETSIZEBYTES = packet_len;
 	rfm12_send_bufx();
+
+	// show info (after sending, to not cause additional delay)
+	decode_data(packet_len);
 }
 
 int main(void)
@@ -473,14 +473,12 @@ int main(void)
 			if ((message_type != MESSAGETYPE_GET) && (message_type != MESSAGETYPE_SET) && (message_type != MESSAGETYPE_SETGET))
 			{
 				send_packet(aes_key_nr, packet_len);
-				rfm12_tick();
 				led_blink(200, 0, 1);
 			}
 			else if (receiverid == 4095)
 			{
 				UART_PUTS("Sending broadcast request without using queue.\r\n");
 				send_packet(aes_key_nr, packet_len);
-				rfm12_tick();
 				led_blink(200, 0, 1);
 			}
 			else // enqueue request (don't send immediately)
@@ -489,13 +487,12 @@ int main(void)
 				if (queue_request(pkg_headerext_common_get_receiverid(), message_type, aes_key_nr, bufx + 9, packet_len - 9))
 				{
 					UART_PUTF("Request added to queue (%u bytes packet).\r\n", packet_len);
+					loop = LOOP_CNT_QUEUE; // set counter to make main loop send packet immediately
 				}
 				else
 				{
 					UART_PUTS("Warning! Request queue full. Packet will not be sent.\r\n");
 				}
-
-				loop = LOOP_CNT_QUEUE; // set counter to make main loop send packet immediately
 
 				//print_request_queue(); // only for debugging (takes additional time to print it out)
 			}
@@ -515,8 +512,6 @@ int main(void)
 			{
 				UART_PUTS("Repeating request.\r\n");
 				send_packet((*request).aes_key, (*request).data_bytes + 9); // header size = 9 bytes!
-				//led_dbg(5);
-				rfm12_tick();
 				led_blink(200, 0, 1);
 				
 				print_request_queue();

@@ -226,6 +226,13 @@ void util_init(void)
 	sbi(LED_DDR, LED_PIN);
 }
 
+void led_dbg(uint8_t ms)
+{
+	sbi(LED_PORT, LED_PIN);
+	_delay_ms(ms);
+	cbi(LED_PORT, LED_PIN);
+}
+
 void switch_led(bool b_on)
 {
 	if (b_on)
@@ -343,10 +350,14 @@ void rfm12_send_bufx(void)
 
 	uint8_t packet_len = aes256_encrypt_cbc(bufx, __PACKETSIZEBYTES);
 
+	// Write to tx buffer and call rfm12_tick to send immediately.
+	rfm12_tx(packet_len, 0, (uint8_t *) bufx);
+	rfm12_tick();
+	//led_dbg(2);
+
+	// Print to UART after sending to not cause additional delay.
 	UART_PUTS("After encryption:  ");
 	print_bytearray(bufx, packet_len);
-
-	rfm12_tx(packet_len, 0, (uint8_t *) bufx);
 }
 
 // Go to sleep. Wakeup by RFM12 wakeup-interrupt or pin change (if configured).
