@@ -486,7 +486,7 @@ int main(void)
 
 				loop = LOOP_CNT_QUEUE; // set counter to make main loop send packet immediately
 
-				print_request_queue();
+				//print_request_queue(); // only for debugging (takes additional time to print it out)
 			}
 		
 			// clear cmdbuf to receive more input from UART
@@ -510,6 +510,7 @@ int main(void)
 			{
 				UART_PUTS("Repeating request.\r\n");
 				send_packet((*request).aes_key, (*request).data_bytes + 9); // header size = 9 bytes!
+				//led_dbg(2);
 				print_request_queue();
 				//led_dbg(6);
 			}
