@@ -227,7 +227,6 @@ int main(void)
 {
 	uint8_t aes_key_nr;
 	uint8_t loop = 0;
-	uint8_t loop2 = 0;
 	
 	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
 	_delay_ms(1000);
@@ -466,11 +465,15 @@ int main(void)
 			if ((message_type != MESSAGETYPE_GET) && (message_type != MESSAGETYPE_SET) && (message_type != MESSAGETYPE_SETGET))
 			{
 				send_packet(aes_key_nr, packet_len);
+				rfm12_tick();
+				led_blink(200, 0, 1);
 			}
 			else if (receiverid == 4095)
 			{
 				UART_PUTS("Sending broadcast request without using queue.\r\n");
 				send_packet(aes_key_nr, packet_len);
+				rfm12_tick();
+				led_blink(200, 0, 1);
 			}
 			else // enqueue request (don't send immediately)
 			{ 
@@ -491,17 +494,11 @@ int main(void)
 		
 			// clear cmdbuf to receive more input from UART
 			send_data_avail = false;
-
-			rfm12_tick();
-
-			led_blink(200, 0, 1);
 		}
 
 		// flash LED every second to show the device is alive
 		if (loop == LOOP_CNT_QUEUE)
 		{
-			led_blink(10, 10, 1);
-			
 			loop = 0;
 			
 			request_t* request = find_request_to_repeat(packetcounter + 1);
@@ -510,22 +507,16 @@ int main(void)
 			{
 				UART_PUTS("Repeating request.\r\n");
 				send_packet((*request).aes_key, (*request).data_bytes + 9); // header size = 9 bytes!
+				rfm12_tick();
+				led_blink(200, 0, 1);
+				
 				//led_dbg(2);
 				print_request_queue();
 				//led_dbg(6);
 			}
-			
-			// Auto-send something for debugging purposes...
-			if (loop2 == 50)
-			{
-				//strcpy(cmdbuf, "s000102828300");
-				//send_data_avail = true;
-				
-				loop2 = 0;
-			}
 			else
 			{
-				loop2++;
+				led_blink(10, 10, 1);
 			}
 		}
 		else
