@@ -1,7 +1,8 @@
 ##########################################################################
 # This file is part of the smarthomatic module for FHEM.
 #
-# Copyright (c) 2014 Stefan Baumann, Uwe Freese
+# Copyright (c) 2014 Stefan Baumann
+#               2014..2015 Uwe Freese
 #
 # You can find smarthomatic at www.smarthomatic.org.
 # You can find FHEM at www.fhem.de.
@@ -111,7 +112,7 @@ sub SHCdev_Initialize($)
 {
   my ($hash) = @_;
 
-  $hash->{Match}    = "^Packet Data: SenderID=[1-9]|0[1-9]|[1-9][0-9]|[0-9][0-9][0-9]|[0-3][0-9][0-9][0-9]|40[0-8][0-9]|409[0-6]";
+  $hash->{Match}    = "^PKT:SID=[1-9]|0[1-9]|[1-9][0-9]|[0-9][0-9][0-9]|[0-3][0-9][0-9][0-9]|40[0-8][0-9]|409[0-6]";
   $hash->{SetFn}    = "SHCdev_Set";
   $hash->{GetFn}    = "SHCdev_Get";
   $hash->{DefFn}    = "SHCdev_Define";

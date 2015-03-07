@@ -63,17 +63,19 @@ void decode_data(uint8_t len)
 	uint32_t packetcounter = pkg_header_get_packetcounter();
 	MessageTypeEnum messagetype = pkg_header_get_messagetype();
 
+	UART_PUTS("PKT:");
+	
+	// Data secured by the CRC starts with "SID"
 	uartbuf[0] = 0;
-	UART_PUTF_B("Packet Data: SenderID=%u;", senderid);
-	UART_PUTF_B("Packet Data: SenderID=%u;", senderid);
-	UART_PUTF_B("PacketCounter=%lu;", packetcounter);
-	UART_PUTF_B("MessageType=%u;", messagetype);
+	UART_PUTF_B("SID=%u;", senderid);
+	UART_PUTF_B("PC=%lu;", packetcounter);
+	UART_PUTF_B("MT=%u;", messagetype);
 
 	// show ReceiverID for all requests
 	if ((messagetype == MESSAGETYPE_GET) || (messagetype == MESSAGETYPE_SET) || (messagetype == MESSAGETYPE_SETGET))
 	{
 		uint16_t receiverid = pkg_headerext_common_get_receiverid();
-		UART_PUTF_B("ReceiverID=%u;", receiverid);
+		UART_PUTF_B("RID=%u;", receiverid);
 	}
 	
 	uint16_t acksenderid = 65000;
@@ -85,9 +87,9 @@ void decode_data(uint8_t len)
 		acksenderid = pkg_headerext_common_get_acksenderid();
 		ackpacketcounter = pkg_headerext_common_get_ackpacketcounter();
 		uint8_t error = pkg_headerext_common_get_error();
-		UART_PUTF_B("AckSenderID=%u;", acksenderid);
-		UART_PUTF_B("AckPacketCounter=%lu;", ackpacketcounter);
-		UART_PUTF_B("Error=%u;", error);
+		UART_PUTF_B("ASID=%u;", acksenderid);
+		UART_PUTF_B("APC=%lu;", ackpacketcounter);
+		UART_PUTF_B("E=%u;", error);
 	}
 
 	// show MessageGroupID and MessageID for all MessageTypes except "Ack"
@@ -95,8 +97,8 @@ void decode_data(uint8_t len)
 	{
 		messagegroupid = pkg_headerext_common_get_messagegroupid();
 		messageid = pkg_headerext_common_get_messageid();
-		UART_PUTF_B("MessageGroupID=%u;", messagegroupid);
-		UART_PUTF_B("MessageID=%u;", messageid);
+		UART_PUTF_B("MGID=%u;", messagegroupid);
+		UART_PUTF_B("MID=%u;", messageid);
 	}
 	
 	// show raw message data for all MessageTypes with data (= all except "Get" and "Ack")
@@ -107,7 +109,7 @@ void decode_data(uint8_t len)
 	
 		//UART_PUTF4("\r\n\r\nLEN=%u, START=%u, SHIFT=%u, COUNT=%u\r\n\r\n", len, start, shift, count);
 	
-		UART_PUTS_B("MessageData=");
+		UART_PUTS_B("MD=");
 	
 		for (i = 0; i < count; i++)
 		{
@@ -359,11 +361,12 @@ int main(void)
 					
 					if (crcok)
 					{
+						// print relevant PKT info immediately for quickest reaction on PC
+						decode_data(len);
+						
 						//UART_PUTS("CRC correct, AES key found!\r\n");
 						UART_PUTF("Received (AES key %u): ", aes_key_nr);
 						print_bytearray(bufx, len);
-						
-						decode_data(len);
 						
 						break;
 					}

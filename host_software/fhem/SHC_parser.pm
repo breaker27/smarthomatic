@@ -3,7 +3,7 @@
 ##########################################################################
 # This file is part of the smarthomatic module for FHEM.
 #
-# Copyright (c) 2014 Uwe Freese
+# Copyright (c) 2014, 2015 Uwe Freese
 #
 # You can find smarthomatic at www.smarthomatic.org.
 # You can find FHEM at www.fhem.de.
@@ -31,7 +31,7 @@
 # ------------------
 # 1.) Receive string from base station (over UART).
 # 2.) Parse received string:
-#     $parser->parse("Packet Data: SenderID=22;...");
+#     $parser->parse("PKT:SID=22;...");
 # 3.) Get MessageGroupName: my $grp = $parser->getMessageGroupName();
 # 4.) Get MessageName: my $msg = $parser->getMessageName();
 # 5.) Get data fields depending on MessageGroupName and MessageName, e.g.
@@ -250,10 +250,10 @@ sub parse
   if (
     (
       $msg =~
-/^Packet Data: SenderID=(\d*);PacketCounter=(\d*);MessageType=(\d*);MessageGroupID=(\d*);MessageID=(\d*);MessageData=([^;]*);.*/
+/^PKT:SID=(\d*);PC=(\d*);MT=(\d*);MGID=(\d*);MID=(\d*);MD=([^;]*);.*/
     )
     || ($msg =~
-/^Packet Data: SenderID=(\d*);PacketCounter=(\d*);MessageType=(\d*);AckSenderID=\d*;AckPacketCounter=\d*;Error=\d*;MessageGroupID=(\d*);MessageID=(\d*);MessageData=([^;]*);.*/
+/^PKT:SID=(\d*);PC=(\d*);MT=(\d*);ASID=\d*;APC=\d*;E=\d*;MGID=(\d*);MID=(\d*);MD=([^;]*);.*/
     )
     )
   {
