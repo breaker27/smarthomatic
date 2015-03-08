@@ -27,6 +27,7 @@ package main;
 use strict;
 use warnings;
 use Time::HiRes qw(gettimeofday);
+use Digest::CRC qw(crc32); # linux packet libdigest-crc-perl
 
 sub SHC_Parse($$$$);
 sub SHC_Read($);
@@ -306,6 +307,16 @@ sub SHC_Parse($$$$)
     return;
   }
 
+  # check CRC of "PKT:..." message and ignore message if necessary
+  my $crc = crc32(substr($dmsg, 4, length($dmsg) - 12));
+  $crc = sprintf("%08x", $crc);
+  
+  if ($crc ne substr($dmsg, length($dmsg) - 8))
+  {
+	Log3 $name, 1, "$name: CRC Error (" . $crc . ") $dmsg";
+	return;
+  }
+  
   $hash->{"${name}_MSGCNT"}++;
   $hash->{"${name}_TIME"} = TimeNow();
   $hash->{RAWMSG} = $rmsg;
