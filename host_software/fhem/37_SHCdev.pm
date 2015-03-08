@@ -112,7 +112,7 @@ sub SHCdev_Initialize($)
 {
   my ($hash) = @_;
 
-  $hash->{Match}    = "^PKT:SID=[1-9]|0[1-9]|[1-9][0-9]|[0-9][0-9][0-9]|[0-3][0-9][0-9][0-9]|40[0-8][0-9]|409[0-6]";
+  $hash->{Match}    = "^PKT:SID=([1-9]|[1-9][0-9]|[1-9][0-9][0-9]|[1-3][0-9][0-9][0-9]|40[0-8][0-9]|409[0-6]);";
   $hash->{SetFn}    = "SHCdev_Set";
   $hash->{GetFn}    = "SHCdev_Get";
   $hash->{DefFn}    = "SHCdev_Define";
@@ -190,7 +190,7 @@ sub SHCdev_Parse($$)
   my $name = $hash->{NAME};
 
   if (!$parser->parse($msg)) {
-    Log3 $hash, 4, "SHC_TEMP: parser error: $msg";
+    Log3 $name, 1, "$name: Parser error: $msg";
     return "";
   }
 
@@ -202,7 +202,7 @@ sub SHCdev_Parse($$)
   my $rname        = $rhash ? $rhash->{NAME} : $raddr;
 
   if (!$modules{SHCdev}{defptr}{$raddr}) {
-    Log3 $name, 3, "SHC_TEMP: Unknown device $rname, please define it";
+    Log3 $name, 3, "$name: Unknown device $rname, please define it";
     return "UNDEFINED SHCdev_$rname SHCdev $raddr";
   }
 

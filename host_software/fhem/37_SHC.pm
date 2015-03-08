@@ -39,7 +39,7 @@ sub SHC_SimpleWrite(@);
 my $clientsSHC = ":SHCdev:BASE:xxx:";
 
 my %matchListSHC = (
-  "1:SHCdev" => "^PKT:SID=[1-9]|0[1-9]|[1-9][0-9]|[0-9][0-9][0-9]|[0-3][0-9][0-9][0-9]|40[0-8][0-9]|409[0-6]",    #1-4096 with leading zeros
+  "1:SHCdev" => "^PKT:SID=([1-9]|[1-9][0-9]|[1-9][0-9][0-9]|[1-3][0-9][0-9][0-9]|40[0-8][0-9]|409[0-6]);",    #1-4096
   "2:xxx"     => "^\\S+\\s+22",
   "3:xxx"     => "^\\S+\\s+11",
   "4:xxx"     => "^\\S+\\s+9 ",
@@ -271,6 +271,10 @@ sub SHC_Parse($$$$)
 
   next if (!$dmsg || length($dmsg) < 1);    # Bogus messages
 
+  if ($dmsg =~ m/^PKT:SID=0;/) { # "echo" from message sent by FHEM itself
+  	return;
+  }
+  	
   if ($dmsg !~ m/^PKT:SID=/) {
 
     # Messages just to dipose
