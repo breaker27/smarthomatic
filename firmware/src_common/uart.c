@@ -208,7 +208,7 @@ void process_cmd(void)
 		
 		if (calculated_crc != given_crc)
 		{
-			UART_PUTF("CRC error! %08lx does not match. Ignoring command.\r\n", calculated_crc);
+			UART_PUTF("CRC Error! %08lx does not match. Ignoring command.\r\n", calculated_crc);
 		}
 		else
 		{
@@ -261,7 +261,7 @@ void process_rxbuf(void)
 			{
 				cmdbuf[bytes_pos] = input;
 				bytes_pos++;
-				UART_PUTF3("*** %c = value 0x%x, %u bytes to go. ***\r\n", input, hex_to_byte(input), bytes_to_read - bytes_pos);
+				UART_PUTF("*** 0x%x\r\n", hex_to_byte(input));
 			}
 			else
 			{
@@ -324,14 +324,14 @@ void process_rxbuf(void)
 		}
 		else if (input == 's')
 		{
-			UART_PUTS("*** Enter AES key nr, MessageType, header extension and data in hex format to send, finish with ENTER. ***\r\n");
+			UART_PUTS("*** Enter data, finish with ENTER. ***\r\n");
 			cmdbuf[0] = 's';
 			bytes_to_read = 54; // 2 characters for key nr + 2 characters for MessageType + 16 characters for hdr.ext. + 2*17 characters for data
 			bytes_pos = 1;
 		}
 		else if (input == 'c')
 		{
-			UART_PUTS("*** Enter AES key nr, MessageType, header extension, data and CRC in hex format to send, finish with ENTER. ***\r\n");
+			UART_PUTS("*** Enter data, finish with ENTER. ***\r\n");
 			cmdbuf[0] = 'c';
 			bytes_to_read = 62; // 2 characters for key nr + 2 characters for MessageType + 16 characters for hdr.ext. + 2*17 characters for data + 8 characters for CRC
 			bytes_pos = 1;
