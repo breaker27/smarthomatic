@@ -30,11 +30,12 @@
 # Receiving packets:
 # ------------------
 # 1.) Receive string from base station (over UART).
-# 2.) Parse received string:
+# 2.) Check CRC (last 8 characters, optional).
+# 3.) Parse received string:
 #     $parser->parse("PKT:SID=22;...");
-# 3.) Get MessageGroupName: my $grp = $parser->getMessageGroupName();
-# 4.) Get MessageName: my $msg = $parser->getMessageName();
-# 5.) Get data fields depending on MessageGroupName and MessageName, e.g.
+# 4.) Get MessageGroupName: my $grp = $parser->getMessageGroupName();
+# 5.) Get MessageName: my $msg = $parser->getMessageName();
+# 6.) Get data fields depending on MessageGroupName and MessageName, e.g.
 #     $val = $parser->getField("Temperature");
 #
 # Sending packets:
@@ -44,6 +45,7 @@
 # 2.) Set fields:
 #     $parser->setField("PowerSwitch", "SwitchState", "TimeoutSec", 8);
 # 3.) Get send string: $str = $parser->getSendString($receiverID);
+#     It includes a CRC32 as last 8 characters.
 # 4.) Send string to base station (over UART).
 ##########################################################################
 # $Id: SHC_parser.pm 6580 2014-09-20 09:50:45Z rr2000 $
@@ -54,6 +56,7 @@ use strict;
 use feature qw(switch);
 use XML::LibXML;
 use SHC_datafields;
+use Digest::CRC qw(crc32); # linux packet libdigest-crc-perl
 
 # Hash for data field definitions.
 my %dataFields = ();
@@ -365,8 +368,8 @@ sub setField
   $obj->setValue(\@msgData, $value, $index);
 }
 
-# sKK01RRRRGGMMDD
-# s0001003D3C0164 = SET    Dimmer Switch Brightness 50%
+# cKK01RRRRGGMMDD{CRC32}
+# c0001003D3C0164 = SET    Dimmer Switch Brightness 50%
 sub getSendString
 {
   my ($self, $receiverID, $aesKeyNr) = @_;
@@ -382,13 +385,15 @@ sub getSendString
     $aesKeyNr = 0;
   }
 
-  my $s = "s"
+  my $s = "c"
     . sprintf("%02X", $aesKeyNr)
     . sprintf("%02X", $self->{_messageTypeID})
     . sprintf("%04X", $receiverID)
     . sprintf("%02X", $self->{_messageGroupID})
     . sprintf("%02X", $self->{_messageID})
     . getMessageData();
+  
+  return $s . sprintf("%08x", crc32($s));
 }
 
 1;
