@@ -212,6 +212,7 @@ void process_cmd(void)
 		}
 		else
 		{
+			cmdbuf[len - 8] = 0; // strip CRC from command
 			send_data_avail = true;
 		}
 	}
