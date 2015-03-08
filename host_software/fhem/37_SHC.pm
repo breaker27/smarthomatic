@@ -274,8 +274,8 @@ sub SHC_Parse($$$$)
   if ($dmsg !~ m/^PKT:SID=/) {
 
     # Messages just to dipose
-    if ( $dmsg =~ m/^\*\*\* Enter AES key nr/
-      || $dmsg =~ m/^\*\*\* . =/)
+    if ( $dmsg =~ m/^\*\*\* Enter data/
+      || $dmsg =~ m/^\*\*\* 0x/)
     {
       return;
     }
@@ -299,6 +299,13 @@ sub SHC_Parse($$$$)
       || $dmsg =~ m/^Request Queue/)
     {
       Log3 $name, 4, "$name: $dmsg";
+      return;
+    }
+	
+    # -Verbosity level 1
+    if ( $dmsg =~ m/^CRC Error/ )
+    {
+      Log3 $name, 1, "$name: $dmsg";
       return;
     }
 
