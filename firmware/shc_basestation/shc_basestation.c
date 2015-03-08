@@ -109,8 +109,21 @@ void decode_data(uint8_t len)
 	
 		//UART_PUTF4("\r\n\r\nLEN=%u, START=%u, SHIFT=%u, COUNT=%u\r\n\r\n", len, start, shift, count);
 	
+		// print MessageData, but truncate trailing 0-bytes
 		UART_PUTS_B("MD=");
-	
+		
+		while (count > 0)
+		{
+			if (array_read_UIntValue8(__HEADEROFFSETBITS + (count - 1) * 8, 8, 0, 255, bufx) == 0)
+			{
+				count--;
+			}
+			else
+			{
+				break;
+			}
+		}
+
 		for (i = 0; i < count; i++)
 		{
 			UART_PUTF_B("%02x", array_read_UIntValue8(__HEADEROFFSETBITS + i * 8, 8, 0, 255, bufx));
