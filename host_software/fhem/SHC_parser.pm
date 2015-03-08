@@ -253,10 +253,10 @@ sub parse
   if (
     (
       $msg =~
-/^PKT:SID=(\d*);PC=(\d*);MT=(\d*);MGID=(\d*);MID=(\d*);MD=([^;]*);.*/
+/^PKT:SID=(\d+);PC=(\d+);MT=(\d+);MGID=(\d+);MID=(\d+);MD=([^;]+);.*/
     )
     || ($msg =~
-/^PKT:SID=(\d*);PC=(\d*);MT=(\d*);ASID=\d*;APC=\d*;E=\d*;MGID=(\d*);MID=(\d*);MD=([^;]*);.*/
+/^PKT:SID=(\d+);PC=(\d+);MT=(\d+);ASID=\d+;APC=\d+;E=\d+;MGID=(\d+);MID=(\d+);MD=([^;]+);.*/
     )
     )
   {
