@@ -195,9 +195,25 @@ void process_cmd(void)
 		uint8_t val = eeprom_read_byte((uint8_t *)adr);
 		UART_PUTF2("EEPROM value at position 0x%x is 0x%x.\r\n", adr, val);
 	}
-	else if ((cmdbuf[0] == 's') && (strlen(cmdbuf) > 4)) // "send" command
+	else if ((cmdbuf[0] == 's') && (strlen(cmdbuf) > 6)) // "send" command
 	{
 		send_data_avail = true;
+	}
+	else if ((cmdbuf[0] == 'c') && (strlen(cmdbuf) > 14)) // "send" command with CRC
+	{
+		uint8_t len = strlen(cmdbuf);
+		
+		uint32_t calculated_crc = crc32((uint8_t *)cmdbuf, len - 8);
+		uint32_t given_crc = hex_to_uint32((uint8_t *)cmdbuf, len - 8);
+		
+		if (calculated_crc != given_crc)
+		{
+			UART_PUTF("CRC error! %08lx does not match. Ignoring command.\r\n", calculated_crc);
+		}
+		else
+		{
+			send_data_avail = true;
+		}
 	}
 	else
 	{
@@ -266,8 +282,8 @@ void process_rxbuf(void)
 			UART_PUTS("wAAXX..........write EEPROM at hex address AA to hex value XX\r\n");
 			UART_PUTS("x..............enable writing to EEPROM\r\n");
 			UART_PUTS("z..............disable writing to EEPROM\r\n");
-			UART_PUTS("sKK{T}{X}{D}...Use AES key KK to send a packet with MessageType T, followed\r\n");
-			UART_PUTS("               by all necessary extension header fields and message data.\r\n");
+			UART_PUTS("sKKTT{D}.......Use AES key KK to send a packet with MessageType TT, followed\r\n");
+			UART_PUTS("               by all necessary extension header fields and message data D.\r\n");
 			UART_PUTS("               Fields are: ReceiverID (RRRR), MessageGroup (GG), MessageID (MM)\r\n");
 			UART_PUTS("               AckSenderID (SSSS), AckPacketCounter (PPPPPP), Error (EE).\r\n");
 			UART_PUTS("               MessageData (DD) can be 0..17 bytes with bits moved to the left.\r\n");
@@ -278,6 +294,8 @@ void process_rxbuf(void)
 			UART_PUTS("sKK08GGMMDD...............Status\r\n");
 			UART_PUTS("sKK09SSSSPPPPPPEE.........Ack\r\n");
 			UART_PUTS("sKK0ASSSSPPPPPPEEGGMMDD...AckStatus\r\n");
+			UART_PUTS("cKKTT{D}{CRC}..Same as s..., but a CRC32 checksum of the command has to be appended.\r\n");
+			UART_PUTS("               If it doesn't match, the command is ignored.\r\n");
 		}
 		else if (input == 'x')
 		{
@@ -305,9 +323,16 @@ void process_rxbuf(void)
 		}
 		else if (input == 's')
 		{
-			UART_PUTS("*** Enter AES key nr, MessageType, header extension + data in hex format to send, finish with ENTER. ***\r\n");
+			UART_PUTS("*** Enter AES key nr, MessageType, header extension and data in hex format to send, finish with ENTER. ***\r\n");
 			cmdbuf[0] = 's';
 			bytes_to_read = 54; // 2 characters for key nr + 2 characters for MessageType + 16 characters for hdr.ext. + 2*17 characters for data
+			bytes_pos = 1;
+		}
+		else if (input == 'c')
+		{
+			UART_PUTS("*** Enter AES key nr, MessageType, header extension, data and CRC in hex format to send, finish with ENTER. ***\r\n");
+			cmdbuf[0] = 'c';
+			bytes_to_read = 62; // 2 characters for key nr + 2 characters for MessageType + 16 characters for hdr.ext. + 2*17 characters for data + 8 characters for CRC
 			bytes_pos = 1;
 		}
 		else
