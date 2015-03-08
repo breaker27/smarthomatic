@@ -314,6 +314,9 @@ sub getMessageData
       $res .= sprintf("%02X", $_);
     }
 
+	# strip trailing zeros (pairwise)
+	$res =~ s/(00)+$//;
+
     return $res;
   } else {
     return $self->{_messageData};
