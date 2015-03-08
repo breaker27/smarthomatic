@@ -231,13 +231,13 @@ void send_packet(uint8_t aes_key_nr, uint8_t packet_len)
 	}
 	
 	e2p_basestation_get_aeskey(aes_key_nr, aes_key);
+
+	// show info
+	decode_data(packet_len);
 	
 	// encrypt and send
 	__PACKETSIZEBYTES = packet_len;
 	rfm12_send_bufx();
-
-	// show info (after sending, to not cause additional delay)
-	decode_data(packet_len);
 }
 
 int main(void)
