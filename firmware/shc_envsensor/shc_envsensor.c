@@ -39,7 +39,7 @@
 #include "lm75.h"
 #include "bmp085.h"
 #include "srf02.h"
-#include "htu21d.h"
+#include "sht2x_htu21d.h"
 #include "onewire.h"
 
 #include "../src_common/aes256.h"
@@ -547,7 +547,7 @@ void measure_temperature_i2c(void)
 {
 	if ((temperature_sensor_type != TEMPERATURESENSORTYPE_DS7505)
 		&& (temperature_sensor_type != TEMPERATURESENSORTYPE_BMP085)
-		&& (temperature_sensor_type != TEMPERATURESENSORTYPE_HTU21D))
+		&& (temperature_sensor_type != TEMPERATURESENSORTYPE_SHT2X_HTU21D))
 		return;
 
 	if (!countWakeup(&temperature))
@@ -564,9 +564,9 @@ void measure_temperature_i2c(void)
 	{
 		temperature.val += bmp085_meas_temp();
 	}
-	else if (temperature_sensor_type == TEMPERATURESENSORTYPE_HTU21D)
+	else if (temperature_sensor_type == TEMPERATURESENSORTYPE_SHT2X_HTU21D)
 	{
-		temperature.val += htu21d_meas_temp();
+		temperature.val += sht2x_htu21d_meas_temp();
 	}
 }
 
@@ -595,13 +595,13 @@ void measure_temperature_other(void)
 
 void measure_humidity_i2c(void)
 {
-	if (humidity_sensor_type != HUMIDITYSENSORTYPE_HTU21D)
+	if (humidity_sensor_type != HUMIDITYSENSORTYPE_SHT2X_HTU21D)
 		return;
 
 	if (!countWakeup(&humidity))
 		return;
 
-	humidity.val += htu21d_meas_hum();
+	humidity.val += sht2x_htu21d_meas_hum();
 }
 
 void measure_humidity_other(void)
@@ -985,8 +985,8 @@ int main(void)
 	bool measure_other_i2c = (temperature_sensor_type == TEMPERATURESENSORTYPE_DS7505)
 		|| (temperature_sensor_type == TEMPERATURESENSORTYPE_BMP085)
 		|| (barometric_sensor_type == BAROMETRICSENSORTYPE_BMP085)
-		|| (temperature_sensor_type == TEMPERATURESENSORTYPE_HTU21D)
-		|| (humidity_sensor_type == HUMIDITYSENSORTYPE_HTU21D);
+		|| (temperature_sensor_type == TEMPERATURESENSORTYPE_SHT2X_HTU21D)
+		|| (humidity_sensor_type == HUMIDITYSENSORTYPE_SHT2X_HTU21D);
 
 	while (42)
 	{

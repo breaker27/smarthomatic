@@ -151,7 +151,7 @@
 			</Element>
 			<Element>
 				<Value>5</Value>
-				<Name>HTU21D</Name>
+				<Name>SHT2x_HTU21D</Name>
 			</Element>
 		</EnumValue>
 		<EnumValue>
@@ -168,7 +168,7 @@
 			</Element>
 			<Element>
 				<Value>2</Value>
-				<Name>HTU21D</Name>
+				<Name>SHT2x_HTU21D</Name>
 			</Element>
 		</EnumValue>
 		<EnumValue>

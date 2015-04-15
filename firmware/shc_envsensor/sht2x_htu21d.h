@@ -1,6 +1,7 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
 * Copyright (c) 2015 Uwe Freese
+*               2015 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -22,10 +23,10 @@
  * Starts humidity measurement and returns the result in
  * 1/10000 (divide by 100 to get a percentage relative humidity).
  */
-uint16_t htu21d_meas_hum(void);
+uint16_t sht2x_htu21d_meas_hum(void);
 
 /*
  * Starts temperature measurement and returns the result in
  * 1/100 degree celsius.
  */
-int16_t htu21d_meas_temp(void);
+int16_t sht2x_htu21d_meas_temp(void);
