@@ -368,7 +368,10 @@ sub SHC_SimpleWrite(@)
   syswrite($hash->{DIODev}, $msg) if ($hash->{DIODev});
 
   # Some linux installations are broken with 0.001, T01 returns no answer
-  select(undef, undef, undef, 0.01);
+  #select(undef, undef, undef, 0.01);
+
+  # Sleep for 250 milliseconds to make sure the base station can process the command before the next is sent
+  select(undef, undef, undef, 0.25);
 }
 
 1;
