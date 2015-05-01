@@ -194,12 +194,13 @@ sub SHCdev_Parse($$)
     return "";
   }
 
-  my $msgtypename  = $parser->getMessageTypeName();
-  my $msggroupname = $parser->getMessageGroupName();
-  my $msgname      = $parser->getMessageName();
-  my $raddr        = $parser->getSenderID();
-  my $rhash        = $modules{SHCdev}{defptr}{$raddr};
-  my $rname        = $rhash ? $rhash->{NAME} : $raddr;
+  my $msgtypename   = $parser->getMessageTypeName();
+  my $msggroupname  = $parser->getMessageGroupName();
+  my $msgname       = $parser->getMessageName();
+  my $packetcounter = $parser->getPacketCounter();
+  my $raddr         = $parser->getSenderID();
+  my $rhash         = $modules{SHCdev}{defptr}{$raddr};
+  my $rname         = $rhash ? $rhash->{NAME} : $raddr;
 
   if (!$modules{SHCdev}{defptr}{$raddr}) {
     Log3 $name, 3, "$name: Unknown device $rname, please define it";
@@ -222,6 +223,9 @@ sub SHCdev_Parse($$)
   my $readonly = AttrVal($rname, "readonly", "0");
 
   readingsBeginUpdate($rhash);
+
+  # remember PacketCounter (which every message provides)
+  readingsBulkUpdate($rhash, "packetCounter", $packetcounter);
 
   given ($msggroupname) {
     when ('Generic') {
