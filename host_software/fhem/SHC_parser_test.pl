@@ -123,16 +123,16 @@ sub parser_test($)
 	}
 }
 
-parser_test("Packet Data: SenderID=27;PacketCounter=301;MessageType=8;MessageGroupID=1;MessageID=1;MessageData=800000000000;");
-parser_test("Packet Data: SenderID=22;PacketCounter=101;MessageType=8;MessageGroupID=0;MessageID=5;MessageData=b40000000000;Percentage=3321;");
-parser_test("Packet Data: SenderID=20;PacketCounter=19284;MessageType=8;MessageGroupID=10;MessageID=1;MessageData=085c79630000;Temperature=21.40;Humidity=48.5;Brightness=70;");
-parser_test("Packet Data: SenderID=40;PacketCounter=7401;MessageType=8;MessageGroupID=20;MessageID=1;MessageData=000000000000;On=0;TimeoutSec=0;");
-parser_test("Packet Data: SenderID=40;PacketCounter=7402;MessageType=8;MessageGroupID=0;MessageID=1;MessageData=00000000000000000000000000000000000000000000;Major=0;Minor=0;Patch=0;Hash=00000000;");
-parser_test("Packet Data: SenderID=23;PacketCounter=414;MessageType=8;MessageGroupID=1;MessageID=2;MessageData=0042e000000000000000000000000000000000000000;");
-parser_test("Packet Data: SenderID=23;PacketCounter=307;MessageType=8;MessageGroupID=1;MessageID=2;MessageData=80458000000000000000000000000000000000000000;");
-parser_test("Packet Data: SenderID=71;PacketCounter=527;MessageType=8;MessageGroupID=10;MessageID=2;MessageData=a67161000000;Humidity=66.5;Temperature=-149.72;");
-parser_test("Packet Data: SenderID=27;PacketCounter=35106;MessageType=8;MessageGroupID=1;MessageID=1;MessageData=800000000000;");
-parser_test("Packet Data: SenderID=21;PacketCounter=680;MessageType=8;MessageGroupID=10;MessageID=1;MessageData=de7b00000000;Temperature=-85.81;");
+parser_test("PKT:SID=27;PC=301;MT=8;MGID=1;MID=1;MD=800000000000;");
+parser_test("PKT:SID=22;PC=101;MT=8;MGID=0;MID=5;MD=b40000000000;");
+parser_test("PKT:SID=20;PC=19284;MT=8;MGID=10;MID=1;MD=085c79630000;");
+parser_test("PKT:SID=40;PC=7401;MT=8;MGID=20;MID=1;MD=000000000000;");
+parser_test("PKT:SID=40;PC=7402;MT=8;MGID=0;MID=1;MD=00000000000000000000000000000000000000000000;");
+parser_test("PKT:SID=23;PC=414;MT=8;MGID=1;MID=2;MD=0042e000000000000000000000000000000000000000;");
+parser_test("PKT:SID=23;PC=307;MT=8;MGID=1;MID=2;MD=80458000000000000000000000000000000000000000;");
+parser_test("PKT:SID=71;PC=527;MT=8;MGID=10;MID=2;MD=a67161000000;");
+parser_test("PKT:SID=27;PC=35106;MT=8;MGID=1;MID=1;MD=800000000000;");
+parser_test("PKT:SID=21;PC=680;MT=8;MGID=10;MID=1;MD=de7b00000000;");
 
 # Create message string for sending
 

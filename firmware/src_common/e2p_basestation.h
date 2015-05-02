@@ -65,8 +65,33 @@ static inline void e2p_basestation_get_aeskey(uint8_t index, void *dst)
   eeprom_read_block(dst, (uint8_t *)((520 + (uint16_t)index * 256) / 8), 32);
 }
 
-// Reserved area with 3576 bits
-// Offset: 4616
+// UartBaudRate (EnumValue)
+// Description: Select which baud rate to use for communication with the base station. Use 19200 (0,2% baud rate error @20 MHz) for standard speed, which should work with any connected device. Use 115200 (1,4% baud rate error @20 MHz) to speed up communication to the base station.
+
+#ifndef _ENUM_UartBaudRate
+#define _ENUM_UartBaudRate
+typedef enum {
+  UARTBAUDRATE_19200 = 19,
+  UARTBAUDRATE_115200 = 115
+} UartBaudRateEnum;
+#endif /* _ENUM_UartBaudRate */
+
+// Set UartBaudRate (EnumValue)
+// Offset: 4616, length bits 8
+static inline void e2p_basestation_set_uartbaudrate(UartBaudRateEnum val)
+{
+  eeprom_write_UIntValue(4616, 8, val);
+}
+
+// Get UartBaudRate (EnumValue)
+// Offset: 4616, length bits 8
+static inline UartBaudRateEnum e2p_basestation_get_uartbaudrate(void)
+{
+  return eeprom_read_UIntValue8(4616, 8, 0, 255);
+}
+
+// Reserved area with 3568 bits
+// Offset: 4624
 
 
 #endif /* _E2P_BASESTATION_H */

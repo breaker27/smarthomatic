@@ -42,7 +42,7 @@ typedef enum {
   TEMPERATURESENSORTYPE_DS7505 = 2,
   TEMPERATURESENSORTYPE_BMP085 = 3,
   TEMPERATURESENSORTYPE_DS18X20 = 4,
-  TEMPERATURESENSORTYPE_HTU21D = 5
+  TEMPERATURESENSORTYPE_SHT2X_HTU21D = 5
 } TemperatureSensorTypeEnum;
 #endif /* _ENUM_TemperatureSensorType */
 
@@ -68,7 +68,7 @@ static inline TemperatureSensorTypeEnum e2p_envsensor_get_temperaturesensortype(
 typedef enum {
   HUMIDITYSENSORTYPE_NOSENSOR = 0,
   HUMIDITYSENSORTYPE_SHT15 = 1,
-  HUMIDITYSENSORTYPE_HTU21D = 2
+  HUMIDITYSENSORTYPE_SHT2X_HTU21D = 2
 } HumiditySensorTypeEnum;
 #endif /* _ENUM_HumiditySensorType */
 

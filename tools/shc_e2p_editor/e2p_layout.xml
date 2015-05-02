@@ -100,8 +100,22 @@
 				<Bytes>32</Bytes>
 			</ByteArray>
 		</Array>
+		<EnumValue>
+			<ID>UartBaudRate</ID>
+			<Description>Select which baud rate to use for communication with the base station. Use 19200 (0,2% baud rate error @20 MHz) for standard speed, which should work with any connected device. Use 115200 (1,4% baud rate error @20 MHz) to speed up communication to the base station.</Description>
+			<Bits>8</Bits>
+			<Element>
+				<Value>19</Value>
+				<Name>19200</Name>
+			</Element>
+			<Element>
+				<Value>115</Value>
+				<Name>115200</Name>
+			</Element>
+			<DefaultVal>19</DefaultVal>
+		</EnumValue>
 		<Reserved>
-			<Bits>3576</Bits>
+			<Bits>3568</Bits>
 		</Reserved>
 	</Block>
 	<Block>
@@ -137,7 +151,7 @@
 			</Element>
 			<Element>
 				<Value>5</Value>
-				<Name>HTU21D</Name>
+				<Name>SHT2x_HTU21D</Name>
 			</Element>
 		</EnumValue>
 		<EnumValue>
@@ -154,7 +168,7 @@
 			</Element>
 			<Element>
 				<Value>2</Value>
-				<Name>HTU21D</Name>
+				<Name>SHT2x_HTU21D</Name>
 			</Element>
 		</EnumValue>
 		<EnumValue>
@@ -854,8 +868,16 @@
 			<MinVal>0</MinVal>
 			<MaxVal>65535</MaxVal>
 		</UIntValue>
+		<UIntValue>
+			<ID>SmoothingPercentage</ID>
+			<Description>This is the size of a moving window in which the absolute humidity (0 to 100 percent) is smoothed. This is necessary because the raw values typically show some short term variation, depending on external circumstances (plant in sunlight or above radiator). The variation also depends on the thickness of isolation above the sensor plates.</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>30</MaxVal>
+			<DefaultVal>8</DefaultVal>
+		</UIntValue>
 		<Reserved>
-			<Bits>7584</Bits>
+			<Bits>7576</Bits>
 		</Reserved>
 	</Block>
 	<Block>

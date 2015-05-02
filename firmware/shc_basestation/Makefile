@@ -1,6 +1,6 @@
 #
 # This file is part of smarthomatic, http://www.smarthomatic.org.
-# Copyright (c) 2013 Uwe Freese
+# Copyright (c) 2013..2015 Uwe Freese
 #
 # smarthomatic is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -19,6 +19,7 @@
 # CPU config
 MCU		       = atmega328
 F_CPU	       = 20000000
+# baud rate in makefile is ignored, because it is configured by e2p
 UART_BAUD_RATE = 19200
 
 # never remove this, because the base station needs the UART

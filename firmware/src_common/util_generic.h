@@ -47,12 +47,23 @@ uint8_t hex_to_uint8(uint8_t * buf, uint8_t offset);
 
 static inline uint16_t hex_to_uint16(uint8_t * buf, uint8_t offset)
 {
-	return ((uint16_t)hex_to_uint8(buf, offset) << 8) + hex_to_uint8(buf, offset + 2);
+	return ((uint16_t)hex_to_uint8(buf, offset) << 8)
+		+ hex_to_uint8(buf, offset + 2);
 }
 
 static inline uint32_t hex_to_uint24(uint8_t * buf, uint8_t offset)
 {
-	return ((uint32_t)hex_to_uint8(buf, offset) << 16) + ((uint32_t)hex_to_uint8(buf, offset + 2) << 8) + hex_to_uint8(buf, offset + 4);
+	return ((uint32_t)hex_to_uint8(buf, offset) << 16)
+		+ ((uint32_t)hex_to_uint8(buf, offset + 2) << 8)
+		+ hex_to_uint8(buf, offset + 4);
+}
+
+static inline uint32_t hex_to_uint32(uint8_t * buf, uint8_t offset)
+{
+	return ((uint32_t)hex_to_uint8(buf, offset) << 24)
+		+ ((uint32_t)hex_to_uint8(buf, offset + 2) << 16)
+		+ ((uint32_t)hex_to_uint8(buf, offset + 4) << 8)
+		+ hex_to_uint8(buf, offset + 6);
 }
 
 // ########## read/write 16 bit / 32 bit values to the byte buffer in PC byte order
