@@ -1,7 +1,8 @@
 ##########################################################################
 # This file is part of the smarthomatic module for FHEM.
 #
-# Copyright (c) 2014 Stefan Baumann, Uwe Freese
+# Copyright (c) 2014 Stefan Baumann
+#               2014..2015 Uwe Freese
 #
 # You can find smarthomatic at www.smarthomatic.org.
 # You can find FHEM at www.fhem.de.
@@ -63,7 +64,10 @@ my %dev_state_format = (
     "port",                "Port: ",
     "ains",                "Ain: "
   ],
-  "RGBDimmer"           => ["color", "Color: "],
+  "RGBDimmer"           => [
+    "color",               "Color: ",
+    "brightness",          "Brightness: "
+  ],
   "SoilMoistureMeter"   => ["humidity", "H: "]
 );
 
@@ -78,13 +82,14 @@ my %sets = (
                            "DigitalPort " .
                            "DigitalPortTimeout " .
                            "DigitalPin " .
-                           "DigitalPinTimeout ",
+                           "DigitalPinTimeout",
   "Dimmer"              => "on:noArg off:noArg toggle:noArg statusRequest:noArg pct:slider,0,1,100 ani " .
                            # Used from SetExtensions.pm
                            "blink on-for-timer on-till off-for-timer off-till intervals",
   "EnvSensor"           => "",
   "RGBDimmer"           => "Color " .
-                           "ColorAnimation",
+                           "ColorAnimation " .
+                           "Dimmer.Brightness:slider,0,1,100",
   "SoilMoistureMeter"   => "",
   "Custom"              => "Dimmer.Brightness " .
                            "Dimmer.Animation"
@@ -107,7 +112,7 @@ sub SHCdev_Initialize($)
 {
   my ($hash) = @_;
 
-  $hash->{Match}    = "^Packet Data: SenderID=[1-9]|0[1-9]|[1-9][0-9]|[0-9][0-9][0-9]|[0-3][0-9][0-9][0-9]|40[0-8][0-9]|409[0-6]";
+  $hash->{Match}    = "^PKT:SID=([1-9]|[1-9][0-9]|[1-9][0-9][0-9]|[1-3][0-9][0-9][0-9]|40[0-8][0-9]|409[0-6]);";
   $hash->{SetFn}    = "SHCdev_Set";
   $hash->{GetFn}    = "SHCdev_Get";
   $hash->{DefFn}    = "SHCdev_Define";
@@ -185,19 +190,20 @@ sub SHCdev_Parse($$)
   my $name = $hash->{NAME};
 
   if (!$parser->parse($msg)) {
-    Log3 $hash, 4, "SHC_TEMP: parser error: $msg";
+    Log3 $name, 1, "$name: Parser error: $msg";
     return "";
   }
 
-  my $msgtypename  = $parser->getMessageTypeName();
-  my $msggroupname = $parser->getMessageGroupName();
-  my $msgname      = $parser->getMessageName();
-  my $raddr        = $parser->getSenderID();
-  my $rhash        = $modules{SHCdev}{defptr}{$raddr};
-  my $rname        = $rhash ? $rhash->{NAME} : $raddr;
+  my $msgtypename   = $parser->getMessageTypeName();
+  my $msggroupname  = $parser->getMessageGroupName();
+  my $msgname       = $parser->getMessageName();
+  my $packetcounter = $parser->getPacketCounter();
+  my $raddr         = $parser->getSenderID();
+  my $rhash         = $modules{SHCdev}{defptr}{$raddr};
+  my $rname         = $rhash ? $rhash->{NAME} : $raddr;
 
   if (!$modules{SHCdev}{defptr}{$raddr}) {
-    Log3 $name, 3, "SHC_TEMP: Unknown device $rname, please define it";
+    Log3 $name, 3, "$name: Unknown device $rname, please define it";
     return "UNDEFINED SHCdev_$rname SHCdev $raddr";
   }
 
@@ -217,6 +223,9 @@ sub SHCdev_Parse($$)
   my $readonly = AttrVal($rname, "readonly", "0");
 
   readingsBeginUpdate($rhash);
+
+  # remember PacketCounter (which every message provides)
+  readingsBulkUpdate($rhash, "packetCounter", $packetcounter);
 
   given ($msggroupname) {
     when ('Generic') {
@@ -604,6 +613,16 @@ sub SHCdev_Set($@)
           $parser->setField("Dimmer", "ColorAnimation", "Color", $curcolor, $i);
         }
         readingsSingleUpdate($hash, "state", "set-coloranimation", 1);
+        SHCdev_Send($hash);
+      } elsif ($cmd eq 'Dimmer.Brightness') {
+        my $brightness = $arg;
+
+        # DEBUG
+        # Log3 $name, 3, "$name: Args: $arg, $arg2, $arg3, $brightness";
+
+        readingsSingleUpdate($hash, "state", "set-brightness:$brightness", 1);
+        $parser->initPacket("Dimmer", "Brightness", "SetGet");
+        $parser->setField("Dimmer", "Brightness", "Brightness", $brightness);
         SHCdev_Send($hash);
       } else {
         return SetExtensions($hash, "", $name, @aa);

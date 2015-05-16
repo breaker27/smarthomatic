@@ -47,16 +47,15 @@
 
 #define BUTTON (!(BUTTON_PINPORT & (1 << BUTTON_PIN)))
 
-#define SEND_BATTERY_STATUS_CYCLE 25 // send version status every x wake ups
-#define SEND_VERSION_STATUS_CYCLE 50 // send version status every x wake ups
-
-#define DENOISE_WINDOW_PERMILL 20
+#define SEND_VERSION_STATUS_CYCLE 50    // send version status every x wake ups
+#define SEND_BATTERY_STATUS_CYCLE 25    // send battery status every x wake ups
+#define SEND_STATUS_TIMES_AT_STARTUP 2  // send version and battery status after power up (inserting battery) x times
 
 uint16_t device_id;
 uint32_t station_packetcounter;
 
-uint8_t version_status_cycle = 1; // send promptly after startup
-uint8_t battery_status_cycle = 1; // send promptly after startup
+uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE;
+uint8_t battery_status_cycle = SEND_BATTERY_STATUS_CYCLE;
 
 uint32_t dry_thr;              // configured by user
 uint32_t counter_min = 100000; // min occurred value in current watering period
@@ -67,8 +66,10 @@ uint16_t wupCnt = 0; // Amount of wake-up cycles counting from the last time a m
 uint16_t avgInt = 3; // The number of times a value is measured before an average is calculated and sent.
 uint16_t avgIntInit = 3;
 
-uint32_t reported_result = 0;
+int32_t reported_result = 0;
 bool direction_up = true;
+
+uint8_t smoothing_percentage;
 
 // TODO: Move to util
 // calculate x^y
@@ -176,11 +177,10 @@ void prepare_humidity_status_RAW_DBG(uint16_t hum, int16_t raw)
 bool measure_humidity(void)
 {
 	bool res = false;
+	uint16_t cnt;
 	
 	switch_schmitt_trigger(true);
 	_delay_ms(10);
-	
-	uint16_t result;
 
 	// make PD5 an input and disable pull-ups
 	DDRD &= ~(1 << 5);
@@ -195,17 +195,18 @@ bool measure_humidity(void)
 
 	_delay_ms(100);
 
-	//result = (TCNT1H << 8) | TCNT1L;
-	result = TCNT1;
+	//cnt = (TCNT1H << 8) | TCNT1L;
+	cnt = TCNT1;
 
-	TCCR1B = 0x00;  // turn counter off
+	TCCR1B = 0x00; // turn counter off
 	
 	switch_schmitt_trigger(false);
 	
-	counter_meas += result;
+	counter_meas += cnt;
 	wupCnt++;
 	
-	UART_PUTF3("Init mode %u, Measurement %u, Counter %u\r\n", init_mode, wupCnt, result);
+	UART_PUTF4("Init mode %u, Measurement %u/%u, Counter %u\r\n",
+		init_mode, wupCnt, init_mode ? avgIntInit : avgInt , cnt);
 
 	if ((init_mode && (wupCnt == avgIntInit)) || (!init_mode && (wupCnt == avgInt)))
 	{
@@ -256,7 +257,7 @@ bool measure_humidity(void)
 					{
 						reported_result = result;
 					}
-					else if (result < reported_result - DENOISE_WINDOW_PERMILL)
+					else if (result < reported_result - smoothing_percentage * 10)
 					{
 						reported_result = result;
 						direction_up = false;
@@ -268,7 +269,7 @@ bool measure_humidity(void)
 					{
 						reported_result = result;
 					}
-					else if (result > reported_result + DENOISE_WINDOW_PERMILL)
+					else if (result > reported_result + smoothing_percentage * 10)
 					{
 						reported_result = result;
 						direction_up = true;
@@ -276,8 +277,8 @@ bool measure_humidity(void)
 				}
 			}
 			
-			prepare_humidity_status(reported_result);
-			//prepare_humidity_status_RAW_DBG(reported_result, (int16_t) MIN((int32_t)avg, 30000)); // for debugging only
+			prepare_humidity_status((uint16_t)reported_result);
+			//prepare_humidity_status_RAW_DBG((uint16_t)reported_result, (int16_t) MIN((int32_t)avg, 30000)); // for debugging only
 			res = true;
 		}
 
@@ -289,6 +290,19 @@ bool measure_humidity(void)
 	return res;
 }
 
+void send_prepared_message(void)
+{
+	inc_packetcounter();
+	
+	pkg_header_set_senderid(device_id);
+	pkg_header_set_packetcounter(packetcounter);
+	
+	rfm12_send_bufx();
+	rfm12_tick(); // send packet, and then WAIT SOME TIME BEFORE GOING TO SLEEP (otherwise packet would not be sent)
+
+	led_blink(200, 0, 1);
+}
+
 ISR (INT1_vect)
 {
     /* interrupt code here */
@@ -296,6 +310,7 @@ ISR (INT1_vect)
 
 int main(void)
 {
+	uint8_t i;
 	uint16_t wakeup_sec;
 	bool send;
 
@@ -330,6 +345,7 @@ int main(void)
 
 	avgIntInit = e2p_soilmoisturemeter_get_averagingintervalinit();
 	avgInt = e2p_soilmoisturemeter_get_averaginginterval();
+	smoothing_percentage = e2p_soilmoisturemeter_get_smoothingpercentage();
 
 	osccal_init();
 
@@ -337,7 +353,7 @@ int main(void)
 
 	UART_PUTS ("\r\n");
 	UART_PUTF4("smarthomatic Soil Moisture Meter v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
-	UART_PUTS("(c) 2014 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTS("(c) 2014..2015 Uwe Freese, www.smarthomatic.org\r\n");
 	osccal_info();
 	UART_PUTF ("DeviceID: %u\r\n", device_id);
 	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);
@@ -345,6 +361,7 @@ int main(void)
 	UART_PUTF ("AveragingInterval for normal operation: %u\r\n", avgInt);
 	UART_PUTF ("Dry threshold: %u\r\n", dry_thr);
 	UART_PUTF ("Min value: %u\r\n", counter_min);
+	UART_PUTF ("Smoothing percentage: %u\r\n", smoothing_percentage);
 
 	adc_init();
 
@@ -377,6 +394,16 @@ int main(void)
 	sbi(EIMSK, INT1);
 	
 	sei();
+
+	for (i = 0; i < SEND_STATUS_TIMES_AT_STARTUP; i++)
+	{
+		prepare_deviceinfo_status();
+		send_prepared_message();
+		_delay_ms(800);
+		prepare_battery_status();
+		send_prepared_message();
+		_delay_ms(800);
+	}
 
 	while (42)
 	{
@@ -443,15 +470,7 @@ int main(void)
 
 			if (send)
 			{
-				inc_packetcounter();
-				
-				pkg_header_set_senderid(device_id);
-				pkg_header_set_packetcounter(packetcounter);
-				
-				rfm12_send_bufx();
-				rfm12_tick(); // send packet, and then WAIT SOME TIME BEFORE GOING TO SLEEP (otherwise packet would not be sent)
-
-				led_blink(200, 0, 1);
+				send_prepared_message();
 			}
 		}
 		

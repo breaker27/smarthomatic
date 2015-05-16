@@ -39,8 +39,8 @@
 #define RGBLED_PORT PORTD
 #define RGBLED_PINPORT PIND
 
-#define SEND_STATUS_EVERY_SEC 1800 // how often should a status be sent?
-#define SEND_VERSION_STATUS_CYCLE 50 // send version status x times less than switch status (~once per day)
+#define SEND_STATUS_EVERY_SEC 2400 // how often should a status be sent?
+#define SEND_VERSION_STATUS_CYCLE 35 // send version status x times less than switch status (~once per day)
 
 uint16_t device_id;
 uint32_t station_packetcounter;
@@ -48,7 +48,8 @@ uint32_t station_packetcounter;
 uint16_t send_status_timeout = 15;
 uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly after startup
 
-uint8_t brightness_factor;
+uint8_t brightness_factor;            // fixed, from e2p
+uint8_t user_brightness_factor = 100; // additional brightness changeable by brightness message
 
 #define RED_PIN 6
 #define GRN_PIN 5
@@ -115,20 +116,14 @@ void PWM_init(void)
 	GRN_DDR |= (1 << GRN_PIN);
 	BLU_DDR |= (1 << BLU_PIN);
 
-	// OC0A (Red LED): Fast PWM, 8 Bit, TOP = 0xFF = 255, inverting output
-	// OC0B (Green LED): Fast PWM, 8 Bit, TOP = 0xFF = 255, non inverting output
-	// Inverting mode is used to make sure that the LEDs are off with the extreme value of 255 for OCRxx.
-	// (This is not the case using non-inverting mode and a value of 0.)
-	TCCR0A = (1 << WGM01) | (1 << WGM00) | (1 << COM0A1) | (1 << COM0A0) | (1 << COM0B1)| (1 << COM0B0);
+	// OC0A (Red LED): Phase correct PWM, 8 Bit, TOP = 0xFF = 255, non-inverting output
+	// OC0B (Green LED): Phase correct PWM, 8 Bit, TOP = 0xFF = 255, non-inverting output
+	TCCR0A = (1 << WGM00) | (1 << COM0A1) | (1 << COM0B1);
 
-	// OC1A (Blue LED): Fast PWM, 8 Bit, TOP = 0xFF = 255, inverting output
-	TCCR1A = (1 << WGM12) | (1 << WGM10) | (1 << COM1A1)| (1 << COM1A0);
+	// OC1A (Blue LED): Phase correct PWM, 8 Bit, TOP = 0xFF = 255, non-inverting output
+	TCCR1A = (1 << WGM10) | (1 << COM1A1);
 
-	// Clock source for both timers = I/O clock, 1/256 prescaler -> ~ 120 Hz
-	//TCCR0B = (1 << CS02);
-	//TCCR1B = (1 << CS12);
-
-	// Clock source for both timers = I/O clock, 1/64 prescaler -> ~ 480 Hz
+	// Clock source for both timers = I/O clock, 1/64 prescaler -> ~ 240 Hz
 	TCCR0B = (1 << CS01) | (1 << CS00);
 	TCCR1B = (1 << CS11) | (1 << CS10);
 }
@@ -145,9 +140,9 @@ void timer2_init(void)
 
 void set_PWM(struct rgb_color_t color)
 {
-	OCR0A = 255 - (uint16_t)(pwm_transl[color.r]) * brightness_factor / 100;
-	OCR0B = 255 - (uint16_t)(pwm_transl[color.g]) * brightness_factor / 100;
-	OCR1A = 255 - (uint16_t)(pwm_transl[color.b]) * brightness_factor / 100;
+	OCR0A = (uint32_t)(pwm_transl[color.r]) * brightness_factor * user_brightness_factor / 10000;
+	OCR0B = (uint32_t)(pwm_transl[color.g]) * brightness_factor * user_brightness_factor / 10000;
+	OCR1A = (uint32_t)(pwm_transl[color.b]) * brightness_factor * user_brightness_factor / 10000;
 }
 
 // Calculate an RGB value out of the index color.
@@ -278,6 +273,22 @@ void send_deviceinfo_status(void)
 	msg_generic_deviceinfo_set_versionminor(VERSION_MINOR);
 	msg_generic_deviceinfo_set_versionpatch(VERSION_PATCH);
 	msg_generic_deviceinfo_set_versionhash(VERSION_HASH);
+
+	rfm12_send_bufx();
+}
+
+// Send brightness status
+void send_brightness_status(void)
+{
+	inc_packetcounter();
+
+	UART_PUTF("Sending color status: color: %u\r\n", anim_col_i[0]);
+
+	// Set packet content
+	pkg_header_init_dimmer_brightness_status();
+	pkg_header_set_senderid(device_id);
+	pkg_header_set_packetcounter(packetcounter);
+	msg_dimmer_brightness_set_brightness(user_brightness_factor);
 
 	rfm12_send_bufx();
 }
@@ -572,17 +583,31 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	
 	UART_PUTF("MessageID:%u;", messageid);
 
-	if ((messageid != MESSAGEID_DIMMER_COLOR) && (messageid != MESSAGEID_DIMMER_COLORANIMATION))
+	if ((messageid != MESSAGEID_DIMMER_BRIGHTNESS)
+		&& (messageid != MESSAGEID_DIMMER_COLOR)
+		&& (messageid != MESSAGEID_DIMMER_COLORANIMATION))
 	{
 		UART_PUTS("\r\nERR: Unsupported MessageID.\r\n");
 		send_ack(acksenderid, ackpacketcounter, true);
 		return;
 	}
 
-	// "Set" or "SetGet" -> modify color
+	// "Set" or "SetGet" -> modify brightness/color/animation
 	if ((messagetype == MESSAGETYPE_SET) || (messagetype == MESSAGETYPE_SETGET))
 	{
-		if (messageid == MESSAGEID_DIMMER_COLORANIMATION)
+		if (messageid == MESSAGEID_DIMMER_BRIGHTNESS)
+		{
+			user_brightness_factor = msg_dimmer_brightness_get_brightness();
+			UART_PUTF("Brightness:%u;", brightness_factor);
+			update_current_col();
+		}
+		else if (messageid == MESSAGEID_DIMMER_COLOR)
+		{
+			uint8_t color = msg_dimmer_color_get_color();
+			UART_PUTF("Color:%u;", color);
+			set_animation_fixed_color(color);
+		}
+		else // MESSAGEID_DIMMER_COLORANIMATION
 		{
 			uint8_t i;
 			
@@ -611,12 +636,6 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 			
 			sei();
 		}
-		else
-		{
-			uint8_t color = msg_dimmer_color_get_color();
-			UART_PUTF("Color:%u;", color);
-			set_animation_fixed_color(color);
-		}
 	}
 
 	UART_PUTS("\r\n");
@@ -624,13 +643,17 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	// "Set" -> send "Ack"
 	if (messagetype == MESSAGETYPE_SET)
 	{
-		if (messageid == MESSAGEID_DIMMER_COLORANIMATION)
+		if (messageid == MESSAGEID_DIMMER_BRIGHTNESS)
 		{
-			pkg_header_init_dimmer_coloranimation_ack();
+			pkg_header_init_dimmer_brightness_ack();
 		}
-		else
+		else if (messageid == MESSAGEID_DIMMER_COLOR)
 		{
 			pkg_header_init_dimmer_color_ack();
+		}
+		else // MESSAGEID_DIMMER_COLORANIMATION
+		{
+			pkg_header_init_dimmer_coloranimation_ack();
 		}
 
 		UART_PUTS("Sending Ack\r\n");
@@ -638,7 +661,17 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	// "Get" or "SetGet" -> send "AckStatus"
 	else
 	{
-		if (messageid == MESSAGEID_DIMMER_COLORANIMATION)
+		if (messageid == MESSAGEID_DIMMER_BRIGHTNESS)
+		{
+			pkg_header_init_dimmer_brightness_ackstatus();
+			msg_dimmer_brightness_set_brightness(user_brightness_factor);
+		}
+		else if (messageid == MESSAGEID_DIMMER_COLOR)
+		{
+			pkg_header_init_dimmer_color_ackstatus();
+			msg_dimmer_color_set_color(anim_col_i[0]);
+		}
+		else // MESSAGEID_DIMMER_COLORANIMATION
 		{
 			uint8_t i;
 
@@ -653,13 +686,7 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 			msg_dimmer_coloranimation_set_repeat(repeat);
 			msg_dimmer_coloranimation_set_autoreverse(autoreverse);
 		}
-		else
-		{
-			pkg_header_init_dimmer_color_ackstatus();
-			msg_dimmer_color_set_color(anim_col_i[0]);
-		}
-		
-		// set message data
+
 		UART_PUTS("Sending AckStatus\r\n");
 	}
 
@@ -762,7 +789,7 @@ int main(void)
 	UART_PUTF ("DeviceID: %u\r\n", device_id);
 	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);
 	UART_PUTF ("Last received base station PacketCounter: %u\r\n\r\n", station_packetcounter);
-	UART_PUTF ("Brightness factor: %u%%\r\n", brightness_factor);
+	UART_PUTF ("E2P brightness factor: %u%%\r\n", brightness_factor);
 
 	// init AES key
 	e2p_generic_get_aeskey(aes_key);
@@ -847,7 +874,12 @@ int main(void)
 			// send status from time to time
 			send_status_timeout--;
 		
-			if (send_status_timeout == 0)
+			if (send_status_timeout == 8)
+			{
+				send_brightness_status();
+				led_blink(200, 0, 1);
+			}
+			else if (send_status_timeout == 0)
 			{
 				send_status_timeout = SEND_STATUS_EVERY_SEC;
 				send_status();
