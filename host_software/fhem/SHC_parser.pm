@@ -48,7 +48,7 @@
 #     It includes a CRC32 as last 8 characters.
 # 4.) Send string to base station (over UART).
 ##########################################################################
-# $Id: SHC_parser.pm 6580 2014-09-20 09:50:45Z rr2000 $
+# $Id: SHC_parser.pm 8190 2015-03-10 21:23:03Z rr2000 $
 
 package SHC_parser;
 

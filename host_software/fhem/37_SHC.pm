@@ -20,7 +20,7 @@
 # You should have received a copy of the GNU General Public License along
 # with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 ###########################################################################
-# $Id: 37_SHC.pm 6177 2014-06-29 11:09:17Z rr2000 $
+# $Id: 37_SHC.pm 8190 2015-03-10 21:23:03Z rr2000 $
 
 package main;
 
