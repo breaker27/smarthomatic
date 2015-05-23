@@ -1,6 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2015 Uwe Freese
+* Copyright (c) 2013 Stefan Baumann
 *               2015 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
