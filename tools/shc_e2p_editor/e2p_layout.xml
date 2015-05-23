@@ -643,6 +643,7 @@
 			<Bits>8</Bits>
 			<MinVal>0</MinVal>
 			<MaxVal>255</MaxVal>
+			<DefaultVal>0</DefaultVal>
 		</UIntValue>
 		<Reserved>
 			<Bits>7448</Bits>
@@ -676,6 +677,7 @@
 			<Bits>8</Bits>
 			<MinVal>0</MinVal>
 			<MaxVal>255</MaxVal>
+			<DefaultVal>0</DefaultVal>
 		</UIntValue>
 		<Reserved>
 			<Bits>7640</Bits>
@@ -707,6 +709,7 @@
 			<Bits>8</Bits>
 			<MinVal>0</MinVal>
 			<MaxVal>255</MaxVal>
+			<DefaultVal>0</DefaultVal>
 		</UIntValue>
 		<Reserved>
 			<Bits>6840</Bits>
