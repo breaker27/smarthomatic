@@ -688,3 +688,11 @@ void rfm12_init(void)
 	//activate the interrupt
 	RFM12_INT_ON();	
 }
+
+/**
+* Call a SW reset in case the module hangs (does not receive any data).
+*/
+void rfm12_reset(void)
+{
+	rfm12_data(RFM12_CMD_RESET);
+}

@@ -1,6 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013 Uwe Freese
+* Copyright (c) 2013..2015 Uwe Freese
 *
 * Original authors of RFM 12 library:
 *    Peter Fuhrmann, Hans-Gert Dahmen, Soeren Heisrath
@@ -511,3 +511,11 @@
 #define RFM12_STATUS_DQD 	0x0080
 #define RFM12_STATUS_CRL 	0x0040
 #define RFM12_STATUS_ATGL 	0x0020
+
+/*
+	18. Software Reset (undocumented)
+	Some forums name 0xFF00 or 0xFE00 as the reset command.
+	By testing, I found out that only 0xFF00 works as reset command.
+*/
+
+#define RFM12_CMD_RESET		0xFF00
