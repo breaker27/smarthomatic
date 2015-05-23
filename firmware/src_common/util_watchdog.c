@@ -1,6 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013 Stefan Baumann
+* Copyright (c) 2015 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -18,12 +18,13 @@
 
 #include "util_watchdog.h"
 
+#include "../src_common/msggrp_generic.h"
+
 uint32_t _rfm_last_reception_ms = 0;
-uint32_t _rfm_timeout_ms;
+uint32_t _rfm_timeout_ms = 0; // 0 == watchdog disabled
 uint16_t _rfm_watchdog_deviceid;
 bool _rfm_retry_done = false;
 
-// uint8_t volatile * port, uint8_t pin, 
 void rfm_watchdog_init(uint16_t deviceid, uint16_t timeout_sec)
 {
 	_rfm_watchdog_deviceid = deviceid;
@@ -38,7 +39,7 @@ void rfm_watchdog_reset(void)
 
 void _rfm12_recover(void)
 {
-	UART_PUTS("RFM watchdog! try recover\r\n");
+	UART_PUTS("RFM watchdog timeout! Recovering...\r\n");
 	
 	rfm12_reset();
 	_delay_ms(150);
@@ -49,14 +50,10 @@ void _rfm12_recover(void)
 	inc_packetcounter();
 
 	// Set packet content
-	pkg_header_init_generic_deviceinfo_status();
+	pkg_header_init_generic_hardwareerror_status();
 	pkg_header_set_senderid(_rfm_watchdog_deviceid);
 	pkg_header_set_packetcounter(packetcounter);
-	msg_generic_deviceinfo_set_devicetype(DEVICETYPE_POWERSWITCH);
-	msg_generic_deviceinfo_set_versionmajor(7);
-	msg_generic_deviceinfo_set_versionminor(0);
-	msg_generic_deviceinfo_set_versionpatch(0);
-	msg_generic_deviceinfo_set_versionhash(0);
+	msg_generic_hardwareerror_set_errorcode(ERRORCODE_TRANSCEIVERWATCHDOGRESET);
 
 	rfm12_send_bufx();
 	
@@ -65,20 +62,21 @@ void _rfm12_recover(void)
 
 void rfm_watchdog_count(uint16_t ms)
 {
-	_rfm_last_reception_ms += ms;
-	
-	//UART_PUTF("%lu\r\n", _rfm_last_reception_ms);
-	
-	if (!_rfm_retry_done && (_rfm_last_reception_ms > _rfm_timeout_ms))
+	if (_rfm_timeout_ms) // 0 == watchdog disabled
 	{
-		_rfm12_recover();
-		_rfm_retry_done = true;
-	}
-	else if (_rfm_last_reception_ms > 2 * _rfm_timeout_ms)
-	{
-		while (true) // endless error loop
+		_rfm_last_reception_ms += ms;
+		
+		if (!_rfm_retry_done && (_rfm_last_reception_ms > _rfm_timeout_ms))
 		{
-			led_blink(500, 500, 1);
+			_rfm12_recover();
+			_rfm_retry_done = true;
+		}
+		else if (_rfm_last_reception_ms > 2 * _rfm_timeout_ms)
+		{
+			while (true) // endless error loop
+			{
+				led_blink(500, 500, 1);
+			}
 		}
 	}
 }

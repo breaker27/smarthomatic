@@ -1,6 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013 Stefan Baumann
+* Copyright (c) 2015 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -19,16 +19,21 @@
 #ifndef _UTIL_WATCHDOG_H
 #define _UTIL_WATCHDOG_H
 
-#define SRF_I2C_ADR	0x70
-
 /*
- * Starts a ultrasonic range measurement and returns the result in
- * centimeters
- * Returns: distance in centimeters
- * 
+ * Initialize watchdog with needed parameters. Call once after startup.
  */
 void rfm_watchdog_init(uint16_t deviceid, uint16_t timeout_sec);
+
+/*
+ * Reset watchdog. Call whenever data was received (as a sign that transceiver
+ * is working properly)..
+ */
 void rfm_watchdog_reset(void);
+
+/*
+ * Tell watchdog the (additional) time that passed till last call of this
+ * function. The watchdog will automatically start a retry after timeout.
+ */
 void rfm_watchdog_count(uint16_t ms);
 
 #endif /* _UTIL_WATCHDOG_H */

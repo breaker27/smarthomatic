@@ -525,7 +525,7 @@ int main(void)
 	uart_init();
 	UART_PUTS ("\r\n");
 	UART_PUTF4("smarthomatic Dimmer v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
-	UART_PUTS("(c) 2013..2014 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTS("(c) 2013..2015 Uwe Freese, www.smarthomatic.org\r\n");
 	osccal_info();
 	UART_PUTF ("DeviceID: %u\r\n", device_id);
 	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);
@@ -535,7 +535,9 @@ int main(void)
 	// init AES key
 	e2p_generic_get_aeskey(aes_key);
 	
+	rfm_watchdog_init(device_id, e2p_dimmer_get_transceiverwatchdogtimeout());	
 	rfm12_init();
+
 	PWM_init();
 	io_init();
 	setPWMDutyCyclePercent(0);
@@ -592,6 +594,8 @@ int main(void)
 		if (rfm12_rx_status() == STATUS_COMPLETE)
 		{
 			uint8_t len = rfm12_rx_len();
+			
+			rfm_watchdog_reset();
 			
 			if ((len == 0) || (len % 16 != 0))
 			{
@@ -738,6 +742,8 @@ int main(void)
 		}
 
 		checkSwitchOff();
+
+		rfm_watchdog_count(ANIMATION_UPDATE_MS);
 
 		rfm12_tick();
 		send_status_timeout--;

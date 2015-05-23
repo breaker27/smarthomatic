@@ -291,6 +291,22 @@
 			</UIntValue>
 		</Message>
 		<Message>
+			<Name>HardwareError</Name>
+			<Description>Reports detected problems with the hardware.</Description>
+			<MessageID>3</MessageID>
+			<MessageType>8</MessageType>
+			<Validity>test</Validity>
+			<EnumValue>
+				<ID>ErrorCode</ID>
+				<Description>Lists the type of error that occurred.</Description>
+				<Bits>8</Bits>
+				<Element>
+					<Value>0</Value>
+					<Name>TransceiverWatchdogReset</Name>
+				</Element>
+			</EnumValue>
+		</Message>
+		<Message>
 			<Name>BatteryStatus</Name>
 			<Description>Tells the current battery status in percent. Please note that the "Get" may not be answered because a device does not listen to requests.</Description>
 			<MessageID>5</MessageID>
