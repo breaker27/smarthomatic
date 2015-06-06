@@ -591,6 +591,8 @@ rfm12_tx(uint8_t len, uint8_t type, uint8_t *data)
 */
 void rfm12_init(void)
 {
+	RFM12_INT_OFF(); // in case rfm12_init is called twice, make sure rfm module does not interfere
+
 	//initialize spi
 	SS_RELEASE();
 	DDR_SS |= (1<<BIT_SS);	
@@ -694,5 +696,7 @@ void rfm12_init(void)
 */
 void rfm12_reset(void)
 {
+	RFM12_INT_OFF();
 	rfm12_data(RFM12_CMD_RESET);
+	RFM12_INT_ON();
 }
