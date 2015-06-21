@@ -460,7 +460,7 @@ int main(void)
 		{
 			uint8_t len = rfm12_rx_len();
 			
-			rfm_watchdog_reset();
+			rfm_watchdog_alive();
 			
 			if ((len == 0) || (len % 16 != 0))
 			{

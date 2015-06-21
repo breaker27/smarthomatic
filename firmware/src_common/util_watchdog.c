@@ -31,7 +31,7 @@ void rfm_watchdog_init(uint16_t deviceid, uint16_t timeout_sec)
 	_rfm_timeout_ms = (uint32_t)timeout_sec * 1000;
 }
 
-void rfm_watchdog_reset(void)
+void rfm_watchdog_alive(void)
 {
 	_rfm_last_reception_ms = 0;
 	_rfm_retry_done = false;
@@ -41,8 +41,7 @@ void _rfm12_recover(void)
 {
 	UART_PUTS("RFM watchdog timeout! Recovering...\r\n");
 	
-	rfm12_reset();
-	_delay_ms(150);
+	rfm12_sw_reset();
 	
 	rfm12_init();
 	_delay_ms(500);

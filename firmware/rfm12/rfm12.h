@@ -76,7 +76,7 @@
 //see rfm12.c for more documentation
 void rfm12_init(void);
 void rfm12_tick(void);
-void rfm12_reset(void);
+void rfm12_sw_reset(void);
 
 //if receive mode is not disabled (default)
 #if !(RFM12_TRANSMIT_ONLY)

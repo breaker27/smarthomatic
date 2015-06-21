@@ -515,7 +515,14 @@
 /*
 	18. Software Reset (undocumented)
 	Some forums name 0xFF00 or 0xFE00 as the reset command.
-	By testing, I found out that only 0xFF00 works as reset command.
+	The RFM12B seems to use the Si4421 IC and 0xFE00 is listed there
+	as reset command, but it did not work.
+	https://www.silabs.com/Support%20Documents/TechnicalDocs/Si4421.pdf
+	0xFF00 seemed to work. It may also be that the modules have different
+	ICs.
+	As a result, we use both commands to call a reset.
+	If you have better information, let us know.
 */
 
-#define RFM12_CMD_RESET		0xFF00
+#define RFM12_CMD_RESET_FE		0xFE00
+#define RFM12_CMD_RESET_FF		0xFF00

@@ -1,6 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013 Uwe Freese
+* Copyright (c) 2013..2015 Uwe Freese
 *
 * Original authors of RFM 12 library:
 *    Peter Fuhrmann, Hans-Gert Dahmen, Soeren Heisrath
@@ -34,6 +34,7 @@
 /************************
  * standard includes
 */
+#include <util/delay.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <string.h>
@@ -694,9 +695,12 @@ void rfm12_init(void)
 /**
 * Call a SW reset in case the module hangs (does not receive any data).
 */
-void rfm12_reset(void)
+void rfm12_sw_reset(void)
 {
 	RFM12_INT_OFF();
-	rfm12_data(RFM12_CMD_RESET);
+	rfm12_data(RFM12_CMD_RESET_FE);
+	_delay_ms(200); // datasheet lists 150ms max.
+	rfm12_data(RFM12_CMD_RESET_FF);
+	_delay_ms(200);
 	RFM12_INT_ON();
 }

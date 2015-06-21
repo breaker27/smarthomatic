@@ -25,10 +25,10 @@
 void rfm_watchdog_init(uint16_t deviceid, uint16_t timeout_sec);
 
 /*
- * Reset watchdog. Call whenever data was received (as a sign that transceiver
- * is working properly)..
+ * Reset watchdog counter because RFM transceiver is alive.
+ * Call whenever data was received (as a sign that transceiver is working properly).
  */
-void rfm_watchdog_reset(void);
+void rfm_watchdog_alive(void);
 
 /*
  * Tell watchdog the (additional) time that passed till last call of this
