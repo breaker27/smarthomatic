@@ -294,14 +294,14 @@ sub getValue
   my ($self, $byteArrayRef, $index) = @_;
 
   my $value = SHC_util::getUInt($byteArrayRef, $self->{_offset} + $self->{_arrayElementBits} * $index, $self->{_bits});
-  return $self->{_value2name{$value}};
+  return $self->{_value2name}{$value};
 }
 
 sub setValue
 {
   my ($self, $byteArrayRef, $name, $index) = @_;
 
-  my $value = $name2value{$name};
+  my $value = $self->{_name2value}{$name};
   SHC_util::setUInt($byteArrayRef, $self->{_offset} + $self->{_arrayElementBits} * $index, $self->{_bits}, $value);
 }
 
