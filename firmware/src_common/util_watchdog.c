@@ -23,12 +23,40 @@
 uint32_t _rfm_last_reception_ms = 0;
 uint32_t _rfm_timeout_ms = 0; // 0 == watchdog disabled
 uint16_t _rfm_watchdog_deviceid;
+uint8_t _nres_port_nr = 0;
+uint8_t _nres_pin = 0;
 bool _rfm_retry_done = false;
 
-void rfm_watchdog_init(uint16_t deviceid, uint16_t timeout_sec)
+// Setup IO pin connected to RFM NRES pin from floating to high (== no reset).
+void _setup_nres(uint8_t port_nr, uint8_t pin)
+{
+	switch (port_nr)
+	{
+		case 0:
+			sbi(PORTB, pin);
+			sbi(DDRB, pin);
+			break;
+		case 1:
+			sbi(PORTC, pin);
+			sbi(DDRC, pin);
+			break;
+		case 2:
+			sbi(PORTD, pin);
+			sbi(DDRD, pin);
+			break;
+	}
+	
+	_delay_ms(200);
+}
+
+void rfm_watchdog_init(uint16_t deviceid, uint16_t timeout_10sec, uint8_t nres_port_nr, uint8_t nres_pin)
 {
 	_rfm_watchdog_deviceid = deviceid;
-	_rfm_timeout_ms = (uint32_t)timeout_sec * 1000;
+	_rfm_timeout_ms = (uint32_t)timeout_10sec * 10 * 1000;
+	_nres_port_nr = nres_port_nr;
+	_nres_pin = nres_pin;
+
+	_setup_nres(nres_port_nr, nres_pin);
 }
 
 void rfm_watchdog_alive(void)
@@ -37,11 +65,36 @@ void rfm_watchdog_alive(void)
 	_rfm_retry_done = false;
 }
 
+void _rfm12_pull_nres(volatile uint8_t *port, uint8_t pin)
+{
+	*port &= ~(1 << pin);
+	_delay_ms(50);
+	*port |= (1 << pin);
+	_delay_ms(200);
+}
+
+void _rfm12_hw_reset(void)
+{
+	switch (_nres_port_nr)
+	{
+		case 0:
+			_rfm12_pull_nres(&PORTB, _nres_pin);
+			break;
+		case 1:
+			_rfm12_pull_nres(&PORTC, _nres_pin);
+			break;
+		case 2:
+			_rfm12_pull_nres(&PORTD, _nres_pin);
+			break;
+	}
+}
+
 void _rfm12_recover(void)
 {
-	UART_PUTS("RFM watchdog timeout! Recovering...\r\n");
+	UART_PUTS("RFM watchdog timeout! Resetting RFM module...\r\n");
 	
 	rfm12_sw_reset();
+	_rfm12_hw_reset();
 	
 	rfm12_init();
 	_delay_ms(500);
@@ -55,7 +108,7 @@ void _rfm12_recover(void)
 	msg_generic_hardwareerror_set_errorcode(ERRORCODE_TRANSCEIVERWATCHDOGRESET);
 
 	rfm12_send_bufx();
-	
+
 	_delay_ms(500);
 }
 
@@ -72,6 +125,8 @@ void rfm_watchdog_count(uint16_t ms)
 		}
 		else if (_rfm_last_reception_ms > 2 * _rfm_timeout_ms)
 		{
+			UART_PUTS("RFM watchdog timeout 2! ERROR, halt!\r\n");
+
 			while (true) // endless error loop
 			{
 				led_blink(500, 500, 1);

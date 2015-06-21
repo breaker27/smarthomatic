@@ -21,8 +21,9 @@
 
 /*
  * Initialize watchdog with needed parameters. Call once after startup.
+ * Use nres_port_nr > 2 to not use the HW reset (NRES) pin.
  */
-void rfm_watchdog_init(uint16_t deviceid, uint16_t timeout_sec);
+void rfm_watchdog_init(uint16_t deviceid, uint16_t timeout_10sec, uint8_t nres_port_nr, uint8_t nres_pin);
 
 /*
  * Reset watchdog counter because RFM transceiver is alive.

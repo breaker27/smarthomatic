@@ -39,6 +39,11 @@
 #define RGBLED_PORT PORTD
 #define RGBLED_PINPORT PIND
 
+// RFM12 NRES (Reset) pin may be connected to PC3.
+// If not, only sw reset is used.
+#define RFM_RESET_PIN 3
+#define RFM_RESET_PORT_NR 1
+
 #define SEND_STATUS_EVERY_SEC 2400 // how often should a status be sent?
 #define SEND_VERSION_STATUS_CYCLE 35 // send version status x times less than switch status (~once per day)
 
@@ -796,7 +801,7 @@ int main(void)
 
 	PWM_init();
 	
-	rfm_watchdog_init(device_id, e2p_rgbdimmer_get_transceiverwatchdogtimeout());
+	rfm_watchdog_init(device_id, e2p_rgbdimmer_get_transceiverwatchdogtimeout(), RFM_RESET_PORT_NR, RFM_RESET_PIN);
 	rfm12_init();
 	
 	set_animation_fixed_color(0);

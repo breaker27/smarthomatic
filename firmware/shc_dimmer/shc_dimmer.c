@@ -53,6 +53,11 @@
 #define BUTTON_PORT PIND
 #define BUTTON_PIN 3
 
+// RFM12 NRES (Reset) pin may be connected to PC3.
+// If not, only sw reset is used.
+#define RFM_RESET_PIN 3
+#define RFM_RESET_PORT_NR 1
+
 // These are the PWM values for 0%..100% (AKA 1V..10V output),
 // calculated by measuring the output voltage and linear interpolation
 // of the measured voltages.
@@ -535,7 +540,7 @@ int main(void)
 	// init AES key
 	e2p_generic_get_aeskey(aes_key);
 	
-	rfm_watchdog_init(device_id, e2p_dimmer_get_transceiverwatchdogtimeout());	
+	rfm_watchdog_init(device_id, e2p_dimmer_get_transceiverwatchdogtimeout(), RFM_RESET_PORT_NR, RFM_RESET_PIN);
 	rfm12_init();
 
 	PWM_init();
