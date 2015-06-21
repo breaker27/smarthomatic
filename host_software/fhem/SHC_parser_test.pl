@@ -61,6 +61,10 @@ sub parser_test($)
 				{
 					print "Percentage: " . $parser->getField("Percentage") . "\n";
 				}
+				when('HardwareError')
+				{
+					print "ErrorCode: " . $parser->getField("ErrorCode") . "\n";
+				}
 				when('Version')
 				{
 					print "Major: " . $parser->getField("Major") . "\n";
@@ -133,6 +137,7 @@ parser_test("PKT:SID=23;PC=307;MT=8;MGID=1;MID=2;MD=8045800000000000000000000000
 parser_test("PKT:SID=71;PC=527;MT=8;MGID=10;MID=2;MD=a67161000000;");
 parser_test("PKT:SID=27;PC=35106;MT=8;MGID=1;MID=1;MD=800000000000;");
 parser_test("PKT:SID=21;PC=680;MT=8;MGID=10;MID=1;MD=de7b00000000;");
+parser_test("PKT:SID=42;PC=103;MT=8;MGID=0;MID=3;MD=00;");
 
 # Create message string for sending
 
