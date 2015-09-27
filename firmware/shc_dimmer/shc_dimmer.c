@@ -53,7 +53,7 @@
 #define BUTTON_PORT PIND
 #define BUTTON_PIN 3
 
-// RFM12 NRES (Reset) pin may be connected to PC3.
+// Power of RFM12B (since PCB rev 1.3) or RFM12 NRES (Reset) pin may be connected to PC3.
 // If not, only sw reset is used.
 #define RFM_RESET_PIN 3
 #define RFM_RESET_PORT_NR 1
