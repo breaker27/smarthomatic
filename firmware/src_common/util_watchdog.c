@@ -68,7 +68,7 @@ void rfm_watchdog_alive(void)
 void _rfm12_pull_nres(volatile uint8_t *port, uint8_t pin)
 {
 	*port &= ~(1 << pin);
-	_delay_ms(50);
+	_delay_ms(1000);
 	*port |= (1 << pin);
 	_delay_ms(200);
 }
