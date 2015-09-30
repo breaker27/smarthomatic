@@ -45,7 +45,7 @@
 #define BUTTON_PINPORT PIND
 #define BUTTON_PIN 3
 
-// RFM12 NRES (Reset) pin may be connected to PC3.
+// Power of RFM12B (since PCB rev 1.1) or RFM12 NRES (Reset) pin may be connected to PC3.
 // If not, only sw reset is used.
 #define RFM_RESET_PIN 3
 #define RFM_RESET_PORT_NR 1
@@ -550,7 +550,7 @@ int main(void)
 		switch_led(switch_state[0]);
 
 		rfm_watchdog_count(20);
-
+		
 		rfm12_tick();
 
 		button = !(BUTTON_PINPORT & (1 << BUTTON_PIN));
