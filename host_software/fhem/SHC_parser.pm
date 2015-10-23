@@ -152,6 +152,8 @@ sub init_datafield_positions_noarray($$$$$)
         my $name  = ($element->findnodes("Name"))[0]->textContent;
 
         $object->addValue($name, $value);
+		
+		# print "Enum value " . $value . " -> " . $name . "\n";
       }
 
       $offset += $bits;

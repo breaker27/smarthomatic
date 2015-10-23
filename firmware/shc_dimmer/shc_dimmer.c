@@ -53,6 +53,11 @@
 #define BUTTON_PORT PIND
 #define BUTTON_PIN 3
 
+// Power of RFM12B (since PCB rev 1.3) or RFM12 NRES (Reset) pin may be connected to PC3.
+// If not, only sw reset is used.
+#define RFM_RESET_PIN 3
+#define RFM_RESET_PORT_NR 1
+
 // These are the PWM values for 0%..100% (AKA 1V..10V output),
 // calculated by measuring the output voltage and linear interpolation
 // of the measured voltages.
@@ -525,7 +530,7 @@ int main(void)
 	uart_init();
 	UART_PUTS ("\r\n");
 	UART_PUTF4("smarthomatic Dimmer v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
-	UART_PUTS("(c) 2013..2014 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTS("(c) 2013..2015 Uwe Freese, www.smarthomatic.org\r\n");
 	osccal_info();
 	UART_PUTF ("DeviceID: %u\r\n", device_id);
 	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);
@@ -535,7 +540,9 @@ int main(void)
 	// init AES key
 	e2p_generic_get_aeskey(aes_key);
 	
+	rfm_watchdog_init(device_id, e2p_dimmer_get_transceiverwatchdogtimeout(), RFM_RESET_PORT_NR, RFM_RESET_PIN);
 	rfm12_init();
+
 	PWM_init();
 	io_init();
 	setPWMDutyCyclePercent(0);
@@ -592,6 +599,8 @@ int main(void)
 		if (rfm12_rx_status() == STATUS_COMPLETE)
 		{
 			uint8_t len = rfm12_rx_len();
+			
+			rfm_watchdog_alive();
 			
 			if ((len == 0) || (len % 16 != 0))
 			{
@@ -738,6 +747,8 @@ int main(void)
 		}
 
 		checkSwitchOff();
+
+		rfm_watchdog_count(ANIMATION_UPDATE_MS);
 
 		rfm12_tick();
 		send_status_timeout--;

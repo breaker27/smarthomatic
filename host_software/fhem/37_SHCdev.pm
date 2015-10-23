@@ -254,6 +254,9 @@ sub SHCdev_Parse($$)
 
           readingsBulkUpdate($rhash, "version", "$major.$minor.$patch-$vhash");
         }
+		when ('HardwareError') {
+          readingsBulkUpdate($rhash, "hardwareErrorCode", $parser->getField("ErrorCode"));
+        }
 		when ('BatteryStatus') {
           readingsBulkUpdate($rhash, "battery", $parser->getField("Percentage"));
         }

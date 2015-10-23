@@ -43,6 +43,7 @@
 typedef enum {
   MESSAGEID_GENERIC_VERSION = 1,
   MESSAGEID_GENERIC_DEVICEINFO = 2,
+  MESSAGEID_GENERIC_HARDWAREERROR = 3,
   MESSAGEID_GENERIC_BATTERYSTATUS = 5
 } GENERIC_MessageIDEnum;
 
@@ -304,6 +305,53 @@ static inline void msg_generic_deviceinfo_set_versionhash(uint32_t val)
 static inline uint32_t msg_generic_deviceinfo_get_versionhash(void)
 {
   return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 32, 32, 0, 4294967295, bufx);
+}
+
+
+// Message "generic_hardwareerror"
+// -------------------------------
+// MessageGroupID: 0
+// MessageID: 3
+// Possible MessageTypes: Status
+// Validity: test
+// Length w/o Header + HeaderExtension: 8 bits
+// Data fields: ErrorCode
+// Description: Reports detected problems with the hardware.
+
+// Function to initialize header for the MessageType "Status".
+static inline void pkg_header_init_generic_hardwareerror_status(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(8);
+  pkg_headerext_status_set_messagegroupid(0);
+  pkg_headerext_status_set_messageid(3);
+  __HEADEROFFSETBITS = 83;
+  __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 8;
+}
+
+// ErrorCode (EnumValue)
+// Description: Lists the type of error that occurred.
+
+#ifndef _ENUM_ErrorCode
+#define _ENUM_ErrorCode
+typedef enum {
+  ERRORCODE_TRANSCEIVERWATCHDOGRESET = 0
+} ErrorCodeEnum;
+#endif /* _ENUM_ErrorCode */
+
+// Set ErrorCode (EnumValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 8
+static inline void msg_generic_hardwareerror_set_errorcode(ErrorCodeEnum val)
+{
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 0, 8, val, bufx);
+}
+
+// Get ErrorCode (EnumValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 8
+static inline ErrorCodeEnum msg_generic_hardwareerror_get_errorcode(void)
+{
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 0, 8, 0, 255, bufx);
 }
 
 

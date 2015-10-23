@@ -65,8 +65,25 @@ static inline void e2p_dimmer_get_brightnesstranslationtable(void *dst)
   eeprom_read_block(dst, (uint8_t *)((536) / 8), 101);
 }
 
-// Reserved area with 6848 bits
-// Offset: 1344
+// TransceiverWatchdogTimeout (UIntValue)
+// Description: Reset RFM12B module if no data is received until timeout is reached. Use this function if your specific transceiver hangs sometimes. Value is in 10 * x seconds. Set 0 to disable (default).
+
+// Set TransceiverWatchdogTimeout (UIntValue)
+// Offset: 1344, length bits 8, min val 0, max val 255
+static inline void e2p_dimmer_set_transceiverwatchdogtimeout(uint8_t val)
+{
+  eeprom_write_UIntValue(1344, 8, val);
+}
+
+// Get TransceiverWatchdogTimeout (UIntValue)
+// Offset: 1344, length bits 8, min val 0, max val 255
+static inline uint8_t e2p_dimmer_get_transceiverwatchdogtimeout(void)
+{
+  return eeprom_read_UIntValue8(1344, 8, 0, 255);
+}
+
+// Reserved area with 6840 bits
+// Offset: 1352
 
 
 #endif /* _E2P_DIMMER_H */

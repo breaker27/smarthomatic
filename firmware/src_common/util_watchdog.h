@@ -1,7 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013 Stefan Baumann
-*               2015 Uwe Freese
+* Copyright (c) 2015 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -17,16 +16,25 @@
 * with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "../src_common/util.h"
+#ifndef _UTIL_WATCHDOG_H
+#define _UTIL_WATCHDOG_H
 
 /*
- * Starts humidity measurement and returns the result in
- * 1/10000 (divide by 100 to get a percentage relative humidity).
+ * Initialize watchdog with needed parameters. Call once after startup.
+ * Use nres_port_nr > 2 to not use the HW reset (NRES) pin.
  */
-uint16_t sht2x_htu21d_meas_hum(void);
+void rfm_watchdog_init(uint16_t deviceid, uint16_t timeout_10sec, uint8_t nres_port_nr, uint8_t nres_pin);
 
 /*
- * Starts temperature measurement and returns the result in
- * 1/100 degree celsius.
+ * Reset watchdog counter because RFM transceiver is alive.
+ * Call whenever data was received (as a sign that transceiver is working properly).
  */
-int16_t sht2x_htu21d_meas_temp(void);
+void rfm_watchdog_alive(void);
+
+/*
+ * Tell watchdog the (additional) time that passed till last call of this
+ * function. The watchdog will automatically start a retry after timeout.
+ */
+void rfm_watchdog_count(uint16_t ms);
+
+#endif /* _UTIL_WATCHDOG_H */

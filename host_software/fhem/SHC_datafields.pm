@@ -262,8 +262,8 @@ sub setValue
 
 package EnumValue;
 
-my %name2value = ();
-my %value2name = ();
+# my %name2value = ();
+# my %value2name = ();
 
 sub new
 {
@@ -273,7 +273,9 @@ sub new
     _offset           => shift,
     _bits             => shift,
     _length           => shift,
-    _arrayElementBits => shift
+    _arrayElementBits => shift,
+    _name2value       => {},
+    _value2name       => {}
   };
   bless $self, $class;
   return $self;
@@ -283,8 +285,8 @@ sub addValue
 {
   my ($self, $name, $value) = @_;
 
-  $name2value{$name}  = $value;
-  $value2name{$value} = $name;
+  $self->{_name2value}{$name}  = $value;
+  $self->{_value2name}{$value} = $name;
 }
 
 sub getValue
@@ -292,14 +294,14 @@ sub getValue
   my ($self, $byteArrayRef, $index) = @_;
 
   my $value = SHC_util::getUInt($byteArrayRef, $self->{_offset} + $self->{_arrayElementBits} * $index, $self->{_bits});
-  return $value2name{$value};
+  return $self->{_value2name}{$value};
 }
 
 sub setValue
 {
   my ($self, $byteArrayRef, $name, $index) = @_;
 
-  my $value = $name2value{$name};
+  my $value = $self->{_name2value}{$name};
   SHC_util::setUInt($byteArrayRef, $self->{_offset} + $self->{_arrayElementBits} * $index, $self->{_bits}, $value);
 }
 
