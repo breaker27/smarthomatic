@@ -1,6 +1,7 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
 * Copyright (c) 2015 Uwe Freese
+*               2015 Andreas Richter
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the

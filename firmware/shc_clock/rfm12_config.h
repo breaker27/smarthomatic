@@ -1,6 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013 Uwe Freese
+* Copyright (c) 2015 Uwe Freese
 *
 * Original authors of RFM 12 library:
 *    Peter Fuhrmann, Hans-Gert Dahmen, Soeren Heisrath

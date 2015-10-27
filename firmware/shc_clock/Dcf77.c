@@ -1,9 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013 Uwe Freese
-*
-* Original authors of DCF77 library:
-*    Andreas Richter
+* Copyright (c) 2015 Andreas Richter (original author of DCF77 library)
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
