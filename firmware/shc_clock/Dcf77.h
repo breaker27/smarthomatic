@@ -63,11 +63,11 @@ typedef enum _DCF_RCV_STATE {
 } DCF_RCV_STATE;
 
 extern void dcf77_timer100(bool pin);
-extern bool dcf77_is_summer_time();
+extern bool dcf77_is_summer_time(void);
 extern bool dcf77_get_current(DateTime* dt);
-extern uint8_t dcf77_get_seconds();
-extern bool dcf77_get_blink_flag();
-extern int8_t dcf77_get_last_error();
+extern uint8_t dcf77_get_seconds(void);
+extern bool dcf77_get_blink_flag(void);
+extern int8_t dcf77_get_last_error(void);
 
-extern DCF_RCV_STATE dcf77_get_rcv_state();
+extern DCF_RCV_STATE dcf77_get_rcv_state(void);
 #endif /* DCF77_H_ */

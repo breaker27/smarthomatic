@@ -24,7 +24,7 @@
 #include <util/parity.h>
 
 #include "Dcf77.h"
-#include "util_hw.h"
+#include "../src_common/util_hw.h"
 
 enum DCF_INFO_BITS	{
 	DCF_BIT_CALL =		0x01,		// 15 Rufbit für Alarmierung der PTB-Mitarbeiter
@@ -379,22 +379,22 @@ bool dcf77_get_current(DateTime* dt)
 	return false;
 }
 
-bool dcf77_get_blink_flag()
+bool dcf77_get_blink_flag(void)
 { 
 	return (State & DCF_ST_BLINK50) != 0; 
 }
 	
-uint8_t dcf77_get_seconds()
+uint8_t dcf77_get_seconds(void)
 {
 	return Seconds;	
 }
 
-int8_t dcf77_get_last_error()		
+int8_t dcf77_get_last_error(void)		
 { 
 	return LastError; 
 }
 
-DCF_RCV_STATE dcf77_get_rcv_state()
+DCF_RCV_STATE dcf77_get_rcv_state(void)
 {
 	uint8_t st = State;
 	if (st & DCF_ST_LASTOK) return DCF_RCV_OK;
@@ -402,7 +402,7 @@ DCF_RCV_STATE dcf77_get_rcv_state()
 	return DCF_RCV_NO_SIGNAL;
 }
 
-bool dcf77_is_summer_time()
+bool dcf77_is_summer_time(void)
 {
 	uint8_t st = State;
 	return (st & DCF_ST_SUMMERTIME) != 0;

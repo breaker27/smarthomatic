@@ -226,7 +226,7 @@ void process_packet(uint8_t len)
 #error overflow, increase prescaler
 #endif
 
-inline void timer1_init()
+inline void timer1_init(void)
 {
 	OCR1A = 0;
 	OCR1B = 0;
