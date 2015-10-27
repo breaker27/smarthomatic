@@ -34,6 +34,8 @@
 #include "../src_common/util.h"
 #include "version.h"
 
+#include "Dcf77.h"
+
 #define SEND_STATUS_EVERY_SEC 1800 // how often should a status be sent?
 #define SEND_VERSION_STATUS_CYCLE 50 // send version status x times less than switch status (~once per day)
 
@@ -213,11 +215,48 @@ void process_packet(uint8_t len)
 	process_request(messagetype, messagegroupid, messageid);*/
 }
 
-// Called every 10ms.
-ISR (TIMER0_COMPA_vect)
+#define USE_TIMER1
+#ifdef USE_TIMER1
+#define TIMER1_FREQ 100
+#define T1_PRESCALE 8
+#define T1_OVL(FREQ) ((F_CPU/T1_PRESCALE/FREQ)-1)
+#define T1_MAX T1_OVL(TIMER1_FREQ)
+
+#if ((T1_MAX) > 0xffff)
+#error overflow, increase prescaler
+#endif
+
+inline void timer1_init()
 {
-	UART_PUTS(".");
+	OCR1A = 0;
+	OCR1B = 0;
+	ICR1 = T1_MAX-1;
+	TCCR1A =	(0<<WGM11)|(0<<WGM10);
+	
+	uint8_t tccr1b = (1<<WGM12)|(1<<WGM13);	// Mode12
+	
+#if (T1_PRESCALE == 1)
+	tccr1b|= (1<<CS10);
+#elif (T1_PRESCALE == 8)
+	tccr1b|= (1<<CS11);
+#elif (T1_PRESCALE == 64)
+	tccr1b|= (1<<CS10)|(1<<CS11);
+#elif (T1_PRESCALE == 256)
+	tccr1b|= (1<<CS12);
+#elif (T1_PRESCALE == 1024)
+	tccr1b|= (1<<CS10)|(1<<CS12);
+#else
+ #error unknown prescaler
+#endif
+	
+	TCCR1B = tccr1b;
+	TIMSK1 = (1<<ICIE1);
 }
+
+
+// Called every 10ms.
+ISR (TIMER1_CAPT_vect)
+#else
 
 // Timer0 is used to detect length of DFC pulses.
 // 1 clock pulse = 1 ms
@@ -238,13 +277,24 @@ void timer0_init(void)
 	TIMSK0 = (1 << OCIE0A);
 }
 
+// Called every 10ms.
+ISR (TIMER0_COMPA_vect)
+#endif
+{
+	dcf77_timer100((DCF_PINREG & (1 << DCF_PIN)) == 0);
+}
+
 int main(void)
 {
 	uint8_t loop = 0;
-	uint8_t i = 0;
-	uint8_t j = 0;
+	
 	uint8_t state = 0;
-	uint8_t last_state = 0;
+	uint8_t last_state = -1;
+	
+	int8_t error = 0;
+	int8_t last_error = 0;
+	
+	DateTime now = {0};
 
 	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
 	_delay_ms(1000);
@@ -284,38 +334,38 @@ int main(void)
 	// set pullup for DCF receiver
 	sbi(DCF_PORTREG, DCF_PIN);
 
+#ifdef USE_TIMER1
+	timer1_init();
+#else
 	timer0_init();
-	
-	while (1)
-	{
-		_delay_ms(1000);
-	}
+#endif
 
 	while (1)
 	{
-		state = (DCF_PINREG >> DCF_PIN) & 1;
-		
-		switch_led(state);
-		
-		if (state)
+		state = dcf77_get_rcv_state();
+		if (state != last_state)
 		{
-			j++;
+			last_state = state;
+			static const char* StStr[] = {"NO_SIGNAL", "RCV_PROGRESS", "RCV_OK"};
+			UART_PUTF("DCF State: %s\r\n", StStr[state]);
+		}
+		error = dcf77_get_last_error();
+		if (error != last_error)
+		{
+			last_error = error;
+			if (error < 0)
+			{
+				UART_PUTF("DCF Error: %d\r\n", error);
+			}
 		}
 		
-		if ((last_state == 1) && (state == 0))
+		if (dcf77_get_current(&now))
 		{
-			j = 0;
-		}
-		else if ((last_state == 0) && (state == 1))
-		{
-			i++;
-			UART_PUTF2("%03d %d ms\r\n", i, j);
+			static const char* WdStr[] = {"Mo","Di","Mi","Do","Fr","Sa","So"};
+			UART_PUTF4("Date: %u.%u.%u %s\r\n", now.Day, now.Month, now.Year, WdStr[now.WDay]);
+			UART_PUTF3("Time: %u:%u:%u\r\n", now.Hour, now.Minute, dcf77_get_seconds());
 		}
 		
-		last_state = state;
-		
-	
-		_delay_ms(1);		
 	}
 
 	while (42)
