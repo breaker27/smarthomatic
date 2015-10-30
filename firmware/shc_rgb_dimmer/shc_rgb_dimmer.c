@@ -35,6 +35,8 @@
 #include "../src_common/util.h"
 #include "version.h"
 
+#include "../src_common/util_watchdog_init.h"
+
 #define RGBLED_DDR DDRD
 #define RGBLED_PORT PORTD
 #define RGBLED_PINPORT PIND
@@ -881,26 +883,29 @@ int main(void)
 			loop = 0;
 
 			// send status from time to time
-			send_status_timeout--;
-		
-			if (send_status_timeout == 8)
+			if (!send_startup_reason(&mcusr_mirror))
 			{
-				send_brightness_status();
-				led_blink(200, 0, 1);
-			}
-			else if (send_status_timeout == 0)
-			{
-				send_status_timeout = SEND_STATUS_EVERY_SEC;
-				send_status();
-				led_blink(200, 0, 1);
-				
-				version_status_cycle++;
-			}
-			else if (version_status_cycle >= SEND_VERSION_STATUS_CYCLE)
-			{
-				version_status_cycle = 0;
-				send_deviceinfo_status();
-				led_blink(200, 0, 1);
+				send_status_timeout--;
+			
+				if (send_status_timeout == 8)
+				{
+					send_brightness_status();
+					led_blink(200, 0, 1);
+				}
+				else if (send_status_timeout == 0)
+				{
+					send_status_timeout = SEND_STATUS_EVERY_SEC;
+					send_status();
+					led_blink(200, 0, 1);
+					
+					version_status_cycle++;
+				}
+				else if (version_status_cycle >= SEND_VERSION_STATUS_CYCLE)
+				{
+					version_status_cycle = 0;
+					send_deviceinfo_status();
+					led_blink(200, 0, 1);
+				}
 			}
 		}
 		else

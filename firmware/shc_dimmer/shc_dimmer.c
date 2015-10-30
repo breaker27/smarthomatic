@@ -35,6 +35,8 @@
 #include "../src_common/util.h"
 #include "version.h"
 
+#include "../src_common/util_watchdog_init.h"
+
 //#define UART_DEBUG_CALCULATIONS
 
 #define SEND_STATUS_EVERY_SEC 1800 // how often should a status be sent
@@ -733,17 +735,20 @@ int main(void)
 		}			
 		
 		// send status from time to time
-		if (send_status_timeout == 0)
+		if (!send_startup_reason(&mcusr_mirror))
 		{
-			send_status_timeout = SEND_STATUS_EVERY_SEC * (1000 / ANIMATION_UPDATE_MS);
-			send_dimmer_status();
-			led_blink(200, 0, 1);
-		}
-		else if (version_status_cycle >= SEND_VERSION_STATUS_CYCLE)
-		{
-			version_status_cycle = 0;
-			send_deviceinfo_status();
-			led_blink(200, 0, 1);
+			if (send_status_timeout == 0)
+			{
+				send_status_timeout = SEND_STATUS_EVERY_SEC * (1000 / ANIMATION_UPDATE_MS);
+				send_dimmer_status();
+				led_blink(200, 0, 1);
+			}
+			else if (version_status_cycle >= SEND_VERSION_STATUS_CYCLE)
+			{
+				version_status_cycle = 0;
+				send_deviceinfo_status();
+				led_blink(200, 0, 1);
+			}
 		}
 
 		checkSwitchOff();
