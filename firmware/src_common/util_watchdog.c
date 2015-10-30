@@ -17,6 +17,7 @@
 */
 
 #include "util_watchdog.h"
+#include <avr/wdt.h>
 
 #include "../src_common/msggrp_generic.h"
 
@@ -68,9 +69,9 @@ void rfm_watchdog_alive(void)
 void _rfm12_pull_nres(volatile uint8_t *port, uint8_t pin)
 {
 	*port &= ~(1 << pin);
-	_delay_ms(1000);
+	_delay_ms(500);
 	*port |= (1 << pin);
-	_delay_ms(200);
+	_delay_ms(500);
 }
 
 void _rfm12_hw_reset(void)
@@ -89,6 +90,16 @@ void _rfm12_hw_reset(void)
 	}
 }
 
+// Initiate a reset of the ATMega by enabling the watchdog and waiting infinitely
+// by purpose.
+void _atmega_watchdog_reset(void)
+{
+    wdt_enable(WDTO_15MS);
+
+	while (1)
+	{ }
+}
+
 void _rfm12_recover(void)
 {
 	UART_PUTS("RFM watchdog timeout! Resetting RFM module...\r\n");
@@ -96,6 +107,10 @@ void _rfm12_recover(void)
 	rfm12_sw_reset();
 	_rfm12_hw_reset();
 	
+	_atmega_watchdog_reset();
+	
+	/* UNUSED CODE. May be used again later as an alternative to reset RFM12 without resetting ATMega.
+
 	rfm12_init();
 	_delay_ms(500);
 	
@@ -109,7 +124,7 @@ void _rfm12_recover(void)
 
 	rfm12_send_bufx();
 
-	_delay_ms(500);
+	_delay_ms(500); */
 }
 
 void rfm_watchdog_count(uint16_t ms)
@@ -132,5 +147,50 @@ void rfm_watchdog_count(uint16_t ms)
 				led_blink(500, 500, 1);
 			}
 		}
+	}
+}
+
+bool send_startup_reason(uint8_t *mcusr_mirror)
+{
+	if (*mcusr_mirror == 0) // register was already cleared after startup by this function
+	{
+		return false;
+	}
+	else if ((*mcusr_mirror & (~(1 << PORF))) == 0) // no exceptional startup reason
+	{
+		*mcusr_mirror = 0;
+		return false;
+	}
+	else
+	{
+		inc_packetcounter();
+
+		// Set packet content
+		pkg_header_init_generic_hardwareerror_status();
+		pkg_header_set_senderid(_rfm_watchdog_deviceid);
+		pkg_header_set_packetcounter(packetcounter);
+		
+		if (*mcusr_mirror & (1 << EXTRF))
+		{
+			msg_generic_hardwareerror_set_errorcode(ERRORCODE_EXTERNALRESET);
+			rfm12_send_bufx();
+		}
+		else if (*mcusr_mirror & (1 << BORF))
+		{
+			msg_generic_hardwareerror_set_errorcode(ERRORCODE_BROWNOUTRESET);
+			rfm12_send_bufx();
+		}
+		else if (*mcusr_mirror & (1 << WDRF))
+		{
+			// Assume WD reset was on purpose after RFM12 fault, since normal ATMega WD is not used.
+			msg_generic_hardwareerror_set_errorcode(ERRORCODE_TRANSCEIVERWATCHDOGRESET);
+			rfm12_send_bufx();
+		}
+		
+		// If none of the cases matches (which should not be possible), the message is not sent.
+		// (Don't move "rfm12_send_bufx();" here to be sure not to send garbage!)
+		
+		*mcusr_mirror = 0;
+		return true;
 	}
 }

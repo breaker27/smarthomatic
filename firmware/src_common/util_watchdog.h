@@ -37,4 +37,10 @@ void rfm_watchdog_alive(void);
  */
 void rfm_watchdog_count(uint16_t ms);
 
+/*
+ * If startup was by error (e.g. watchdog), send an error message once and return true.
+ * Otherwise, do nothing and return false;
+ */
+bool send_startup_reason(uint8_t *mcusr_mirror);
+
 #endif /* _UTIL_WATCHDOG_H */

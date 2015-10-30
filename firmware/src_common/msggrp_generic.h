@@ -336,7 +336,10 @@ static inline void pkg_header_init_generic_hardwareerror_status(void)
 #ifndef _ENUM_ErrorCode
 #define _ENUM_ErrorCode
 typedef enum {
-  ERRORCODE_TRANSCEIVERWATCHDOGRESET = 0
+  ERRORCODE_EXTERNALRESET = 0,
+  ERRORCODE_BROWNOUTRESET = 1,
+  ERRORCODE_WATCHDOGRESET = 2,
+  ERRORCODE_TRANSCEIVERWATCHDOGRESET = 3
 } ErrorCodeEnum;
 #endif /* _ENUM_ErrorCode */
 

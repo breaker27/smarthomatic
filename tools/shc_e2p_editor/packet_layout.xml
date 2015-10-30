@@ -302,6 +302,18 @@
 				<Bits>8</Bits>
 				<Element>
 					<Value>0</Value>
+					<Name>ExternalReset</Name>
+				</Element>
+				<Element>
+					<Value>1</Value>
+					<Name>BrownOutReset</Name>
+				</Element>
+				<Element>
+					<Value>2</Value>
+					<Name>WatchdogReset</Name>
+				</Element>
+				<Element>
+					<Value>3</Value>
 					<Name>TransceiverWatchdogReset</Name>
 				</Element>
 			</EnumValue>

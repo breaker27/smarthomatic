@@ -20,6 +20,7 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 #include <string.h>
+#include <avr/wdt.h>
 
 #include "rfm12.h"
 #include "../src_common/uart.h"
@@ -52,6 +53,8 @@
 
 #define SEND_STATUS_EVERY_SEC 1800 // how often should a status be sent?
 #define SEND_VERSION_STATUS_CYCLE 50 // send version status x times less than switch status (~once per day)
+
+#include "../src_common/util_watchdog_init.h"
 
 uint16_t device_id;
 uint32_t station_packetcounter;
@@ -525,21 +528,24 @@ int main(void)
 			}
 			
 			// send status from time to time
-			send_status_timeout--;
+			if (!send_startup_reason(&mcusr_mirror))
+			{
+				send_status_timeout--;
 		
-			if (send_status_timeout == 0)
-			{
-				send_status_timeout = SEND_STATUS_EVERY_SEC;
-				send_gpio_digitalporttimeout_status();
-				led_blink(200, 0, 1);
-				
-				version_status_cycle++;
-			}
-			else if (version_status_cycle >= SEND_VERSION_STATUS_CYCLE)
-			{
-				version_status_cycle = 0;
-				send_deviceinfo_status();
-				led_blink(200, 0, 1);
+				if (send_status_timeout == 0)
+				{
+					send_status_timeout = SEND_STATUS_EVERY_SEC;
+					send_gpio_digitalporttimeout_status();
+					led_blink(200, 0, 1);
+					
+					version_status_cycle++;
+				}
+				else if (version_status_cycle >= SEND_VERSION_STATUS_CYCLE)
+				{
+					version_status_cycle = 0;
+					send_deviceinfo_status();
+					led_blink(200, 0, 1);
+				}
 			}
 		}
 		else
