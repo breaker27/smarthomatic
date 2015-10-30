@@ -20,7 +20,6 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 #include <string.h>
-#include <avr/wdt.h>
 
 #include "rfm12.h"
 #include "../src_common/uart.h"
