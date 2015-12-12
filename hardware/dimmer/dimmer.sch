@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="6.4">
+<eagle version="7.3.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -14312,7 +14312,6 @@ naming: grid - package width</description>
 <part name="R1" library="rcl" deviceset="R-EU_" device="0207/7" value="680R"/>
 <part name="GND2" library="supply1" deviceset="GND" device=""/>
 <part name="P+2" library="supply1" deviceset="VCC" device=""/>
-<part name="P+3" library="supply1" deviceset="VCC" device=""/>
 <part name="R4" library="rcl" deviceset="R-EU_" device="0207/7" value="1M"/>
 <part name="JP5" library="pinhead" deviceset="PINHD-1X1" device="" value="ANT"/>
 <part name="TR1" library="trafo" deviceset="EI30-1" device="" value="15V"/>
@@ -14362,8 +14361,8 @@ naming: grid - package width</description>
 <plain>
 <frame x1="-83.82" y1="-101.6" x2="96.52" y2="93.98" columns="8" rows="5" layer="97"/>
 <text x="12.7" y="-76.2" size="3.81" layer="97">smarthomatic Dimmer</text>
-<text x="63.5" y="-81.28" size="2.1844" layer="97">Date: 02.01.2015</text>
-<text x="12.7" y="-81.28" size="2.1844" layer="97">Rev 1.2</text>
+<text x="63.5" y="-81.28" size="2.1844" layer="97">Date: 30.10.2015</text>
+<text x="12.7" y="-81.28" size="2.1844" layer="97">Rev 1.3</text>
 <text x="12.7" y="-86.36" size="2.1844" layer="97">Copyright (c) Uwe Freese, www.smarthomatic.org</text>
 </plain>
 <instances>
@@ -14375,9 +14374,8 @@ naming: grid - package width</description>
 <instance part="GND1" gate="1" x="-66.04" y="-10.16"/>
 <instance part="R1" gate="G$1" x="50.8" y="10.16"/>
 <instance part="GND2" gate="1" x="81.28" y="-12.7"/>
-<instance part="P+2" gate="VCC" x="53.34" y="22.86" rot="R180"/>
-<instance part="P+3" gate="VCC" x="30.48" y="50.8" rot="R180"/>
-<instance part="R4" gate="G$1" x="63.5" y="22.86" rot="R270"/>
+<instance part="P+2" gate="VCC" x="76.2" y="33.02"/>
+<instance part="R4" gate="G$1" x="73.66" y="22.86" rot="R270"/>
 <instance part="JP5" gate="G$1" x="50.8" y="81.28"/>
 <instance part="TR1" gate="1" x="-53.34" y="-55.88"/>
 <instance part="D1" gate="G$1" x="-35.56" y="-50.8"/>
@@ -14519,20 +14517,9 @@ naming: grid - package width</description>
 <net name="VCC" class="0">
 <segment>
 <pinref part="P+2" gate="VCC" pin="VCC"/>
-<wire x1="63.5" y1="27.94" x2="53.34" y2="27.94" width="0.1524" layer="91"/>
-<wire x1="53.34" y1="27.94" x2="53.34" y2="25.4" width="0.1524" layer="91"/>
-<junction x="63.5" y="27.94"/>
-<pinref part="IC2" gate="G$1" pin="FSK/DATA/NFFS"/>
-<wire x1="63.5" y1="33.02" x2="63.5" y2="27.94" width="0.1524" layer="91"/>
+<wire x1="73.66" y1="27.94" x2="76.2" y2="27.94" width="0.1524" layer="91"/>
+<wire x1="76.2" y1="27.94" x2="76.2" y2="30.48" width="0.1524" layer="91"/>
 <pinref part="R4" gate="G$1" pin="1"/>
-</segment>
-<segment>
-<pinref part="IC2" gate="G$1" pin="VDD"/>
-<pinref part="P+3" gate="VCC" pin="VCC"/>
-<wire x1="30.48" y1="58.42" x2="30.48" y2="53.34" width="0.1524" layer="91"/>
-<pinref part="C6" gate="G$1" pin="1"/>
-<wire x1="20.32" y1="58.42" x2="30.48" y2="58.42" width="0.1524" layer="91"/>
-<junction x="30.48" y="58.42"/>
 </segment>
 <segment>
 <pinref part="P+4" gate="VCC" pin="VCC"/>
@@ -14632,7 +14619,7 @@ naming: grid - package width</description>
 <net name="N$13" class="0">
 <segment>
 <pinref part="IC2" gate="G$1" pin="NSEL"/>
-<wire x1="63.5" y1="17.78" x2="68.58" y2="17.78" width="0.1524" layer="91"/>
+<wire x1="73.66" y1="17.78" x2="68.58" y2="17.78" width="0.1524" layer="91"/>
 <pinref part="R4" gate="G$1" pin="2"/>
 <pinref part="IC1" gate="1" pin="PB0(ICP1/CLKO/PCINT0)"/>
 <wire x1="68.58" y1="17.78" x2="68.58" y2="33.02" width="0.1524" layer="91"/>
@@ -14886,11 +14873,29 @@ naming: grid - package width</description>
 <wire x1="43.18" y1="-15.24" x2="53.34" y2="-15.24" width="0.1524" layer="91"/>
 </segment>
 </net>
+<net name="N$28" class="0">
+<segment>
+<pinref part="IC2" gate="G$1" pin="VDD"/>
+<pinref part="C6" gate="G$1" pin="1"/>
+<wire x1="20.32" y1="58.42" x2="27.94" y2="58.42" width="0.1524" layer="91"/>
+<pinref part="IC1" gate="1" pin="PC3(ADC3/PCINT11)"/>
+<wire x1="27.94" y1="58.42" x2="30.48" y2="58.42" width="0.1524" layer="91"/>
+<wire x1="-2.54" y1="43.18" x2="2.54" y2="43.18" width="0.1524" layer="91"/>
+<wire x1="2.54" y1="43.18" x2="2.54" y2="58.42" width="0.1524" layer="91"/>
+<wire x1="2.54" y1="58.42" x2="20.32" y2="58.42" width="0.1524" layer="91"/>
+<junction x="20.32" y="58.42"/>
+<wire x1="27.94" y1="58.42" x2="27.94" y2="27.94" width="0.1524" layer="91"/>
+<junction x="27.94" y="58.42"/>
+<pinref part="IC2" gate="G$1" pin="FSK/DATA/NFFS"/>
+<wire x1="27.94" y1="27.94" x2="63.5" y2="27.94" width="0.1524" layer="91"/>
+<wire x1="63.5" y1="27.94" x2="63.5" y2="33.02" width="0.1524" layer="91"/>
+</segment>
+</net>
 </nets>
 </sheet>
 </sheets>
 <errors>
-<approved hash="104,1,30.48,58.42,IC2,VDD,VCC,,,"/>
+<approved hash="104,1,30.48,58.42,IC2,VDD,N$28,,,"/>
 <approved hash="104,1,-63.5,0,IC1,AGND,GND,,,"/>
 </errors>
 </schematic>

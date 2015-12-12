@@ -203,8 +203,19 @@ void process_cmd(void)
 	{
 		uint8_t len = strlen(cmdbuf);
 		
-		uint32_t calculated_crc = crc32((uint8_t *)cmdbuf, len - 8);
+		// Warning! The following two lines were originally in the reverse order.
+		// This obviously should not change anything.
+		// But the "avr-gcc (GCC) 4.7.2" on my linux machine produced a firmware
+		// which resulted in a wrong "calculated_crc" (whereas the
+		// "avr-gcc (WinAVR 20100110) 4.3.3" on my Windows machine didn't).
+		// I could recalculate the calculated_crc a 2nd time, call a UART_PUTS
+		// or some other commands, which all produced a firmware which did not
+		// have this issue. It's unknown why the GCC 4.7.2 produced this
+		// wrong output.
+		// Current workaround: I reversed the following two lines.
+
 		uint32_t given_crc = hex_to_uint32((uint8_t *)cmdbuf, len - 8);
+		uint32_t calculated_crc = crc32((uint8_t *)cmdbuf, len - 8);
 		
 		if (calculated_crc != given_crc)
 		{

@@ -1,7 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013 Stefan Baumann
-*               2015 Uwe Freese
+* Copyright (c) 2015 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -17,16 +16,14 @@
 * with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "../src_common/util.h"
+#include <avr/io.h> 
 
-/*
- * Starts humidity measurement and returns the result in
- * 1/10000 (divide by 100 to get a percentage relative humidity).
- */
-uint16_t sht2x_htu21d_meas_hum(void);
-
-/*
- * Starts temperature measurement and returns the result in
- * 1/100 degree celsius.
- */
-int16_t sht2x_htu21d_meas_temp(void);
+FUSES = 
+{ 
+	// value 0xE2 - disable clock divider for 8 MHz clock, the other fuses are default for ATMega328
+	.low = (FUSE_CKSEL0 & FUSE_CKSEL2 & FUSE_CKSEL3 & FUSE_SUT0),
+	// value 0xD1 - EESAVE is 0, others are default
+	.high = (FUSE_SPIEN & FUSE_EESAVE & FUSE_BOOTSZ1 & FUSE_BOOTSZ0),
+	// value 0xFD - set BOD to 2.7V to prevent accidentially FLASH garbage
+	.extended = FUSE_BODLEVEL1,
+};
