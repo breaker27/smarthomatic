@@ -1,6 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013 Uwe Freese
+* Copyright (c) 2013..2015 Uwe Freese
 *
 * Original authors of RFM 12 library:
 *    Peter Fuhrmann, Hans-Gert Dahmen, Soeren Heisrath
@@ -511,3 +511,18 @@
 #define RFM12_STATUS_DQD 	0x0080
 #define RFM12_STATUS_CRL 	0x0040
 #define RFM12_STATUS_ATGL 	0x0020
+
+/*
+	18. Software Reset (undocumented)
+	Some forums name 0xFF00 or 0xFE00 as the reset command.
+	The RFM12B seems to use the Si4421 IC and 0xFE00 is listed there
+	as reset command, but it did not work.
+	https://www.silabs.com/Support%20Documents/TechnicalDocs/Si4421.pdf
+	0xFF00 seemed to work. It may also be that the modules have different
+	ICs.
+	As a result, we use both commands to call a reset.
+	If you have better information, let us know.
+*/
+
+#define RFM12_CMD_RESET_FE		0xFE00
+#define RFM12_CMD_RESET_FF		0xFF00

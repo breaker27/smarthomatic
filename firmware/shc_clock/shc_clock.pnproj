@@ -1,0 +1,1 @@
+<Project name="shc_clock"><File path="Makefile"></File><File path="shc_clock.c"></File><File path="rfm12_config.h"></File><File path="fuses.c"></File><File path="DateTime.c"></File><File path="DateTime.h"></File><File path="Dcf77.c"></File><File path="Dcf77.h"></File></Project>

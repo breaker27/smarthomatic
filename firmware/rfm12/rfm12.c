@@ -1,6 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013 Uwe Freese
+* Copyright (c) 2013..2015 Uwe Freese
 *
 * Original authors of RFM 12 library:
 *    Peter Fuhrmann, Hans-Gert Dahmen, Soeren Heisrath
@@ -34,6 +34,7 @@
 /************************
  * standard includes
 */
+#include <util/delay.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <string.h>
@@ -591,6 +592,8 @@ rfm12_tx(uint8_t len, uint8_t type, uint8_t *data)
 */
 void rfm12_init(void)
 {
+	RFM12_INT_OFF(); // in case rfm12_init is called twice, make sure rfm module does not interfere
+
 	//initialize spi
 	SS_RELEASE();
 	DDR_SS |= (1<<BIT_SS);	
@@ -687,4 +690,17 @@ void rfm12_init(void)
 	
 	//activate the interrupt
 	RFM12_INT_ON();	
+}
+
+/**
+* Call a SW reset in case the module hangs (does not receive any data).
+*/
+void rfm12_sw_reset(void)
+{
+	RFM12_INT_OFF();
+	rfm12_data(RFM12_CMD_RESET_FE);
+	_delay_ms(200); // datasheet lists 150ms max.
+	rfm12_data(RFM12_CMD_RESET_FF);
+	_delay_ms(200);
+	RFM12_INT_ON();
 }

@@ -1,7 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013 Stefan Baumann
-*               2015 Uwe Freese
+* Copyright (c) 2015 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -17,16 +16,20 @@
 * with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "../src_common/util.h"
+// Include this file only ONCE in the main c file.
 
-/*
- * Starts humidity measurement and returns the result in
- * 1/10000 (divide by 100 to get a percentage relative humidity).
- */
-uint16_t sht2x_htu21d_meas_hum(void);
+#include <avr/wdt.h>
 
-/*
- * Starts temperature measurement and returns the result in
- * 1/100 degree celsius.
- */
-int16_t sht2x_htu21d_meas_temp(void);
+uint8_t mcusr_mirror __attribute__ ((section (".noinit")));
+
+// Function Pototype
+void wdt_init(void) __attribute__((naked)) __attribute__((section(".init3")));
+
+// Function Implementation
+void wdt_init(void)
+{
+	mcusr_mirror = MCUSR;
+	MCUSR = 0;
+	wdt_disable();
+	return;
+}

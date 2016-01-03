@@ -35,9 +35,16 @@
 #include "../src_common/util.h"
 #include "version.h"
 
+#include "../src_common/util_watchdog_init.h"
+
 #define RGBLED_DDR DDRD
 #define RGBLED_PORT PORTD
 #define RGBLED_PINPORT PIND
+
+// RFM12 NRES (Reset) pin may be connected to PC3.
+// If not, only sw reset is used.
+#define RFM_RESET_PIN 3
+#define RFM_RESET_PORT_NR 1
 
 #define SEND_STATUS_EVERY_SEC 2400 // how often should a status be sent?
 #define SEND_VERSION_STATUS_CYCLE 35 // send version status x times less than switch status (~once per day)
@@ -784,7 +791,7 @@ int main(void)
 
 	UART_PUTS ("\r\n");
 	UART_PUTF4("smarthomatic RGB Dimmer v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
-	UART_PUTS("(c) 2014 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTS("(c) 2014..2015 Uwe Freese, www.smarthomatic.org\r\n");
 	osccal_info();
 	UART_PUTF ("DeviceID: %u\r\n", device_id);
 	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);
@@ -795,6 +802,8 @@ int main(void)
 	e2p_generic_get_aeskey(aes_key);
 
 	PWM_init();
+	
+	rfm_watchdog_init(device_id, e2p_rgbdimmer_get_transceiverwatchdogtimeout(), RFM_RESET_PORT_NR, RFM_RESET_PIN);
 	rfm12_init();
 	
 	set_animation_fixed_color(0);
@@ -831,6 +840,8 @@ int main(void)
 		if (rfm12_rx_status() == STATUS_COMPLETE)
 		{
 			uint8_t len = rfm12_rx_len();
+			
+			rfm_watchdog_alive();
 			
 			if ((len == 0) || (len % 16 != 0))
 			{
@@ -872,32 +883,37 @@ int main(void)
 			loop = 0;
 
 			// send status from time to time
-			send_status_timeout--;
-		
-			if (send_status_timeout == 8)
+			if (!send_startup_reason(&mcusr_mirror))
 			{
-				send_brightness_status();
-				led_blink(200, 0, 1);
-			}
-			else if (send_status_timeout == 0)
-			{
-				send_status_timeout = SEND_STATUS_EVERY_SEC;
-				send_status();
-				led_blink(200, 0, 1);
-				
-				version_status_cycle++;
-			}
-			else if (version_status_cycle >= SEND_VERSION_STATUS_CYCLE)
-			{
-				version_status_cycle = 0;
-				send_deviceinfo_status();
-				led_blink(200, 0, 1);
+				send_status_timeout--;
+			
+				if (send_status_timeout == 8)
+				{
+					send_brightness_status();
+					led_blink(200, 0, 1);
+				}
+				else if (send_status_timeout == 0)
+				{
+					send_status_timeout = SEND_STATUS_EVERY_SEC;
+					send_status();
+					led_blink(200, 0, 1);
+					
+					version_status_cycle++;
+				}
+				else if (version_status_cycle >= SEND_VERSION_STATUS_CYCLE)
+				{
+					version_status_cycle = 0;
+					send_deviceinfo_status();
+					led_blink(200, 0, 1);
+				}
 			}
 		}
 		else
 		{
 			_delay_ms(20);
 		}
+
+		rfm_watchdog_count(20);
 
 		rfm12_tick();
 

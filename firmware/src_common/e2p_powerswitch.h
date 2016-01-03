@@ -99,8 +99,25 @@ static inline uint16_t e2p_powerswitch_get_switchtimeout(uint8_t index)
   return eeprom_read_UIntValue16(608 + (uint16_t)index * 16, 16, 0, 65767);
 }
 
-// Reserved area with 7456 bits
-// Offset: 736
+// TransceiverWatchdogTimeout (UIntValue)
+// Description: Reset RFM12B module if no data is received until timeout is reached. Use this function if your specific transceiver hangs sometimes. Value is in deca seconds. Suggested setting is 48 (for 8 minutes). Set 0 to disable (default).
+
+// Set TransceiverWatchdogTimeout (UIntValue)
+// Offset: 736, length bits 8, min val 0, max val 255
+static inline void e2p_powerswitch_set_transceiverwatchdogtimeout(uint8_t val)
+{
+  eeprom_write_UIntValue(736, 8, val);
+}
+
+// Get TransceiverWatchdogTimeout (UIntValue)
+// Offset: 736, length bits 8, min val 0, max val 255
+static inline uint8_t e2p_powerswitch_get_transceiverwatchdogtimeout(void)
+{
+  return eeprom_read_UIntValue8(736, 8, 0, 255);
+}
+
+// Reserved area with 7448 bits
+// Offset: 744
 
 
 #endif /* _E2P_POWERSWITCH_H */
