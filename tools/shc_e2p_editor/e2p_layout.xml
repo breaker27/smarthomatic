@@ -35,6 +35,10 @@
 				<Value>80</Value>
 				<Name>Thermostat</Name>
 			</Element>
+			<Element>
+				<Value>90</Value>
+				<Name>TeaMaker</Name>
+			</Element>
 		</EnumValue>
 		<IntValue>
 			<ID>OsccalMode</ID>
@@ -920,6 +924,74 @@
 		</UIntValue>
 		<Reserved>
 			<Bits>7656</Bits>
+		</Reserved>
+	</Block>
+	<Block>
+		<Name>TeaMaker</Name>
+		<Description>This block contains the specific configuration data that only tea maker needs.</Description>
+		<Restriction>
+			<RefID>DeviceType</RefID>
+			<Value>90</Value>
+		</Restriction>
+		<UIntValue>
+			<ID>BaseStationPacketCounter</ID>
+			<Description>This is the last remembered packet counter of a command from the base station. Packets with the same or lower number are ignored.</Description>
+			<Bits>24</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>16777215</MaxVal>
+		</UIntValue>
+		<Array>
+			<Length>9</Length>
+			<ByteArray>
+				<ID>Name</ID>
+				<Description>The name of the brewing preset (most times the type of tea used), shown on the LCD.</Description>
+				<Bytes>16</Bytes>
+			</ByteArray>
+			<UIntValue>
+				<ID>HeatingTemperature</ID>
+				<Description>Temperature to which the water is heated up in 1/10 degrees celsius (range is 0 to 100 degree celsius).</Description>
+				<Bits>16</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>1000</MaxVal>
+			</UIntValue>
+			<UIntValue>
+				<ID>HeatingTemperatureDrop</ID>
+				<Description>in 1/10 degree celsius</Description>
+				<Bits>8</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>50</MaxVal>
+			</UIntValue>
+			<UIntValue>
+				<ID>BrewingTemperature</ID>
+				<Description>Temperature to which the water is heated up or cooled off until brewing is started, in 1/10 degree celsius.</Description>
+				<Bits>16</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>1000</MaxVal>
+			</UIntValue>
+			<UIntValue>
+				<ID>BrewingTimeSec</ID>
+				<Description>This is how long the tea bag is placed inside the water at brewing temperature. Range is from 0 to 30 minutes, in seconds.</Description>
+				<Bits>16</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>1800</MaxVal>
+			</UIntValue>
+			<UIntValue>
+				<ID>WarmingTemperature</ID>
+				<Description>Temperature at which the water is held after brewing is finished.</Description>
+				<Bits>8</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>200</MaxVal>
+			</UIntValue>
+			<UIntValue>
+				<ID>WarmingTimeSec</ID>
+				<Description>This is how long the water is held at the warming temperature after brewing is finished. Range is from 0 to 12 hours, in seconds.</Description>
+				<Bits>16</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>43200</MaxVal>
+			</UIntValue>
+		</Array>
+		<Reserved>
+			<Bits>5000</Bits>
 		</Reserved>
 	</Block>
 </E2P>
