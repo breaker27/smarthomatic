@@ -30,7 +30,7 @@
 
 #include "../src_common/e2p_hardware.h"
 #include "../src_common/e2p_generic.h"
-#include "../src_common/e2p_powerswitch.h"
+#include "../src_common/e2p_teamaker.h"
 
 #include "onewire.h"
 
@@ -80,6 +80,15 @@ uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly a
 #define WINCH_PIN 1
 #define WINCH_DDR DDRB
 
+// These are the values from the current preset, read out of the E2P.
+char *   preset_name = "Absorb";
+uint16_t heating_temperature = 0;
+uint8_t  heating_temperature_drop = 0;
+uint16_t last_heating_time_sec = 0;
+uint16_t brewing_temperature = 0;
+uint16_t brewing_time_sec = 0;
+uint16_t warming_temperature = 0;
+uint16_t warming_time_sec = 0;
 
 typedef enum
 {
@@ -240,6 +249,7 @@ void send_deviceinfo_status(void)
 	rfm12_send_bufx();
 }
 
+/*
 void switchRelais(int8_t num, bool on, uint16_t timeout, bool dbgmsg)
 {
 	if (dbgmsg)
@@ -284,166 +294,7 @@ void switchRelais(int8_t num, bool on, uint16_t timeout, bool dbgmsg)
 		e2p_powerswitch_set_switchtimeout(num, timeout);
 	}
 }
-
-void process_gpio_digitalport(MessageTypeEnum messagetype)
-{
-	// "Set" or "SetGet" -> modify switch state
-	if ((messagetype == MESSAGETYPE_SET) || (messagetype == MESSAGETYPE_SETGET))
-	{
-		uint8_t i;
-		
-		// react on changed state (version for more than one switch...)
-		for (i = 0; i < SWITCH_COUNT; i++)
-		{
-			bool req_on = msg_gpio_digitalport_get_on(i);
-			UART_PUTF2("On[%u]:%u;", i, req_on);
-			switchRelais(i, req_on, 0, false);
-		}
-	}
-}
-
-void process_gpio_digitalpin(MessageTypeEnum messagetype)
-{
-	// "Set" or "SetGet" -> modify switch state
-	if ((messagetype == MESSAGETYPE_SET) || (messagetype == MESSAGETYPE_SETGET))
-	{
-		uint8_t req_pos = msg_gpio_digitalpin_get_pos();
-		bool req_on = msg_gpio_digitalpin_get_on();
-		UART_PUTF2("Pos:%u;On:%u;", req_pos, req_on);
-		switchRelais(req_pos, req_on, 0, false);
-	}
-}
-
-void process_gpio_digitalporttimeout(MessageTypeEnum messagetype)
-{
-	// "Set" or "SetGet" -> modify switch state
-	if ((messagetype == MESSAGETYPE_SET) || (messagetype == MESSAGETYPE_SETGET))
-	{
-		uint8_t i;
-		
-		// react on changed state (version for more than one switch...)
-		for (i = 0; i < SWITCH_COUNT; i++)
-		{
-			bool req_on = msg_gpio_digitalporttimeout_get_on(i);
-			uint16_t req_timeout = msg_gpio_digitalporttimeout_get_timeoutsec(i);
-
-			UART_PUTF2("On[%u]:%u;", i, req_on);
-			UART_PUTF2("TimeoutSec[%u]:%u;", i, req_timeout);
-
-			switchRelais(i, req_on, req_timeout, false);
-		}
-	}
-}
-
-void process_gpio_digitalpintimeout(MessageTypeEnum messagetype)
-{
-	// "Set" or "SetGet" -> modify switch state
-	if ((messagetype == MESSAGETYPE_SET) || (messagetype == MESSAGETYPE_SETGET))
-	{
-		uint8_t req_pos = msg_gpio_digitalpintimeout_get_pos();
-		bool req_on = msg_gpio_digitalpintimeout_get_on();
-		uint16_t req_timeout = msg_gpio_digitalpintimeout_get_timeoutsec();
-		UART_PUTF2("Pos:%u;On:%u;", req_pos, req_on);
-		UART_PUTF("TimeoutSec:%u;", req_timeout);
-		switchRelais(req_pos, req_on, req_timeout, false);
-	}
-}
-
-void send_ack(uint32_t acksenderid, uint32_t ackpacketcounter, bool error)
-{
-	// any message can be used as ack, because they are the same anyway
-	if (error)
-	{
-		UART_PUTS("Send error Ack\r\n");
-		pkg_header_init_gpio_digitalporttimeout_ack();
-	}
-
-	inc_packetcounter();
-	
-	// set common fields
-	pkg_header_set_senderid(device_id);
-	pkg_header_set_packetcounter(packetcounter);
-	
-	pkg_headerext_common_set_acksenderid(acksenderid);
-	pkg_headerext_common_set_ackpacketcounter(ackpacketcounter);
-	pkg_headerext_common_set_error(error);
-	
-	rfm12_send_bufx();
-}
-
-// Process a request to this device.
-// React accordingly on the MessageType, MessageGroup and MessageID
-// and send an Ack in any case. It may be an error ack if request is not supported.
-void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint32_t messageid)
-{
-	// remember some values before the packet buffer is destroyed
-	uint32_t acksenderid = pkg_header_get_senderid();
-	uint32_t ackpacketcounter = pkg_header_get_packetcounter();
-	
-	UART_PUTF("MessageGroupID:%u;", messagegroupid);
-	
-	if (messagegroupid != MESSAGEGROUP_GPIO)
-	{
-		UART_PUTS("\r\nERR: Unsupported MessageGroupID.\r\n");
-		send_ack(acksenderid, ackpacketcounter, true);
-		return;
-	}
-	
-	UART_PUTF("MessageID:%u;", messageid);
-
-	switch (messageid)
-	{
-		case MESSAGEID_GPIO_DIGITALPORT:
-			process_gpio_digitalport(messagetype);
-			break;
-		case MESSAGEID_GPIO_DIGITALPIN:
-			process_gpio_digitalpin(messagetype);
-			break;
-		case MESSAGEID_GPIO_DIGITALPORTTIMEOUT:
-			process_gpio_digitalporttimeout(messagetype);
-			break;
-		case MESSAGEID_GPIO_DIGITALPINTIMEOUT:
-			process_gpio_digitalpintimeout(messagetype);
-			break;
-		default:
-			UART_PUTS("\r\nERR: Unsupported MessageID.");
-			send_ack(acksenderid, ackpacketcounter, true);
-			return;
-	}
-	
-	UART_PUTS("\r\n");
-
-	// In all cases, use the digitalporttimer message as answer.
-	// It contains the data for *all* pins and *all* timer values.
-
-	// "Set" -> send "Ack"
-	if (messagetype == MESSAGETYPE_SET)
-	{
-		pkg_header_init_gpio_digitalporttimeout_ack();
-
-		UART_PUTS("Sending Ack\r\n");
-	}
-	// "Get" or "SetGet" -> send "AckStatus"
-	else
-	{
-		pkg_header_init_gpio_digitalporttimeout_ackstatus();
-		
-		uint8_t i;
-		
-		// react on changed state (version for more than one switch...)
-		for (i = 0; i < SWITCH_COUNT; i++)
-		{
-			// set message data
-			msg_gpio_digitalporttimeout_set_on(i, switch_state[i]);
-			msg_gpio_digitalporttimeout_set_timeoutsec(i, switch_timeout[i]);
-		}
-		
-		UART_PUTS("Sending AckStatus\r\n");
-	}
-
-	send_ack(acksenderid, ackpacketcounter, false);
-	send_status_timeout = 5;
-}
+*/
 
 // Check if incoming message is a legitimate request for this device.
 // If not, ignore it.
@@ -475,7 +326,7 @@ void process_packet(uint8_t len)
 	// write received counter
 	station_packetcounter = packcnt;
 	
-	e2p_powerswitch_set_basestationpacketcounter(station_packetcounter);
+	e2p_teamaker_set_basestationpacketcounter(station_packetcounter);
 	
 	// check MessageType
 	MessageTypeEnum messagetype = pkg_header_get_messagetype();
@@ -502,7 +353,7 @@ void process_packet(uint8_t len)
 	uint32_t messagegroupid = pkg_headerext_common_get_messagegroupid();
 	uint32_t messageid = pkg_headerext_common_get_messageid();
 	
-	process_request(messagetype, messagegroupid, messageid);
+	//process_request(messagetype, messagegroupid, messageid);
 }
 
 // Return currently pressed button, without using debouncing.
@@ -587,6 +438,19 @@ button_t button(void)
 	return button_wait_down();
 }
 
+// Lead the given preset from E2P into variables.
+void load_preset(uint8_t nr)
+{
+	// TODO: Load name (as char*).
+	heating_temperature = e2p_teamaker_get_heatingtemperature(nr);
+	heating_temperature_drop = e2p_teamaker_get_heatingtemperaturedrop(nr);
+	last_heating_time_sec = e2p_teamaker_get_lastheatingtimesec(nr);
+	brewing_temperature = e2p_teamaker_get_brewingtemperature(nr);
+	brewing_time_sec = e2p_teamaker_get_brewingtimesec(nr);
+	warming_temperature = e2p_teamaker_get_warmingtemperature(nr);
+	warming_time_sec = e2p_teamaker_get_warmingtimesec(nr);
+}
+
 int main(void)
 {
 	uint8_t loop = 0;
@@ -669,6 +533,17 @@ int main(void)
 	uint8_t countdown_pos = 0;
 	uint8_t countdown_count = 5;
 	
+	uint8_t brewing_regulation_range_above = 0;
+	uint8_t brewing_regulation_range_below = 0;
+	uint8_t warming_regulation_range_above = 0;
+	uint8_t warming_regulation_range_below = 0;
+	uint8_t brewing_PWM_percentage = 0;
+	uint8_t brewing_PWM_cycle_cec = 0;
+	uint8_t warming_PWM_percentage = 0;
+	uint8_t warming_PWM_cycle_cec = 0;
+	
+	load_preset(0);
+	
 	while (1)
 	{
 		switch (menu_pos)
@@ -692,15 +567,20 @@ int main(void)
 
 			case MENU_BREWING_PRESET: 
 				lcd_clear();
-				LCD_PUTF("Preset %d", brewing_preset_pos + 1); // user perceived number counts from 1 on
+				LCD_PUTF("P%d", brewing_preset_pos + 1); // user perceived number counts from 1 on
+				lcd_gotoxy(0,1);
+				LCD_PUTF2("%d.%d°C ", heating_temperature / 10, heating_temperature % 10);
+				LCD_PUTF3("%ds@%d.%d", brewing_time_sec, brewing_temperature / 10, brewing_temperature % 10);
 				
 				switch (button())
 				{
 					case BUTTON_UP:
 						brewing_preset_pos = (brewing_preset_pos + brewing_preset_count - 1) % brewing_preset_count;
+						load_preset(brewing_preset_pos);
 						break;
 					case BUTTON_DOWN:
 						brewing_preset_pos = (brewing_preset_pos + 1) % brewing_preset_count;
+						load_preset(brewing_preset_pos);
 						break;
 					case BUTTON_RIGHT:
 						menu_pos = MENU_START_MODE_NOW;
