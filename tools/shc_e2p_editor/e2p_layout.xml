@@ -943,53 +943,151 @@
 		<Array>
 			<Length>9</Length>
 			<ByteArray>
-				<ID>Name</ID>
+				<ID>PresetName</ID>
 				<Description>The name of the brewing preset (most times the type of tea used), shown on the LCD.</Description>
 				<Bytes>16</Bytes>
 			</ByteArray>
+		</Array>
+		<Array>
+			<Length>9</Length>
 			<UIntValue>
 				<ID>HeatingTemperature</ID>
 				<Description>Temperature to which the water is heated up in 1/10 degrees celsius (range is 0 to 100 degree celsius).</Description>
 				<Bits>16</Bits>
 				<MinVal>0</MinVal>
 				<MaxVal>1000</MaxVal>
+				<DefaultVal>900</DefaultVal>
 			</UIntValue>
+		</Array>
+		<Array>
+			<Length>9</Length>
 			<UIntValue>
 				<ID>HeatingTemperatureDrop</ID>
-				<Description>in 1/10 degree celsius</Description>
+				<Description>The number of degrees that the temperature has to drop after the maximum temperature was reached after powering off the heating plate when HeatingTemperature was reached (in 1/10 degree celsius).</Description>
 				<Bits>8</Bits>
 				<MinVal>0</MinVal>
 				<MaxVal>50</MaxVal>
+				<DefaultVal>10</DefaultVal>
 			</UIntValue>
+		</Array>
+		<Array>
+			<Length>9</Length>
+			<UIntValue>
+				<ID>LastHeatingTimeSec</ID>
+				<Description>This is the time it took the last time to heat up the water. The value is used to show and calculate a countdown. Range is from 0 to 30 minutes, in seconds.</Description>
+				<Bits>16</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>1800</MaxVal>
+			</UIntValue>
+		</Array>
+		<Array>
+			<Length>9</Length>
 			<UIntValue>
 				<ID>BrewingTemperature</ID>
-				<Description>Temperature to which the water is heated up or cooled off until brewing is started, in 1/10 degree celsius.</Description>
+				<Description>Temperature (in 1/10 degree celsius) to which the water is cooled off until brewing is started, in 1/10 degree celsius. The water is held at this temperature during the brewing phase.</Description>
 				<Bits>16</Bits>
 				<MinVal>0</MinVal>
 				<MaxVal>1000</MaxVal>
+				<DefaultVal>900</DefaultVal>
 			</UIntValue>
+		</Array>
+		<Array>
+			<Length>9</Length>
 			<UIntValue>
 				<ID>BrewingTimeSec</ID>
 				<Description>This is how long the tea bag is placed inside the water at brewing temperature. Range is from 0 to 30 minutes, in seconds.</Description>
 				<Bits>16</Bits>
 				<MinVal>0</MinVal>
 				<MaxVal>1800</MaxVal>
+				<DefaultVal>240</DefaultVal>
 			</UIntValue>
+		</Array>
+		<Array>
+			<Length>9</Length>
 			<UIntValue>
 				<ID>WarmingTemperature</ID>
 				<Description>Temperature at which the water is held after brewing is finished.</Description>
 				<Bits>8</Bits>
 				<MinVal>0</MinVal>
 				<MaxVal>200</MaxVal>
+				<DefaultVal>500</DefaultVal>
 			</UIntValue>
+		</Array>
+		<Array>
+			<Length>9</Length>
 			<UIntValue>
 				<ID>WarmingTimeSec</ID>
 				<Description>This is how long the water is held at the warming temperature after brewing is finished. Range is from 0 to 12 hours, in seconds.</Description>
 				<Bits>16</Bits>
 				<MinVal>0</MinVal>
 				<MaxVal>43200</MaxVal>
+				<DefaultVal>7200</DefaultVal>
 			</UIntValue>
 		</Array>
+		<UIntValue>
+			<ID>BrewingRegulationRangeAbove</ID>
+			<Description>This defines at which temperature the heating plate is turned off when heating up in the brewing phase, in 1/10 degree celsius.</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>50</MaxVal>
+			<DefaultVal>20</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>BrewingRegulationRangeBelow</ID>
+			<Description>This defines at which temperature the heating plate is turned on again when the water is cooling off currently in the brewing phase, in 1/10 degree celsius. </Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>50</MaxVal>
+			<DefaultVal>20</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>WarmingRegulationRangeAbove</ID>
+			<Description>This defines at which temperature the heating plate is turned off when heating up in the warming phase, in 1/10 degree celsius.</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>50</MaxVal>
+			<DefaultVal>20</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>WarmingRegulationRangeBelow</ID>
+			<Description>This defines at which temperature the heating plate is turned on again when the water is cooling off currently in the warming phase, in 1/10 degree celsius.</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>50</MaxVal>
+			<DefaultVal>20</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>BrewingPWMPercentage</ID>
+			<Description>The percentage of time the heating plate is one in one cycle of several seconds to minutes. The value has to be high enough to actually heat up the water also at the maximum brewing temperature and the maximum amount of water in the kettle.</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>100</MaxVal>
+			<DefaultVal>30</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>BrewingPWMCycleSec</ID>
+			<Description>The length of one heating PWM cycle in seconds in the brewing phase.</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>255</MaxVal>
+			<DefaultVal>30</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>WarmingPWMPercentage</ID>
+			<Description>The percentage of time the heating plate is one in one cycle of several seconds to minutes. The value has to be high enough to actually heat up the water also at the maximum warming temperature and the maximum amount of water in the kettle. The PWM cycle in general should be slower in the warming phase compared to the brewing phase, because usually the temperature to regulate to is not so important.</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>100</MaxVal>
+			<DefaultVal>30</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>WarmingPWMCycleSec</ID>
+			<Description>The length of one heating PWM cycle in seconds in the warming phase.</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>255</MaxVal>
+			<DefaultVal>180</DefaultVal>
+		</UIntValue>
 		<Reserved>
 			<Bits>5000</Bits>
 		</Reserved>
