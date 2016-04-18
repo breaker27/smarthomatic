@@ -167,12 +167,44 @@ void lcd_clear(void)
 
 void lcd_putc(char c)
 {
-	lcd_data(c);	
+	switch ((uint8_t)c)
+	{
+		case 0xb0: // °
+			lcd_data(0xdf);
+			break;
+		case 0xe4: // ä
+			lcd_data(0xe1);
+			break;
+		case 0xf6: // ö
+			lcd_data(0xef);
+			break;
+		case 0xfc: // ü
+			lcd_data(0xf5);
+			break;
+		case 0xc4: // Ä
+			lcd_data(0x00); // user character 0
+			break;
+		case 0xd6: // Ö
+			lcd_data(0x01); // user character 1
+			break;
+		case 0xdc: // Ü
+			lcd_data(0x02); // user character 2
+			break;
+		case 0xdf: // ß
+			lcd_data(0xe2);
+			break;
+		default:
+			lcd_data(c);
+			break;
+	}
 }
 
 void lcd_putstr(char * str)
 {
-	while(*str) lcd_data(*str++); // using lcd_data instead of lcd_putc means one function call less
+	while(*str)
+	{
+		lcd_putc(*str++);
+	}
 }
 
 void lcd_puts_p(PGM_P str)
