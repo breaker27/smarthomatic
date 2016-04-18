@@ -81,7 +81,8 @@ uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly a
 #define WINCH_DDR DDRB
 
 // These are the values from the current preset, read out of the E2P.
-char *   preset_name = "Absorb";
+//char *   preset_name = "1234567890123456\x00";
+char preset_name[17] = {0x73,0x63,0x68,0x77,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x00};
 uint16_t heating_temperature = 0;
 uint8_t  heating_temperature_drop = 0;
 uint16_t last_heating_time_sec = 0;
@@ -442,6 +443,7 @@ button_t button(void)
 void load_preset(uint8_t nr)
 {
 	// TODO: Load name (as char*).
+	e2p_teamaker_get_presetname(nr, (void*)&preset_name);
 	heating_temperature = e2p_teamaker_get_heatingtemperature(nr);
 	heating_temperature_drop = e2p_teamaker_get_heatingtemperaturedrop(nr);
 	last_heating_time_sec = e2p_teamaker_get_lastheatingtimesec(nr);
@@ -455,6 +457,8 @@ int main(void)
 {
 	uint8_t loop = 0;
 	uint16_t temperature;
+	uint8_t i;
+	uint8_t j;
 
 	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
 	_delay_ms(700);
@@ -487,6 +491,31 @@ int main(void)
 	UART_PUTF ("Last received base station PacketCounter: %u\r\n\r\n", station_packetcounter);
 	
 	lcd_init();
+	
+	/* // show all characters
+	i = 0;
+	char xx[2] = {0x73,0x00};
+	
+	while (1)
+	{
+		lcd_gotoxy(0, 0);
+		LCD_PUTF("i = %d ", i);
+
+		lcd_gotoxy(0, 1);
+		
+		for (j = 0; j < 16; j++)
+		{
+			xx[0] = i * 16 + j;
+			
+			LCD_PUTF("%s", xx);
+			i++;
+		}
+		
+		_delay_ms(10000);
+		
+		i = (i + 1) % 16;
+	}
+	*/
 	
 	LCD_PUTS("--- TeaMaker ---");
 	lcd_gotoxy(0, 1);
@@ -544,15 +573,16 @@ int main(void)
 	
 	load_preset(0);
 	
+	
 	while (1)
 	{
 		switch (menu_pos)
 		{
 			case MENU_CONFIRMATION:
 				lcd_clear();
-				LCD_PUTS("Fill in üöäßÄÖÜ");
+				LCD_PUTS(" Wasser und Tee ");
 				lcd_gotoxy(0,1);
-				LCD_PUTS("Water & Tea!");
+				LCD_PUTS("   einfüllen!   ");
 				
 				switch (button())
 				{
@@ -567,10 +597,10 @@ int main(void)
 
 			case MENU_BREWING_PRESET: 
 				lcd_clear();
-				LCD_PUTF("P%d", brewing_preset_pos + 1); // user perceived number counts from 1 on
+				LCD_PUTF("%s", preset_name); // user perceived number counts from 1 on
 				lcd_gotoxy(0,1);
-				LCD_PUTF2("%d.%d°C ", heating_temperature / 10, heating_temperature % 10);
-				LCD_PUTF3("%ds@%d.%d", brewing_time_sec, brewing_temperature / 10, brewing_temperature % 10);
+				
+				LCD_PUTF3("%d:%02d   %d°C", brewing_time_sec / 60, brewing_time_sec % 60, brewing_temperature / 10);
 				
 				switch (button())
 				{
