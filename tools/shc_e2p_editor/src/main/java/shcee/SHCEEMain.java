@@ -23,9 +23,17 @@ import java.awt.Toolkit;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Properties;
+
+import javafx.scene.control.SplitPane.Divider;
 
 import javax.swing.JFrame;
 import javax.swing.JSplitPane;
@@ -39,7 +47,7 @@ import javax.xml.transform.TransformerException;
 public class SHCEEMain extends JFrame {
 	
 	private static final long serialVersionUID = 1760274466931877539L;
-	public static SHCEEMain mySHCEEMain;
+	public static SHCEEMain mySHCEEMain = null;
 	
 	public static final String EEPROM_METAMODEL_XSD = "e2p_metamodel.xsd";
 	public static final String EEPROM_LAYOUT_XML = "e2p_layout.xml";
@@ -47,10 +55,14 @@ public class SHCEEMain extends JFrame {
 	public static final String PACKET_METAMODEL_XSD = "packet_metamodel.xsd";
 	public static final String PACKET_CATALOG_XML = "packet_layout.xml";
 
+	private static String CFG_FILENAME = "shc_e2p_editor.cfg";
+
 	// Default width and height is used at least until the size is save to a config file.
-	public static int defaultWidth = 900;
-	public static int defaultHeight = 600;
-	
+	public static int propWidth = 900;
+	public static int propHeight = 600;
+	public static int propDividerLocation = 400;
+	public static String propFlashCmd = "";
+
 	public static String version;
 	
 	private int oldWidth;
@@ -64,6 +76,7 @@ public class SHCEEMain extends JFrame {
 		super();
 		mySHCEEMain = this;
 	
+		loadProperties();
 		readVersion();
 		
 		initializeMainFrame();
@@ -85,9 +98,96 @@ public class SHCEEMain extends JFrame {
 
 		addComponentListener(resizeListener);
 		
-		jSplitPane.setDividerLocation(defaultWidth * 45 / 100);
+		// Add window listener to detect when window is closed.
+		this.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+				saveProperties();
+            }
+		});
+				
+		jSplitPane.setDividerLocation(propDividerLocation);
+	}
+
+	/**
+	 * Load parameters from a file.
+	 */
+	private void loadProperties()
+	{
+		Properties prop = new Properties();
+		InputStream input = null;
+	 
+		try
+		{
+			input = new FileInputStream(CFG_FILENAME);
+			prop.load(input);
+			propFlashCmd = prop.getProperty("flash_cmd");
+			propWidth = Integer.parseInt(prop.getProperty("width", "" + propWidth));
+			propHeight = Integer.parseInt(prop.getProperty("height", "" + propHeight));
+			propDividerLocation = Integer.parseInt(prop.getProperty("divider_location", "" + propDividerLocation));
+		}
+		catch (FileNotFoundException ex)
+		{
+			// OK - cfg may not exist
+		}
+		catch (IOException ex)
+		{
+			ex.printStackTrace();
+		}
+		finally
+		{
+			if (input != null)
+			{
+				try
+				{
+					input.close();
+				}
+				catch (IOException e)
+				{
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 	
+	/**
+	 * Persist parameters to a file.
+	 */
+	private void saveProperties()
+	{
+		Properties prop = new Properties();
+		OutputStream output = null;
+
+		try
+		{
+			output = new FileOutputStream(CFG_FILENAME);
+			prop.setProperty("flash_cmd", propFlashCmd);
+			prop.setProperty("width", "" + this.getWidth());
+			prop.setProperty("height", "" + this.getHeight());
+			prop.setProperty("divider_location", "" + jSplitPane.getDividerLocation());
+			prop.store(output, null);	 
+		}
+		catch (IOException io)
+		{
+			io.printStackTrace();
+		}
+		finally
+		{
+			if (output != null)
+			{
+				try
+				{
+					output.close();
+				}
+				catch (IOException e)
+				{
+					e.printStackTrace();
+				}
+			}
+	 
+		}
+	}
+
 	private void readVersion()
 	{
 		try
@@ -122,9 +222,9 @@ public class SHCEEMain extends JFrame {
 		setTitle("smarthomatic EEPROM Editor");
 		
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-		setSize(defaultWidth, defaultHeight);
-		setLocation((screenSize.width - defaultWidth) / 2, (screenSize.height - defaultHeight) / 2);
-		oldWidth = defaultWidth;
+		setSize(propWidth, propHeight);
+		setLocation((screenSize.width - propWidth) / 2, (screenSize.height - propHeight) / 2);
+		oldWidth = propWidth;
 	}
 
 	/**

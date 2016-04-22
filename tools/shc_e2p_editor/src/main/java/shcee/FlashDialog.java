@@ -25,13 +25,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Properties;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -49,7 +43,6 @@ public class FlashDialog extends JDialog
 	
 	private static String DEFAULT_CMD_WINDOWS = "avrdude.exe -p #DEVICE# -U eeprom:w:#FILENAME#:r";
 	private static String DEFAULT_CMD_LINUX = "xterm -hold -e avrdude -p #DEVICE# -U eeprom:w:#FILENAME#:r";
-	private static String CFG_FILENAME = "shc_e2p_editor.cfg";
 	
 	private JTextField textField;
 	private int e2pLength;
@@ -200,37 +193,8 @@ public class FlashDialog extends JDialog
 	 */
 	private void loadProperties()
 	{
-		Properties prop = new Properties();
-		InputStream input = null;
-	 
-		try
-		{
-			input = new FileInputStream(CFG_FILENAME);
-			prop.load(input);
-			textField.setText(prop.getProperty("flash_cmd"));
-		}
-		catch (FileNotFoundException ex)
-		{
-			// OK - cfg may not exist
-		}
-		catch (IOException ex)
-		{
-			ex.printStackTrace();
-		}
-		finally
-		{
-			if (input != null)
-			{
-				try
-				{
-					input.close();
-				}
-				catch (IOException e)
-				{
-					e.printStackTrace();
-				}
-			}
-		}
+		if (!SHCEEMain.propFlashCmd.equals(""))
+			textField.setText(SHCEEMain.propFlashCmd);
 	}
 	
 	/**
@@ -238,33 +202,6 @@ public class FlashDialog extends JDialog
 	 */
 	private void saveProperties()
 	{
-		Properties prop = new Properties();
-		OutputStream output = null;
-
-		try
-		{
-			output = new FileOutputStream(CFG_FILENAME);
-			prop.setProperty("flash_cmd", textField.getText());
-			prop.store(output, null);	 
-		}
-		catch (IOException io)
-		{
-			io.printStackTrace();
-		}
-		finally
-		{
-			if (output != null)
-			{
-				try
-				{
-					output.close();
-				}
-				catch (IOException e)
-				{
-					e.printStackTrace();
-				}
-			}
-	 
-		}
+		SHCEEMain.propFlashCmd = textField.getText();
 	}
 }
