@@ -18,7 +18,6 @@
 
 package shcee;
 
-import java.io.Console;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
