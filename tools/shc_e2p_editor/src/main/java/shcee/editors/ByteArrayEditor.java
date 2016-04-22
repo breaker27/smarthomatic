@@ -63,6 +63,7 @@ public class ByteArrayEditor extends AbstractEditor
 		input = new ByteArrayTextArea(bytes, defaultVal);
 		inputPanel.add(input);
 
+		// "Default" button
 		if (null != defaultVal)
 		{
 			JButton buttonDefault = new JButton("Default");
@@ -78,6 +79,19 @@ public class ByteArrayEditor extends AbstractEditor
 			inputPanel.add(buttonDefault);
 		}
 		
+		// "Text / HEX" mode button
+		JButton buttonMode = new JButton("HEX/Text");
+		
+		buttonMode.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e)
+            {
+                onButtonMode();
+            }
+        });
+
+		inputPanel.add(Box.createRigidArea(new Dimension(6, 6))); // space between components
+		inputPanel.add(buttonMode);
+		
 		add(inputPanel);
 		
 		// add description
@@ -88,6 +102,11 @@ public class ByteArrayEditor extends AbstractEditor
 	private void onButtonDefault()
 	{
 		input.setText(defaultVal);
+	}
+	
+	private void onButtonMode()
+	{
+		input.toggleMode();
 	}
 	
 	@Override

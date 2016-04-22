@@ -40,6 +40,8 @@ public class ByteArrayTextArea extends JTextArea
 	private boolean valid;
 	private int bytes;
 	private String defaultVal;
+	private boolean hexMode = true;
+	private TextFieldLimit doc;
 	
 	public ByteArrayTextArea(int bytes, String defaultVal)
 	{
@@ -48,12 +50,12 @@ public class ByteArrayTextArea extends JTextArea
 		this.bytes = bytes;
 		this.defaultVal = defaultVal;
 		
-		PlainDocument d = new TextFieldLimit(bytes * 2);
-		setDocument(d);
+		doc = new TextFieldLimit(bytes * 2);
+		setDocument(doc);
 
 		this.setText(Util.fillString('0', bytes * 2));
 
-		d.addDocumentListener(new DocumentListener()
+		doc.addDocumentListener(new DocumentListener()
 		{
 			@Override
 			public void changedUpdate(DocumentEvent e)
@@ -79,9 +81,56 @@ public class ByteArrayTextArea extends JTextArea
 		checkInput();
 	}
 
+	/**
+	 * Toggle between hex and string mode.
+	 */
+	public void toggleMode()
+	{
+		hexMode = !hexMode;
+		
+		if (hexMode) // string -> hex
+		{
+			String s = getText();
+			
+			doc.setLimit(bytes * 2);
+			
+			StringBuilder sb = new StringBuilder();
+			
+			for (int i = 0; i < bytes; i++)
+			{
+				if (s.length() > i)
+				{
+					sb.append(Util.byteToHex((byte)s.charAt(i)));
+				}
+			}
+			
+			setText(sb.toString());
+		}
+		else // hex -> string
+		{
+			String s = getText();
+			
+			byte[] buffer = new byte[bytes];
+			
+			for (int i = 0; i < bytes; i++)
+			{
+				if (s.length() > i * 2 + 1)
+				{
+					
+					buffer[i] = Util.hexToByte(s.charAt(i * 2), s.charAt(i * 2 + 1));
+				}
+			}
+			
+			doc.setLimit(bytes);
+
+			setText(new String(buffer));
+		}
+	}
+	
 	protected void checkInput()
 	{
-		valid = (getText().length() == bytes * 2) && Util.isHexString(getText());
+		valid = (hexMode && (getText().length() == bytes * 2) && Util.isHexString(getText()))
+				|| (!hexMode && (getText().length() == bytes));
 		
 		if (!valid)
 		{
