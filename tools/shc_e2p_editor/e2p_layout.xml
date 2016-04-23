@@ -944,10 +944,10 @@
 		<ByteArray>
 			<ID>StartupConfirmationMessage</ID>
 			<Description>Text shown on LCD at startup until a button is pressed.</Description>
-			<Bytes>16</Bytes>
+			<Bytes>32</Bytes>
 		</ByteArray>
 		<Reserved>
-			<Bits>640</Bits>
+			<Bits>1280</Bits>
 		</Reserved>
 		<Array>
 			<Length>9</Length>
@@ -1016,9 +1016,9 @@
 			<UIntValue>
 				<ID>WarmingTemperature</ID>
 				<Description>Temperature at which the water is held after brewing is finished.</Description>
-				<Bits>8</Bits>
+				<Bits>16</Bits>
 				<MinVal>0</MinVal>
-				<MaxVal>200</MaxVal>
+				<MaxVal>1000</MaxVal>
 				<DefaultVal>500</DefaultVal>
 			</UIntValue>
 		</Array>
