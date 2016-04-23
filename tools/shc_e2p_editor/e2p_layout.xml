@@ -941,6 +941,14 @@
 			<MinVal>0</MinVal>
 			<MaxVal>16777215</MaxVal>
 		</UIntValue>
+		<ByteArray>
+			<ID>StartupConfirmationMessage</ID>
+			<Description>Text shown on LCD at startup until a button is pressed.</Description>
+			<Bytes>16</Bytes>
+		</ByteArray>
+		<Reserved>
+			<Bits>640</Bits>
+		</Reserved>
 		<Array>
 			<Length>9</Length>
 			<ByteArray>
@@ -1025,6 +1033,9 @@
 				<DefaultVal>7200</DefaultVal>
 			</UIntValue>
 		</Array>
+		<Reserved>
+			<Bits>576</Bits>
+		</Reserved>
 		<UIntValue>
 			<ID>BrewingRegulationRangeAbove</ID>
 			<Description>This defines at which temperature the heating plate is turned off when heating up in the brewing phase, in 1/10 degree celsius.</Description>
@@ -1089,8 +1100,5 @@
 			<MaxVal>255</MaxVal>
 			<DefaultVal>180</DefaultVal>
 		</UIntValue>
-		<Reserved>
-			<Bits>5000</Bits>
-		</Reserved>
 	</Block>
 </E2P>
