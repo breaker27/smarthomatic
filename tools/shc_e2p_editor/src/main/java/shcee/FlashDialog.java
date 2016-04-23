@@ -47,11 +47,13 @@ public class FlashDialog extends JDialog
 	private JTextField textField;
 	private int e2pLength;
 	private String e2pFilename;
+	private String microcontrollerModel;
 	
-	public FlashDialog(int e2pLength, String e2pFilename)
+	public FlashDialog(int e2pLength, String e2pFilename, String microcontrollerModel)
 	{
 		this.e2pLength = e2pLength;
 		this.e2pFilename = e2pFilename;
+		this.microcontrollerModel = microcontrollerModel;
 		
 		this.setTitle("Flash e2p file to device");
 		
@@ -90,7 +92,7 @@ public class FlashDialog extends JDialog
 		panel.add(l1);
 		
 		panel.add(Box.createRigidArea(new Dimension(0, 10)));
-		panel.add(new JLabel("#DEVICE# will be replaced by m328p or m168p according to e2p size"));
+		panel.add(new JLabel("#DEVICE# will be replaced by the microcontroller model defined in the e2p layout or (if not defined) m328p or m168p according to e2p size"));
 		panel.add(new JLabel("#FILENAME# will be replaced by the e2p filename"));
 		panel.add(Box.createRigidArea(new Dimension(0, 10)));
 		panel.add(new JLabel("Default is: " + (Util.runsOnWindows() ? DEFAULT_CMD_WINDOWS : DEFAULT_CMD_LINUX)));
@@ -155,7 +157,11 @@ public class FlashDialog extends JDialog
 	{
 		String cmdLineS = textField.getText();
 		
-		if (e2pLength > 4096)
+		if (microcontrollerModel != null)
+		{
+			cmdLineS = cmdLineS.replace("#DEVICE#", microcontrollerModel);
+		}
+		else if (e2pLength > 4096)
 		{			
 			cmdLineS = cmdLineS.replace("#DEVICE#", "m328p");
 		}

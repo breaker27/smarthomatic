@@ -166,13 +166,24 @@ public class ValueEditorPanel extends JPanel
 				"<html><body><b>smarthomatic EEPROM Editor</b><br/>" +
 				SHCEEMain.version + "<br/>" +
 				"http://www.smarthomatic.org<br/>" +
-				"Copyright (c) 2013..2014 Uwe Freese<br/>" +
+				"Copyright (c) 2013..2016 Uwe Freese<br/>" +
 				"Licensed under GLP 3 or later.</body></html>", "About", JOptionPane.INFORMATION_MESSAGE);
 	}
 
 	protected void onButtonFlash()
 	{
-		new FlashDialog(length, filename);
+		String microcontrollerModel = null;
+		
+		for (Block b : blocks)
+		{
+			if (b.isVisible() && (b.microcontrollerModel != null))
+			{
+				microcontrollerModel = b.microcontrollerModel;
+				break;
+			}
+		}
+		
+		new FlashDialog(length, filename, microcontrollerModel);
 	}
 
 	protected void onButtonSave()
