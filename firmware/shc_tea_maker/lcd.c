@@ -207,6 +207,14 @@ void lcd_putstr(char * str)
 	}
 }
 
+void lcd_nputstr(char * str, uint8_t maxlen)
+{
+	while ((*str) && (maxlen--))
+	{
+		lcd_putc(*str++);
+	}
+}
+
 void lcd_puts_p(PGM_P str)
 {
 	char tmp;

@@ -30,5 +30,6 @@ extern char lcdbuf[];
 void lcd_init(void);
 void lcd_clear(void);
 void lcd_putstr(char * str);
+void lcd_nputstr(char * str, uint8_t maxlen);
 void lcd_puts_p(PGM_P str);
 void lcd_gotoxy(unsigned char x, unsigned char y);
