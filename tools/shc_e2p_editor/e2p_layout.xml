@@ -933,6 +933,7 @@
 			<RefID>DeviceType</RefID>
 			<Value>90</Value>
 		</Restriction>
+		<MicrocontrollerModel>m324pa</MicrocontrollerModel>
 		<UIntValue>
 			<ID>BaseStationPacketCounter</ID>
 			<Description>This is the last remembered packet counter of a command from the base station. Packets with the same or lower number are ignored.</Description>
