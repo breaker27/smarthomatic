@@ -949,6 +949,13 @@
 		<Reserved>
 			<Bits>1280</Bits>
 		</Reserved>
+		<UIntValue>
+			<ID>PresetCount</ID>
+			<Description>The number of presets to use.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>9</MaxVal>
+		</UIntValue>
 		<Array>
 			<Length>9</Length>
 			<ByteArray>

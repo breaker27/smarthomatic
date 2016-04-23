@@ -53,8 +53,11 @@
 #define BUTTON_LEFT_PIN  3
 #define BUTTON_RIGHT_PIN 4
 
+#define LCD_WIDTH 16
+#define LCD_HEIGHT 2
+
 #define BUTTON_DEBOUNCE_COUNT 3
-#define BUTTON_DEBOUNCE_DELAY_MS 30
+#define BUTTON_DEBOUNCE_DELAY_MS 5
 
 // Power of RFM12B (since PCB rev 1.1) or RFM12 NRES (Reset) pin may be connected to PC3.
 // If not, only sw reset is used.
@@ -442,7 +445,6 @@ button_t button(void)
 // Lead the given preset from E2P into variables.
 void load_preset(uint8_t nr)
 {
-	// TODO: Load name (as char*).
 	e2p_teamaker_get_presetname(nr, (void*)&preset_name);
 	heating_temperature = e2p_teamaker_get_heatingtemperature(nr);
 	heating_temperature_drop = e2p_teamaker_get_heatingtemperaturedrop(nr);
@@ -556,7 +558,7 @@ int main(void)
 	
 	menu_pos_t menu_pos = MENU_CONFIRMATION;
 	uint8_t brewing_preset_pos = 0;
-	uint8_t brewing_preset_count = 5;
+	uint8_t brewing_preset_count = e2p_teamaker_get_presetcount();
 	uint8_t timer_pos = 0;
 	uint8_t timer_count = 5;
 	uint8_t countdown_pos = 0;
@@ -573,16 +575,20 @@ int main(void)
 	
 	load_preset(0);
 	
-	
 	while (1)
 	{
 		switch (menu_pos)
 		{
 			case MENU_CONFIRMATION:
 				lcd_clear();
-				LCD_PUTS(" Wasser und Tee ");
-				lcd_gotoxy(0,1);
-				LCD_PUTS("   einfüllen!   ");
+				
+				e2p_teamaker_get_startupconfirmationmessage(lcdbuf);
+				
+				for (i = 0; i < LCD_HEIGHT; i++)
+				{
+					lcd_gotoxy(0, i);
+					lcd_nputstr(lcdbuf + i * LCD_WIDTH, LCD_WIDTH);
+				}
 				
 				switch (button())
 				{
