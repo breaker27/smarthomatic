@@ -23,7 +23,7 @@ import java.awt.Color;
 import javax.swing.JTextArea;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.text.PlainDocument;
+
 import shcee.Util;
 
 /**
@@ -82,29 +82,35 @@ public class ByteArrayTextArea extends JTextArea
 	}
 
 	/**
-	 * Toggle between hex and string mode.
+	 * Convert normal text string (e.g. "hello") to a hex string (e.g. "68656C6C6F").
+	 * @return
 	 */
-	public void toggleMode()
+	public String textToHex(String text)
 	{
-		hexMode = !hexMode;
+		StringBuilder sb = new StringBuilder();
+		
+		for (int i = 0; i < bytes; i++)
+		{
+			if (text.length() > i)
+			{
+				sb.append(Util.byteToHex((byte)text.charAt(i)));
+			}
+		}
+		
+		return sb.toString();
+	}
+	
+	/**
+	 * Set hex or string mode.
+	 */
+	public void setMode(boolean hexMode)
+	{
+		this.hexMode = hexMode;
 		
 		if (hexMode) // string -> hex
 		{
-			String s = getText();
-			
 			doc.setLimit(bytes * 2);
-			
-			StringBuilder sb = new StringBuilder();
-			
-			for (int i = 0; i < bytes; i++)
-			{
-				if (s.length() > i)
-				{
-					sb.append(Util.byteToHex((byte)s.charAt(i)));
-				}
-			}
-			
-			setText(sb.toString());
+			setText(textToHex(getText()));
 		}
 		else // hex -> string
 		{
@@ -121,10 +127,17 @@ public class ByteArrayTextArea extends JTextArea
 				}
 			}
 			
-			doc.setLimit(bytes);
-
 			setText(new String(buffer));
+			doc.setLimit(bytes);
 		}
+	}
+	
+	/**
+	 * Toggle between hex and string mode.
+	 */
+	public void toggleMode()
+	{
+		setMode(!hexMode);
 	}
 	
 	protected void checkInput()
@@ -149,5 +162,27 @@ public class ByteArrayTextArea extends JTextArea
 	public boolean dataIsValid()
 	{
 		return valid;
+	}
+	
+	public byte[] getBytes()
+	{
+		byte[] res = new byte[bytes];
+		String s;
+		
+		if (hexMode)
+		{
+			s = getText();
+		}
+		else
+		{
+			s = textToHex(getText());
+		}
+		
+		for (int i = 0; i < bytes; i++)
+		{
+			res[i] = Util.hexToByte(s.charAt(i * 2), s.charAt(i * 2 + 1));
+		}
+		
+		return res;
 	}
 }

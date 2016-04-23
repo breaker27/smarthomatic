@@ -141,6 +141,7 @@ public class ByteArrayEditor extends AbstractEditor
 		// then set text
 		DefaultCaret caret = (DefaultCaret)input.getCaret();
 		caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
+		input.setMode(true);
 		input.setText(s);
 		caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
 		
@@ -150,13 +151,11 @@ public class ByteArrayEditor extends AbstractEditor
 	@Override
 	public int writeToEepromArray(byte[] eeprom, int offsetBit)
 	{
-		String s = input.getText();
+		byte[] buf = input.getBytes();
 		
 		for (int i = 0; i < bytes; i++)
 		{
-			byte b = Util.hexToByte(s.charAt(i * 2), s.charAt(i * 2 + 1));
-
-			Util.setUIntInByteArray(b, eeprom, offsetBit, 8);
+			Util.setUIntInByteArray(buf[i], eeprom, offsetBit, 8);
 			offsetBit += 8;
 		}
 		
