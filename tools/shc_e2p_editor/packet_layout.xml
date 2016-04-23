@@ -260,6 +260,10 @@
 					<Value>80</Value>
 					<Name>Thermostat</Name>
 				</Element>
+				<Element>
+					<Value>90</Value>
+					<Name>TeaMaker</Name>
+				</Element>
 			</EnumValue>
 			<UIntValue>
 				<ID>VersionMajor</ID>
