@@ -67,8 +67,9 @@
 #define SEND_STATUS_EVERY_SEC 1800 // how often should a status be sent?
 #define SEND_VERSION_STATUS_CYCLE 50 // send version status x times less than switch status (~once per day)
 
-// PWM range around 1500ms. E.g. use 300 to use a range of 1.2..1.8 ms pulse. Don't use values above 500!
-#define PWM_RANGE 300
+// PWM range around 1500ms. E.g. use 300 to use a range of 1.2..1.8 ms pulse. Don't use values above 640!
+#define PWM_RANGE 200
+#define PWM_CENTER_OFFSET -20
 
 uint16_t device_id;
 uint32_t station_packetcounter;
@@ -80,8 +81,17 @@ uint8_t rom_id[8]; // for 1-wire
 uint16_t send_status_timeout = 5;
 uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly after startup
 
-#define WINCH_PIN 1
-#define WINCH_DDR DDRB
+#define WINCH_PIN 5
+#define WINCH_DDR DDRD
+
+#define WINCH_PWR_PIN 6
+#define WINCH_PWR_PORT PORTC
+#define WINCH_PWR_DDR DDRC
+
+// PD6 = FAN
+#define FAN_PWR_PIN 6
+#define FAN_PWR_PORT PORTD
+#define FAN_PWR_DDR DDRD
 
 // These are the values from the current preset, read out of the E2P.
 //char *   preset_name = "1234567890123456\x00";
@@ -125,6 +135,9 @@ void io_init(void)
 	sbi(BUTTON_PORT, BUTTON_LEFT_PIN);
 	cbi(BUTTON_DDR,  BUTTON_RIGHT_PIN);
 	sbi(BUTTON_PORT, BUTTON_RIGHT_PIN);
+	
+	// set output pins
+	sbi(WINCH_PWR_DDR, WINCH_PWR_PIN);
 }
 
 // Timer1 (16 Bit) is used for the winch.
@@ -135,13 +148,13 @@ void PWM_init(void)
 	// Enable output pins
 	WINCH_DDR |= (1 << WINCH_PIN);
 
-	// OC1A: Fast PWM, 16 Bit, TOP = ICR1, non-inverting output
+	// OC1A: Fast PWM, 16 Bit, TOP = ICR1, non-inverting output, prescaler 8
 	TCCR1A = (1 << WGM11) | (1 << COM1A1);
-	TCCR1B = (1 << WGM12) | (1 << WGM13) | (1 << CS10);
+	TCCR1B = (1 << WGM12) | (1 << WGM13) | (1 << CS11);
 
-	// count from 0 - 20000 = 20ms @ 1 MHz
-	ICR1 = 20000;
-	OCR1A = 1500; // stand still
+	// count from 0 - 25600 = 20ms @ 10240 Hz with prescaler of 8
+	ICR1 = 25600;
+	OCR1A = 1920 + (PWM_CENTER_OFFSET); // 1,5 ms pluse = stand still
 }
 
 // Use speed percentage in the range -100..100.
@@ -156,7 +169,10 @@ void winch_speed(int8_t percentage)
 		percentage = -100;
 	}
 
-	OCR1A = 1500 + PWM_RANGE * (int16_t)percentage / 100;
+	uint16_t val = 1920 + (PWM_CENTER_OFFSET) + (int16_t)((int32_t)PWM_RANGE * (int32_t)percentage / 100);
+	UART_PUTF("PWM %d\r\n", val);
+
+	OCR1A = val;
 }
 
 // Accelerate from one speed to another one in the given amount of ms.
@@ -165,6 +181,15 @@ void winch_accelerate(int8_t startPercentage, int8_t endPercentage, uint16_t ms)
 {
 	int16_t steps = ms / 20;
 	int16_t speed;
+	
+	if ((startPercentage == 0) && (endPercentage != 0)) // switch power ON
+	{
+		UART_PUTS("Switching winch power ON\r\n");
+		sbi(WINCH_PWR_PORT, WINCH_PWR_PIN);
+		_delay_ms(1000);
+		sbi(WINCH_DDR, WINCH_PIN);
+		_delay_ms(1000);
+	}
 	
 	/*
 	UART_PUTF("startPercentage: %d\r\n", startPercentage);
@@ -175,12 +200,26 @@ void winch_accelerate(int8_t startPercentage, int8_t endPercentage, uint16_t ms)
 	for (uint8_t i = 0; i < steps; i++)
 	{
 		speed = startPercentage + ((int16_t)endPercentage - startPercentage) * i / steps;
+		UART_PUTS("SPD ");
+		print_signed(speed);
+		UART_PUTS("% ");
 		winch_speed(speed);
 		_delay_ms(20);
 	}
 	
 	winch_speed(endPercentage);
 	UART_PUTF("end: %d\r\n", endPercentage);
+	
+	if ((startPercentage != 0) && (endPercentage == 0)) // switch power OFF
+	{
+		UART_PUTS("Switching winch power OFF\r\n");
+		_delay_ms(1000);
+		cbi(WINCH_PWR_PORT, WINCH_PWR_PIN);
+		_delay_ms(1000);
+		cbi(WINCH_DDR, WINCH_PIN);
+		_delay_ms(1000);
+	}
+
 }
 
 void print_switch_state(void)
@@ -526,9 +565,21 @@ int main(void)
 	// init AES key
 	e2p_generic_get_aeskey(aes_key);
 	
-	//PWM_init();
+	PWM_init();
 	
 	io_init();
+	
+	
+	// winch test
+	while (42)
+	{
+		winch_accelerate(0, 100, 1000);
+		_delay_ms(1000);
+		winch_accelerate(100, -100, 2000);
+		_delay_ms(1000);
+		winch_accelerate(-100, 0, 1000);
+		_delay_ms(10000);
+	}
 	
 	onewire_init();
 	
@@ -574,6 +625,9 @@ int main(void)
 	uint8_t warming_PWM_cycle_cec = 0;
 	
 	load_preset(0);
+	
+	
+	
 	
 	while (1)
 	{
@@ -707,18 +761,6 @@ int main(void)
 	}
 	
 	
-	
-	/* // winch test
-	while (42)
-	{
-		winch_accelerate(0, 20, 500);
-		winch_accelerate(20, 100, 500);
-		_delay_ms(500);
-		winch_accelerate(100, 15, 1000);
-		_delay_ms(500);
-		winch_accelerate(15, 0, 500);
-		_delay_ms(3000);
-	} */
 	
 
 //	rfm_watchdog_init(device_id, e2p_powerswitch_get_transceiverwatchdogtimeout(), RFM_RESET_PORT_NR, RFM_RESET_PIN);
