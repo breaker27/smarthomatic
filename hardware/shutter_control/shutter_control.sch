@@ -14399,8 +14399,10 @@ Source: http://ecb.omron.com.sg/pdf/relay/power/G6D.pdf</description>
 </sheets>
 <errors>
 <approved hash="104,1,68.58,53.34,IC2,VDD,N$22,,,"/>
-<approved hash="104,1,-25.4,17.78,IC1,VCC,+3V3,,,"/>
-<approved hash="104,1,-25.4,-5.08,IC1,AGND,GND,,,"/>
+<approved hash="104,1,-48.26,17.78,IC1,VCC,+3V3,,,"/>
+<approved hash="104,1,-48.26,-5.08,IC1,AGND,GND,,,"/>
+<approved hash="111,1,45.72,10.16,N$31,,,,,"/>
+<approved hash="111,1,45.72,12.7,N$31,,,,,"/>
 </errors>
 </schematic>
 </drawing>
