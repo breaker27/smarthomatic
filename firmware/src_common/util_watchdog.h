@@ -33,13 +33,16 @@ void rfm_watchdog_alive(void);
 
 /*
  * Tell watchdog the (additional) time that passed till last call of this
- * function. The watchdog will automatically start a retry after timeout.
+ * function. The watchdog will automatically restart the RFM (soft reset) or reset
+ * the ATMega if the total time is bigger than the configured timeout_10sec value.
  */
 void rfm_watchdog_count(uint16_t ms);
 
 /*
  * If startup was by error (e.g. watchdog), send an error message once and return true.
  * Otherwise, do nothing and return false;
+ * Should be called after startup of the ATMega to send the startup reason when
+ * this RFM watchdog function is used.
  */
 bool send_startup_reason(uint8_t *mcusr_mirror);
 
