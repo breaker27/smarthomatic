@@ -59,6 +59,7 @@
 // If not, only sw reset is used.
 #define RFM_RESET_PIN 3
 #define RFM_RESET_PORT_NR 1
+#define RFM_RESET_PIN_STATE 1
 
 // These are the PWM values for 0%..100% (AKA 1V..10V output),
 // calculated by measuring the output voltage and linear interpolation
@@ -532,7 +533,7 @@ int main(void)
 	uart_init();
 	UART_PUTS ("\r\n");
 	UART_PUTF4("smarthomatic Dimmer v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
-	UART_PUTS("(c) 2013..2015 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTS("(c) 2013..2018 Uwe Freese, www.smarthomatic.org\r\n");
 	osccal_info();
 	UART_PUTF ("DeviceID: %u\r\n", device_id);
 	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);
@@ -542,7 +543,7 @@ int main(void)
 	// init AES key
 	e2p_generic_get_aeskey(aes_key);
 	
-	rfm_watchdog_init(device_id, e2p_dimmer_get_transceiverwatchdogtimeout(), RFM_RESET_PORT_NR, RFM_RESET_PIN);
+	rfm_watchdog_init(device_id, e2p_dimmer_get_transceiverwatchdogtimeout(), RFM_RESET_PORT_NR, RFM_RESET_PIN, RFM_RESET_PIN_STATE);
 	rfm12_init();
 
 	PWM_init();

@@ -63,6 +63,7 @@
 // If not, only sw reset is used.
 #define RFM_RESET_PIN 3
 #define RFM_RESET_PORT_NR 1
+#define RFM_RESET_PIN_STATE 1
 
 #define SEND_STATUS_EVERY_SEC 1800 // how often should a status be sent?
 #define SEND_VERSION_STATUS_CYCLE 50 // send version status x times less than switch status (~once per day)
