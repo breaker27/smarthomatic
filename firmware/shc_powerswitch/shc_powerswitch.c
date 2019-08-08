@@ -70,6 +70,7 @@ uint16_t device_id;
 uint32_t station_packetcounter;
 bool switch_state[RELAIS_COUNT];
 uint16_t switch_timeout[RELAIS_COUNT];
+uint8_t switch_mode[RELAIS_COUNT];
 
 uint16_t send_status_timeout = 5;
 uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly after startup
@@ -93,7 +94,7 @@ void print_switch_state(void)
 
 		if (switch_timeout[i - 1])
 		{
-			UART_PUTF(" (Timeout: %us)", switch_timeout[i - 1]);
+			UART_PUTF2(" (Timeout: %us, Mode: %u)", switch_timeout[i - 1], switch_mode[i - 1]);
 		}
 
 		UART_PUTS("\r\n");
@@ -144,6 +145,7 @@ void send_deviceinfo_status(void)
 	rfm12_send_bufx();
 }
 
+// Switch the relais according explicit parameters and switch_mode set in e2p.
 void switchRelais(int8_t num, bool on, uint16_t timeout, bool dbgmsg)
 {
 	if (dbgmsg)
@@ -317,7 +319,7 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 
 	UART_PUTS("\r\n");
 
-	// In all cases, use the digitalporttimer message as answer.
+	// In all cases, use the digitalporttimeout message as answer.
 	// It contains the data for *all* pins and *all* timer values.
 
 	// "Set" -> send "Ack"
@@ -443,18 +445,23 @@ int main(void)
 	// read device id
 	device_id = e2p_generic_get_deviceid();
 
+	// read switch mode
+	for (i = 0; i < RELAIS_COUNT; i++)
+	{
+		switch_mode[i] = e2p_powerswitch_get_switchmode(i);
+	}
+
 	osccal_init();
 
 	uart_init();
 
 	UART_PUTS ("\r\n");
 	UART_PUTF4("smarthomatic Power Switch v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
-	UART_PUTS("(c) 2013..2018 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTS("(c) 2013..2019 Uwe Freese, www.smarthomatic.org\r\n");
 	osccal_info();
 	UART_PUTF ("DeviceID: %u\r\n", device_id);
 	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);
-	print_switch_state();
-	UART_PUTF ("Last received base station PacketCounter: %u\r\n\r\n", station_packetcounter);
+	UART_PUTF ("Last received base station PacketCounter: %u\r\n", station_packetcounter);
 
 	// init AES key
 	e2p_generic_get_aeskey(aes_key);
@@ -466,6 +473,9 @@ int main(void)
 	{
 		switchRelais(i, e2p_powerswitch_get_switchstate(i), e2p_powerswitch_get_switchtimeout(i), true);
 	}
+
+	print_switch_state();
+	UART_PUTS ("\r\n");
 
 	rfm_watchdog_init(device_id, e2p_powerswitch_get_transceiverwatchdogtimeout(), RFM_RESET_PORT_NR, RFM_RESET_PIN, RFM_RESET_PIN_STATE);
 	rfm12_init();
