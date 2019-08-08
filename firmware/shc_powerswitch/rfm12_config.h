@@ -60,8 +60,8 @@
 #define BIT_MISO 4
 #define BIT_SCK  5
 #define BIT_SPI_SS 2
-//this is the hardware SS pin of the AVR - it 
-//needs to be set to output for the spi-interface to work 
+//this is the hardware SS pin of the AVR - it
+//needs to be set to output for the spi-interface to work
 //correctly, independently of the CS pin used for the RFM12
 
 //frequency to use
@@ -87,7 +87,7 @@
 /**** INTERRUPT VECTOR
  * define the interrupt vector settings here
  */
- 
+
 //the interrupt vector
 #define RFM12_INT_VECT (INT0_vect)
 
