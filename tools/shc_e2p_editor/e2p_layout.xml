@@ -636,14 +636,14 @@
 			<Length>8</Length>
 			<BoolValue>
 				<ID>SwitchState</ID>
-				<Description>This field stores the last known switch state(s) for eight switches to allow restoring the same state after power loss. It contains also the remaining timeout value. Fill this with zeros when creating a e2p file!</Description>
+				<Description>This field stores the switch state(s) which were requested by one of the supported 'set' commands for eight switches to allow restoring the same state after power loss. Fill this with zeros when creating a e2p file!</Description>
 			</BoolValue>
 		</Array>
 		<Array>
 			<Length>8</Length>
 			<UIntValue>
 				<ID>SwitchTimeout</ID>
-				<Description>This field stores the last known switch state(s) for eight switches to allow restoring the same state after power loss. It contains also the remaining timeout value. Fill this with zeros when creating a e2p file!</Description>
+				<Description>This field stores the timeout value(s) which were requested by one of the supported 'set' commands for eight switches to allow restoring the same state after power loss. Fill this with zeros when creating a e2p file!</Description>
 				<Bits>16</Bits>
 				<MinVal>0</MinVal>
 				<MaxVal>65767</MaxVal>
