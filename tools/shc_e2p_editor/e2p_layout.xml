@@ -635,15 +635,15 @@
 		<Array>
 			<Length>8</Length>
 			<BoolValue>
-				<ID>SwitchState</ID>
-				<Description>This field stores the switch state(s) which were requested by one of the supported 'set' commands for eight switches to allow restoring the same state after power loss. Fill this with zeros when creating a e2p file!</Description>
+				<ID>CMDState</ID>
+				<Description>This field stores the switch state(s) which were requested by one of the supported 'set'/'setget' commands for eight switches to allow restoring the same state after power loss. Fill this with zeros when creating a e2p file!</Description>
 			</BoolValue>
 		</Array>
 		<Array>
 			<Length>8</Length>
 			<UIntValue>
-				<ID>SwitchTimeout</ID>
-				<Description>This field stores the timeout value(s) which were requested by one of the supported 'set' commands for eight switches to allow restoring the same state after power loss. Fill this with zeros when creating a e2p file!</Description>
+				<ID>CMDTimeout</ID>
+				<Description>This field stores the timeout value(s) which were requested by one of the supported 'set'/'setget' commands for eight switches to allow restoring the same state after power loss. Fill this with zeros when creating a e2p file!</Description>
 				<Bits>16</Bits>
 				<MinVal>0</MinVal>
 				<MaxVal>65767</MaxVal>
@@ -661,7 +661,7 @@
 			<Length>8</Length>
 			<EnumValue>
 				<ID>SwitchMode</ID>
-				<Description>The mode decides how the optional manual switches are used in combination to the SwitchState command to set the relais status. In general, the status according SwitchState command (CMD) and the switch (SW) can be combined by 'and', 'or' or 'xor'. Additionally the switch can be active open or active close and therefore can be inversed ('not'). 'CMD' and '(not) SW' mean that only the command or switch are considered. The default value is to ignore the optional manual switch.</Description>
+				<Description>The mode decides how the optional manual switches are used in combination to the digital pin/port commands to set the relais status. In general, the status according digital pin/port command (CMD) and the switch (SW) can be combined by 'and', 'or' or 'xor'. Additionally the switch can be active open or active close and therefore can be inversed ('not'). 'CMD' and '(not) SW' mean that only the command or switch are considered. The default value is to ignore the optional manual switch.</Description>
 				<Bits>8</Bits>
 				<Element>
 					<Value>0</Value>

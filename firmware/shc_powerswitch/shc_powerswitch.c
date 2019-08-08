@@ -175,9 +175,9 @@ void switchRelais(int8_t num, bool on, uint16_t timeout, bool dbgmsg)
 		}
 	}
 
-	if (e2p_powerswitch_get_switchstate(num) != on)
+	if (e2p_powerswitch_get_cmdstate(num) != on)
 	{
-		e2p_powerswitch_set_switchstate(num, on);
+		e2p_powerswitch_set_cmdstate(num, on);
 	}
 
 	if (switch_timeout[num] != timeout)
@@ -185,9 +185,9 @@ void switchRelais(int8_t num, bool on, uint16_t timeout, bool dbgmsg)
 		switch_timeout[num] = timeout;
 	}
 
-	if (e2p_powerswitch_get_switchtimeout(num) != timeout)
+	if (e2p_powerswitch_get_cmdtimeout(num) != timeout)
 	{
-		e2p_powerswitch_set_switchtimeout(num, timeout);
+		e2p_powerswitch_set_cmdtimeout(num, timeout);
 	}
 }
 
@@ -471,7 +471,7 @@ int main(void)
 	// read (saved) switch state from before the eventual powerloss
 	for (i = 0; i < RELAIS_COUNT; i++)
 	{
-		switchRelais(i, e2p_powerswitch_get_switchstate(i), e2p_powerswitch_get_switchtimeout(i), true);
+		switchRelais(i, e2p_powerswitch_get_cmdstate(i), e2p_powerswitch_get_cmdtimeout(i), true);
 	}
 
 	print_switch_state();

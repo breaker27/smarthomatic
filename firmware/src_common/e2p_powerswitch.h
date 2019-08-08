@@ -65,36 +65,36 @@ static inline uint32_t e2p_powerswitch_get_basestationpacketcounter(void)
   return eeprom_read_UIntValue32(520, 24, 0, 16777215);
 }
 
-// SwitchState (BoolValue[8])
-// Description: This field stores the last known switch state(s) for eight switches to allow restoring the same state after power loss. It contains also the remaining timeout value. Fill this with zeros when creating a e2p file!
+// CMDState (BoolValue[8])
+// Description: This field stores the switch state(s) which were requested by one of the supported 'set'/'setget' commands for eight switches to allow restoring the same state after power loss. Fill this with zeros when creating a e2p file!
 
-// Set SwitchState (BoolValue)
+// Set CMDState (BoolValue)
 // Offset: 544, length bits 8
-static inline void e2p_powerswitch_set_switchstate(uint8_t index, bool val)
+static inline void e2p_powerswitch_set_cmdstate(uint8_t index, bool val)
 {
   eeprom_write_UIntValue(544 + (uint16_t)index * 8, 8, val ? 1 : 0);
 }
 
-// Get SwitchState (BoolValue)
+// Get CMDState (BoolValue)
 // Offset: 544, length bits 8
-static inline bool e2p_powerswitch_get_switchstate(uint8_t index)
+static inline bool e2p_powerswitch_get_cmdstate(uint8_t index)
 {
   return eeprom_read_UIntValue8(544 + (uint16_t)index * 8, 8, 0, 1) == 1;
 }
 
-// SwitchTimeout (UIntValue[8])
-// Description: This field stores the last known switch state(s) for eight switches to allow restoring the same state after power loss. It contains also the remaining timeout value. Fill this with zeros when creating a e2p file!
+// CMDTimeout (UIntValue[8])
+// Description: This field stores the timeout value(s) which were requested by one of the supported 'set'/'setget' commands for eight switches to allow restoring the same state after power loss. Fill this with zeros when creating a e2p file!
 
-// Set SwitchTimeout (UIntValue)
+// Set CMDTimeout (UIntValue)
 // Offset: 608, length bits 16, min val 0, max val 65767
-static inline void e2p_powerswitch_set_switchtimeout(uint8_t index, uint16_t val)
+static inline void e2p_powerswitch_set_cmdtimeout(uint8_t index, uint16_t val)
 {
   eeprom_write_UIntValue(608 + (uint16_t)index * 16, 16, val);
 }
 
-// Get SwitchTimeout (UIntValue)
+// Get CMDTimeout (UIntValue)
 // Offset: 608, length bits 16, min val 0, max val 65767
-static inline uint16_t e2p_powerswitch_get_switchtimeout(uint8_t index)
+static inline uint16_t e2p_powerswitch_get_cmdtimeout(uint8_t index)
 {
   return eeprom_read_UIntValue16(608 + (uint16_t)index * 16, 16, 0, 65767);
 }
@@ -117,7 +117,7 @@ static inline uint8_t e2p_powerswitch_get_transceiverwatchdogtimeout(void)
 }
 
 // SwitchMode (EnumValue[8])
-// Description: The mode decides how the optional manual switches are used in combination to the SwitchState command to set the relais status. In general, the status according SwitchState command (CMD) and the switch (SW) can be combined by 'and', 'or' or 'xor'. Additionally the switch can be active open or active close and therefore can be inversed ('not'). 'CMD' and '(not) SW' mean that only the command or switch are considered. The default value is to ignore the optional manual switch.
+// Description: The mode decides how the optional manual switches are used in combination to the digital pin/port commands to set the relais status. In general, the status according digital pin/port command (CMD) and the switch (SW) can be combined by 'and', 'or' or 'xor'. Additionally the switch can be active open or active close and therefore can be inversed ('not'). 'CMD' and '(not) SW' mean that only the command or switch are considered. The default value is to ignore the optional manual switch.
 
 #ifndef _ENUM_SwitchMode
 #define _ENUM_SwitchMode
