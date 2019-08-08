@@ -35,17 +35,17 @@
 // Description: This is a bit field about the connected switches.
 
 // Set SupportedSwitches (UIntValue)
-// Offset: 512, length bits 8, min val 1, max val 6
+// Offset: 512, length bits 8, min val 1, max val 3
 static inline void e2p_powerswitch_set_supportedswitches(uint8_t val)
 {
   eeprom_write_UIntValue(512, 8, val);
 }
 
 // Get SupportedSwitches (UIntValue)
-// Offset: 512, length bits 8, min val 1, max val 6
+// Offset: 512, length bits 8, min val 1, max val 3
 static inline uint8_t e2p_powerswitch_get_supportedswitches(void)
 {
-  return eeprom_read_UIntValue8(512, 8, 1, 6);
+  return eeprom_read_UIntValue8(512, 8, 1, 3);
 }
 
 // BaseStationPacketCounter (UIntValue)
@@ -116,8 +116,40 @@ static inline uint8_t e2p_powerswitch_get_transceiverwatchdogtimeout(void)
   return eeprom_read_UIntValue8(736, 8, 0, 255);
 }
 
-// Reserved area with 7448 bits
-// Offset: 744
+// SwitchMode (EnumValue[8])
+// Description: The mode decides how the optional manual switches are used in combination to the SwitchState command to set the relais status. In general, the status according SwitchState command (CMD) and the switch (SW) can be combined by 'and', 'or' or 'xor'. Additionally the switch can be active open or active close and therefore can be inversed ('not'). 'CMD' and '(not) SW' mean that only the command or switch are considered. The default value is to ignore the optional manual switch.
+
+#ifndef _ENUM_SwitchMode
+#define _ENUM_SwitchMode
+typedef enum {
+  SWITCHMODE_CMD = 0,
+  SWITCHMODE_SW = 1,
+  SWITCHMODE_NOT_SW = 2,
+  SWITCHMODE_CMD_AND_SW = 3,
+  SWITCHMODE_CMD_OR_SW = 4,
+  SWITCHMODE_CMD_XOR_SW = 5,
+  SWITCHMODE_CMD_AND_NOT_SW = 6,
+  SWITCHMODE_CMD_OR_NOT_SW = 7,
+  SWITCHMODE_CMD_XOR_NOT_SW = 8
+} SwitchModeEnum;
+#endif /* _ENUM_SwitchMode */
+
+// Set SwitchMode (EnumValue)
+// Offset: 744, length bits 8
+static inline void e2p_powerswitch_set_switchmode(uint8_t index, SwitchModeEnum val)
+{
+  eeprom_write_UIntValue(744 + (uint16_t)index * 8, 8, val);
+}
+
+// Get SwitchMode (EnumValue)
+// Offset: 744, length bits 8
+static inline SwitchModeEnum e2p_powerswitch_get_switchmode(uint8_t index)
+{
+  return eeprom_read_UIntValue8(744 + (uint16_t)index * 8, 8, 0, 255);
+}
+
+// Reserved area with 7384 bits
+// Offset: 808
 
 
 #endif /* _E2P_POWERSWITCH_H */
