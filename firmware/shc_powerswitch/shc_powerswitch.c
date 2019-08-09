@@ -68,20 +68,39 @@
 
 uint16_t device_id;
 uint32_t station_packetcounter;
-bool switch_state[RELAIS_COUNT];
-uint16_t switch_timeout[RELAIS_COUNT];
-uint8_t switch_mode[RELAIS_COUNT];
+
+bool cmd_state[RELAIS_COUNT];       // state as requested by command
+bool switch_state[RELAIS_COUNT];    // state as set by the manual switch
+bool relais_state[RELAIS_COUNT];    // resulting relais state as combination of cmd_state and switch_state
+uint16_t cmd_timeout[RELAIS_COUNT]; // timeout as requested by command
+uint8_t switch_mode[RELAIS_COUNT];  // defines how cmd_state and switch_state are combined to set relais state
 
 uint16_t send_status_timeout = 5;
 uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly after startup
 
-void print_switch_state(void)
+void print_states(void)
 {
 	uint8_t i;
 
 	for (i = 1; i <= RELAIS_COUNT; i++)
 	{
-		UART_PUTF("Switch %u ", i);
+		UART_PUTF("Relais %u: CMD=", i);
+
+		if (cmd_state[i - 1])
+		{
+			UART_PUTS("ON");
+		}
+		else
+		{
+			UART_PUTS("OFF");
+		}
+
+		if (cmd_timeout[i - 1])
+		{
+			UART_PUTF(" (Timeout: %us)", cmd_timeout[i - 1]);
+		}
+
+		UART_PUTS(", SWITCH=");
 
 		if (switch_state[i - 1])
 		{
@@ -92,9 +111,15 @@ void print_switch_state(void)
 			UART_PUTS("OFF");
 		}
 
-		if (switch_timeout[i - 1])
+		UART_PUTF(" (Mode: %u) -> RELAIS=", switch_mode[i - 1]);
+
+		if (relais_state[i - 1])
 		{
-			UART_PUTF2(" (Timeout: %us, Mode: %u)", switch_timeout[i - 1], switch_mode[i - 1]);
+			UART_PUTS("ON");
+		}
+		else
+		{
+			UART_PUTS("OFF");
 		}
 
 		UART_PUTS("\r\n");
@@ -107,7 +132,7 @@ void send_gpio_digitalporttimeout_status(void)
 
 	UART_PUTS("Sending GPIO DigitalPortTimeout Status:\r\n");
 
-	print_switch_state();
+	print_states();
 
 	inc_packetcounter();
 
@@ -118,8 +143,8 @@ void send_gpio_digitalporttimeout_status(void)
 
 	for (i = 0; i < RELAIS_COUNT; i++)
 	{
-		msg_gpio_digitalporttimeout_set_on(i, switch_state[i]);
-		msg_gpio_digitalporttimeout_set_timeoutsec(i, switch_timeout[i]);
+		msg_gpio_digitalporttimeout_set_on(i, cmd_state[i]);
+		msg_gpio_digitalporttimeout_set_timeoutsec(i, cmd_timeout[i]);
 	}
 
 	rfm12_send_bufx();
@@ -145,12 +170,70 @@ void send_deviceinfo_status(void)
 	rfm12_send_bufx();
 }
 
+// Calculate the relais state out of cmd_state, switch_state and switch_mode
+// and switch the relais.
+void update_relais_states(void)
+{
+	uint8_t i;
+	uint8_t relaisStateOld;
+
+	for (i = 0; i < RELAIS_COUNT; i++)
+	{
+		relaisStateOld = relais_state[i];
+
+		switch (switch_mode[i])
+		{
+			case SWITCHMODE_SW:
+				relais_state[i] = switch_state[i];
+			case SWITCHMODE_NOT_SW:
+				relais_state[i] = !switch_state[i];
+			case SWITCHMODE_CMD_AND_SW:
+				relais_state[i] = cmd_state[i] && switch_state[i];
+			case SWITCHMODE_CMD_AND_NOT_SW:
+				relais_state[i] = cmd_state[i] && (!switch_state[i]);
+			case SWITCHMODE_CMD_OR_SW:
+				relais_state[i] = cmd_state[i] || switch_state[i];
+			case SWITCHMODE_CMD_OR_NOT_SW:
+				relais_state[i] = cmd_state[i] || (!switch_state[i]);
+			case SWITCHMODE_CMD_XOR_SW:
+				relais_state[i] = cmd_state[i] ^ switch_state[i];
+			case SWITCHMODE_CMD_XOR_NOT_SW:
+				relais_state[i] = cmd_state[i] ^ (!switch_state[i]);
+			default: // SWITCHMODE_CMD (= default) and all other values
+				relais_state[i] = cmd_state[i];
+				break;
+		}
+
+		if (relaisStateOld != relais_state[i])
+		{
+			if (relais_state[i])
+			{
+				sbi(RELAIS_PORT, RELAIS_PIN_START + i);
+
+				if (i == 0)
+				{
+					switch_led(1);
+				}
+			}
+			else
+			{
+				cbi(RELAIS_PORT, RELAIS_PIN_START + i);
+
+				if (i == 0)
+				{
+					switch_led(0);
+				}
+			}
+		}
+	}
+}
+
 // Switch the relais according explicit parameters and switch_mode set in e2p.
-void switchRelais(int8_t num, bool on, uint16_t timeout, bool dbgmsg)
+void set_cmd_state(int8_t num, bool on, uint16_t timeout, bool dbgmsg)
 {
 	if (dbgmsg)
 	{
-		UART_PUTF3("Switching relais %u to %u with timeout %us.\r\n", num + 1, on, timeout);
+		UART_PUTF3("Switching cmd state %u to %u with timeout %us.\r\n", num + 1, on, timeout);
 	}
 
 	if (num >= RELAIS_COUNT)
@@ -159,36 +242,20 @@ void switchRelais(int8_t num, bool on, uint16_t timeout, bool dbgmsg)
 		return;
 	}
 
-	if (switch_state[num] != on)
-	{
-		switch_state[num] = on;
-
-		if (on)
-		{
-			sbi(RELAIS_PORT, RELAIS_PIN_START + num);
-			switch_led(1);
-		}
-		else
-		{
-			cbi(RELAIS_PORT, RELAIS_PIN_START + num);
-			switch_led(0);
-		}
-	}
+	cmd_state[num] = on;
+	cmd_timeout[num] = timeout;
 
 	if (e2p_powerswitch_get_cmdstate(num) != on)
 	{
 		e2p_powerswitch_set_cmdstate(num, on);
 	}
 
-	if (switch_timeout[num] != timeout)
-	{
-		switch_timeout[num] = timeout;
-	}
-
 	if (e2p_powerswitch_get_cmdtimeout(num) != timeout)
 	{
 		e2p_powerswitch_set_cmdtimeout(num, timeout);
 	}
+
+	update_relais_states();
 }
 
 void process_gpio_digitalport(MessageTypeEnum messagetype)
@@ -203,7 +270,7 @@ void process_gpio_digitalport(MessageTypeEnum messagetype)
 		{
 			bool req_on = msg_gpio_digitalport_get_on(i);
 			UART_PUTF2("On[%u]:%u;", i, req_on);
-			switchRelais(i, req_on, 0, false);
+			set_cmd_state(i, req_on, 0, false);
 		}
 	}
 }
@@ -216,7 +283,7 @@ void process_gpio_digitalpin(MessageTypeEnum messagetype)
 		uint8_t req_pos = msg_gpio_digitalpin_get_pos();
 		bool req_on = msg_gpio_digitalpin_get_on();
 		UART_PUTF2("Pos:%u;On:%u;", req_pos, req_on);
-		switchRelais(req_pos, req_on, 0, false);
+		set_cmd_state(req_pos, req_on, 0, false);
 	}
 }
 
@@ -236,7 +303,7 @@ void process_gpio_digitalporttimeout(MessageTypeEnum messagetype)
 			UART_PUTF2("On[%u]:%u;", i, req_on);
 			UART_PUTF2("TimeoutSec[%u]:%u;", i, req_timeout);
 
-			switchRelais(i, req_on, req_timeout, false);
+			set_cmd_state(i, req_on, req_timeout, false);
 		}
 	}
 }
@@ -251,7 +318,7 @@ void process_gpio_digitalpintimeout(MessageTypeEnum messagetype)
 		uint16_t req_timeout = msg_gpio_digitalpintimeout_get_timeoutsec();
 		UART_PUTF2("Pos:%u;On:%u;", req_pos, req_on);
 		UART_PUTF("TimeoutSec:%u;", req_timeout);
-		switchRelais(req_pos, req_on, req_timeout, false);
+		set_cmd_state(req_pos, req_on, req_timeout, false);
 	}
 }
 
@@ -340,8 +407,8 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		for (i = 0; i < RELAIS_COUNT; i++)
 		{
 			// set message data
-			msg_gpio_digitalporttimeout_set_on(i, switch_state[i]);
-			msg_gpio_digitalporttimeout_set_timeoutsec(i, switch_timeout[i]);
+			msg_gpio_digitalporttimeout_set_on(i, cmd_state[i]);
+			msg_gpio_digitalporttimeout_set_timeoutsec(i, cmd_timeout[i]);
 		}
 
 		UART_PUTS("Sending AckStatus\r\n");
@@ -468,13 +535,13 @@ int main(void)
 
 	led_blink(500, 500, 3);
 
-	// read (saved) switch state from before the eventual powerloss
+	// read (saved) cmd state from before the eventual powerloss
 	for (i = 0; i < RELAIS_COUNT; i++)
 	{
-		switchRelais(i, e2p_powerswitch_get_cmdstate(i), e2p_powerswitch_get_cmdtimeout(i), true);
+		set_cmd_state(i, e2p_powerswitch_get_cmdstate(i), e2p_powerswitch_get_cmdtimeout(i), true);
 	}
 
-	print_switch_state();
+	print_states();
 	UART_PUTS ("\r\n");
 
 	rfm_watchdog_init(device_id, e2p_powerswitch_get_transceiverwatchdogtimeout(), RFM_RESET_PORT_NR, RFM_RESET_PIN, RFM_RESET_PIN_STATE);
@@ -524,7 +591,7 @@ int main(void)
 		// flash LED every second to show the device is alive
 		if (loop == 50)
 		{
-			if (switch_timeout[0])
+			if (cmd_timeout[0])
 			{
 				led_blink(10, 10, 1);
 			}
@@ -534,14 +601,14 @@ int main(void)
 			// Check timeouts and toggle switches
 			for (i = 0; i < RELAIS_COUNT; i++)
 			{
-				if (switch_timeout[i])
+				if (cmd_timeout[i])
 				{
-					switch_timeout[i]--;
+					cmd_timeout[i]--;
 
-					if (switch_timeout[i] == 0)
+					if (cmd_timeout[i] == 0)
 					{
 						UART_PUTS("Timeout! ");
-						switchRelais(i, !switch_state[i], 0, true);
+						set_cmd_state(i, !cmd_state[i], 0, true);
 						send_status_timeout = 1; // immediately send the status update
 					}
 				}
@@ -573,7 +640,7 @@ int main(void)
 			_delay_ms(20);
 		}
 
-		switch_led(switch_state[0]);
+		switch_led(cmd_state[0]);
 
 		rfm_watchdog_count(20);
 
@@ -593,7 +660,7 @@ int main(void)
 			if (button) // on button press
 			{
 				UART_PUTS("Button! ");
-				switchRelais(0, !switch_state[0], 0, true);
+				set_cmd_state(0, !cmd_state[0], 0, true);
 				send_status_timeout = 15; // send status after 15s
 			}
 		}
