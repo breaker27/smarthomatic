@@ -254,8 +254,26 @@ void set_cmd_state(int8_t num, bool on, uint16_t timeout, bool dbgmsg)
 	{
 		e2p_powerswitch_set_cmdtimeout(num, timeout);
 	}
+}
 
-	update_relais_states();
+// Read the states of the manual switches (from IO pins).
+// Currently only one switch is supported.
+// Return if there was any change.
+bool update_switch_states(void)
+{
+	uint8_t oldState;
+	bool change = false;
+
+	if (switch_mode[0] != SWITCHMODE_CMD)
+	{
+		oldState = switch_state[0];
+
+		switch_state[0] = !(SWITCH_PINPORT & (1 << SWITCH_PIN));
+
+		change = change || (oldState != switch_state[0]);
+	}
+
+	return change;
 }
 
 void process_gpio_digitalport(MessageTypeEnum messagetype)
@@ -271,6 +289,7 @@ void process_gpio_digitalport(MessageTypeEnum messagetype)
 			bool req_on = msg_gpio_digitalport_get_on(i);
 			UART_PUTF2("On[%u]:%u;", i, req_on);
 			set_cmd_state(i, req_on, 0, false);
+			update_relais_states();
 		}
 	}
 }
@@ -284,6 +303,7 @@ void process_gpio_digitalpin(MessageTypeEnum messagetype)
 		bool req_on = msg_gpio_digitalpin_get_on();
 		UART_PUTF2("Pos:%u;On:%u;", req_pos, req_on);
 		set_cmd_state(req_pos, req_on, 0, false);
+		update_relais_states();
 	}
 }
 
@@ -304,6 +324,7 @@ void process_gpio_digitalporttimeout(MessageTypeEnum messagetype)
 			UART_PUTF2("TimeoutSec[%u]:%u;", i, req_timeout);
 
 			set_cmd_state(i, req_on, req_timeout, false);
+			update_relais_states();
 		}
 	}
 }
@@ -319,6 +340,7 @@ void process_gpio_digitalpintimeout(MessageTypeEnum messagetype)
 		UART_PUTF2("Pos:%u;On:%u;", req_pos, req_on);
 		UART_PUTF("TimeoutSec:%u;", req_timeout);
 		set_cmd_state(req_pos, req_on, req_timeout, false);
+		update_relais_states();
 	}
 }
 
@@ -409,6 +431,9 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 			// set message data
 			msg_gpio_digitalporttimeout_set_on(i, cmd_state[i]);
 			msg_gpio_digitalporttimeout_set_timeoutsec(i, cmd_timeout[i]);
+
+			// set "virtual" pin states reflecting the manual switch states
+			msg_gpio_digitalporttimeout_set_on(i + 4, switch_state[i]);
 		}
 
 		UART_PUTS("Sending AckStatus\r\n");
@@ -518,6 +543,14 @@ int main(void)
 		switch_mode[i] = e2p_powerswitch_get_switchmode(i);
 	}
 
+	// Init IO pin(s) for switches.
+	// Only one switch is currently supported!
+	if (switch_mode[0] != SWITCHMODE_CMD)
+	{
+		cbi(SWITCH_DDR, SWITCH_PIN);
+		sbi(SWITCH_PORT, SWITCH_PIN);
+	}
+
 	osccal_init();
 
 	uart_init();
@@ -541,7 +574,10 @@ int main(void)
 		set_cmd_state(i, e2p_powerswitch_get_cmdstate(i), e2p_powerswitch_get_cmdtimeout(i), true);
 	}
 
+	update_switch_states();
+	update_relais_states();
 	print_states();
+
 	UART_PUTS ("\r\n");
 
 	rfm_watchdog_init(device_id, e2p_powerswitch_get_transceiverwatchdogtimeout(), RFM_RESET_PORT_NR, RFM_RESET_PIN, RFM_RESET_PIN_STATE);
@@ -609,6 +645,7 @@ int main(void)
 					{
 						UART_PUTS("Timeout! ");
 						set_cmd_state(i, !cmd_state[i], 0, true);
+						update_relais_states();
 						send_status_timeout = 1; // immediately send the status update
 					}
 				}
@@ -661,6 +698,17 @@ int main(void)
 			{
 				UART_PUTS("Button! ");
 				set_cmd_state(0, !cmd_state[0], 0, true);
+				update_relais_states();
+				send_status_timeout = 15; // send status after 15s
+			}
+		}
+
+		if (loop % 8 == 0) // update every 200ms
+		{
+			if (update_switch_states())
+			{
+				UART_PUTF("Switch state changed to %u\n", switch_state[0]);
+				update_relais_states();
 				send_status_timeout = 15; // send status after 15s
 			}
 		}
