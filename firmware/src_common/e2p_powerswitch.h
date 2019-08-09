@@ -117,7 +117,7 @@ static inline uint8_t e2p_powerswitch_get_transceiverwatchdogtimeout(void)
 }
 
 // SwitchMode (EnumValue[8])
-// Description: The mode decides how the optional manual switches are used in combination to the digital pin/port commands to set the relais status. In general, the status according digital pin/port command (CMD) and the switch (SW) can be combined by 'and', 'or' or 'xor'. Additionally the switch can be active open or active close and therefore can be inversed ('not'). 'CMD' and '(not) SW' mean that only the command or switch are considered. The default value is to ignore the optional manual switch.
+// Description: The mode decides how the optional manual switches are used in combination to the digital pin/port commands to set the relais status. In general, the status according digital pin/port command (CMD) and the switch (SW) can be combined by 'and', 'or' or 'xor'. Additionally the switch can be active open or active close and therefore can be inverted ('not'). 'CMD' and '(not) SW' mean that only the command or switch are considered. The default value is to ignore the optional manual switch.
 
 #ifndef _ENUM_SwitchMode
 #define _ENUM_SwitchMode
@@ -126,10 +126,10 @@ typedef enum {
   SWITCHMODE_SW = 1,
   SWITCHMODE_NOT_SW = 2,
   SWITCHMODE_CMD_AND_SW = 3,
-  SWITCHMODE_CMD_OR_SW = 4,
-  SWITCHMODE_CMD_XOR_SW = 5,
-  SWITCHMODE_CMD_AND_NOT_SW = 6,
-  SWITCHMODE_CMD_OR_NOT_SW = 7,
+  SWITCHMODE_CMD_AND_NOT_SW = 4,
+  SWITCHMODE_CMD_OR_SW = 5,
+  SWITCHMODE_CMD_OR_NOT_SW = 6,
+  SWITCHMODE_CMD_XOR_SW = 7,
   SWITCHMODE_CMD_XOR_NOT_SW = 8
 } SwitchModeEnum;
 #endif /* _ENUM_SwitchMode */

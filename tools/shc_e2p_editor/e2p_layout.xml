@@ -661,7 +661,7 @@
 			<Length>8</Length>
 			<EnumValue>
 				<ID>SwitchMode</ID>
-				<Description>The mode decides how the optional manual switches are used in combination to the digital pin/port commands to set the relais status. In general, the status according digital pin/port command (CMD) and the switch (SW) can be combined by 'and', 'or' or 'xor'. Additionally the switch can be active open or active close and therefore can be inversed ('not'). 'CMD' and '(not) SW' mean that only the command or switch are considered. The default value is to ignore the optional manual switch.</Description>
+				<Description>The mode decides how the optional manual switches are used in combination to the digital pin/port commands to set the relais status. In general, the status according digital pin/port command (CMD) and the switch (SW) can be combined by 'and', 'or' or 'xor'. Additionally the switch can be active open or active close and therefore can be inverted ('not'). 'CMD' and '(not) SW' mean that only the command or switch are considered. The default value is to ignore the optional manual switch.</Description>
 				<Bits>8</Bits>
 				<Element>
 					<Value>0</Value>
@@ -681,19 +681,19 @@
 				</Element>
 				<Element>
 					<Value>4</Value>
-					<Name>CMD or SW</Name>
-				</Element>
-				<Element>
-					<Value>5</Value>
-					<Name>CMD xor SW</Name>
-				</Element>
-				<Element>
-					<Value>6</Value>
 					<Name>CMD and not SW</Name>
 				</Element>
 				<Element>
-					<Value>7</Value>
+					<Value>5</Value>
+					<Name>CMD or SW</Name>
+				</Element>
+				<Element>
+					<Value>6</Value>
 					<Name>CMD or not SW</Name>
+				</Element>
+				<Element>
+					<Value>7</Value>
+					<Name>CMD xor SW</Name>
 				</Element>
 				<Element>
 					<Value>8</Value>
