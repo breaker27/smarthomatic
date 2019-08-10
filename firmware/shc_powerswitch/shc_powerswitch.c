@@ -145,6 +145,9 @@ void send_gpio_digitalporttimeout_status(void)
 	{
 		msg_gpio_digitalporttimeout_set_on(i, cmd_state[i]);
 		msg_gpio_digitalporttimeout_set_timeoutsec(i, cmd_timeout[i]);
+
+		// set "virtual" pin states reflecting the manual switch states
+		msg_gpio_digitalporttimeout_set_on(i + 4, switch_state[i]);
 	}
 
 	rfm12_send_bufx();
