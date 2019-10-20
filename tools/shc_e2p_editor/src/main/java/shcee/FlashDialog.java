@@ -40,32 +40,32 @@ import javax.swing.JTextField;
 public class FlashDialog extends JDialog
 {
 	private static final long serialVersionUID = -5437332123602239488L;
-	
+
 	private static String DEFAULT_CMD_WINDOWS = "avrdude.exe -p #DEVICE# -U eeprom:w:#FILENAME#:r";
 	private static String DEFAULT_CMD_LINUX = "xterm -hold -e avrdude -p #DEVICE# -U eeprom:w:#FILENAME#:r";
-	
+
 	private JTextField textField;
 	private int e2pLength;
 	private String e2pFilename;
 	private String microcontrollerModel;
-	
+
 	public FlashDialog(int e2pLength, String e2pFilename, String microcontrollerModel)
 	{
 		this.e2pLength = e2pLength;
 		this.e2pFilename = e2pFilename;
 		this.microcontrollerModel = microcontrollerModel;
-		
+
 		this.setTitle("Flash e2p file to device");
-		
+
 		addComponents();
 
 		loadProperties();
-		
+
 		setModal(true);
 		pack();
 		setLocationRelativeTo(null);
 		setResizable(false);
-		
+
 		textField.requestFocusInWindow();
 
 		// Add window listener to detect when window is closed.
@@ -79,18 +79,18 @@ public class FlashDialog extends JDialog
 
 		setVisible(true);
 	}
-	
+
 	private void addComponents()
 	{
-		JPanel panel = new JPanel();  
-		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));  
+		JPanel panel = new JPanel();
+		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		
+
 		JLabel l1 = new JLabel("Enter command for flashing e2p file");
 		l1.setFont(new Font(l1.getFont().getName(), Font.BOLD, l1.getFont().getSize()));
 		l1.setAlignmentX(Component.LEFT_ALIGNMENT);
 		panel.add(l1);
-		
+
 		panel.add(Box.createRigidArea(new Dimension(0, 10)));
 		panel.add(new JLabel("#DEVICE# will be replaced by the microcontroller model defined in the e2p layout or (if not defined) m328p or m168p according to e2p size"));
 		panel.add(new JLabel("#FILENAME# will be replaced by the e2p filename"));
@@ -103,38 +103,38 @@ public class FlashDialog extends JDialog
 		panel.add(textField);
 
 		panel.add(Box.createRigidArea(new Dimension(0, 10)));
-		
+
 		JButton buttonFlash = new JButton("Flash");
 		JButton buttonRestoreDefaults = new JButton("Restore Defaults");
 		JButton buttonCancel = new JButton("Cancel");
-		
+
 		buttonFlash.setMnemonic('f');
-		
+
 		buttonFlash.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e)
             {
                 onButtonFlash();
             }
         });
-		
+
 		buttonRestoreDefaults.setMnemonic('d');
-		
+
 		buttonRestoreDefaults.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e)
             {
                 onButtonRestoreDefaults();
             }
         });
-		
+
 		buttonCancel.setMnemonic('c');
-		
+
 		buttonCancel.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e)
             {
                 onButtonCancel();
             }
         });
-		
+
 		JPanel buttonPane = new JPanel();
 		buttonPane.setLayout(new BoxLayout(buttonPane, BoxLayout.LINE_AXIS));
 		//buttonPane.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
@@ -145,33 +145,40 @@ public class FlashDialog extends JDialog
 		buttonPane.add(Box.createRigidArea(new Dimension(10, 0)));
 		buttonPane.add(buttonCancel);
 		buttonPane.setAlignmentX(Component.LEFT_ALIGNMENT);
-		
+
 		panel.add(buttonPane);
-		
+
 		this.add(panel);
 
 		getRootPane().setDefaultButton(buttonFlash);
 	}
-	
+
 	private void onButtonFlash()
 	{
 		String cmdLineS = textField.getText();
-		
+
 		if (microcontrollerModel != null)
 		{
 			cmdLineS = cmdLineS.replace("#DEVICE#", microcontrollerModel);
 		}
 		else if (e2pLength > 4096)
-		{			
+		{
 			cmdLineS = cmdLineS.replace("#DEVICE#", "m328p");
 		}
 		else
 		{
-			cmdLineS = cmdLineS.replace("#DEVICE#", "m168p");	
+			cmdLineS = cmdLineS.replace("#DEVICE#", "m168p");
 		}
-		
-		cmdLineS = cmdLineS.replace("#FILENAME#", "\"" + e2pFilename + "\"");
-		
+
+		if (Util.runsOnWindows())
+		{
+			cmdLineS = cmdLineS.replace("#FILENAME#", "\"" + e2pFilename + "\"");
+		}
+		else
+		{
+			cmdLineS = cmdLineS.replace("#FILENAME#", e2pFilename);
+		}
+
 		try
 		{
 			Util.execute(cmdLineS);
@@ -182,7 +189,7 @@ public class FlashDialog extends JDialog
 			e.printStackTrace();
 		}
 	}
-	
+
 	private void onButtonRestoreDefaults()
 	{
 		textField.setText(Util.runsOnWindows() ? DEFAULT_CMD_WINDOWS : DEFAULT_CMD_LINUX);
@@ -202,7 +209,7 @@ public class FlashDialog extends JDialog
 		if (!SHCEEMain.propFlashCmd.equals(""))
 			textField.setText(SHCEEMain.propFlashCmd);
 	}
-	
+
 	/**
 	 * Persist parameters to a file.
 	 */
