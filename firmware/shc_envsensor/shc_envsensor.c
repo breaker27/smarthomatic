@@ -149,14 +149,14 @@ void enablePCI(uint8_t port_nr, uint8_t pin)
 uint8_t getPinStatus(uint8_t port_nr, uint8_t pin)
 {
 	uint8_t val;
-	
+
 	if (port_nr == 2)
 		val = PIND;
 	else if (port_nr == 1)
 		val = PINC;
 	else
 		val = PINB;
-		
+
 	return (val >> pin) & 1;
 }
 
@@ -185,7 +185,7 @@ void clearPullUp(uint8_t port_nr, uint8_t pin)
 void remember_di_state(void)
 {
 	uint8_t i;
-	
+
 	for (i = 0; i < 8; i++)
 	{
 		if (di[i].pin != DI_UNUSED)
@@ -201,7 +201,7 @@ void init_di_sensor(void)
 	uint8_t i;
 	uint8_t measInt = e2p_envsensor_get_digitalinputmeasuringinterval();
 	uint8_t avgInt = e2p_envsensor_get_digitalinputaveraginginterval();
-	
+
 	for (i = 0; i < 8; i++)
 	{
 		uint8_t pin = e2p_envsensor_get_digitalinputpin(i);
@@ -211,7 +211,7 @@ void init_di_sensor(void)
 		di[i].meas.measInt = measInt;
 		di[i].meas.measCnt = 0;
 		di[i].meas.avgInt = avgInt;
-		
+
 		if (pin == 0) // not used
 		{
 			di[i].pin = DI_UNUSED;
@@ -225,11 +225,11 @@ void init_di_sensor(void)
 			di[i].port = (pin - 1) / 8;
 			di[i].pin = (pin - 1) % 8;
 			di[i].mode = mode;
-			
+
 			if (di[i].mode != DIGITALINPUTTRIGGERMODE_OFF)
 			{
 				enablePCI(di[i].port, di[i].pin); // enable Pin Change Interrupt
-				
+
 				if (di[i].pull_up)
 				{
 					setPullUp(di[i].port, di[i].pin); // when using PCI, pullups should be active
@@ -238,7 +238,7 @@ void init_di_sensor(void)
 
 			UART_PUTF3("Using port %u pin %u as digital input pin %u ", di[i].port, di[i].pin, i);
 			UART_PUTF2("in mode %u with pull-up %s\r\n", mode, di[i].pull_up ? "ON" : "OFF");
-			
+
 			di_sensor_used = true;
 
 			// remember to send out status after power up
@@ -257,9 +257,9 @@ void init_ai_sensor(void)
 	uint8_t i;
 	uint8_t measInt = e2p_envsensor_get_analoginputmeasuringinterval();
 	uint8_t avgInt = e2p_envsensor_get_analoginputaveraginginterval();
-	
+
 	UART_PUTS("Init analog\r\n");
-	
+
 	for (i = 0; i < 5; i++)
 	{
 		uint8_t pin = e2p_envsensor_get_analoginputpin(i);
@@ -269,7 +269,7 @@ void init_ai_sensor(void)
 		ai[i].meas.measInt = measInt;
 		ai[i].meas.measCnt = 0;
 		ai[i].meas.avgInt = avgInt;
-		
+
 		if (pin == 0) // not used
 		{
 			ai[i].pin = DI_UNUSED;
@@ -285,15 +285,15 @@ void init_ai_sensor(void)
 			ai[i].hyst = e2p_envsensor_get_analoginputtriggerhysteresis(i);
 			ai[i].val_ref = 0;
 			ai[i].over_thr = false;
-			
+
 			UART_PUTF2("Using port ADC%u as analog input pin %u ", ai[i].pin, i);
 			UART_PUTF3("in mode %u with threshold %umV and hysteresis %umV\r\n", mode, ai[i].thr, ai[i].hyst);
-			
+
 			ai_sensor_used = true;
 
 			// set DIDR for ADC channels, switch off digital input buffers to reduce ADC noise and to save power
 			sbi(DIDR0, ai[i].pin);
-	
+
 			// remember to send out status after power up
 			ai_change = true;
 		}
@@ -321,7 +321,7 @@ uint32_t power(uint32_t x, uint32_t y)
 
 	/* Wake-up time is calculated as T = M * 2 ^ R [ms]
 	Value is saved as RRRRRMMMMMMMM
-	
+
 	   Binary       Decimal     ms    equals
 	0001111111010   1018       2000      2s
 	0010011111010   1274       4000      4s
@@ -361,18 +361,18 @@ uint32_t power(uint32_t x, uint32_t y)
 uint16_t init_wakeup(void)
 {
 	uint16_t interval = e2p_envsensor_get_wakeupinterval();
-	
+
 	if (interval == 0) // misconficuration in E2P
 	{
 		interval = WAKEUPINTERVAL_105S;
 	}
-	
+
 	rfm12_set_wakeup_timer(interval);
-	
+
 	// Calculate wake-up time in seconds according RFM12B datasheet and round the value to seconds.
 	uint16_t sec = (uint16_t)(((interval & 0xff) * power(2, (interval >> 8) & 0b11111) + 500) / 1000);
 	UART_PUTF("Wake-up interval: %us\r\n", sec);
-	
+
 	return sec;
 }
 
@@ -382,14 +382,14 @@ uint16_t init_wakeup(void)
 bool countWakeup(struct measurement_t * m)
 {
 	m->wupCnt++;
-	
+
 	if (m->wupCnt >= m->measInt)
 	{
 		m->wupCnt = 0;
 		m->measCnt++;
 		return true;
 	}
-	
+
 	return false;
 }
 
@@ -406,7 +406,7 @@ void measure_digital_input(void)
 
 	uint8_t i;
 	bool wait_pullups = false;
-	
+
 	for (i = 0; i < 8; i++)
 	{
 		if ((di[i].pull_up) && (di[i].mode == DIGITALINPUTTRIGGERMODE_OFF))
@@ -415,19 +415,19 @@ void measure_digital_input(void)
 			wait_pullups = true;
 		}
 	}
-	
+
 	// wait a little bit to let the voltage level settle down in case pullups were just switched on
 	if (wait_pullups)
 	{
 		_delay_ms(5);
 	}
-	
+
 	for (i = 0; i < 8; i++)
 	{
 		if (di[i].pin != DI_UNUSED)
 		{
 			uint8_t stat = getPinStatus(di[i].port, di[i].pin);
-			
+
 			// if status changed in OnChange mode, remember to send immediately
 			if (pin_wakeup && (di[i].meas.val != stat)
 					&& ( (di[i].mode == DIGITALINPUTTRIGGERMODE_CHANGE)
@@ -443,11 +443,11 @@ void measure_digital_input(void)
 				UART_PUTF("Pin avgCnt reached -> send\r\n", i);
 				di_change = true;
 			}
-			
+
 			di[i].meas.val = stat; // TODO: Add averaging feature?
 		}
 	}
-	
+
 	for (i = 0; i < 8; i++)
 	{
 		if ((di[i].pull_up) && (di[i].mode == DIGITALINPUTTRIGGERMODE_OFF))
@@ -466,14 +466,14 @@ void measure_analog_input(void)
 
 	if (!countWakeup(&ai[0].meas)) // only use pin1 cnt, measInt and avgThr for all pins
 		return;
-	
+
 	for (i = 0; i < 5; i++)
 	{
 		if (ai[i].pin != DI_UNUSED)
 		{
 			// Maximum ADC value of 1023 = 1.1V. Save value in 0.1 mV.
 			uint16_t voltage = (uint16_t)(((uint32_t)read_adc(ai[i].pin) * 11000) / 1023);
-			
+
 			ai[i].meas.val += voltage; // accumulate values to calc average later on
 
 			if (ai[i].mode != ANALOGINPUTTRIGGERMODE_OFF)
@@ -483,31 +483,31 @@ void measure_analog_input(void)
 				{
 					ai[i].val_ref = voltage;
 				}
-				
+
 				bool trigger_down = ai[i].over_thr && (voltage / 10 + ai[i].hyst < ai[i].val_ref / 10); // beware of overflow!
 				bool trigger_up = !ai[i].over_thr && (voltage / 10 > ai[i].val_ref / 10 + ai[i].hyst);
 				bool trigger = trigger_down || trigger_up;
-				
+
 				if (trigger)
 				{
 					// When a trigger fires, reverse the direction for the next trigger.
 					ai[i].over_thr = !ai[i].over_thr;
 					ai[i].val_ref = voltage;
-					
+
 					// Check if the value has to be send (depending on the configuration).
 					if ( (trigger_down && (ai[i].mode == ANALOGINPUTTRIGGERMODE_DOWN))
 						|| (trigger_up && (ai[i].mode == ANALOGINPUTTRIGGERMODE_UP))
 						|| (ai[i].mode == ANALOGINPUTTRIGGERMODE_CHANGE))
 					{
 						ai_change = true;
-						
+
 						// use only current value instead of average
 						ai[i].meas.val = voltage;
 						ai[i].meas.measCnt = 1;
 					}
 				}
 			}
-			
+
 			//UART_PUTF2("voltage: %u, maes.val: %u, ", voltage, ai[i].meas.val);
 			//UART_PUTF3("val_ref: %u, over_thr: %u, ai_change: %u", ai[i].val_ref, ai[i].over_thr, ai_change);
 			//UART_PUTS("\r\n\r\n");
@@ -525,21 +525,21 @@ void sht11_measure_loop(void)
 {
 	sht11_start_measure();
 	_delay_ms(200);
-	
+
 	uint8_t i = 0;
-	
+
 	while (i < 100) // Abort at 1200ms. Measurement takes typically 420ms.
 	{
 		i++;
 		_delay_ms(10);
-		
+
 		if (sht11_measure_finish())
 		{
 			//UART_PUTF("SHT15 measurement took %dms\r\n", 200 + i * 10);
 			return;
 		}
 	}
-	
+
 	UART_PUTS("SHT15 measurement error.\r\n");
 }
 
@@ -574,7 +574,7 @@ void measure_temperature_1wire(void)
 {
 	if (temperature_sensor_type != TEMPERATURESENSORTYPE_DS18X20)
 		return;
-		
+
 	if (!countWakeup(&temperature))
 		return;
 
@@ -619,7 +619,7 @@ void measure_humidity_other(void)
 		{
 			sht11_measure_loop();
 		}
-	
+
 		humidity.val += sht11_get_hum();
 	}
 }
@@ -690,16 +690,16 @@ void prepare_digitalport(void)
 	pkg_header_init_gpio_digitalport_status();
 
 	UART_PUTS("Send DigitalPort: ");
-	
+
 	uint8_t i;
-	
+
 	for (i = 0; i < 8; i++)
 	{
-		
+
 		if (di[i].pin != DI_UNUSED)
 		{
 			UART_PUTF("%u", di[i].meas.val);
-			
+
 			msg_gpio_digitalport_set_on(i, di[i].meas.val != 0);
 		}
 		else
@@ -709,7 +709,7 @@ void prepare_digitalport(void)
 	}
 
 	UART_PUTS("\r\n");
-	
+
 	di[0].meas.wupCnt = 0;
 	di[0].meas.measCnt = 0;
 	di_change = false;
@@ -720,24 +720,24 @@ void prepare_analogport(void)
 	pkg_header_init_gpio_analogport_status();
 
 	UART_PUTS("Send AnalogPort:");
-	
+
 	uint8_t i;
-	
+
 	for (i = 0; i < 5; i++)
 	{
 		if (ai[i].pin != DI_UNUSED)
 		{
-			average(&ai[i].meas);
+			ai[i].meas.val /= ai[0].meas.measCnt; // use always measCnt of pin 1 struct
 			ai[i].meas.val = (ai[i].meas.val + 5) / 10; // round to mV
 
 			bool on = ((ai[i].mode == ANALOGINPUTTRIGGERMODE_OFF) && (ai[i].meas.val >= ai[i].thr))
 				|| ((ai[i].mode != ANALOGINPUTTRIGGERMODE_OFF) && ai[i].over_thr);
-		
+
 			UART_PUTF2(" %u/%u", ai[i].meas.val, on);
-			
+
 			msg_gpio_analogport_set_on(i, on);
 			msg_gpio_analogport_set_voltage(i, ai[i].meas.val);
-			
+
 			ai[i].meas.val = 0;
 		}
 		else
@@ -745,10 +745,11 @@ void prepare_analogport(void)
 			UART_PUTS(" -");
 		}
 	}
-	
-	ai[0].meas.wupCnt = 0;
+
 	UART_PUTS("\r\n");
 
+	ai[0].meas.wupCnt = 0;
+	ai[0].meas.measCnt = 0;
 	ai_change = false;
 }
 
@@ -781,7 +782,7 @@ void prepare_barometricpressuretemperature(void)
 	UART_PUTF("Send barometric pressure: %ld pascal, temperature: ", barometric_pressure.val);
 	print_signed(temperature.val);
 	UART_PUTS(" deg.C\r\n");
-	
+
 	barometric_pressure.val = 0;
 	temperature.val = 0;
 }
@@ -789,14 +790,14 @@ void prepare_barometricpressuretemperature(void)
 void prepare_temperature(void)
 {
 	average(&temperature);
-	
+
 	pkg_header_init_weather_temperature_status();
 	msg_weather_temperature_set_temperature(temperature.val);
-	
+
 	UART_PUTS("Send temperature: ");
 	print_signed(temperature.val);
 	UART_PUTS(" deg.C\r\n");
-	
+
 	temperature.val = 0;
 }
 
@@ -806,9 +807,9 @@ void prepare_distance(void)
 
 	pkg_header_init_environment_distance_status();
 	msg_environment_distance_set_distance(distance.val);
-	
+
 	UART_PUTF("Send distance: %d\r\n", distance.val);
-	
+
 	distance.val = 0;
 }
 void prepare_brightness(void)
@@ -818,9 +819,9 @@ void prepare_brightness(void)
 
 	pkg_header_init_environment_brightness_status();
 	msg_environment_brightness_set_brightness(brightness.val);
-	
+
 	UART_PUTF("Send brightness: %u%%\r\n", brightness.val);
-	
+
 	brightness.val = 0;
 }
 
@@ -831,7 +832,7 @@ void prepare_battery_voltage(void)
 
 	pkg_header_init_generic_batterystatus_status();
 	msg_generic_batterystatus_set_percentage(battery_voltage.val);
-				
+
 	UART_PUTF("Send battery: %u%%\r\n", battery_voltage.val);
 
 	battery_voltage.val = 0;
@@ -849,7 +850,7 @@ void prepare_deviceinfo(void)
 
 	UART_PUTF("Send DeviceInfo: DeviceType %u,", DEVICETYPE_ENVSENSOR);
 	UART_PUTF4(" v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
-	
+
 	version_wupCnt = 0;
 }
 
@@ -866,7 +867,7 @@ int main(void)
 	util_init();
 
 	sbi(ADC_PULLUP_DDR, ADC_PULLUP_PIN);
-	
+
 	check_eeprom_compatibility(DEVICETYPE_ENVSENSOR);
 
 	osccal_init();
@@ -885,17 +886,17 @@ int main(void)
 
 	// read device id
 	device_id = e2p_generic_get_deviceid();
-	
+
 	UART_PUTS ("\r\n");
 	UART_PUTF4("smarthomatic EnvSensor v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
-	UART_PUTS("(c) 2012..2015 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTS("(c) 2012..2019 Uwe Freese, www.smarthomatic.org\r\n");
 	osccal_info();
 	UART_PUTF ("Device ID: %u\r\n", device_id);
 	UART_PUTF ("Packet counter: %lu\r\n", packetcounter);
-	
+
 	init_di_sensor();
 	init_ai_sensor();
-	
+
 	// init AES key
 	e2p_generic_get_aeskey(aes_key);
 
@@ -911,7 +912,7 @@ int main(void)
 	battery_voltage.measInt = BATTERY_MEASURING_INTERVAL_SEC / wakeup_sec;
 	version_measInt = VERSION_MEASURING_INTERVAL_SEC / wakeup_sec;
 	version_wupCnt = version_measInt - 1; // send right after startup
-	
+
 	temperature.avgInt = e2p_envsensor_get_temperatureaveraginginterval();
 	humidity.avgInt = e2p_envsensor_get_humidityaveraginginterval();
 	barometric_pressure.avgInt = e2p_envsensor_get_barometricaveraginginterval();
@@ -941,7 +942,7 @@ int main(void)
 	{
 		onewire_init();
 		bool res = onewire_get_rom_id(rom_id);
-		
+
 		if (res) // error, no slave found
 		{
 			while (1)
@@ -949,13 +950,13 @@ int main(void)
 				led_blink(50, 50, 1);
 			}
 		}
-		
+
 		UART_PUTS("1-wire ROM ID: ");
 		print_bytearray(rom_id, 8);
-		
+
 		vempty = 1500; // 1.5V * 2 cells = 3.0V = min. voltage for DS18X20
 	}
-	
+
 	UART_PUTF3("Min. battery voltage: %umV (measInt %u, avgInt %u)\r\n", vempty, battery_voltage.measInt, battery_voltage.avgInt);
 
 	if ((barometric_sensor_type == BAROMETRICSENSORTYPE_BMP085)
@@ -974,7 +975,7 @@ int main(void)
 	UART_PUTS("\r\n");
 
 	led_blink(500, 500, 3);
-	
+
 	sei();
 
 	// If a SRF02 is connected, it is assumed that it is powered by a step up voltage converter,
@@ -1032,23 +1033,23 @@ int main(void)
 					cbi(SRF02_POWER_PORT, SRF02_POWER_PIN);
 				}
 			}
-			
+
 			if (srf02_connected && !measure_srf02)
 			{
 				distance.wupCnt++; // increase distance counter, because measure_distance_i2c() was not called
 			}
-			
+
 			// measure other values, non-I2C devices
 			measure_temperature_1wire();
 			measure_temperature_other();
 			measure_humidity_other();
-			
+
 			version_wupCnt++;
 		}
 
 		// search for value to send with avgInt reached
 		bool send = true;
-		
+
 		if (pin_wakeup && !di_change) // don't send update if pin level changed in "wrong" direction
 		{
 			send = false;
@@ -1093,14 +1094,14 @@ int main(void)
 		{
 			send = false;
 		}
-		
+
 		if (send)
 		{
 			inc_packetcounter();
-			
+
 			pkg_header_set_senderid(device_id);
 			pkg_header_set_packetcounter(packetcounter);
-			
+
 			rfm12_send_bufx();
 			rfm12_tick(); // send packet, and then WAIT SOME TIME BEFORE GOING TO SLEEP (otherwise packet would not be sent)
 
