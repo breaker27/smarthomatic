@@ -76,13 +76,13 @@
 
 /**** TX BUFFER SIZE
  */
-#define RFM12_TX_BUFFER_SIZE 50
+#define RFM12_TX_BUFFER_SIZE 64
 
 /**** RX BUFFER SIZE
  * there are going to be 2 Buffers of this size
  * (double_buffering)
  */
-#define RFM12_RX_BUFFER_SIZE 50
+#define RFM12_RX_BUFFER_SIZE 64
 
 /**** INTERRUPT VECTOR
  * define the interrupt vector settings here
