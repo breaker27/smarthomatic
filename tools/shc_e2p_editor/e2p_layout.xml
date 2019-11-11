@@ -222,8 +222,21 @@
 				<Name>SRF02</Name>
 			</Element>
 		</EnumValue>
+		<EnumValue>
+			<ID>ParticulateMatterSensorType</ID>
+			<Description>Choose one of the connected particulate matter sensor types.</Description>
+			<Bits>8</Bits>
+			<Element>
+				<Value>0</Value>
+				<Name>NoSensor</Name>
+			</Element>
+			<Element>
+				<Value>1</Value>
+				<Name>SPS30</Name>
+			</Element>
+		</EnumValue>
 		<Reserved>
-			<Bits>472</Bits>
+			<Bits>464</Bits>
 		</Reserved>
 		<EnumValue>
 			<ID>WakeupInterval</ID>
@@ -427,8 +440,24 @@
 			<MaxVal>16</MaxVal>
 			<DefaultVal>6</DefaultVal>
 		</UIntValue>
+		<UIntValue>
+			<ID>ParticulateMatterPauseInterval</ID>
+			<Description>The number of times the device wakes up after the last measuring interval ended before measuring starts again.</Description>
+			<Bits>16</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>65535</MaxVal>
+			<DefaultVal>100</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>ParticulateMatterMeasuringInterval</ID>
+			<Description>The number of times the device wakes up after measuring started before the measuring ends and the result is sent. Note that values are sent after (ParticulateMatterPauseInterval + ParticulateMatterMeasuringInterval) wakeups for this sensor type, not after ...MeasuringInterval * ...AveragingInterval wakeups, since this sensor type can not measure particles instantly, but needs some time to detect and count them. Therefore, ParticulateMatterMeasuringInterval is used to specify the length of the measurement.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>255</MaxVal>
+			<DefaultVal>2</DefaultVal>
+		</UIntValue>
 		<Reserved>
-			<Bits>384</Bits>
+			<Bits>360</Bits>
 		</Reserved>
 		<Array>
 			<Length>8</Length>
