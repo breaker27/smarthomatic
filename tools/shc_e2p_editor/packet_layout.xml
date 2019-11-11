@@ -587,6 +587,64 @@
 				<MaxVal>16383</MaxVal>
 			</UIntValue>
 		</Message>
+		<Message>
+			<Name>ParticulateMatterConfig</Name>
+			<Description/>
+			<MessageID>3</MessageID>
+			<MessageType>0</MessageType>
+			<MessageType>8</MessageType>
+			<MessageType>10</MessageType>
+			<Validity>test</Validity>
+			<Array>
+				<Length>5</Length>
+				<UIntValue>
+					<ID>MassConcentrationSize</ID>
+					<Description>Maximum particle size [1/10 µm] which is considered in the MassConcentrationValue[x] of the ParticulateMatter message. Use 0 when array element not used.</Description>
+					<Bits>8</Bits>
+					<MinVal>0</MinVal>
+					<MaxVal>255</MaxVal>
+					<DefaultVal>0</DefaultVal>
+				</UIntValue>
+			</Array>
+			<Array>
+				<Length>5</Length>
+				<UIntValue>
+					<ID>NumberConcentrationSize</ID>
+					<Description>Maximum particle size [1/10 µm] which is considered in the NumberConcentrationValue[x] of the ParticulateMatter message. Use 0 when array element not used.</Description>
+					<Bits>8</Bits>
+					<MinVal>0</MinVal>
+					<MaxVal>255</MaxVal>
+					<DefaultVal>0</DefaultVal>
+				</UIntValue>
+			</Array>
+		</Message>
+		<Message>
+			<Name>ParticulateMatter</Name>
+			<Description/>
+			<MessageID>4</MessageID>
+			<MessageType>0</MessageType>
+			<MessageType>8</MessageType>
+			<MessageType>10</MessageType>
+			<Validity>test</Validity>
+			<FloatValue>
+				<ID>TypicalParticleSize</ID>
+				<Description>Typical Particle Size [μm]</Description>
+			</FloatValue>
+			<Array>
+				<Length>5</Length>
+				<FloatValue>
+					<ID>MassConcentrationValue</ID>
+					<Description>Mass concentration [μg/m3], considering the MassConcentrationSize[x] of the ParticulateMatterConfig message.</Description>
+				</FloatValue>
+			</Array>
+			<Array>
+				<Length>5</Length>
+				<FloatValue>
+					<ID>NumberConcentrationValue</ID>
+					<Description>Number concentration [#/cm3], considering the NumberConcentrationSize[x] of the ParticulateMatterConfig message.</Description>
+				</FloatValue>
+			</Array>
+		</Message>
 	</MessageGroup>
 	<MessageGroup>
 		<Name>PowerSwitch</Name>
