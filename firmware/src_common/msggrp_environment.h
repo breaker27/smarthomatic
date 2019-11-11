@@ -1,6 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013..2014 Uwe Freese
+* Copyright (c) 2013..2019 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -42,7 +42,9 @@
 // ENUM for MessageIDs of this MessageGroup
 typedef enum {
   MESSAGEID_ENVIRONMENT_BRIGHTNESS = 1,
-  MESSAGEID_ENVIRONMENT_DISTANCE = 2
+  MESSAGEID_ENVIRONMENT_DISTANCE = 2,
+  MESSAGEID_ENVIRONMENT_PARTICULATEMATTERCONFIG = 3,
+  MESSAGEID_ENVIRONMENT_PARTICULATEMATTER = 4
 } ENVIRONMENT_MessageIDEnum;
 
 
@@ -169,6 +171,183 @@ static inline void msg_environment_distance_set_distance(uint32_t val)
 static inline uint32_t msg_environment_distance_get_distance(void)
 {
   return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 0, 14, 0, 16383, bufx);
+}
+
+
+// Message "environment_particulatematterconfig"
+// ---------------------------------------------
+// MessageGroupID: 11
+// MessageID: 3
+// Possible MessageTypes: Get, Status, AckStatus
+// Validity: test
+// Length w/o Header + HeaderExtension: 80 bits
+// Data fields: MassConcentrationSize, NumberConcentrationSize
+
+// Function to initialize header for the MessageType "Get".
+static inline void pkg_header_init_environment_particulatematterconfig_get(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(0);
+  pkg_headerext_get_set_messagegroupid(11);
+  pkg_headerext_get_set_messageid(3);
+  __HEADEROFFSETBITS = 95;
+  __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 0;
+}
+
+// Function to initialize header for the MessageType "Status".
+static inline void pkg_header_init_environment_particulatematterconfig_status(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(8);
+  pkg_headerext_status_set_messagegroupid(11);
+  pkg_headerext_status_set_messageid(3);
+  __HEADEROFFSETBITS = 83;
+  __PACKETSIZEBYTES = 32;
+  __MESSAGETYPE = 8;
+}
+
+// Function to initialize header for the MessageType "AckStatus".
+static inline void pkg_header_init_environment_particulatematterconfig_ackstatus(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(10);
+  pkg_headerext_ackstatus_set_messagegroupid(11);
+  pkg_headerext_ackstatus_set_messageid(3);
+  __HEADEROFFSETBITS = 120;
+  __PACKETSIZEBYTES = 32;
+  __MESSAGETYPE = 10;
+}
+
+// MassConcentrationSize (UIntValue[5])
+// Description: Maximum particle size [1/10 µm] which is considered in the MassConcentrationValue[x] of the ParticulateMatter message. Use 0 when array element not used.
+
+// Set MassConcentrationSize (UIntValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 8, length bits 8, min val 0, max val 255
+static inline void msg_environment_particulatematterconfig_set_massconcentrationsize(uint8_t index, uint32_t val)
+{
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 8, 8, val, bufx);
+}
+
+// Get MassConcentrationSize (UIntValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 8, length bits 8, min val 0, max val 255
+static inline uint32_t msg_environment_particulatematterconfig_get_massconcentrationsize(uint8_t index)
+{
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 0 + (uint16_t)index * 8, 8, 0, 255, bufx);
+}
+
+// NumberConcentrationSize (UIntValue[5])
+// Description: Maximum particle size [1/10 µm] which is considered in the NumberConcentrationValue[x] of the ParticulateMatter message. Use 0 when array element not used.
+
+// Set NumberConcentrationSize (UIntValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 40 + (uint16_t)index * 8, length bits 8, min val 0, max val 255
+static inline void msg_environment_particulatematterconfig_set_numberconcentrationsize(uint8_t index, uint32_t val)
+{
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 40 + (uint16_t)index * 8, 8, val, bufx);
+}
+
+// Get NumberConcentrationSize (UIntValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 40 + (uint16_t)index * 8, length bits 8, min val 0, max val 255
+static inline uint32_t msg_environment_particulatematterconfig_get_numberconcentrationsize(uint8_t index)
+{
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 40 + (uint16_t)index * 8, 8, 0, 255, bufx);
+}
+
+
+// Message "environment_particulatematter"
+// ---------------------------------------
+// MessageGroupID: 11
+// MessageID: 4
+// Possible MessageTypes: Get, Status, AckStatus
+// Validity: test
+// Length w/o Header + HeaderExtension: 352 bits
+// Data fields: TypicalParticleSize, MassConcentrationValue, NumberConcentrationValue
+
+// Function to initialize header for the MessageType "Get".
+static inline void pkg_header_init_environment_particulatematter_get(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(0);
+  pkg_headerext_get_set_messagegroupid(11);
+  pkg_headerext_get_set_messageid(4);
+  __HEADEROFFSETBITS = 95;
+  __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 0;
+}
+
+// Function to initialize header for the MessageType "Status".
+static inline void pkg_header_init_environment_particulatematter_status(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(8);
+  pkg_headerext_status_set_messagegroupid(11);
+  pkg_headerext_status_set_messageid(4);
+  __HEADEROFFSETBITS = 83;
+  __PACKETSIZEBYTES = 64;
+  __MESSAGETYPE = 8;
+}
+
+// Function to initialize header for the MessageType "AckStatus".
+static inline void pkg_header_init_environment_particulatematter_ackstatus(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(10);
+  pkg_headerext_ackstatus_set_messagegroupid(11);
+  pkg_headerext_ackstatus_set_messageid(4);
+  __HEADEROFFSETBITS = 120;
+  __PACKETSIZEBYTES = 64;
+  __MESSAGETYPE = 10;
+}
+
+// TypicalParticleSize (FloatValue)
+// Description: Typical Particle Size [μm]
+
+// Set TypicalParticleSize (FloatValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 32
+static inline void msg_environment_particulatematter_set_typicalparticlesize(float val)
+{
+  array_write_FloatValue((uint16_t)__HEADEROFFSETBITS + 0, val, bufx);
+}
+
+// Get TypicalParticleSize (FloatValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 32
+static inline float msg_environment_particulatematter_get_typicalparticlesize(void)
+{
+  return array_read_FloatValue((uint16_t)__HEADEROFFSETBITS + 0, bufx);
+}
+
+// MassConcentrationValue (FloatValue[5])
+// Description: Mass concentration [μg/m3], considering the MassConcentrationSize[x] of the ParticulateMatterConfig message.
+
+// Set MassConcentrationValue (FloatValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 32 + (uint16_t)index * 32, length bits 32
+static inline void msg_environment_particulatematter_set_massconcentrationvalue(uint8_t index, float val)
+{
+  array_write_FloatValue((uint16_t)__HEADEROFFSETBITS + 32 + (uint16_t)index * 32, val, bufx);
+}
+
+// Get MassConcentrationValue (FloatValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 32 + (uint16_t)index * 32, length bits 32
+static inline float msg_environment_particulatematter_get_massconcentrationvalue(uint8_t index)
+{
+  return array_read_FloatValue((uint16_t)__HEADEROFFSETBITS + 32 + (uint16_t)index * 32, bufx);
+}
+
+// NumberConcentrationValue (FloatValue[5])
+// Description: Number concentration [#/cm3], considering the NumberConcentrationSize[x] of the ParticulateMatterConfig message.
+
+// Set NumberConcentrationValue (FloatValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 192 + (uint16_t)index * 32, length bits 32
+static inline void msg_environment_particulatematter_set_numberconcentrationvalue(uint8_t index, float val)
+{
+  array_write_FloatValue((uint16_t)__HEADEROFFSETBITS + 192 + (uint16_t)index * 32, val, bufx);
+}
+
+// Get NumberConcentrationValue (FloatValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 192 + (uint16_t)index * 32, length bits 32
+static inline float msg_environment_particulatematter_get_numberconcentrationvalue(uint8_t index)
+{
+  return array_read_FloatValue((uint16_t)__HEADEROFFSETBITS + 192 + (uint16_t)index * 32, bufx);
 }
 
 #endif /* _MSGGRP_ENVIRONMENT_H */

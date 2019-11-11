@@ -1,6 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013..2014 Uwe Freese
+* Copyright (c) 2013..2019 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -161,8 +161,33 @@ static inline DistanceSensorTypeEnum e2p_envsensor_get_distancesensortype(void)
   return eeprom_read_UIntValue8(544, 8, 0, 255);
 }
 
-// Reserved area with 472 bits
-// Offset: 552
+// ParticulateMatterSensorType (EnumValue)
+// Description: Choose one of the connected particulate matter sensor types.
+
+#ifndef _ENUM_ParticulateMatterSensorType
+#define _ENUM_ParticulateMatterSensorType
+typedef enum {
+  PARTICULATEMATTERSENSORTYPE_NOSENSOR = 0,
+  PARTICULATEMATTERSENSORTYPE_SPS30 = 1
+} ParticulateMatterSensorTypeEnum;
+#endif /* _ENUM_ParticulateMatterSensorType */
+
+// Set ParticulateMatterSensorType (EnumValue)
+// Offset: 552, length bits 8
+static inline void e2p_envsensor_set_particulatemattersensortype(ParticulateMatterSensorTypeEnum val)
+{
+  eeprom_write_UIntValue(552, 8, val);
+}
+
+// Get ParticulateMatterSensorType (EnumValue)
+// Offset: 552, length bits 8
+static inline ParticulateMatterSensorTypeEnum e2p_envsensor_get_particulatemattersensortype(void)
+{
+  return eeprom_read_UIntValue8(552, 8, 0, 255);
+}
+
+// Reserved area with 464 bits
+// Offset: 560
 
 // WakeupInterval (EnumValue)
 // Description: Decide after which time the device should be woken up by the RFM12B transceiver to measure or send values.
@@ -446,8 +471,42 @@ static inline uint8_t e2p_envsensor_get_analoginputaveraginginterval(void)
   return eeprom_read_UIntValue8(1144, 8, 1, 16);
 }
 
-// Reserved area with 384 bits
-// Offset: 1152
+// ParticulateMatterPauseInterval (UIntValue)
+// Description: The number of times the device wakes up after the last measuring interval ended before measuring starts again.
+
+// Set ParticulateMatterPauseInterval (UIntValue)
+// Offset: 1152, length bits 16, min val 1, max val 65535
+static inline void e2p_envsensor_set_particulatematterpauseinterval(uint16_t val)
+{
+  eeprom_write_UIntValue(1152, 16, val);
+}
+
+// Get ParticulateMatterPauseInterval (UIntValue)
+// Offset: 1152, length bits 16, min val 1, max val 65535
+static inline uint16_t e2p_envsensor_get_particulatematterpauseinterval(void)
+{
+  return eeprom_read_UIntValue16(1152, 16, 1, 65535);
+}
+
+// ParticulateMatterMeasuringInterval (UIntValue)
+// Description: The number of times the device wakes up after measuring started before the measuring ends and the result is sent. Note that values are sent after (ParticulateMatterPauseInterval + ParticulateMatterMeasuringInterval) wakeups for this sensor type, not after ...MeasuringInterval * ...AveragingInterval wakeups, since this sensor type can not measure particles instantly, but needs some time to detect and count them. Therefore, ParticulateMatterMeasuringInterval is used to specify the length of the measurement.
+
+// Set ParticulateMatterMeasuringInterval (UIntValue)
+// Offset: 1168, length bits 8, min val 1, max val 255
+static inline void e2p_envsensor_set_particulatemattermeasuringinterval(uint8_t val)
+{
+  eeprom_write_UIntValue(1168, 8, val);
+}
+
+// Get ParticulateMatterMeasuringInterval (UIntValue)
+// Offset: 1168, length bits 8, min val 1, max val 255
+static inline uint8_t e2p_envsensor_get_particulatemattermeasuringinterval(void)
+{
+  return eeprom_read_UIntValue8(1168, 8, 1, 255);
+}
+
+// Reserved area with 360 bits
+// Offset: 1176
 
 // DigitalInputPin (EnumValue[8])
 // Description: You can choose up to 8 GPIO pins as digital input. The enum values are counting through every pin from port B, C and D, leaving out the pins that are not accessible because otherwise used.
