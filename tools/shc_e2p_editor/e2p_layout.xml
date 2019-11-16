@@ -441,23 +441,23 @@
 			<DefaultVal>6</DefaultVal>
 		</UIntValue>
 		<UIntValue>
-			<ID>ParticulateMatterPauseInterval</ID>
-			<Description>The number of times the device wakes up after the last measuring interval ended before measuring starts again.</Description>
-			<Bits>16</Bits>
-			<MinVal>1</MinVal>
-			<MaxVal>65535</MaxVal>
-			<DefaultVal>100</DefaultVal>
-		</UIntValue>
-		<UIntValue>
 			<ID>ParticulateMatterMeasuringInterval</ID>
-			<Description>The number of times the device wakes up after measuring started before the measuring ends and the result is sent. Note that values are sent after (ParticulateMatterPauseInterval + ParticulateMatterMeasuringInterval) wakeups for this sensor type, not after ...MeasuringInterval * ...AveragingInterval wakeups, since this sensor type can not measure particles instantly, but needs some time to detect and count them. Therefore, ParticulateMatterMeasuringInterval is used to specify the length of the measurement.</Description>
+			<Description>The number of times the device wakes up before this value is measured.</Description>
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>255</MaxVal>
-			<DefaultVal>2</DefaultVal>
+			<DefaultVal>1</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>ParticulateMatterAveragingInterval</ID>
+			<Description>The number of values whose average is calculated before sending.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>16</MaxVal>
+			<DefaultVal>4</DefaultVal>
 		</UIntValue>
 		<Reserved>
-			<Bits>360</Bits>
+			<Bits>368</Bits>
 		</Reserved>
 		<Array>
 			<Length>8</Length>
