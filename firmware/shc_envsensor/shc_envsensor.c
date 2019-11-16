@@ -1,6 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013 Uwe Freese
+* Copyright (c) 2013..2019 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -39,6 +39,7 @@
 #include "lm75.h"
 #include "bmp085.h"
 #include "srf02.h"
+#include "sps30.h"
 #include "sht2x_htu21d.h"
 #include "onewire.h"
 
@@ -64,6 +65,7 @@ uint8_t humidity_sensor_type = 0;
 uint8_t barometric_sensor_type = 0;
 uint8_t brightness_sensor_type = 0;
 uint8_t distance_sensor_type = 0;
+uint8_t particulate_matter_sensor_type = 0;
 uint32_t version_measInt;
 uint32_t version_wupCnt;
 uint16_t vempty = 1100; // 1.1V * 2 cells = 2.2V = min. voltage for RFM12B
@@ -83,6 +85,19 @@ struct measurement_t
 	uint8_t measCnt;  // The number of measurements that were taken since the last time the average was sent.
 	uint8_t avgInt;   // The number of values whose average is calculated before sending.
 } temperature, humidity, barometric_pressure, distance, battery_voltage, brightness;
+
+struct pm_measurement_t
+{
+	// The values are currently based on the SPS30.
+	// If other particulate matter sensors would be supported, the structure has to be changed accordingly.
+	float typicalParticleSize;
+	float massConcentration[4];
+	float numberConcentration[5];
+	uint16_t wupCnt;  // Amount of wake-up cycles counting from the last time a measurement was done.
+	uint16_t measInt; // The number of times the device wakes up before this value is measured.
+	uint8_t measCnt;  // The number of measurements that were taken since the last time the average was sent.
+	uint8_t avgInt;   // The number of values whose average is calculated before sending.
+} particulate_matter;
 
 struct di_portpin_t
 {
@@ -653,6 +668,59 @@ void measure_distance_i2c(void)
 	}
 }
 
+void measure_particulatematter_i2c(void)
+{
+	if (particulate_matter_sensor_type == PARTICULATEMATTERSENSORTYPE_NOSENSOR)
+		return;
+
+	particulate_matter.wupCnt++;
+
+	// start measuring?
+	if (particulate_matter.wupCnt >= particulate_matter.measInt)
+	{
+		particulate_matter.wupCnt = 0;
+
+		UART_PUTS("Start PM sensor\r\n");
+		sps30_start_measurement();
+
+		while (!sps30_read_data_ready())
+		{
+			_delay_ms(50);
+		}
+
+		_delay_ms(3500); // stabilize air flow
+
+		uint8_t i = 0;
+		uint8_t j;
+
+		// measure 4 times
+		while (i < 4)
+		{
+			_delay_ms(1100); // sensor has one new value every second
+
+			UART_PUTF("Measure %d...", i);
+
+			if (sps30_read_measured_values())
+			{
+				for (j = 0; j <= 3; j++)
+					particulate_matter.massConcentration[j] += sps30_get_measured_value(j);
+
+				for (j = 0; j <= 4; j++)
+					particulate_matter.numberConcentration[j] += sps30_get_measured_value(j + 4);
+
+				particulate_matter.typicalParticleSize += sps30_get_measured_value(9);
+
+				UART_PUTF("success, PM2.5 * 10 = %d\r\n", (int)(sps30_get_measured_value(1) * 10));
+				i++;
+			}
+		}
+
+		sps30_stop_measurement();
+
+		particulate_matter.measCnt++;
+	}
+}
+
 void measure_battery_voltage(void)
 {
 	if (!countWakeup(&battery_voltage))
@@ -812,6 +880,60 @@ void prepare_distance(void)
 
 	distance.val = 0;
 }
+
+// Round the float value used for pm sensors to an uint.
+// Multiply the value before with 10 or 100 to create the
+// 1/10 µm / 1/100 µm values as defined in the message.
+// Return UINT16_MAX-1 as maximum value, since UINT16_MAX
+// is used to indicate an invalid value.
+uint16_t pm_float2uint(float f)
+{
+	f += 0.5; // for rounding
+
+	if (f >= UINT16_MAX - 1)
+		return UINT16_MAX - 1;
+	else
+		return (uint16_t)f;
+}
+
+void prepare_particulate_matter(void)
+{
+	uint8_t i;
+
+	pkg_header_init_environment_particulatematter_status();
+
+	// set sizes
+	msg_environment_particulatematter_set_size(0, 5);
+	msg_environment_particulatematter_set_size(1, 10);
+	msg_environment_particulatematter_set_size(2, 25);
+	msg_environment_particulatematter_set_size(3, 40);
+	msg_environment_particulatematter_set_size(4, 100);
+
+	// set mass concentrations
+	msg_environment_particulatematter_set_massconcentration(0, UINT16_MAX); // value not used
+
+	for (i = 0; i <= 3; i++)
+	{
+		msg_environment_particulatematter_set_massconcentration(i + 1, pm_float2uint(particulate_matter.massConcentration[i] / 4 / particulate_matter.avgInt * 10));
+		particulate_matter.massConcentration[i] = 0; // reset value
+	}
+
+	// set number concentration
+	for (i = 0; i <= 4; i++)
+	{
+		msg_environment_particulatematter_set_numberconcentration(i, pm_float2uint(particulate_matter.numberConcentration[i] / 4 / particulate_matter.avgInt * 10));
+		particulate_matter.numberConcentration[i] = 0; // reset value
+	}
+
+	// set typical particle size
+	msg_environment_particulatematter_set_typicalparticlesize(particulate_matter.typicalParticleSize / 4 / particulate_matter.avgInt * 100);
+	particulate_matter.typicalParticleSize = 0; // reset value
+
+	UART_PUTF("Send PM: %d\r\n", 1234);
+
+	particulate_matter.measCnt = 0;
+}
+
 void prepare_brightness(void)
 {
 	average(&brightness);
@@ -883,6 +1005,7 @@ int main(void)
 	barometric_sensor_type = e2p_envsensor_get_barometricsensortype();
 	brightness_sensor_type = e2p_envsensor_get_brightnesssensortype();
 	distance_sensor_type = e2p_envsensor_get_distancesensortype();
+	particulate_matter_sensor_type = e2p_envsensor_get_particulatemattersensortype();
 
 	// read device id
 	device_id = e2p_generic_get_deviceid();
@@ -909,6 +1032,7 @@ int main(void)
 	barometric_pressure.measInt = e2p_envsensor_get_barometricmeasuringinterval();
 	brightness.measInt = e2p_envsensor_get_brightnessmeasuringinterval();
 	distance.measInt = e2p_envsensor_get_distancemeasuringinterval();
+	particulate_matter.measInt = e2p_envsensor_get_particulatemattermeasuringinterval();
 	battery_voltage.measInt = BATTERY_MEASURING_INTERVAL_SEC / wakeup_sec;
 	version_measInt = VERSION_MEASURING_INTERVAL_SEC / wakeup_sec;
 	version_wupCnt = version_measInt - 1; // send right after startup
@@ -918,6 +1042,7 @@ int main(void)
 	barometric_pressure.avgInt = e2p_envsensor_get_barometricaveraginginterval();
 	brightness.avgInt = e2p_envsensor_get_brightnessaveraginginterval();
 	distance.avgInt = e2p_envsensor_get_distanceaveraginginterval();
+	particulate_matter.avgInt = e2p_envsensor_get_particulatematteraveraginginterval();
 	battery_voltage.avgInt = BATTERY_AVERAGING_INTERVAL;
 
 	UART_PUTF3("Temperature sensor type: %u (measInt %u, avgInt %u)\r\n", temperature_sensor_type, temperature.measInt, temperature.avgInt);
@@ -925,6 +1050,7 @@ int main(void)
 	UART_PUTF3("Barometric sensor type: %u (measInt %u, avgInt %u)\r\n", barometric_sensor_type, barometric_pressure.measInt, barometric_pressure.avgInt);
 	UART_PUTF3("Brightness sensor type: %u (measInt %u, avgInt %u)\r\n", brightness_sensor_type, brightness.measInt, brightness.avgInt);
 	UART_PUTF3("Distance sensor type: %u (measInt %u, avgInt %u)\r\n", distance_sensor_type, distance.measInt, distance.avgInt);
+	UART_PUTF3("Particulate matter sensor type: %u (measInt %u, avgInt %u)\r\n", particulate_matter_sensor_type, particulate_matter.measInt, particulate_matter.avgInt);
 
 	adc_init();
 
@@ -987,7 +1113,8 @@ int main(void)
 		|| (temperature_sensor_type == TEMPERATURESENSORTYPE_BMP085)
 		|| (barometric_sensor_type == BAROMETRICSENSORTYPE_BMP085)
 		|| (temperature_sensor_type == TEMPERATURESENSORTYPE_SHT2X_HTU21D)
-		|| (humidity_sensor_type == HUMIDITYSENSORTYPE_SHT2X_HTU21D);
+		|| (humidity_sensor_type == HUMIDITYSENSORTYPE_SHT2X_HTU21D)
+		|| (particulate_matter_sensor_type == PARTICULATEMATTERSENSORTYPE_SPS30);
 
 	while (42)
 	{
@@ -1026,6 +1153,7 @@ int main(void)
 				measure_humidity_i2c();
 				measure_barometric_pressure_i2c();
 				measure_distance_i2c();
+				measure_particulatematter_i2c();
 				i2c_disable();
 
 				if (needs_power)
@@ -1077,6 +1205,10 @@ int main(void)
 		else if (distance.measCnt >= distance.avgInt)
 		{
 			prepare_distance();
+		}
+		else if (particulate_matter.measCnt >= particulate_matter.avgInt)
+		{
+			prepare_particulate_matter();
 		}
 		else if (brightness.measCnt >= brightness.avgInt)
 		{

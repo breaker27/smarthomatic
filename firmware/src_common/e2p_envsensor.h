@@ -471,42 +471,42 @@ static inline uint8_t e2p_envsensor_get_analoginputaveraginginterval(void)
   return eeprom_read_UIntValue8(1144, 8, 1, 16);
 }
 
-// ParticulateMatterPauseInterval (UIntValue)
-// Description: The number of times the device wakes up after the last measuring interval ended before measuring starts again.
-
-// Set ParticulateMatterPauseInterval (UIntValue)
-// Offset: 1152, length bits 16, min val 1, max val 65535
-static inline void e2p_envsensor_set_particulatematterpauseinterval(uint16_t val)
-{
-  eeprom_write_UIntValue(1152, 16, val);
-}
-
-// Get ParticulateMatterPauseInterval (UIntValue)
-// Offset: 1152, length bits 16, min val 1, max val 65535
-static inline uint16_t e2p_envsensor_get_particulatematterpauseinterval(void)
-{
-  return eeprom_read_UIntValue16(1152, 16, 1, 65535);
-}
-
 // ParticulateMatterMeasuringInterval (UIntValue)
-// Description: The number of times the device wakes up after measuring started before the measuring ends and the result is sent. Note that values are sent after (ParticulateMatterPauseInterval + ParticulateMatterMeasuringInterval) wakeups for this sensor type, not after ...MeasuringInterval * ...AveragingInterval wakeups, since this sensor type can not measure particles instantly, but needs some time to detect and count them. Therefore, ParticulateMatterMeasuringInterval is used to specify the length of the measurement.
+// Description: The number of times the device wakes up before this value is measured.
 
 // Set ParticulateMatterMeasuringInterval (UIntValue)
-// Offset: 1168, length bits 8, min val 1, max val 255
+// Offset: 1152, length bits 8, min val 1, max val 255
 static inline void e2p_envsensor_set_particulatemattermeasuringinterval(uint8_t val)
 {
-  eeprom_write_UIntValue(1168, 8, val);
+  eeprom_write_UIntValue(1152, 8, val);
 }
 
 // Get ParticulateMatterMeasuringInterval (UIntValue)
-// Offset: 1168, length bits 8, min val 1, max val 255
+// Offset: 1152, length bits 8, min val 1, max val 255
 static inline uint8_t e2p_envsensor_get_particulatemattermeasuringinterval(void)
 {
-  return eeprom_read_UIntValue8(1168, 8, 1, 255);
+  return eeprom_read_UIntValue8(1152, 8, 1, 255);
 }
 
-// Reserved area with 360 bits
-// Offset: 1176
+// ParticulateMatterAveragingInterval (UIntValue)
+// Description: The number of values whose average is calculated before sending.
+
+// Set ParticulateMatterAveragingInterval (UIntValue)
+// Offset: 1160, length bits 8, min val 1, max val 16
+static inline void e2p_envsensor_set_particulatematteraveraginginterval(uint8_t val)
+{
+  eeprom_write_UIntValue(1160, 8, val);
+}
+
+// Get ParticulateMatterAveragingInterval (UIntValue)
+// Offset: 1160, length bits 8, min val 1, max val 16
+static inline uint8_t e2p_envsensor_get_particulatematteraveraginginterval(void)
+{
+  return eeprom_read_UIntValue8(1160, 8, 1, 16);
+}
+
+// Reserved area with 368 bits
+// Offset: 1168
 
 // DigitalInputPin (EnumValue[8])
 // Description: You can choose up to 8 GPIO pins as digital input. The enum values are counting through every pin from port B, C and D, leaving out the pins that are not accessible because otherwise used.
