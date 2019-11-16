@@ -3,7 +3,7 @@
 ##########################################################################
 # This file is part of the smarthomatic module for FHEM.
 #
-# Copyright (c) 2014, 2015 Uwe Freese
+# Copyright (c) 2014, 2015, 2019 Uwe Freese
 #
 # You can find smarthomatic at www.smarthomatic.org.
 # You can find FHEM at www.fhem.de.
@@ -126,6 +126,18 @@ sub init_datafield_positions_noarray($$$$$)
       $offset += $bits;
     }
 
+    when ('FloatValue') {
+      my $id   = ($field->findnodes("ID"))[0]->textContent;
+      my $bits = 32;
+
+      # print "Data field " . $id . " starts at " . $offset . " with " . $bits . " bits.\n";
+
+      $dataFields{$messageGroupID . "-" . $messageID . "-" . $id} =
+        new FloatValue($id, $offset, $arrayLength, $arrayElementBits);
+
+      $offset += $bits;
+    }
+
     when ('BoolValue') {
       my $id   = ($field->findnodes("ID"))[0]->textContent;
       my $bits = 1;
@@ -152,7 +164,7 @@ sub init_datafield_positions_noarray($$$$$)
         my $name  = ($element->findnodes("Name"))[0]->textContent;
 
         $object->addValue($name, $value);
-		
+
 		# print "Enum value " . $value . " -> " . $name . "\n";
       }
 
@@ -172,7 +184,7 @@ sub init_datafield_positions_array($$$)
     calc_array_bits_ovr($field);    # number of bits for one struct ("set of sub-elements") in a structured array
    # print "Next field is an array with " . $arrayLength . " elements (" . $arrayElementBits . " ovr bits per array element)!\n";
 
-  for my $subfield ($field->findnodes("UIntValue|IntValue|BoolValue|EnumValue")) {
+  for my $subfield ($field->findnodes("UIntValue|IntValue|FloatValue|BoolValue|EnumValue")) {
     my $bits =
       init_datafield_positions_noarray($messageGroupID, $messageID, $subfield, $arrayLength, $arrayElementBits);
   }
@@ -192,6 +204,10 @@ sub calc_array_bits_ovr($)
 
   for my $subfield ($field->findnodes("UIntValue|IntValue|EnumValue")) {
     $bits += ($subfield->findnodes("Bits"))[0]->textContent;
+  }
+
+  for my $subfield ($field->findnodes("FloatValue")) {
+    $bits += 32;
   }
 
   return $bits;
@@ -228,7 +244,7 @@ sub init_datafield_positions()
 
       $offset = 0;
 
-      for my $field ($message->findnodes("Array|UIntValue|IntValue|BoolValue|EnumValue")) {
+      for my $field ($message->findnodes("Array|UIntValue|IntValue|FloatValue|BoolValue|EnumValue")) {
 
         # When an array is detected, remember the array length and change the current field node
         # to the inner node for further processing.
@@ -334,7 +350,7 @@ sub getField
   }
 
   my $obj = $dataFields{$self->{_messageGroupID} . "-" . $self->{_messageID} . "-" . $fieldName};
-  
+
   # add 256 "empty" bytes to have enough data in the array because the message may be truncated
   my @tmpArray = map hex("0x$_"), ($self->{_messageData} . ("00" x 256)) =~ /(..)/g;
 
@@ -397,7 +413,7 @@ sub getSendString
     . sprintf("%02X", $self->{_messageGroupID})
     . sprintf("%02X", $self->{_messageID})
     . getMessageData();
-  
+
   return $s . sprintf("%08x", crc32($s));
 }
 
