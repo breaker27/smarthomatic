@@ -2,7 +2,7 @@
 # This file is part of the smarthomatic module for FHEM.
 #
 # Copyright (c) 2014 Stefan Baumann
-#               2014..2015 Uwe Freese
+#               2014, 2015, 2019 Uwe Freese
 #
 # You can find smarthomatic at www.smarthomatic.org.
 # You can find FHEM at www.fhem.de.
@@ -118,7 +118,7 @@ sub SHCdev_Initialize($)
   $hash->{DefFn}    = "SHCdev_Define";
   $hash->{UndefFn}  = "SHCdev_Undef";
   $hash->{ParseFn}  = "SHCdev_Parse";
-  $hash->{AttrList} = "IODev" 
+  $hash->{AttrList} = "IODev"
                        ." readonly:1"
                        ." forceOn:1"
                        ." $readingFnAttributes"
@@ -345,6 +345,35 @@ sub SHCdev_Parse($$)
         when ('Distance') {
           my $brt = $parser->getField("Distance");
           readingsBulkUpdate($rhash, "distance", $brt);
+        }
+        when ('ParticulateMatter') {
+          my $size = $parser->getField("TypicalParticleSize");
+
+          if ($size != 65535) # 65535 means invalid
+          {
+            readingsBulkUpdate($rhash, "typicalParticleSize", $size / 100); # value was in 1/100 µm
+          }
+
+          for (my $i = 0 ; $i < 5 ; $i++) {
+            $size = $parser->getField("Size", $i);
+
+            if ($size) # 0 means array element not used
+            {
+              my $pmStr = int($size / 10) . "." . ($size % 10);
+              my $massConcentration = $parser->getField("MassConcentration", $i);
+              my $numberConcentration = $parser->getField("NumberConcentration", $i);
+
+              if ($massConcentration != 65535) # 65535 means invalid
+              {
+                readingsBulkUpdate($rhash, "massConcentration_PM" . $pmStr, $massConcentration / 10); # value was in 1/10 µm
+              }
+
+              if ($numberConcentration != 65535) # 65535 means invalid
+              {
+                readingsBulkUpdate($rhash, "numberConcentration_PM" . $pmStr, $numberConcentration / 10); # value was in 1/10 µm
+              }
+            }
+          }
         }
       }
     }
@@ -740,7 +769,7 @@ sub SHCdev_Send($)
 <a name="SHCdev"></a>
 <h3>SHCdev</h3>
 <ul>
-  SHC is the device module that supports several device types available 
+  SHC is the device module that supports several device types available
   at <a href="http://www.smarthomatic.org">www.smarthomatic.org</a>.<br><br>
 
   These device are connected to the FHEM server through the SHC base station (<a href="#SHC">SHC</a>).<br><br>
