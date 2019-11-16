@@ -20,7 +20,7 @@
 MCU		       = atmega328
 F_CPU	       = 1000000
 UART_BAUD_RATE = 4800
-#UART_DEBUG     = 1
+UART_DEBUG     = 1
 #UART_RX        = 1
 
 # Target file name (without extension).
@@ -29,7 +29,7 @@ TARGET = shc_envsensor
 # Source files (C dependencies are automatically generated).
 #   C			*.c
 #   Assembler	*.S
-CSRC = $(TARGET).c rfm12.c ../src_common/util.c ../src_common/uart.c ../src_common/aes256.c sht11.c fuses.c lm75.c i2c.c bmp085.c srf02.c sht2x_htu21d.c onewire.c
+CSRC = $(TARGET).c rfm12.c ../src_common/util.c ../src_common/uart.c ../src_common/aes256.c sht11.c fuses.c lm75.c i2c.c bmp085.c srf02.c sps30.c sht2x_htu21d.c onewire.c
 ASRC = ../src_common/aes_keyschedule-asm.S ../src_common/aes_enc-asm.S ../src_common/aes_dec-asm.S ../src_common/aes_sbox-asm.S
 FUSES = -U hfuse:w:hfuse.hex:i -U lfuse:w:lfuse.hex:i -U efuse:w:efuse.hex:i -u
 
