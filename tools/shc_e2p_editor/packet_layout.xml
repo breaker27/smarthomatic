@@ -597,10 +597,10 @@
 			<Validity>test</Validity>
 			<UIntValue>
 				<ID>TypicalParticleSize</ID>
-				<Description>Typical Particle Size [1/100 μm]. Use 65535 when value invalid.</Description>
-				<Bits>16</Bits>
+				<Description>Typical Particle Size [1/100 μm]. Use 1023 when value invalid.</Description>
+				<Bits>10</Bits>
 				<MinVal>0</MinVal>
-				<MaxVal>65535</MaxVal>
+				<MaxVal>1023</MaxVal>
 			</UIntValue>
 			<Array>
 				<Length>5</Length>
@@ -614,17 +614,17 @@
 				</UIntValue>
 				<UIntValue>
 					<ID>MassConcentration</ID>
-					<Description>Mass concentration [1/10 μg/m3], considering the defined size. Use 65535 when the value is invalid.</Description>
-					<Bits>16</Bits>
+					<Description>Mass concentration [1/10 μg/m3], considering the defined size. Use 1023 when the value is invalid.</Description>
+					<Bits>10</Bits>
 					<MinVal>0</MinVal>
-					<MaxVal>65535</MaxVal>
+					<MaxVal>1023</MaxVal>
 				</UIntValue>
 				<UIntValue>
 					<ID>NumberConcentration</ID>
-					<Description>Number concentration [1/10 #/cm3], considering the defined size. Use 65535 when the value is invalid.</Description>
-					<Bits>16</Bits>
+					<Description>Number concentration [1/10 #/cm3], considering the defined size. Use 4095 when the value is invalid.</Description>
+					<Bits>12</Bits>
 					<MinVal>0</MinVal>
-					<MaxVal>65535</MaxVal>
+					<MaxVal>4095</MaxVal>
 				</UIntValue>
 			</Array>
 		</Message>

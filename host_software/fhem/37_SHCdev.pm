@@ -349,7 +349,7 @@ sub SHCdev_Parse($$)
         when ('ParticulateMatter') {
           my $size = $parser->getField("TypicalParticleSize");
 
-          if ($size != 65535) # 65535 means invalid
+          if ($size != 1023) # 1023 means invalid
           {
             readingsBulkUpdate($rhash, "typicalParticleSize", $size / 100); # value was in 1/100 µm
           }
@@ -363,12 +363,12 @@ sub SHCdev_Parse($$)
               my $massConcentration = $parser->getField("MassConcentration", $i);
               my $numberConcentration = $parser->getField("NumberConcentration", $i);
 
-              if ($massConcentration != 65535) # 65535 means invalid
+              if ($massConcentration != 1023) # 1023 means invalid
               {
                 readingsBulkUpdate($rhash, "massConcentration_PM" . $pmStr, $massConcentration / 10); # value was in 1/10 µm
               }
 
-              if ($numberConcentration != 65535) # 65535 means invalid
+              if ($numberConcentration != 4095) # 4095 means invalid
               {
                 readingsBulkUpdate($rhash, "numberConcentration_PM" . $pmStr, $numberConcentration / 10); # value was in 1/10 µm
               }

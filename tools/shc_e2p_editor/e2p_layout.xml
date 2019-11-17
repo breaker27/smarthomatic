@@ -236,8 +236,21 @@
 			</Element>
 		</EnumValue>
 		<Reserved>
-			<Bits>464</Bits>
+			<Bits>456</Bits>
 		</Reserved>
+		<EnumValue>
+			<ID>PowerPinMode</ID>
+			<Description>Choose the behaviour of the power pin (PD5) while measuring. It can be turned on before measuring to switch a voltage converter to produce 5V out of the 3V battery power. This is needed for some sensors which need 5V. 5VSensor_Delay1000 means that the pin is switched on when a sensor is configured which needs 5V power (currently SRF02 and SPS30). There's a delay of 1000ms after switching the pin to stabilize the voltage and to ensure the sensor works correctly. Off means the power pin is always off.</Description>
+			<Bits>8</Bits>
+			<Element>
+				<Value>0</Value>
+				<Name>Off</Name>
+			</Element>
+			<Element>
+				<Value>1</Value>
+				<Name>5VSensor_Delay1000</Name>
+			</Element>
+		</EnumValue>
 		<EnumValue>
 			<ID>WakeupInterval</ID>
 			<Description>Decide after which time the device should be woken up by the RFM12B transceiver to measure or send values.</Description>

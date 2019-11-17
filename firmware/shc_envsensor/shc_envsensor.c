@@ -52,9 +52,9 @@
 #define ADC_PULLUP_PORT PORTB
 #define ADC_PULLUP_PIN  6
 
-#define SRF02_POWER_PORT PORTD
-#define SRF02_POWER_DDR DDRD
-#define SRF02_POWER_PIN 5
+#define POWERPIN_PORT PORTD
+#define POWERPIN_DDR DDRD
+#define POWERPIN_PIN 5
 
 #define VERSION_MEASURING_INTERVAL_SEC 86000 // about once a day
 #define BATTERY_MEASURING_INTERVAL_SEC 28500 // about every 8 hours
@@ -66,11 +66,13 @@ uint8_t barometric_sensor_type = 0;
 uint8_t brightness_sensor_type = 0;
 uint8_t distance_sensor_type = 0;
 uint8_t particulate_matter_sensor_type = 0;
+uint8_t power_pin_mode = 0;
 uint32_t version_measInt;
 uint32_t version_wupCnt;
 uint16_t vempty = 1100; // 1.1V * 2 cells = 2.2V = min. voltage for RFM12B
 uint8_t rom_id[8]; // for 1-wire
 
+bool i2c_on = false;
 bool di_sensor_used = false;
 bool ai_sensor_used = false;
 bool di_change = false;
@@ -558,6 +560,42 @@ void sht11_measure_loop(void)
 	UART_PUTS("SHT15 measurement error.\r\n");
 }
 
+// Turn on or off i2c. Switch on the power pin before, if configured.
+void switch_i2c(bool on)
+{
+	if (on && !i2c_on)
+	{
+		UART_PUTS("I2C ON\r\n");
+
+		// If power pin is configured to be switched on while I2C is active,
+		// do so, independent of which sensor will be used now to measure.
+		// As long as *one* I2C sensor is connected to the 5V step-up converter,
+		// the power has to be provided. Otherwise, I2C wouldn't work.
+		if (power_pin_mode == POWERPINMODE_5VSENSOR_DELAY1000)
+		{
+			sbi(POWERPIN_PORT, POWERPIN_PIN);
+			_delay_ms(1000); // ~500ms are usually needed to make the output voltage of a regulator stable
+		}
+
+		i2c_enable();
+
+		i2c_on = true;
+	}
+	else if (!on && i2c_on)
+	{
+		UART_PUTS("I2C OFF\r\n");
+
+		i2c_disable();
+
+		if (power_pin_mode == POWERPINMODE_5VSENSOR_DELAY1000)
+		{
+			cbi(POWERPIN_PORT, POWERPIN_PIN);
+		}
+
+		i2c_on = false;
+	}
+}
+
 void measure_temperature_i2c(void)
 {
 	if ((temperature_sensor_type != TEMPERATURESENSORTYPE_DS7505)
@@ -570,6 +608,7 @@ void measure_temperature_i2c(void)
 
 	if (temperature_sensor_type == TEMPERATURESENSORTYPE_DS7505)
 	{
+		switch_i2c(true);
 		lm75_wakeup();
 		_delay_ms(lm75_get_meas_time_ms());
 		temperature.val += lm75_get_tmp();
@@ -577,10 +616,12 @@ void measure_temperature_i2c(void)
 	}
 	else if (temperature_sensor_type == TEMPERATURESENSORTYPE_BMP085)
 	{
+		switch_i2c(true);
 		temperature.val += bmp085_meas_temp();
 	}
 	else if (temperature_sensor_type == TEMPERATURESENSORTYPE_SHT2X_HTU21D)
 	{
+		switch_i2c(true);
 		temperature.val += sht2x_htu21d_meas_temp();
 	}
 }
@@ -616,6 +657,7 @@ void measure_humidity_i2c(void)
 	if (!countWakeup(&humidity))
 		return;
 
+	switch_i2c(true);
 	humidity.val += sht2x_htu21d_meas_hum();
 }
 
@@ -649,6 +691,7 @@ void measure_barometric_pressure_i2c(void)
 
 	if (barometric_sensor_type == BAROMETRICSENSORTYPE_BMP085)
 	{
+		switch_i2c(true);
 		barometric_pressure.val += bmp085_meas_pressure();
 	}
 }
@@ -663,6 +706,7 @@ void measure_distance_i2c(void)
 
 	if (distance_sensor_type == DISTANCESENSORTYPE_SRF02)
 	{
+		switch_i2c(true);
 		distance.val += srf02_get_distance();
 		//UART_PUTF("Dist sum = %u cm\r\n", distance.val);
 	}
@@ -678,17 +722,19 @@ void measure_particulatematter_i2c(void)
 	// start measuring?
 	if (particulate_matter.wupCnt >= particulate_matter.measInt)
 	{
+		switch_i2c(true);
+
 		particulate_matter.wupCnt = 0;
 
 		UART_PUTS("Start PM sensor\r\n");
 		sps30_start_measurement();
 
-		while (!sps30_read_data_ready())
-		{
-			_delay_ms(50);
-		}
+		_delay_ms(8000); // Stabilize air flow. SPS30 has a guaranteed start-up time of <8s.
 
-		_delay_ms(3500); // stabilize air flow
+		while (!sps30_read_data_ready()) // Make sure that data can be read. Device could be in cleaning mode!
+		{
+			_delay_ms(100);
+		}
 
 		uint8_t i = 0;
 		uint8_t j;
@@ -886,12 +932,12 @@ void prepare_distance(void)
 // 1/10 µm / 1/100 µm values as defined in the message.
 // Return UINT16_MAX-1 as maximum value, since UINT16_MAX
 // is used to indicate an invalid value.
-uint16_t pm_float2uint(float f)
+uint16_t pm_float2uint(float f, uint16_t max)
 {
 	f += 0.5; // for rounding
 
-	if (f >= UINT16_MAX - 1)
-		return UINT16_MAX - 1;
+	if (f >= max)
+		return max;
 	else
 		return (uint16_t)f;
 }
@@ -910,23 +956,23 @@ void prepare_particulate_matter(void)
 	msg_environment_particulatematter_set_size(4, 100);
 
 	// set mass concentrations
-	msg_environment_particulatematter_set_massconcentration(0, UINT16_MAX); // value not used
+	msg_environment_particulatematter_set_massconcentration(0, 1023); // 1023 = value not used
 
 	for (i = 0; i <= 3; i++)
 	{
-		msg_environment_particulatematter_set_massconcentration(i + 1, pm_float2uint(particulate_matter.massConcentration[i] / 4 / particulate_matter.avgInt * 10));
+		msg_environment_particulatematter_set_massconcentration(i + 1, pm_float2uint(particulate_matter.massConcentration[i] / 4 / particulate_matter.avgInt * 10, 1022));
 		particulate_matter.massConcentration[i] = 0; // reset value
 	}
 
 	// set number concentration
 	for (i = 0; i <= 4; i++)
 	{
-		msg_environment_particulatematter_set_numberconcentration(i, pm_float2uint(particulate_matter.numberConcentration[i] / 4 / particulate_matter.avgInt * 10));
+		msg_environment_particulatematter_set_numberconcentration(i, pm_float2uint(particulate_matter.numberConcentration[i] / 4 / particulate_matter.avgInt * 10, 4094));
 		particulate_matter.numberConcentration[i] = 0; // reset value
 	}
 
 	// set typical particle size
-	msg_environment_particulatematter_set_typicalparticlesize(particulate_matter.typicalParticleSize / 4 / particulate_matter.avgInt * 100);
+	msg_environment_particulatematter_set_typicalparticlesize(pm_float2uint(particulate_matter.typicalParticleSize / 4 / particulate_matter.avgInt * 100, 1022));
 	particulate_matter.typicalParticleSize = 0; // reset value
 
 	UART_PUTF("Send PM: %d\r\n", 1234);
@@ -1006,6 +1052,7 @@ int main(void)
 	brightness_sensor_type = e2p_envsensor_get_brightnesssensortype();
 	distance_sensor_type = e2p_envsensor_get_distancesensortype();
 	particulate_matter_sensor_type = e2p_envsensor_get_particulatemattersensortype();
+	power_pin_mode = e2p_envsensor_get_powerpinmode();
 
 	// read device id
 	device_id = e2p_generic_get_deviceid();
@@ -1093,28 +1140,11 @@ int main(void)
 		i2c_disable();
 	}
 
-	if (distance_sensor_type == DISTANCESENSORTYPE_SRF02)
-	{
-		sbi(SRF02_POWER_DDR, SRF02_POWER_PIN);
-	}
-
 	UART_PUTS("\r\n");
 
 	led_blink(500, 500, 3);
 
 	sei();
-
-	// If a SRF02 is connected, it is assumed that it is powered by a step up voltage converter,
-	// which produces 5V out of the ~3V battery power. It has to be switched on to activate
-	// the SRF02 and also make it possible to communicate to other I2C devices.
-
-	bool srf02_connected = distance_sensor_type == DISTANCESENSORTYPE_SRF02;
-	bool measure_other_i2c = (temperature_sensor_type == TEMPERATURESENSORTYPE_DS7505)
-		|| (temperature_sensor_type == TEMPERATURESENSORTYPE_BMP085)
-		|| (barometric_sensor_type == BAROMETRICSENSORTYPE_BMP085)
-		|| (temperature_sensor_type == TEMPERATURESENSORTYPE_SHT2X_HTU21D)
-		|| (humidity_sensor_type == HUMIDITYSENSORTYPE_SHT2X_HTU21D)
-		|| (particulate_matter_sensor_type == PARTICULATEMATTERSENSORTYPE_SPS30);
 
 	while (42)
 	{
@@ -1124,10 +1154,6 @@ int main(void)
 		}
 		else // wakeup by RFM12B -> measure everything
 		{
-			bool measure_srf02 = srf02_connected && ((distance.wupCnt + 1) >= distance.measInt);
-			bool measure_i2c = measure_srf02 || measure_other_i2c;
-			bool needs_power = measure_srf02 || (measure_other_i2c && srf02_connected);
-
 			// measure ADC dependant values
 			adc_on(true);
 			sbi(ADC_PULLUP_PORT, ADC_PULLUP_PIN);
@@ -1139,33 +1165,16 @@ int main(void)
 			adc_on(false);
 			measure_digital_input();
 
-			// measure other values from I2C devices
-			if (measure_i2c)
-			{
-				if (needs_power)
-				{
-					sbi(SRF02_POWER_PORT, SRF02_POWER_PIN);
-					_delay_ms(1000); // ~500ms are needed to make the output voltage of the regulator stable
-				}
+			// Measure with i2c sensors.
+			// The following functions will implicitly turn on i2c before measuring.
+			measure_temperature_i2c();
+			measure_humidity_i2c();
+			measure_barometric_pressure_i2c();
+			measure_distance_i2c();
+			measure_particulatematter_i2c();
 
-				i2c_enable();
-				measure_temperature_i2c();
-				measure_humidity_i2c();
-				measure_barometric_pressure_i2c();
-				measure_distance_i2c();
-				measure_particulatematter_i2c();
-				i2c_disable();
-
-				if (needs_power)
-				{
-					cbi(SRF02_POWER_PORT, SRF02_POWER_PIN);
-				}
-			}
-
-			if (srf02_connected && !measure_srf02)
-			{
-				distance.wupCnt++; // increase distance counter, because measure_distance_i2c() was not called
-			}
+			// switch off i2c if it was on
+			switch_i2c(false);
 
 			// measure other values, non-I2C devices
 			measure_temperature_1wire();

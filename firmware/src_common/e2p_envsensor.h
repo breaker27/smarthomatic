@@ -186,8 +186,33 @@ static inline ParticulateMatterSensorTypeEnum e2p_envsensor_get_particulatematte
   return eeprom_read_UIntValue8(552, 8, 0, 255);
 }
 
-// Reserved area with 464 bits
+// Reserved area with 456 bits
 // Offset: 560
+
+// PowerPinMode (EnumValue)
+// Description: Choose the behaviour of the power pin (PD5) while measuring. It can be turned on before measuring to switch a voltage converter to produce 5V out of the 3V battery power. This is needed for some sensors which need 5V. 5VSensor_Delay1000 means that the pin is switched on when a sensor is configured which needs 5V power (currently SRF02 and SPS30). There's a delay of 1000ms after switching the pin to stabilize the voltage and to ensure the sensor works correctly. Off means the power pin is always off.
+
+#ifndef _ENUM_PowerPinMode
+#define _ENUM_PowerPinMode
+typedef enum {
+  POWERPINMODE_OFF = 0,
+  POWERPINMODE_5VSENSOR_DELAY1000 = 1
+} PowerPinModeEnum;
+#endif /* _ENUM_PowerPinMode */
+
+// Set PowerPinMode (EnumValue)
+// Offset: 1016, length bits 8
+static inline void e2p_envsensor_set_powerpinmode(PowerPinModeEnum val)
+{
+  eeprom_write_UIntValue(1016, 8, val);
+}
+
+// Get PowerPinMode (EnumValue)
+// Offset: 1016, length bits 8
+static inline PowerPinModeEnum e2p_envsensor_get_powerpinmode(void)
+{
+  return eeprom_read_UIntValue8(1016, 8, 0, 255);
+}
 
 // WakeupInterval (EnumValue)
 // Description: Decide after which time the device should be woken up by the RFM12B transceiver to measure or send values.
