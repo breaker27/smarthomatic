@@ -34,7 +34,7 @@ void signal_error_state(void);
 #endif
 
 #ifndef NULL
-	#define NULL ((void*)0) 
+	#define NULL ((void*)0)
 #endif
 
 uint32_t _eeprom_read_UIntValue32(uint16_t bit, uint16_t length, uint32_t minval, uint32_t maxval, uint16_t max_bits_for_type, uint8_t * array);
@@ -108,6 +108,24 @@ static inline void array_write_IntValue(uint16_t bit, uint16_t length, int32_t v
 	_eeprom_write_UIntValue(bit, length,
 		(((val >> 31) & 1) << (length - 1)) | (val & (((uint32_t)1 << (length - 1)) - 1)),
 		array);
+}
+
+// Union for reinterpretation (not casting) of float as unit32_t and vice versa.
+union {
+    float floatVal;
+    uint32_t uint32Val;
+  } float2uint32;
+
+static inline void array_write_FloatValue(uint16_t bit, float val, uint8_t * array)
+{
+	float2uint32.floatVal = val;
+	_eeprom_write_UIntValue(bit, 32, float2uint32.uint32Val, array);
+}
+
+static inline float array_read_FloatValue(uint16_t bit, uint8_t * array)
+{
+	float2uint32.uint32Val = _eeprom_read_UIntValue32(bit, 32, 0, UINT32_MAX, 32, array);
+	return float2uint32.floatVal;
 }
 
 #endif // E2P_ACCESS

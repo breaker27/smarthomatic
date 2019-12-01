@@ -25,16 +25,23 @@
 * the 1-wire protocol are in the *.c file.
 */
 
-#ifndef _ONEWIRE_H
-#define _ONEWIRE_H
-
-#include <stdbool.h>
-#include <stdint.h>
+#ifndef ONEWIRE_CONFIG_H_
+#define ONEWIRE_CONFIG_H_
 
 #define ONEWIRE_PORT PORTD
 #define ONEWIRE_DDR DDRD
 #define ONEWIRE_PIN 4
 #define ONEWIRE_PINREG PIND
+
+#endif /* ONEWIRE_CONFIG_H_ */
+
+
+
+#ifndef _ONEWIRE_H
+#define _ONEWIRE_H
+
+#include <stdbool.h>
+#include <stdint.h>
 
 #define NO_TEMPERATURE 65535
 

@@ -23,7 +23,7 @@ import java.awt.Color;
 import javax.swing.JTextArea;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.text.PlainDocument;
+
 import shcee.Util;
 
 /**
@@ -40,6 +40,8 @@ public class ByteArrayTextArea extends JTextArea
 	private boolean valid;
 	private int bytes;
 	private String defaultVal;
+	private boolean hexMode = true;
+	private TextFieldLimit doc;
 	
 	public ByteArrayTextArea(int bytes, String defaultVal)
 	{
@@ -48,12 +50,12 @@ public class ByteArrayTextArea extends JTextArea
 		this.bytes = bytes;
 		this.defaultVal = defaultVal;
 		
-		PlainDocument d = new TextFieldLimit(bytes * 2);
-		setDocument(d);
+		doc = new TextFieldLimit(bytes * 2);
+		setDocument(doc);
 
 		this.setText(Util.fillString('0', bytes * 2));
 
-		d.addDocumentListener(new DocumentListener()
+		doc.addDocumentListener(new DocumentListener()
 		{
 			@Override
 			public void changedUpdate(DocumentEvent e)
@@ -79,9 +81,69 @@ public class ByteArrayTextArea extends JTextArea
 		checkInput();
 	}
 
+	/**
+	 * Convert normal text string (e.g. "hello") to a hex string (e.g. "68656C6C6F").
+	 * @return
+	 */
+	public String textToHex(String text)
+	{
+		StringBuilder sb = new StringBuilder();
+		
+		for (int i = 0; i < bytes; i++)
+		{
+			if (text.length() > i)
+			{
+				sb.append(Util.byteToHex((byte)text.charAt(i)));
+			}
+		}
+		
+		return sb.toString();
+	}
+	
+	/**
+	 * Set hex or string mode.
+	 */
+	public void setMode(boolean hexMode)
+	{
+		this.hexMode = hexMode;
+		
+		if (hexMode) // string -> hex
+		{
+			doc.setLimit(bytes * 2);
+			setText(textToHex(getText()));
+		}
+		else // hex -> string
+		{
+			String s = getText();
+			
+			byte[] buffer = new byte[bytes];
+			
+			for (int i = 0; i < bytes; i++)
+			{
+				if (s.length() > i * 2 + 1)
+				{
+					
+					buffer[i] = Util.hexToByte(s.charAt(i * 2), s.charAt(i * 2 + 1));
+				}
+			}
+			
+			setText(new String(buffer));
+			doc.setLimit(bytes);
+		}
+	}
+	
+	/**
+	 * Toggle between hex and string mode.
+	 */
+	public void toggleMode()
+	{
+		setMode(!hexMode);
+	}
+	
 	protected void checkInput()
 	{
-		valid = (getText().length() == bytes * 2) && Util.isHexString(getText());
+		valid = (hexMode && (getText().length() == bytes * 2) && Util.isHexString(getText()))
+				|| (!hexMode && (getText().length() == bytes));
 		
 		if (!valid)
 		{
@@ -100,5 +162,27 @@ public class ByteArrayTextArea extends JTextArea
 	public boolean dataIsValid()
 	{
 		return valid;
+	}
+	
+	public byte[] getBytes()
+	{
+		byte[] res = new byte[bytes];
+		String s;
+		
+		if (hexMode)
+		{
+			s = getText();
+		}
+		else
+		{
+			s = textToHex(getText());
+		}
+		
+		for (int i = 0; i < bytes; i++)
+		{
+			res[i] = Util.hexToByte(s.charAt(i * 2), s.charAt(i * 2 + 1));
+		}
+		
+		return res;
 	}
 }

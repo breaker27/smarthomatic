@@ -69,12 +69,12 @@ static uint16_t _bat_percentage_raw(uint16_t vbat)
 	else // linear interpolation between the array values
 	{
 		uint8_t i = 0;
-		
+
 		while (vbat < vbat_alkaline[i])
 		{
 			i++;
 		}
-		
+
 		return linear_interpolate16(vbat, vbat_alkaline[i], vbat_alkaline[i - 1], 100 - i * 10, 100 - (i - 1) * 10);
 	}
 }
@@ -86,7 +86,7 @@ uint16_t bat_percentage(uint16_t vbat, uint16_t vempty)
 {
 	uint16_t percentage = _bat_percentage_raw(vbat);
 	uint16_t min_percentage = _bat_percentage_raw(vempty);
-	
+
 	if (percentage < min_percentage)
 	{
 		return 0;
@@ -116,7 +116,7 @@ void adc_init(void)
 	ADCSRA = (1 << ADIE) | (1 << ADPS2) | (1 << ADPS1);
 #else
 	ADCSRA = (1 << ADIE) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
-#endif 
+#endif
 
 	// Voltage reference selection:
 	// REFS1 = 1, REFS0 = 1 -> internal 1.1V reference (used for all ADC input pins)
@@ -161,11 +161,11 @@ void adc_measure(void)
 		sleep_enable();
 		sei();
 		sleep_cpu();
-		
+
 		// Disable interrupts immediately to make sure the ADC interrupt does
 		// not happen right here after the device was woken up by another interrupt.
 		cli();
-		
+
 		// Check if device was woken up by ADC interrupt and ADC value was
 		// therefore stored in adc_data.
 		if (adc_data != 0xffff)
@@ -201,7 +201,7 @@ uint16_t read_adc(uint8_t adc_input)
 	{
 		cbi(ADMUX, REFS1);
 	}
-	
+
 	// Set input channel.
 	ADMUX = (ADMUX & 0b11110000) | adc_input;
 
@@ -248,7 +248,7 @@ void switch_led(bool b_on)
 void led_blink(uint16_t on, uint16_t off, uint8_t times)
 {
 	uint8_t i;
-	
+
 	for (i = 0; i < times; i++)
 	{
 		sbi(LED_PORT, LED_PIN);
@@ -282,7 +282,7 @@ void osccal_info(void)
 {
 #ifdef UART_DEBUG
 	int8_t mode = e2p_hardware_get_osccalmode();
-	
+
 	if (mode != 0)
 	{
 		UART_PUTF("The CPU speed was adjusted by %+d/1000 as set in OSCCAL_MODE byte.\r\n", mode);
@@ -299,15 +299,15 @@ void osccal_info(void)
 void osccal_init(void)
 {
 	int8_t mode = e2p_hardware_get_osccalmode();
-	
+
 	if (mode == -128)
 	{
 		uint8_t i;
-		
+
 		while (1)
 		{
 			led_blink(120, 0, 1);
-	
+
 			for (i = 0; i < 12; i++)
 			{
 				_delay_ms(4990); // _delay_ms can handle only about ~6s
@@ -324,7 +324,7 @@ void osccal_init(void)
 void inc_packetcounter(void)
 {
 	packetcounter++;
-	
+
 	if (packetcounter % PACKET_COUNTER_WRITE_CYCLE == 0)
 	{
 		e2p_generic_set_packetcounter(packetcounter);
@@ -339,12 +339,12 @@ void rfm12_send_bufx(void)
 	{
 		__PACKETSIZEBYTES--;
 	}
-	
+
 	__PACKETSIZEBYTES = ((__PACKETSIZEBYTES - 1) / 16 + 1) * 16;
 
 	uint32_t crc = crc32(bufx + 4, __PACKETSIZEBYTES - 4);
 	array_write_UIntValue(0, 32, crc, bufx);
-	
+
 	UART_PUTS("Before encryption: ");
 	print_bytearray(bufx, __PACKETSIZEBYTES);
 

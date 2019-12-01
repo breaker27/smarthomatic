@@ -1,6 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013..2014 Uwe Freese
+* Copyright (c) 2013..2019 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -221,7 +221,8 @@ typedef enum {
   DEVICETYPE_RGBDIMMER = 50,
   DEVICETYPE_DIMMER = 60,
   DEVICETYPE_SOILMOISTUREMETER = 70,
-  DEVICETYPE_THERMOSTAT = 80
+  DEVICETYPE_THERMOSTAT = 80,
+  DEVICETYPE_TEAMAKER = 90
 } DeviceTypeEnum;
 #endif /* _ENUM_DeviceType */
 

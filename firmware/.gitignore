@@ -19,6 +19,3 @@
 # Build files
 */build/*
 */bin/*
-
-# View State file from WinAVR Programmer's Notepad
-*.pnps

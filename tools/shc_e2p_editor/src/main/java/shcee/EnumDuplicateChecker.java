@@ -18,7 +18,6 @@
 
 package shcee;
 
-import java.util.Dictionary;
 import java.util.Hashtable;
 
 import javax.xml.transform.TransformerException;

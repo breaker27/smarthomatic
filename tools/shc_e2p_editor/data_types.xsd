@@ -7,6 +7,7 @@
 		<xs:choice>
 			<xs:element ref="UIntValue"/>
 			<xs:element ref="IntValue"/>
+			<xs:element ref="FloatValue"/>
 			<xs:element ref="BoolValue"/>
 			<xs:element ref="EnumValue"/>
 			<xs:element ref="ByteArray"/>
@@ -19,6 +20,7 @@
 		<xs:choice>
 			<xs:element ref="UIntValue"/>
 			<xs:element ref="IntValue"/>
+			<xs:element ref="FloatValue"/>
 			<xs:element ref="BoolValue"/>
 			<xs:element ref="EnumValue"/>
 			<xs:element ref="ByteArray"/>
@@ -81,6 +83,18 @@
 				<xs:element name="MinVal" type="xs:int"/>
 				<xs:element name="MaxVal" type="xs:int"/>
 				<xs:element name="DefaultVal" type="xs:int" minOccurs="0"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="FloatValue">
+		<xs:annotation>
+			<xs:documentation>A float value with 4 bytes in size.</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="ID" type="xs:string"/>
+				<xs:element name="Description"/>
+				<xs:element name="DefaultVal" type="xs:float" minOccurs="0"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>

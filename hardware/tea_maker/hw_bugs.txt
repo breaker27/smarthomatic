@@ -1,0 +1,2 @@
+- One-Wire Pull-Up between data anc VCC line of one-wire sensor missing. Can be patched directly on bottom side of PCB.
+- PA6 (ADC6) for ADC Power Lamp Brightness sensor is not in schematics. Has to be connected directly (over resistor).

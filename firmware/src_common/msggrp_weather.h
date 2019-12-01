@@ -1,6 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013..2014 Uwe Freese
+* Copyright (c) 2013..2019 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -95,7 +95,7 @@ static inline void pkg_header_init_weather_temperature_ackstatus(void)
 }
 
 // Temperature (IntValue)
-// Description: temperature [1/100 degree celsius], -50캜 = -5000, 50캜 = 5000
+// Description: temperature [1/100 degree celsius], -50째C = -5000, 50째C = 5000
 
 // Set Temperature (IntValue)
 // Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 16, min val -32768, max val 32767
@@ -176,7 +176,7 @@ static inline uint32_t msg_weather_humiditytemperature_get_humidity(void)
 }
 
 // Temperature (IntValue)
-// Description: temperature [1/100 degree celsius], -50캜 = -5000, 50캜 = 5000
+// Description: temperature [1/100 degree celsius], -50째C = -5000, 50째C = 5000
 
 // Set Temperature (IntValue)
 // Offset: (uint16_t)__HEADEROFFSETBITS + 10, length bits 16, min val -32768, max val 32767
@@ -257,7 +257,7 @@ static inline uint32_t msg_weather_barometricpressuretemperature_get_barometricp
 }
 
 // Temperature (IntValue)
-// Description: temperature [1/100 degree celsius], -50캜 = -5000, 50캜 = 5000
+// Description: temperature [1/100 degree celsius], -50째C = -5000, 50째C = 5000
 
 // Set Temperature (IntValue)
 // Offset: (uint16_t)__HEADEROFFSETBITS + 17, length bits 16, min val -32768, max val 32767

@@ -1,6 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2015 Uwe Freese
+* Copyright (c) 2015..2018 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -26,22 +26,42 @@ uint32_t _rfm_timeout_ms = 0; // 0 == watchdog disabled
 uint16_t _rfm_watchdog_deviceid;
 uint8_t _nres_port_nr = 0;
 uint8_t _nres_pin = 0;
+
+// 0 = reset active when pin is low, device powered on when pin is high
+// (Use this mode when NRES and RFM12 power pin are connected directly to ATMega I/O pin.)
+// 1 = reset active when pin is high, device powered on when pin is low
+// (Use this mode when NRES and RFM12 power pin are connected via PNP transistor.)
+uint8_t _nres_reset_state = 0;
+
 bool _rfm_retry_done = false;
 
 // Setup IO pin connected to RFM NRES pin from floating to high (== no reset).
-void _setup_nres(uint8_t port_nr, uint8_t pin)
+void _setup_nres(uint8_t port_nr, uint8_t pin, uint8_t nres_reset_state)
 {
 	switch (port_nr)
 	{
 		case 0:
-			sbi(PORTB, pin);
+			if (nres_reset_state)
+				cbi(PORTB, pin);
+			else
+				sbi(PORTB, pin);
+				
 			sbi(DDRB, pin);
 			break;
 		case 1:
-			sbi(PORTC, pin);
+			if (nres_reset_state)
+				cbi(PORTC, pin);
+			else
+				sbi(PORTC, pin);
+
 			sbi(DDRC, pin);
 			break;
 		case 2:
+			if (nres_reset_state)
+				cbi(PORTD, pin);
+			else
+				sbi(PORTD, pin);
+
 			sbi(PORTD, pin);
 			sbi(DDRD, pin);
 			break;
@@ -50,14 +70,15 @@ void _setup_nres(uint8_t port_nr, uint8_t pin)
 	_delay_ms(200);
 }
 
-void rfm_watchdog_init(uint16_t deviceid, uint16_t timeout_10sec, uint8_t nres_port_nr, uint8_t nres_pin)
+void rfm_watchdog_init(uint16_t deviceid, uint16_t timeout_10sec, uint8_t nres_port_nr, uint8_t nres_pin, uint8_t nres_reset_state)
 {
 	_rfm_watchdog_deviceid = deviceid;
 	_rfm_timeout_ms = (uint32_t)timeout_10sec * 10 * 1000;
 	_nres_port_nr = nres_port_nr;
 	_nres_pin = nres_pin;
+	_nres_reset_state = nres_reset_state;
 
-	_setup_nres(nres_port_nr, nres_pin);
+	_setup_nres(nres_port_nr, nres_pin, nres_reset_state);
 }
 
 void rfm_watchdog_alive(void)
@@ -66,12 +87,22 @@ void rfm_watchdog_alive(void)
 	_rfm_retry_done = false;
 }
 
-void _rfm12_pull_nres(volatile uint8_t *port, uint8_t pin)
+void _rfm12_pull_nres(volatile uint8_t *port, uint8_t pin, uint8_t nres_reset_state)
 {
-	*port &= ~(1 << pin);
-	_delay_ms(500);
-	*port |= (1 << pin);
-	_delay_ms(500);
+	if (nres_reset_state)
+	{
+		*port |= (1 << pin);
+		_delay_ms(500);
+		*port &= ~(1 << pin);
+		_delay_ms(500);
+	}
+	else
+	{
+		*port &= ~(1 << pin);
+		_delay_ms(500);
+		*port |= (1 << pin);
+		_delay_ms(500);
+	}
 }
 
 void _rfm12_hw_reset(void)
@@ -79,13 +110,13 @@ void _rfm12_hw_reset(void)
 	switch (_nres_port_nr)
 	{
 		case 0:
-			_rfm12_pull_nres(&PORTB, _nres_pin);
+			_rfm12_pull_nres(&PORTB, _nres_pin, _nres_reset_state);
 			break;
 		case 1:
-			_rfm12_pull_nres(&PORTC, _nres_pin);
+			_rfm12_pull_nres(&PORTC, _nres_pin, _nres_reset_state);
 			break;
 		case 2:
-			_rfm12_pull_nres(&PORTD, _nres_pin);
+			_rfm12_pull_nres(&PORTD, _nres_pin, _nres_reset_state);
 			break;
 	}
 }
@@ -132,7 +163,7 @@ void rfm_watchdog_count(uint16_t ms)
 	if (_rfm_timeout_ms) // 0 == watchdog disabled
 	{
 		_rfm_last_reception_ms += ms;
-		
+				
 		if (!_rfm_retry_done && (_rfm_last_reception_ms > _rfm_timeout_ms))
 		{
 			_rfm12_recover();

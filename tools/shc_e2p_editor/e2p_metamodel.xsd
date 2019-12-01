@@ -23,6 +23,16 @@
 									</xs:sequence>
 								</xs:complexType>
 							</xs:element>
+							<xs:element name="MicrocontrollerModel" minOccurs="0">
+								<xs:annotation>
+									<xs:documentation>The model string used to flash the microcontroller using avrdude. The value should only be set in the first block with the restriction for a specific SHC device. If more entries are defined, the first one is taken into account. If not given, the type may be detected by the E2P size (m168p for 512 Bytes, m328p for 1024 bytes).</xs:documentation>
+								</xs:annotation>
+								<xs:simpleType>
+									<xs:restriction base="xs:string">
+										<xs:pattern value="m168p|m328p|m324pa"/>
+									</xs:restriction>
+								</xs:simpleType>
+							</xs:element>
 							<xs:group ref="DataValue" maxOccurs="unbounded"/>
 						</xs:sequence>
 					</xs:complexType>
