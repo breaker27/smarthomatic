@@ -205,7 +205,7 @@ void remember_di_state(void)
 
 	for (i = 0; i < 8; i++)
 	{
-		if (di[i].pin != DI_UNUSED)
+		if (di[i].pin != DI_UNUSED && di[i].mode != DIGITALINPUTTRIGGERMODE_OFF)
 		{
 			uint8_t stat = getPinStatus(di[i].port, di[i].pin);
 			di[i].meas.val = stat;
