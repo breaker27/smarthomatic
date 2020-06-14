@@ -853,6 +853,18 @@ void prepare_deviceinfo(void)
 	version_wupCnt = 0;
 }
 
+void send_prepared_packet(uint16_t device_id, uint32_t packetcounter)
+{
+	inc_packetcounter();
+	pkg_header_set_senderid(device_id);
+	pkg_header_set_packetcounter(packetcounter);
+
+	rfm12_send_bufx();
+	rfm12_tick(); // send packet, and then WAIT SOME TIME BEFORE GOING TO SLEEP (otherwise packet would not be sent)
+
+	led_blink(200, 0, 1);
+}
+
 // ---------- main loop ----------
 
 int main(void)
@@ -1047,64 +1059,51 @@ int main(void)
 		}
 
 		// search for value to send with avgInt reached
-		bool send = true;
 		
-		if (pin_wakeup && !di_change) // don't send update if pin level changed in "wrong" direction
-		{
-			send = false;
-		}
-		else if (di_change)
+		if (di_change)
 		{
 			prepare_digitalport();
+			send_prepared_packet(device_id,packetcounter);
 		}
-		else if (ai_change)
+		if (ai_change)
 		{
 			prepare_analogport();
+			send_prepared_packet(device_id,packetcounter);
 		}
-		else if (humidity.measCnt >= humidity.avgInt)
+		if (humidity.measCnt >= humidity.avgInt)
 		{
 			prepare_humiditytemperature();
+			send_prepared_packet(device_id,packetcounter);
 		}
-		else if (barometric_pressure.measCnt >= barometric_pressure.avgInt)
+		if (barometric_pressure.measCnt >= barometric_pressure.avgInt)
 		{
 			prepare_barometricpressuretemperature();
+			send_prepared_packet(device_id,packetcounter);
 		}
-		else if (temperature.measCnt >= temperature.avgInt)
+		if (temperature.measCnt >= temperature.avgInt)
 		{
 			prepare_temperature();
+			send_prepared_packet(device_id,packetcounter);
 		}
-		else if (distance.measCnt >= distance.avgInt)
+		if (distance.measCnt >= distance.avgInt)
 		{
 			prepare_distance();
+			send_prepared_packet(device_id,packetcounter);
 		}
-		else if (brightness.measCnt >= brightness.avgInt)
+		if (brightness.measCnt >= brightness.avgInt)
 		{
 			prepare_brightness();
+			send_prepared_packet(device_id,packetcounter);
 		}
-		else if (battery_voltage.measCnt >= battery_voltage.avgInt)
+		if (battery_voltage.measCnt >= battery_voltage.avgInt)
 		{
 			prepare_battery_voltage();
+			send_prepared_packet(device_id,packetcounter);
 		}
-		else if (version_wupCnt >= version_measInt)
+		if (version_wupCnt >= version_measInt)
 		{
 			prepare_deviceinfo();
-		}
-		else
-		{
-			send = false;
-		}
-		
-		if (send)
-		{
-			inc_packetcounter();
-			
-			pkg_header_set_senderid(device_id);
-			pkg_header_set_packetcounter(packetcounter);
-			
-			rfm12_send_bufx();
-			rfm12_tick(); // send packet, and then WAIT SOME TIME BEFORE GOING TO SLEEP (otherwise packet would not be sent)
-
-			led_blink(200, 0, 1);
+			send_prepared_packet(device_id,packetcounter);
 		}
 
 		cli();
