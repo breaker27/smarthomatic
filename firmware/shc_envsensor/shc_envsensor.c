@@ -1049,11 +1049,7 @@ int main(void)
 		// search for value to send with avgInt reached
 		bool send = true;
 		
-		if (pin_wakeup && !di_change) // don't send update if pin level changed in "wrong" direction
-		{
-			send = false;
-		}
-		else if (di_change)
+		if (di_change)
 		{
 			prepare_digitalport();
 		}
