@@ -44,6 +44,7 @@ public class Block extends JPanel
 	private ArrayList<AbstractEditor> editors;
 	public String restrictionRefID = null;
 	public String restrictionValue = null;
+	public String microcontrollerModel = null;
 	
 	private static Font titledBorderFont;
 	
@@ -79,6 +80,13 @@ public class Block extends JPanel
 			
 			if (n.getNodeName().equals("Restriction"))
 				addRestriction(n);
+			else if (n.getNodeName().equals("MicrocontrollerModel"))
+			{
+				Node textNode = n.getFirstChild();
+				
+				if (textNode != null)
+					microcontrollerModel = textNode.getNodeValue();
+			}
 			else if (n.getNodeName().equals("UIntValue"))
 				addElem(new UIntEditor(n, this.getBackground(), -1));
 			else if (n.getNodeName().equals("IntValue"))
@@ -94,7 +102,7 @@ public class Block extends JPanel
 			else if (n.getNodeName().equals("Array"))
 				addElem(new ArrayEditor(n, this.getBackground(), -1));
 		}
-	}	
+	}
 	
 	/**
 	 * (Create and) return a font for use at titled borders in editor elements.

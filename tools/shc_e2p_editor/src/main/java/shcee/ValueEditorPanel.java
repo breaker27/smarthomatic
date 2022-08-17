@@ -48,7 +48,7 @@ import org.w3c.dom.NodeList;
  * which finally holds the EEPROM block panels. It can be updates with data from an EEPROM file.
  * To store the dta back in an EEPROM file, the content can be written back
  * to a byte array.
- * 
+ *
  * @author uwe
  */
 public class ValueEditorPanel extends JPanel
@@ -57,39 +57,39 @@ public class ValueEditorPanel extends JPanel
 
 	private static int[] blockColors = { 0xFFD0D0, 0xD0FFD0, 0xD0D0FF, 0xFFFFA0, 0xA0FFFF, 0xFFA0FF };
 	private int colorIndex = 0;
-	
+
 	private String filename = "";
-	
+
 	private JPanel blockContainer;
 	private ArrayList<Block> blocks;
 	private JScrollPane scrollPane;
-	
+
 	private Node xmlRoot;
 	private int length = 0;
-	
+
 	public ValueEditorPanel()
 	{
 		super();
-		
-		blockContainer = new ValueEditorBlockContainer(); 
+
+		blockContainer = new ValueEditorBlockContainer();
 		blocks = new ArrayList<Block>();
-		
+
 		scrollPane = new JScrollPane(blockContainer,
 	            JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 	            JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		scrollPane.getVerticalScrollBar().setUnitIncrement(20);
-		
+
 		// create heading
 		JLabel headingLabel = new JLabel("Value Editor", JLabel.CENTER);
 		headingLabel.setFont(new Font(headingLabel.getFont().getName(), Font.BOLD, 14));
-		
+
 		JPanel headingPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 6));
 		headingPanel.add(headingLabel);
-		
+
 		// Description
 		JPanel colorCodesPanel = new JPanel();
 		colorCodesPanel.setLayout(new BoxLayout(colorCodesPanel, javax.swing.BoxLayout.X_AXIS));
-		
+
 		colorCodesPanel.add(new JLabel("Color codes:"));
 		colorCodesPanel.add(Box.createRigidArea(new Dimension(6, 6)));
 		colorCodesPanel.add(createColorCodeLabel(" invalid ", Color.RED));
@@ -97,33 +97,33 @@ public class ValueEditorPanel extends JPanel
 		colorCodesPanel.add(createColorCodeLabel(" default ", Color.WHITE));
 		colorCodesPanel.add(Box.createRigidArea(new Dimension(6, 6)));
 		colorCodesPanel.add(createColorCodeLabel(" differs from default ", Color.YELLOW));
-		
+
 		headingPanel.add(colorCodesPanel);
 
 		// create buttons
 		JButton buttonSave = new JButton("Save");
 		buttonSave.setMnemonic('s');
-		
+
 		buttonSave.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e)
             {
                 onButtonSave();
             }
         });
-		
+
 		JButton buttonFlash = new JButton("Flash");
 		buttonFlash.setMnemonic('f');
-		
+
 		buttonFlash.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e)
             {
                 onButtonFlash();
             }
         });
-		
+
 		JButton buttonAbout = new JButton("About");
 		buttonAbout.setMnemonic('a');
-		
+
 		buttonAbout.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e)
             {
@@ -143,15 +143,15 @@ public class ValueEditorPanel extends JPanel
 		buttonPanel.setLayout(new java.awt.BorderLayout());
 		buttonPanel.add(innerButtonPanel, "Center");
 		buttonPanel.add(aboutButtonPanel, "East");
-		
+
 		setLayout(new java.awt.BorderLayout());
 		add(headingPanel, "North");
 		add(scrollPane, "Center");
         add(buttonPanel, "South");
-		
+
 		initAccordingEepromLayout();
 	}
-	
+
 	private JLabel createColorCodeLabel(String text, Color color)
 	{
 		JLabel label = new JLabel(text);
@@ -159,20 +159,31 @@ public class ValueEditorPanel extends JPanel
 		label.setBackground(color);
 		return label;
 	}
-	
+
 	protected void onButtonAbout()
 	{
 		JOptionPane.showMessageDialog(SHCEEMain.mySHCEEMain,
 				"<html><body><b>smarthomatic EEPROM Editor</b><br/>" +
 				SHCEEMain.version + "<br/>" +
 				"http://www.smarthomatic.org<br/>" +
-				"Copyright (c) 2013..2014 Uwe Freese<br/>" +
+				"Copyright (c) 2013..2019 Uwe Freese<br/>" +
 				"Licensed under GLP 3 or later.</body></html>", "About", JOptionPane.INFORMATION_MESSAGE);
 	}
 
 	protected void onButtonFlash()
 	{
-		new FlashDialog(length, filename);
+		String microcontrollerModel = null;
+
+		for (Block b : blocks)
+		{
+			if (b.isVisible() && (b.microcontrollerModel != null))
+			{
+				microcontrollerModel = b.microcontrollerModel;
+				break;
+			}
+		}
+
+		new FlashDialog(length, filename, microcontrollerModel);
 	}
 
 	protected void onButtonSave()
@@ -194,14 +205,14 @@ public class ValueEditorPanel extends JPanel
 	private void initAccordingEepromLayout()
 	{
 		String errMsg = Util.conformsToSchema(SHCEEMain.EEPROM_LAYOUT_XML, SHCEEMain.EEPROM_METAMODEL_XSD);
-		
+
 		if (null != errMsg)
 		{
 			JOptionPane.showMessageDialog(SHCEEMain.mySHCEEMain, SHCEEMain.EEPROM_LAYOUT_XML + " does not conform to " +
 					SHCEEMain.EEPROM_METAMODEL_XSD + ".\nError message:\n" + errMsg , "Error", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
-		
+
 		try
 		{
 			xmlRoot = Util.readXML(new File(SHCEEMain.EEPROM_LAYOUT_XML));
@@ -212,15 +223,15 @@ public class ValueEditorPanel extends JPanel
 			JOptionPane.showMessageDialog(SHCEEMain.mySHCEEMain, SHCEEMain.EEPROM_LAYOUT_XML + " could not be loaded", "Error", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
-		
+
 		xmlRoot = Util.getChildNode(xmlRoot, "E2P");
-		
+
 		NodeList nl = xmlRoot.getChildNodes();
-		
+
 		for (int i = 0; i < nl.getLength(); i++)
 		{
 			Node n = nl.item(i);
-			
+
 			if (n.getNodeName().equals("Block"))
 				addBlock(n);
 			// other elements can't occur according to the current metamodel
@@ -260,7 +271,7 @@ public class ValueEditorPanel extends JPanel
 						+ " could not be read into a byte array.", "Cannot read file",
 						JOptionPane.ERROR_MESSAGE);
 			}
-			
+
 			this.filename = filename;
 		}
 
@@ -282,11 +293,11 @@ public class ValueEditorPanel extends JPanel
 		{
 			b.setVisible(false);
 		}
-		
+
 		for (Block b : blocks)
 		{
 			boolean match = true;
-			
+
 			// If a block has a condition set, check it and override
 			// using this block if it is not matched.
 			if (b.restrictionRefID != null)
@@ -298,7 +309,7 @@ public class ValueEditorPanel extends JPanel
 			b.setVisible(match);
 		}
 	}
-	
+
 	/**
 	 * Feed the bytes from the EEPROM file to the editor blocks one after another
 	 * with an updated bit offset.
@@ -315,11 +326,11 @@ public class ValueEditorPanel extends JPanel
 		{
 			b.setVisible(false);
 		}
-		
+
 		for (Block b : blocks)
 		{
 			boolean match = true;
-			
+
 			// If a block has a condition set, check it and override
 			// using this block if it is not matched.
 			if (b.restrictionRefID != null)
@@ -329,17 +340,17 @@ public class ValueEditorPanel extends JPanel
 			}
 
 			b.setVisible(match);
-			
+
 			if (match)
 			{
 				int bitsProcessed = b.readFromEepromArray(eeprom, offset);
 				offset += bitsProcessed;
 			}
 		}
-		
+
 		length = offset;
 	}
-	
+
 	/**
 	 * Let all editors save their content to a byte array and write it to a file.
 	 * @param data
@@ -357,7 +368,7 @@ public class ValueEditorPanel extends JPanel
 				offset += bitsProcessed;
 			}
 		}
-		
+
 		// cut size to 512 or 1024 bytes automatically
 		if (offset <= 512 * 8)
 		{
@@ -365,7 +376,7 @@ public class ValueEditorPanel extends JPanel
 			System.arraycopy(eeprom, 0, eeprom2, 0, 512);
 			eeprom = eeprom2;
 		}
-		
+
 		try
 		{
 			Util.writeFile(filename, eeprom);
@@ -385,15 +396,15 @@ public class ValueEditorPanel extends JPanel
 	 * @return The value as String, or null if not found.
 	 */
 	public String findValue(String id, boolean humanReadable)
-	{	
+	{
 		for (Block b : blocks)
 		{
 			String val = b.findValue(id, humanReadable);
-			
+
 			if (null != val)
 				return val;
 		}
-		
+
 		return null;
 	}
 
@@ -409,10 +420,10 @@ public class ValueEditorPanel extends JPanel
 			if (b.isVisible() && !b.dataIsValid())
 				return false;
 		}
-		
+
 		return true;
 	}
-	
+
 	/**
 	 * Assume that blocks are restricted by the DeviceType only
 	 * (as true for smarthomatic) and switch the blocks on/off
@@ -424,11 +435,11 @@ public class ValueEditorPanel extends JPanel
 	{
 		byte[] dummy = new byte[1024];
 		int offset = 0;
-		
+
 		for (Block b : blocks)
 		{
 			boolean match = true;
-			
+
 			// If a block has a condition set, check it and override
 			// using this block if it is not matched.
 			if ((b.restrictionRefID != null) && b.restrictionRefID.equals("DeviceType"))
@@ -437,7 +448,7 @@ public class ValueEditorPanel extends JPanel
 			}
 
 			b.setVisible(match);
-			
+
 			if (match)
 			{
 				int bitsProcessed = b.readFromEepromArray(dummy, offset);

@@ -23,7 +23,7 @@
  * Initialize watchdog with needed parameters. Call once after startup.
  * Use nres_port_nr > 2 to not use the HW reset (NRES) pin.
  */
-void rfm_watchdog_init(uint16_t deviceid, uint16_t timeout_10sec, uint8_t nres_port_nr, uint8_t nres_pin);
+void rfm_watchdog_init(uint16_t deviceid, uint16_t timeout_10sec, uint8_t nres_port_nr, uint8_t nres_pin, uint8_t nres_reset_state);
 
 /*
  * Reset watchdog counter because RFM transceiver is alive.
@@ -33,13 +33,16 @@ void rfm_watchdog_alive(void);
 
 /*
  * Tell watchdog the (additional) time that passed till last call of this
- * function. The watchdog will automatically start a retry after timeout.
+ * function. The watchdog will automatically restart the RFM (soft reset) or reset
+ * the ATMega if the total time is bigger than the configured timeout_10sec value.
  */
 void rfm_watchdog_count(uint16_t ms);
 
 /*
  * If startup was by error (e.g. watchdog), send an error message once and return true.
  * Otherwise, do nothing and return false;
+ * Should be called after startup of the ATMega to send the startup reason when
+ * this RFM watchdog function is used.
  */
 bool send_startup_reason(uint8_t *mcusr_mirror);
 

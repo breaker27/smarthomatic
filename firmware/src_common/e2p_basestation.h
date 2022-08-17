@@ -1,6 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013..2014 Uwe Freese
+* Copyright (c) 2013..2019 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -90,8 +90,25 @@ static inline UartBaudRateEnum e2p_basestation_get_uartbaudrate(void)
   return eeprom_read_UIntValue8(4616, 8, 0, 255);
 }
 
-// Reserved area with 3568 bits
-// Offset: 4624
+// TransceiverWatchdogTimeout (UIntValue)
+// Description: Reset RFM12B module if no data is received until timeout is reached. Use this function if your specific transceiver hangs sometimes. Value is in deca seconds. Suggested setting is 48 (for 8 minutes). Set 0 to disable (default).
+
+// Set TransceiverWatchdogTimeout (UIntValue)
+// Offset: 4624, length bits 8, min val 0, max val 255
+static inline void e2p_basestation_set_transceiverwatchdogtimeout(uint8_t val)
+{
+  eeprom_write_UIntValue(4624, 8, val);
+}
+
+// Get TransceiverWatchdogTimeout (UIntValue)
+// Offset: 4624, length bits 8, min val 0, max val 255
+static inline uint8_t e2p_basestation_get_transceiverwatchdogtimeout(void)
+{
+  return eeprom_read_UIntValue8(4624, 8, 0, 255);
+}
+
+// Reserved area with 3560 bits
+// Offset: 4632
 
 
 #endif /* _E2P_BASESTATION_H */

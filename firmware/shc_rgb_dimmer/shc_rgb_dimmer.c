@@ -45,6 +45,7 @@
 // If not, only sw reset is used.
 #define RFM_RESET_PIN 3
 #define RFM_RESET_PORT_NR 1
+#define RFM_RESET_PIN_STATE 1
 
 #define SEND_STATUS_EVERY_SEC 2400 // how often should a status be sent?
 #define SEND_VERSION_STATUS_CYCLE 35 // send version status x times less than switch status (~once per day)
@@ -791,7 +792,7 @@ int main(void)
 
 	UART_PUTS ("\r\n");
 	UART_PUTF4("smarthomatic RGB Dimmer v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
-	UART_PUTS("(c) 2014..2015 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTS("(c) 2014..2018 Uwe Freese, www.smarthomatic.org\r\n");
 	osccal_info();
 	UART_PUTF ("DeviceID: %u\r\n", device_id);
 	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);
@@ -803,7 +804,7 @@ int main(void)
 
 	PWM_init();
 	
-	rfm_watchdog_init(device_id, e2p_rgbdimmer_get_transceiverwatchdogtimeout(), RFM_RESET_PORT_NR, RFM_RESET_PIN);
+	rfm_watchdog_init(device_id, e2p_rgbdimmer_get_transceiverwatchdogtimeout(), RFM_RESET_PORT_NR, RFM_RESET_PIN, RFM_RESET_PIN_STATE);
 	rfm12_init();
 	
 	set_animation_fixed_color(0);

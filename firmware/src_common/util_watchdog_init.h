@@ -17,12 +17,14 @@
 */
 
 // Include this file only ONCE in the main c file.
+// wdt_init is automatically called at startup, saving the MCUSR value.
+// wdt_init must not be called in the main c file!
 
 #include <avr/wdt.h>
 
 uint8_t mcusr_mirror __attribute__ ((section (".noinit")));
 
-// Function Pototype
+// Function Prototype
 void wdt_init(void) __attribute__((naked)) __attribute__((section(".init3")));
 
 // Function Implementation

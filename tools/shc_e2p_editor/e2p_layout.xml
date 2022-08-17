@@ -35,6 +35,10 @@
 				<Value>80</Value>
 				<Name>Thermostat</Name>
 			</Element>
+			<Element>
+				<Value>90</Value>
+				<Name>TeaMaker</Name>
+			</Element>
 		</EnumValue>
 		<IntValue>
 			<ID>OsccalMode</ID>
@@ -114,8 +118,16 @@
 			</Element>
 			<DefaultVal>19</DefaultVal>
 		</EnumValue>
+		<UIntValue>
+			<ID>TransceiverWatchdogTimeout</ID>
+			<Description>Reset RFM12B module if no data is received until timeout is reached. Use this function if your specific transceiver hangs sometimes. Value is in deca seconds. Suggested setting is 48 (for 8 minutes). Set 0 to disable (default).</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>255</MaxVal>
+			<DefaultVal>0</DefaultVal>
+		</UIntValue>
 		<Reserved>
-			<Bits>3568</Bits>
+			<Bits>3560</Bits>
 		</Reserved>
 	</Block>
 	<Block>
@@ -210,9 +222,35 @@
 				<Name>SRF02</Name>
 			</Element>
 		</EnumValue>
+		<EnumValue>
+			<ID>ParticulateMatterSensorType</ID>
+			<Description>Choose one of the connected particulate matter sensor types.</Description>
+			<Bits>8</Bits>
+			<Element>
+				<Value>0</Value>
+				<Name>NoSensor</Name>
+			</Element>
+			<Element>
+				<Value>1</Value>
+				<Name>SPS30</Name>
+			</Element>
+		</EnumValue>
 		<Reserved>
-			<Bits>472</Bits>
+			<Bits>456</Bits>
 		</Reserved>
+		<EnumValue>
+			<ID>PowerPinMode</ID>
+			<Description>Choose the behaviour of the power pin (PD5) while measuring. It can be turned on before measuring to switch a voltage converter to produce 5V out of the 3V battery power. This is needed for some sensors which need 5V. 5VSensor_Delay1000 means that the pin is switched on when a sensor is configured which needs 5V power (currently SRF02 and SPS30). There's a delay of 1000ms after switching the pin to stabilize the voltage and to ensure the sensor works correctly. Off means the power pin is always off.</Description>
+			<Bits>8</Bits>
+			<Element>
+				<Value>0</Value>
+				<Name>Off</Name>
+			</Element>
+			<Element>
+				<Value>1</Value>
+				<Name>5VSensor_Delay1000</Name>
+			</Element>
+		</EnumValue>
 		<EnumValue>
 			<ID>WakeupInterval</ID>
 			<Description>Decide after which time the device should be woken up by the RFM12B transceiver to measure or send values.</Description>
@@ -415,8 +453,24 @@
 			<MaxVal>16</MaxVal>
 			<DefaultVal>6</DefaultVal>
 		</UIntValue>
+		<UIntValue>
+			<ID>ParticulateMatterMeasuringInterval</ID>
+			<Description>The number of times the device wakes up before this value is measured.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>255</MaxVal>
+			<DefaultVal>1</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>ParticulateMatterAveragingInterval</ID>
+			<Description>The number of values whose average is calculated before sending.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>16</MaxVal>
+			<DefaultVal>4</DefaultVal>
+		</UIntValue>
 		<Reserved>
-			<Bits>384</Bits>
+			<Bits>368</Bits>
 		</Reserved>
 		<Array>
 			<Length>8</Length>
@@ -611,7 +665,7 @@
 			<Description>This is a bit field about the connected switches.</Description>
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
-			<MaxVal>6</MaxVal>
+			<MaxVal>3</MaxVal>
 		</UIntValue>
 		<UIntValue>
 			<ID>BaseStationPacketCounter</ID>
@@ -623,15 +677,15 @@
 		<Array>
 			<Length>8</Length>
 			<BoolValue>
-				<ID>SwitchState</ID>
-				<Description>This field stores the last known switch state(s) for eight switches to allow restoring the same state after power loss. It contains also the remaining timeout value. Fill this with zeros when creating a e2p file!</Description>
+				<ID>CMDState</ID>
+				<Description>This field stores the switch state(s) which were requested by one of the supported 'set'/'setget' commands for eight switches to allow restoring the same state after power loss. Fill this with zeros when creating a e2p file!</Description>
 			</BoolValue>
 		</Array>
 		<Array>
 			<Length>8</Length>
 			<UIntValue>
-				<ID>SwitchTimeout</ID>
-				<Description>This field stores the last known switch state(s) for eight switches to allow restoring the same state after power loss. It contains also the remaining timeout value. Fill this with zeros when creating a e2p file!</Description>
+				<ID>CMDTimeout</ID>
+				<Description>This field stores the timeout value(s) which were requested by one of the supported 'set'/'setget' commands for eight switches to allow restoring the same state after power loss. Fill this with zeros when creating a e2p file!</Description>
 				<Bits>16</Bits>
 				<MinVal>0</MinVal>
 				<MaxVal>65767</MaxVal>
@@ -645,8 +699,53 @@
 			<MaxVal>255</MaxVal>
 			<DefaultVal>0</DefaultVal>
 		</UIntValue>
+		<Array>
+			<Length>8</Length>
+			<EnumValue>
+				<ID>SwitchMode</ID>
+				<Description>The mode decides how the optional manual switches are used in combination to the digital pin/port commands to set the relais status. In general, the status according digital pin/port command (CMD) and the switch (SW) can be combined by 'and', 'or' or 'xor'. Additionally the switch can be active open or active close and therefore can be inverted ('not'). 'CMD' and '(not) SW' mean that only the command or switch are considered. The default value is to ignore the optional manual switch.</Description>
+				<Bits>8</Bits>
+				<Element>
+					<Value>0</Value>
+					<Name>CMD</Name>
+				</Element>
+				<Element>
+					<Value>1</Value>
+					<Name>SW</Name>
+				</Element>
+				<Element>
+					<Value>2</Value>
+					<Name>not SW</Name>
+				</Element>
+				<Element>
+					<Value>3</Value>
+					<Name>CMD and SW</Name>
+				</Element>
+				<Element>
+					<Value>4</Value>
+					<Name>CMD and not SW</Name>
+				</Element>
+				<Element>
+					<Value>5</Value>
+					<Name>CMD or SW</Name>
+				</Element>
+				<Element>
+					<Value>6</Value>
+					<Name>CMD or not SW</Name>
+				</Element>
+				<Element>
+					<Value>7</Value>
+					<Name>CMD xor SW</Name>
+				</Element>
+				<Element>
+					<Value>8</Value>
+					<Name>CMD xor not SW</Name>
+				</Element>
+				<DefaultVal>0</DefaultVal>
+			</EnumValue>
+		</Array>
 		<Reserved>
-			<Bits>7448</Bits>
+			<Bits>7384</Bits>
 		</Reserved>
 	</Block>
 	<Block>
@@ -921,5 +1020,187 @@
 		<Reserved>
 			<Bits>7656</Bits>
 		</Reserved>
+	</Block>
+	<Block>
+		<Name>TeaMaker</Name>
+		<Description>This block contains the specific configuration data that only tea maker needs.</Description>
+		<Restriction>
+			<RefID>DeviceType</RefID>
+			<Value>90</Value>
+		</Restriction>
+		<MicrocontrollerModel>m324pa</MicrocontrollerModel>
+		<UIntValue>
+			<ID>BaseStationPacketCounter</ID>
+			<Description>This is the last remembered packet counter of a command from the base station. Packets with the same or lower number are ignored.</Description>
+			<Bits>24</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>16777215</MaxVal>
+		</UIntValue>
+		<ByteArray>
+			<ID>StartupConfirmationMessage</ID>
+			<Description>Text shown on LCD at startup until a button is pressed.</Description>
+			<Bytes>32</Bytes>
+		</ByteArray>
+		<Reserved>
+			<Bits>1280</Bits>
+		</Reserved>
+		<UIntValue>
+			<ID>PresetCount</ID>
+			<Description>The number of presets to use.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>9</MaxVal>
+		</UIntValue>
+		<Array>
+			<Length>9</Length>
+			<ByteArray>
+				<ID>PresetName</ID>
+				<Description>The name of the brewing preset (most times the type of tea used), shown on the LCD.</Description>
+				<Bytes>16</Bytes>
+			</ByteArray>
+		</Array>
+		<Array>
+			<Length>9</Length>
+			<UIntValue>
+				<ID>HeatingTemperature</ID>
+				<Description>Temperature to which the water is heated up in 1/10 degrees celsius (range is 0 to 100 degree celsius).</Description>
+				<Bits>16</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>1000</MaxVal>
+				<DefaultVal>900</DefaultVal>
+			</UIntValue>
+		</Array>
+		<Array>
+			<Length>9</Length>
+			<UIntValue>
+				<ID>HeatingTemperatureDrop</ID>
+				<Description>The number of degrees that the temperature has to drop after the maximum temperature was reached after powering off the heating plate when HeatingTemperature was reached (in 1/10 degree celsius).</Description>
+				<Bits>8</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>50</MaxVal>
+				<DefaultVal>10</DefaultVal>
+			</UIntValue>
+		</Array>
+		<Array>
+			<Length>9</Length>
+			<UIntValue>
+				<ID>LastHeatingTimeSec</ID>
+				<Description>This is the time it took the last time to heat up the water. The value is used to show and calculate a countdown. Range is from 0 to 30 minutes, in seconds.</Description>
+				<Bits>16</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>1800</MaxVal>
+			</UIntValue>
+		</Array>
+		<Array>
+			<Length>9</Length>
+			<UIntValue>
+				<ID>BrewingTemperature</ID>
+				<Description>Temperature (in 1/10 degree celsius) to which the water is cooled off until brewing is started, in 1/10 degree celsius. The water is held at this temperature during the brewing phase.</Description>
+				<Bits>16</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>1000</MaxVal>
+				<DefaultVal>900</DefaultVal>
+			</UIntValue>
+		</Array>
+		<Array>
+			<Length>9</Length>
+			<UIntValue>
+				<ID>BrewingTimeSec</ID>
+				<Description>This is how long the tea bag is placed inside the water at brewing temperature. Range is from 0 to 30 minutes, in seconds.</Description>
+				<Bits>16</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>1800</MaxVal>
+				<DefaultVal>240</DefaultVal>
+			</UIntValue>
+		</Array>
+		<Array>
+			<Length>9</Length>
+			<UIntValue>
+				<ID>WarmingTemperature</ID>
+				<Description>Temperature at which the water is held after brewing is finished.</Description>
+				<Bits>16</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>1000</MaxVal>
+				<DefaultVal>500</DefaultVal>
+			</UIntValue>
+		</Array>
+		<Array>
+			<Length>9</Length>
+			<UIntValue>
+				<ID>WarmingTimeSec</ID>
+				<Description>This is how long the water is held at the warming temperature after brewing is finished. Range is from 0 to 12 hours, in seconds.</Description>
+				<Bits>16</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>43200</MaxVal>
+				<DefaultVal>7200</DefaultVal>
+			</UIntValue>
+		</Array>
+		<Reserved>
+			<Bits>576</Bits>
+		</Reserved>
+		<UIntValue>
+			<ID>BrewingRegulationRangeAbove</ID>
+			<Description>This defines at which temperature the heating plate is turned off when heating up in the brewing phase, in 1/10 degree celsius.</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>50</MaxVal>
+			<DefaultVal>20</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>BrewingRegulationRangeBelow</ID>
+			<Description>This defines at which temperature the heating plate is turned on again when the water is cooling off currently in the brewing phase, in 1/10 degree celsius. </Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>50</MaxVal>
+			<DefaultVal>20</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>WarmingRegulationRangeAbove</ID>
+			<Description>This defines at which temperature the heating plate is turned off when heating up in the warming phase, in 1/10 degree celsius.</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>50</MaxVal>
+			<DefaultVal>20</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>WarmingRegulationRangeBelow</ID>
+			<Description>This defines at which temperature the heating plate is turned on again when the water is cooling off currently in the warming phase, in 1/10 degree celsius.</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>50</MaxVal>
+			<DefaultVal>20</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>BrewingPWMPercentage</ID>
+			<Description>The percentage of time the heating plate is one in one cycle of several seconds to minutes. The value has to be high enough to actually heat up the water also at the maximum brewing temperature and the maximum amount of water in the kettle.</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>100</MaxVal>
+			<DefaultVal>30</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>BrewingPWMCycleSec</ID>
+			<Description>The length of one heating PWM cycle in seconds in the brewing phase.</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>255</MaxVal>
+			<DefaultVal>30</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>WarmingPWMPercentage</ID>
+			<Description>The percentage of time the heating plate is one in one cycle of several seconds to minutes. The value has to be high enough to actually heat up the water also at the maximum warming temperature and the maximum amount of water in the kettle. The PWM cycle in general should be slower in the warming phase compared to the brewing phase, because usually the temperature to regulate to is not so important.</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>100</MaxVal>
+			<DefaultVal>30</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>WarmingPWMCycleSec</ID>
+			<Description>The length of one heating PWM cycle in seconds in the warming phase.</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>255</MaxVal>
+			<DefaultVal>180</DefaultVal>
+		</UIntValue>
 	</Block>
 </E2P>
