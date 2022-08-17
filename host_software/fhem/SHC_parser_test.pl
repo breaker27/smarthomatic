@@ -3,7 +3,7 @@
 ##########################################################################
 # This is a test program for the smarthomatic module for FHEM.
 #
-# Copyright (c) 2014 Uwe Freese
+# Copyright (c) 2014..2019 Uwe Freese
 #
 # You can find smarthomatic at www.smarthomatic.org.
 # You can find FHEM at www.fhem.de.
@@ -35,11 +35,11 @@ my $parser = new SHC_parser();
 sub parser_test($)
 {
 	my $str = shift();
-	
+
 	$parser->parse($str);
-	
+
 	print "\nParsing Message: " . $str . "\n\n";
-	
+
 	print "SenderID: " . $parser->getSenderID() . "\n";
 	print "MessageTypeName: " . $parser->getMessageTypeName() . "\n";
 	print "MessageGroupName: " . $parser->getMessageGroupName() . "\n";
@@ -47,10 +47,10 @@ sub parser_test($)
 	print "MessageData: " . $parser->getMessageData() . "\n";
 
 	# process message and react on content
-	
+
 	my $grp = $parser->getMessageGroupName();
 	my $msg = $parser->getMessageName();
-	
+
 	given($grp)
 	{
 		when('Generic')
@@ -124,6 +124,23 @@ sub parser_test($)
 				}
 			}
 		}
+		when('Environment')
+		{
+			given($msg)
+			{
+				when('ParticulateMatter')
+				{
+					print "TypicalParticleSize RAW: " . $parser->getField("TypicalParticleSize") . "\n";
+
+					for (my $i = 0; $i < 5; $i++)
+					{
+						print "Size RAW " . $i . ": " . $parser->getField("Size", $i) . "\n";
+						print "MassConcentration RAW " . $i . ": " . $parser->getField("MassConcentration", $i) . "\n";
+						print "NumberConcentration RAW " . $i . ": " . $parser->getField("NumberConcentration", $i) . "\n";
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -138,6 +155,7 @@ parser_test("PKT:SID=71;PC=527;MT=8;MGID=10;MID=2;MD=a67161000000;");
 parser_test("PKT:SID=27;PC=35106;MT=8;MGID=1;MID=1;MD=800000000000;");
 parser_test("PKT:SID=21;PC=680;MT=8;MGID=10;MID=1;MD=de7b00000000;");
 parser_test("PKT:SID=42;PC=103;MT=8;MGID=0;MID=3;MD=00;");
+parser_test("PKT:SID=37;PC=5115;MT=8;MGID=11;MID=3;MD=0f017ff1880a0e873064411d22811074d90441d3;");
 
 # Create message string for sending
 

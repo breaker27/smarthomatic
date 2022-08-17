@@ -1,6 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013..2014 Uwe Freese
+* Copyright (c) 2013..2019 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -161,8 +161,58 @@ static inline DistanceSensorTypeEnum e2p_envsensor_get_distancesensortype(void)
   return eeprom_read_UIntValue8(544, 8, 0, 255);
 }
 
-// Reserved area with 472 bits
-// Offset: 552
+// ParticulateMatterSensorType (EnumValue)
+// Description: Choose one of the connected particulate matter sensor types.
+
+#ifndef _ENUM_ParticulateMatterSensorType
+#define _ENUM_ParticulateMatterSensorType
+typedef enum {
+  PARTICULATEMATTERSENSORTYPE_NOSENSOR = 0,
+  PARTICULATEMATTERSENSORTYPE_SPS30 = 1
+} ParticulateMatterSensorTypeEnum;
+#endif /* _ENUM_ParticulateMatterSensorType */
+
+// Set ParticulateMatterSensorType (EnumValue)
+// Offset: 552, length bits 8
+static inline void e2p_envsensor_set_particulatemattersensortype(ParticulateMatterSensorTypeEnum val)
+{
+  eeprom_write_UIntValue(552, 8, val);
+}
+
+// Get ParticulateMatterSensorType (EnumValue)
+// Offset: 552, length bits 8
+static inline ParticulateMatterSensorTypeEnum e2p_envsensor_get_particulatemattersensortype(void)
+{
+  return eeprom_read_UIntValue8(552, 8, 0, 255);
+}
+
+// Reserved area with 456 bits
+// Offset: 560
+
+// PowerPinMode (EnumValue)
+// Description: Choose the behaviour of the power pin (PD5) while measuring. It can be turned on before measuring to switch a voltage converter to produce 5V out of the 3V battery power. This is needed for some sensors which need 5V. 5VSensor_Delay1000 means that the pin is switched on when a sensor is configured which needs 5V power (currently SRF02 and SPS30). There's a delay of 1000ms after switching the pin to stabilize the voltage and to ensure the sensor works correctly. Off means the power pin is always off.
+
+#ifndef _ENUM_PowerPinMode
+#define _ENUM_PowerPinMode
+typedef enum {
+  POWERPINMODE_OFF = 0,
+  POWERPINMODE_5VSENSOR_DELAY1000 = 1
+} PowerPinModeEnum;
+#endif /* _ENUM_PowerPinMode */
+
+// Set PowerPinMode (EnumValue)
+// Offset: 1016, length bits 8
+static inline void e2p_envsensor_set_powerpinmode(PowerPinModeEnum val)
+{
+  eeprom_write_UIntValue(1016, 8, val);
+}
+
+// Get PowerPinMode (EnumValue)
+// Offset: 1016, length bits 8
+static inline PowerPinModeEnum e2p_envsensor_get_powerpinmode(void)
+{
+  return eeprom_read_UIntValue8(1016, 8, 0, 255);
+}
 
 // WakeupInterval (EnumValue)
 // Description: Decide after which time the device should be woken up by the RFM12B transceiver to measure or send values.
@@ -446,8 +496,42 @@ static inline uint8_t e2p_envsensor_get_analoginputaveraginginterval(void)
   return eeprom_read_UIntValue8(1144, 8, 1, 16);
 }
 
-// Reserved area with 384 bits
-// Offset: 1152
+// ParticulateMatterMeasuringInterval (UIntValue)
+// Description: The number of times the device wakes up before this value is measured.
+
+// Set ParticulateMatterMeasuringInterval (UIntValue)
+// Offset: 1152, length bits 8, min val 1, max val 255
+static inline void e2p_envsensor_set_particulatemattermeasuringinterval(uint8_t val)
+{
+  eeprom_write_UIntValue(1152, 8, val);
+}
+
+// Get ParticulateMatterMeasuringInterval (UIntValue)
+// Offset: 1152, length bits 8, min val 1, max val 255
+static inline uint8_t e2p_envsensor_get_particulatemattermeasuringinterval(void)
+{
+  return eeprom_read_UIntValue8(1152, 8, 1, 255);
+}
+
+// ParticulateMatterAveragingInterval (UIntValue)
+// Description: The number of values whose average is calculated before sending.
+
+// Set ParticulateMatterAveragingInterval (UIntValue)
+// Offset: 1160, length bits 8, min val 1, max val 16
+static inline void e2p_envsensor_set_particulatematteraveraginginterval(uint8_t val)
+{
+  eeprom_write_UIntValue(1160, 8, val);
+}
+
+// Get ParticulateMatterAveragingInterval (UIntValue)
+// Offset: 1160, length bits 8, min val 1, max val 16
+static inline uint8_t e2p_envsensor_get_particulatematteraveraginginterval(void)
+{
+  return eeprom_read_UIntValue8(1160, 8, 1, 16);
+}
+
+// Reserved area with 368 bits
+// Offset: 1168
 
 // DigitalInputPin (EnumValue[8])
 // Description: You can choose up to 8 GPIO pins as digital input. The enum values are counting through every pin from port B, C and D, leaving out the pins that are not accessible because otherwise used.

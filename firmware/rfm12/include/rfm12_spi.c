@@ -28,6 +28,16 @@
 #define SS_ASSERT() PORT_SS &= ~(1<<BIT_SS)
 #define SS_RELEASE() PORT_SS |= (1<<BIT_SS)
 
+// redefine SPI definitions for the ATMega324PA that are otherwise used for the ATMega328.
+#if defined (__AVR_ATmega324PA__)
+	#define SPDR SPDR0
+	#define SPSR SPSR0
+	#define SPIF SPIF0
+	#define SPCR SPCR0
+	#define SPE  SPE0
+	#define MSTR MSTR0
+	#define SPR0 SPR00
+#endif
 
 #if RFM12_SPI_SOFTWARE
 /* @description Actual sending function to send raw data to the Module
