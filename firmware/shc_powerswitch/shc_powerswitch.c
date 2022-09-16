@@ -188,20 +188,28 @@ void update_relais_states(void)
 		{
 			case SWITCHMODE_SW:
 				relais_state[i] = switch_state[i];
+				break;
 			case SWITCHMODE_NOT_SW:
 				relais_state[i] = !switch_state[i];
+				break;
 			case SWITCHMODE_CMD_AND_SW:
 				relais_state[i] = cmd_state[i] && switch_state[i];
+				break;
 			case SWITCHMODE_CMD_AND_NOT_SW:
 				relais_state[i] = cmd_state[i] && (!switch_state[i]);
+				break;
 			case SWITCHMODE_CMD_OR_SW:
 				relais_state[i] = cmd_state[i] || switch_state[i];
+				break;
 			case SWITCHMODE_CMD_OR_NOT_SW:
 				relais_state[i] = cmd_state[i] || (!switch_state[i]);
+				break;
 			case SWITCHMODE_CMD_XOR_SW:
 				relais_state[i] = cmd_state[i] ^ switch_state[i];
+				break;
 			case SWITCHMODE_CMD_XOR_NOT_SW:
 				relais_state[i] = cmd_state[i] ^ (!switch_state[i]);
+				break;
 			default: // SWITCHMODE_CMD (= default) and all other values
 				relais_state[i] = cmd_state[i];
 				break;
