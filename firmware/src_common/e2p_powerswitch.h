@@ -148,8 +148,42 @@ static inline SwitchModeEnum e2p_powerswitch_get_switchmode(uint8_t index)
   return eeprom_read_UIntValue8(744 + (uint16_t)index * 8, 8, 0, 255);
 }
 
-// Reserved area with 7384 bits
-// Offset: 808
+// SwitchOnDelay (UIntValue[8])
+// Description: This field contains for the 8 switches the times in seconds after which the change of a switch to state "ON" is considered to affect the relais state. If the switch changes to "OFF" again within the delay time, it is cleared and no change of the relais state will happen. If the relais state is changed via command within the delay time, the relais state will consider the old switch state until the delay time is over. After restart (power loss), the delay will not be considered, so the switch state is considered immediately.
+
+// Set SwitchOnDelay (UIntValue)
+// Offset: 808, length bits 16, min val 0, max val 65535
+static inline void e2p_powerswitch_set_switchondelay(uint8_t index, uint16_t val)
+{
+  eeprom_write_UIntValue(808 + (uint16_t)index * 16, 16, val);
+}
+
+// Get SwitchOnDelay (UIntValue)
+// Offset: 808, length bits 16, min val 0, max val 65535
+static inline uint16_t e2p_powerswitch_get_switchondelay(uint8_t index)
+{
+  return eeprom_read_UIntValue16(808 + (uint16_t)index * 16, 16, 0, 65535);
+}
+
+// SwitchOffDelay (UIntValue[8])
+// Description: This field contains for the 8 switches the times in seconds after which the change of a switch to state "OFF" is considered to affect the relais state. The behaviour is equivalent to SwitchOnDelay.
+
+// Set SwitchOffDelay (UIntValue)
+// Offset: 936, length bits 16, min val 0, max val 65535
+static inline void e2p_powerswitch_set_switchoffdelay(uint8_t index, uint16_t val)
+{
+  eeprom_write_UIntValue(936 + (uint16_t)index * 16, 16, val);
+}
+
+// Get SwitchOffDelay (UIntValue)
+// Offset: 936, length bits 16, min val 0, max val 65535
+static inline uint16_t e2p_powerswitch_get_switchoffdelay(uint8_t index)
+{
+  return eeprom_read_UIntValue16(936 + (uint16_t)index * 16, 16, 0, 65535);
+}
+
+// Reserved area with 7128 bits
+// Offset: 1064
 
 
 #endif /* _E2P_POWERSWITCH_H */

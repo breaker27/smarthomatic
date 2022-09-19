@@ -744,8 +744,30 @@
 				<DefaultVal>0</DefaultVal>
 			</EnumValue>
 		</Array>
+		<Array>
+		  <Length>8</Length>
+		  <UIntValue>
+		    <ID>SwitchOnDelay</ID>
+		    <Description>This field contains for the 8 switches the times in seconds after which the change of a switch to state "ON" is considered to affect the relais state. If the switch changes to "OFF" again within the delay time, it is cleared and no change of the relais state will happen. If the relais state is changed via command within the delay time, the relais state will consider the old switch state until the delay time is over. After restart (power loss), the delay will not be considered, so the switch state is considered immediately.</Description>
+		    <Bits>16</Bits>
+		    <MinVal>0</MinVal>
+		    <MaxVal>65535</MaxVal>
+		    <DefaultVal>0</DefaultVal>
+		  </UIntValue>
+		</Array>
+		<Array>
+		  <Length>8</Length>
+		  <UIntValue>
+		    <ID>SwitchOffDelay</ID>
+		    <Description>This field contains for the 8 switches the times in seconds after which the change of a switch to state "OFF" is considered to affect the relais state. The behaviour is equivalent to SwitchOnDelay.</Description>
+		    <Bits>16</Bits>
+		    <MinVal>0</MinVal>
+		    <MaxVal>65535</MaxVal>
+		    <DefaultVal>0</DefaultVal>
+		  </UIntValue>
+		</Array>
 		<Reserved>
-			<Bits>7384</Bits>
+			<Bits>7128</Bits>
 		</Reserved>
 	</Block>
 	<Block>
