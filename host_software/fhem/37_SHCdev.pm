@@ -764,6 +764,8 @@ sub SHCdev_Send($)
 1;
 
 =pod
+=item summary    support of several smarthomatic devices (www.smarthomatic.org)
+=item summary_DE Unterstützung verschiedener smarthomatic-Geräte (www.smarthomatic.org)
 =begin html
 
 <a name="SHCdev"></a>
