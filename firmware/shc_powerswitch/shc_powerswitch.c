@@ -159,11 +159,18 @@ void send_gpio_digitalporttimeout_status(void)
 
 	for (i = 0; i < RELAIS_COUNT; i++)
 	{
+		// set command state incl. current timeout
 		msg_gpio_digitalporttimeout_set_on(i, cmd_state[i]);
 		msg_gpio_digitalporttimeout_set_timeoutsec(i, cmd_timeout[i]);
 
-		// set "virtual" pin states reflecting the manual switch states
-		msg_gpio_digitalporttimeout_set_on(i + 4, switch_state_physical[i]);
+		// set physical manual switch states incl. current timeout with offset 3
+		msg_gpio_digitalporttimeout_set_on(i + 3, switch_state_physical[i]);
+		msg_gpio_digitalporttimeout_set_timeoutsec(i + 3,
+				switch_state_physical[i] ? switch_on_delay_counter[i] : switch_off_delay_counter[i]);
+
+		// set relais state with offset 6
+		if (i < 3)
+			msg_gpio_digitalporttimeout_set_on(i + 6, relais_state[i]);
 	}
 
 	rfm12_send_bufx();
@@ -480,12 +487,18 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		// react on changed state (version for more than one switch...)
 		for (i = 0; i < RELAIS_COUNT; i++)
 		{
-			// set message data
+			// set command state incl. current timeout
 			msg_gpio_digitalporttimeout_set_on(i, cmd_state[i]);
 			msg_gpio_digitalporttimeout_set_timeoutsec(i, cmd_timeout[i]);
 
-			// set "virtual" pin states reflecting the manual switch states
-			msg_gpio_digitalporttimeout_set_on(i + 4, switch_state_physical[i]);
+			// set physical manual switch states incl. current timeout with offset 3
+			msg_gpio_digitalporttimeout_set_on(i + 3, switch_state_physical[i]);
+			msg_gpio_digitalporttimeout_set_timeoutsec(i + 3,
+				switch_state_physical[i] ? switch_on_delay_counter[i] : switch_off_delay_counter[i]);
+
+			// set relais state with offset 6
+			if (i < 3)
+				msg_gpio_digitalporttimeout_set_on(i + 6, relais_state[i]);
 		}
 
 		UART_PUTS("Sending AckStatus\r\n");
