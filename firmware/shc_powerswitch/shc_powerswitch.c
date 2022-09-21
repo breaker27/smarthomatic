@@ -61,9 +61,6 @@
 #define RFM_RESET_PORT_NR 1
 #define RFM_RESET_PIN_STATE 1
 
-#define SEND_STATUS_EVERY_SEC 1800 // how often should a status be sent?
-#define SEND_VERSION_STATUS_CYCLE 50 // send version status x times less than switch status (~once per day)
-
 #include "../src_common/util_watchdog_init.h"
 
 uint16_t device_id;
@@ -79,9 +76,10 @@ uint16_t switch_on_delay[RELAIS_COUNT];   // delay until switch 'on' state is co
 uint16_t switch_off_delay[RELAIS_COUNT];  // delay until switch 'off' state is considered
 uint16_t switch_on_delay_counter[RELAIS_COUNT];  // count the seconds until switch state change is considered
 uint16_t switch_off_delay_counter[RELAIS_COUNT]; // count the seconds until switch state change is considered
-
+uint16_t port_status_cycle;
+uint16_t version_status_cycle;            // send version status x times less than switch status (~once per day)
+uint16_t version_status_cycle_counter;    // send early after startup
 uint16_t send_status_timeout = 5;
-uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly after startup
 
 void print_states(void)
 {
@@ -599,6 +597,10 @@ int main(void)
 	// read last received station packetcounter
 	station_packetcounter = e2p_powerswitch_get_basestationpacketcounter();
 
+	port_status_cycle = (uint16_t)e2p_powerswitch_get_statuscycle() * 60;
+	version_status_cycle = (uint16_t)90000L / port_status_cycle; // once every 25 hours
+	version_status_cycle_counter = version_status_cycle - 1; // send right after startup
+
 	// read device id
 	device_id = e2p_generic_get_deviceid();
 
@@ -629,6 +631,8 @@ int main(void)
 	UART_PUTF ("DeviceID: %u\r\n", device_id);
 	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);
 	UART_PUTF ("Last received base station PacketCounter: %u\r\n", station_packetcounter);
+	UART_PUTF ("Port status cycle: %us\r\n", port_status_cycle);
+	UART_PUTF ("Version status cycle: %u * port status cycle\r\n", version_status_cycle);
 
 	// init AES key
 	e2p_generic_get_aeskey(aes_key);
@@ -756,15 +760,15 @@ int main(void)
 
 				if (send_status_timeout == 0)
 				{
-					send_status_timeout = SEND_STATUS_EVERY_SEC;
+					send_status_timeout = port_status_cycle;
 					send_gpio_digitalporttimeout_status();
 					led_blink(200, 0, 1);
 
-					version_status_cycle++;
+					version_status_cycle_counter++;
 				}
-				else if (version_status_cycle >= SEND_VERSION_STATUS_CYCLE)
+				else if (version_status_cycle_counter >= version_status_cycle)
 				{
-					version_status_cycle = 0;
+					version_status_cycle_counter = 0;
 					send_deviceinfo_status();
 					led_blink(200, 0, 1);
 				}

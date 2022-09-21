@@ -661,18 +661,34 @@
 			<Value>40</Value>
 		</Restriction>
 		<UIntValue>
-			<ID>SupportedSwitches</ID>
-			<Description>This is a bit field about the connected switches.</Description>
-			<Bits>8</Bits>
-			<MinVal>1</MinVal>
-			<MaxVal>3</MaxVal>
-		</UIntValue>
-		<UIntValue>
 			<ID>BaseStationPacketCounter</ID>
 			<Description>This is the last remembered packet counter of a command from the base station. Packets with the same or lower number are ignored.</Description>
 			<Bits>24</Bits>
 			<MinVal>0</MinVal>
 			<MaxVal>16777215</MaxVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>TransceiverWatchdogTimeout</ID>
+			<Description>Reset RFM12B module if no data is received until timeout is reached. Use this function if your specific transceiver hangs sometimes. Value is in deca seconds. Suggested setting is 48 (for 8 minutes). Set 0 to disable (default).</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>255</MaxVal>
+			<DefaultVal>0</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>StatusCycle</ID>
+			<Description>This is the number of minutes after which the status should be resent, so in case of a lost message it can be received again. Set 0 to disable.</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>255</MaxVal>
+			<DefaultVal>30</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>SupportedSwitches</ID>
+			<Description>This is the number of connected switches.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>3</MaxVal>
 		</UIntValue>
 		<Array>
 			<Length>8</Length>
@@ -691,14 +707,6 @@
 				<MaxVal>65767</MaxVal>
 			</UIntValue>
 		</Array>
-		<UIntValue>
-			<ID>TransceiverWatchdogTimeout</ID>
-			<Description>Reset RFM12B module if no data is received until timeout is reached. Use this function if your specific transceiver hangs sometimes. Value is in deca seconds. Suggested setting is 48 (for 8 minutes). Set 0 to disable (default).</Description>
-			<Bits>8</Bits>
-			<MinVal>0</MinVal>
-			<MaxVal>255</MaxVal>
-			<DefaultVal>0</DefaultVal>
-		</UIntValue>
 		<Array>
 			<Length>8</Length>
 			<EnumValue>
@@ -767,7 +775,7 @@
 		  </UIntValue>
 		</Array>
 		<Reserved>
-			<Bits>7128</Bits>
+			<Bits>7120</Bits>
 		</Reserved>
 	</Block>
 	<Block>
