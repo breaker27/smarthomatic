@@ -598,7 +598,7 @@ int main(void)
 	station_packetcounter = e2p_powerswitch_get_basestationpacketcounter();
 
 	port_status_cycle = (uint16_t)e2p_powerswitch_get_statuscycle() * 60;
-	version_status_cycle = (uint16_t)90000L / port_status_cycle; // once every 25 hours
+	version_status_cycle = (uint16_t)(90000UL / port_status_cycle); // once every 25 hours
 	version_status_cycle_counter = version_status_cycle - 1; // send right after startup
 
 	// read device id
