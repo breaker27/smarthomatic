@@ -167,7 +167,7 @@ void send_gpio_digitalporttimeout_status(void)
 				switch_state_physical[i] ? switch_on_delay_counter[i] : switch_off_delay_counter[i]);
 
 		// set relais state with offset 6
-		if (i < 3)
+		if (i < 2)
 			msg_gpio_digitalporttimeout_set_on(i + 6, relais_state[i]);
 	}
 
@@ -495,7 +495,7 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 				switch_state_physical[i] ? switch_on_delay_counter[i] : switch_off_delay_counter[i]);
 
 			// set relais state with offset 6
-			if (i < 3)
+			if (i < 2)
 				msg_gpio_digitalporttimeout_set_on(i + 6, relais_state[i]);
 		}
 
