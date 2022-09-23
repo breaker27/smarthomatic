@@ -721,6 +721,7 @@ int main(void)
 						switch_state_logical[i] = switch_state_physical[i];
 						UART_PUTF("Logical switch state changed to %u\r\n", switch_state_logical[0]);
 						update_relais_states();
+						send_status_timeout = 1;
 					}
 				}
 
@@ -732,6 +733,7 @@ int main(void)
 						switch_state_logical[i] = switch_state_physical[i];
 						UART_PUTF("Logical switch state changed to %u\r\n", switch_state_logical[0]);
 						update_relais_states();
+						send_status_timeout = 1;
 					}
 				}
 			}
@@ -748,7 +750,7 @@ int main(void)
 						UART_PUTS("Timeout! ");
 						set_cmd_state(i, !cmd_state[i], 0, true);
 						update_relais_states();
-						send_status_timeout = 1; // immediately send the status update
+						send_status_timeout = 1;
 					}
 				}
 			}
@@ -801,7 +803,9 @@ int main(void)
 				UART_PUTS("Button! ");
 				set_cmd_state(0, !cmd_state[0], 0, true);
 				update_relais_states();
-				send_status_timeout = 15; // send status after 15s
+				// send status after 15s delay to avoid sending it once per
+				// second in case the button toggles all the time
+				send_status_timeout = 15;
 			}
 		}
 
@@ -811,7 +815,9 @@ int main(void)
 			{
 				UART_PUTF("Physical switch state changed to %u\r\n", switch_state_physical[0]);
 				update_relais_states();
-				send_status_timeout = 15; // send status after 15s
+				// send status after 15s delay to avoid sending it once per
+				// second in case the switch toggles all the time
+				send_status_timeout = 15;
 			}
 		}
 
