@@ -49,7 +49,6 @@
 
 #define SEND_VERSION_STATUS_CYCLE 50    // send version status every x wake ups
 #define SEND_BATTERY_STATUS_CYCLE 25    // send battery status every x wake ups
-#define SEND_STATUS_TIMES_AT_STARTUP 2  // send version and battery status after power up (inserting battery) x times
 
 uint16_t device_id;
 uint32_t station_packetcounter;
@@ -392,18 +391,15 @@ int main(void)
 	// init interrupt for button (falling edge)
 	sbi(EICRA, ISC11);
 	sbi(EIMSK, INT1);
-	
+
 	sei();
 
-	for (i = 0; i < SEND_STATUS_TIMES_AT_STARTUP; i++)
-	{
-		prepare_deviceinfo_status();
-		send_prepared_message();
-		_delay_ms(800);
-		prepare_battery_status();
-		send_prepared_message();
-		_delay_ms(800);
-	}
+	prepare_deviceinfo_status();
+	send_prepared_message();
+	_delay_ms(1000);
+	prepare_battery_status();
+	send_prepared_message();
+	_delay_ms(1000);
 
 	while (42)
 	{
