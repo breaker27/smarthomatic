@@ -309,7 +309,6 @@ ISR (INT1_vect)
 
 int main(void)
 {
-	uint8_t i;
 	uint16_t wakeup_sec;
 	bool send;
 
@@ -454,7 +453,7 @@ int main(void)
 			send = true;
 
 			//UART_PUTF("version_status_cycle = %u\r\n", version_status_cycle);
-		
+
 			if (!measure_humidity())
 			{
 				if (battery_status_cycle > 0)
