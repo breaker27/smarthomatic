@@ -140,7 +140,7 @@ void prepare_battery_status(void)
 {
 	adc_on(true);
 	_delay_ms(10);
-	uint16_t percentage = bat_percentage(read_battery(), 1100); // 1.1V * 2 cells = 2.2V = min. voltage for RFM12B
+	uint16_t percentage = bat_percentage(read_battery() / 2, 1100); // 1.1V * 2 cells = 2.2V = min. voltage for RFM12B
 	adc_on(false);
 
 	UART_PUTF("Sending battery: %u%%\r\n", percentage);
@@ -353,7 +353,7 @@ int main(void)
 
 	UART_PUTS ("\r\n");
 	UART_PUTF4("smarthomatic Soil Moisture Meter v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
-	UART_PUTS("(c) 2014..2015 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTS("(c) 2014..2022 Uwe Freese, www.smarthomatic.org\r\n");
 	osccal_info();
 	UART_PUTF ("DeviceID: %u\r\n", device_id);
 	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);
