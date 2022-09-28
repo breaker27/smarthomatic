@@ -28,6 +28,7 @@ use strict;
 use warnings;
 use Time::HiRes qw(gettimeofday);
 use Digest::CRC qw(crc32); # linux packet libdigest-crc-perl
+use DevIo;
 
 sub SHC_Parse($$$$);
 sub SHC_Read($);
@@ -48,8 +49,6 @@ my %matchListSHC = (
 sub SHC_Initialize($)
 {
   my ($hash) = @_;
-
-  require "$attr{global}{modpath}/FHEM/DevIo.pm";
 
   # Provider
   $hash->{ReadFn}  = "SHC_Read";
