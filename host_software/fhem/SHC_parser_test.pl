@@ -113,17 +113,6 @@ sub parser_test($)
 				}
 			}
 		}
-		when('PowerSwitch')
-		{
-			given($msg)
-			{
-				when('SwitchState')
-				{
-					print "On: " . $parser->getField("On") . "\n";
-					print "TimeoutSec: " . $parser->getField("TimeoutSec") . "\n";
-				}
-			}
-		}
 		when('Environment')
 		{
 			given($msg)
@@ -172,9 +161,6 @@ $parser->setField("GPIO", "DigitalPinTimeout", "Pos", 3);
 $parser->setField("GPIO", "DigitalPinTimeout", "On", 1);
 $parser->setField("GPIO", "DigitalPinTimeout", "TimeoutSec", 8);
 
-print "BaseStation command = " . $parser->getSendString(61) . "\n";
-
-$parser->setField("PowerSwitch", "SwitchState", "On", 1);
 print "BaseStation command = " . $parser->getSendString(61) . "\n";
 
 $parser->initPacket("Dimmer", "ColorAnimation", "Set");

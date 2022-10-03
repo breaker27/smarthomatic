@@ -184,43 +184,6 @@
 		<Description>This group contains messages useful for different devices.</Description>
 		<MessageGroupID>0</MessageGroupID>
 		<Message>
-			<Name>Version</Name>
-			<Description>Reports the current firmware version. Version information is only available when set in source code, which is usually only done for official builds by the build robot.</Description>
-			<MessageID>1</MessageID>
-			<MessageType>0</MessageType>
-			<MessageType>8</MessageType>
-			<MessageType>10</MessageType>
-			<Validity>deprecated</Validity>
-			<UIntValue>
-				<ID>Major</ID>
-				<Description>Different major version means incompatible changes.</Description>
-				<Bits>8</Bits>
-				<MinVal>0</MinVal>
-				<MaxVal>255</MaxVal>
-			</UIntValue>
-			<UIntValue>
-				<ID>Minor</ID>
-				<Description>Different minor number means new functionality without breaking compatibility.</Description>
-				<Bits>8</Bits>
-				<MinVal>0</MinVal>
-				<MaxVal>255</MaxVal>
-			</UIntValue>
-			<UIntValue>
-				<ID>Patch</ID>
-				<Description>The patch version is changed when backwards-compatible bug fixes are made.</Description>
-				<Bits>8</Bits>
-				<MinVal>0</MinVal>
-				<MaxVal>255</MaxVal>
-			</UIntValue>
-			<UIntValue>
-				<ID>Hash</ID>
-				<Description>The beginning of the revision ID hash (as reported by Git).</Description>
-				<Bits>32</Bits>
-				<MinVal>0</MinVal>
-				<MaxVal>4294967295</MaxVal>
-			</UIntValue>
-		</Message>
-		<Message>
 			<Name>DeviceInfo</Name>
 			<Description>Reports DeviceType and current firmware version. Version information is only available when set in source code, which is usually only done for official builds by the build robot.</Description>
 			<MessageID>2</MessageID>
@@ -625,63 +588,6 @@
 					<Bits>12</Bits>
 					<MinVal>0</MinVal>
 					<MaxVal>4095</MaxVal>
-				</UIntValue>
-			</Array>
-		</Message>
-	</MessageGroup>
-	<MessageGroup>
-		<Name>PowerSwitch</Name>
-		<Description/>
-		<MessageGroupID>20</MessageGroupID>
-		<Message>
-			<Name>SwitchState</Name>
-			<Description>This is the state of the relais and its timeout value.</Description>
-			<MessageID>1</MessageID>
-			<MessageType>0</MessageType>
-			<MessageType>1</MessageType>
-			<MessageType>2</MessageType>
-			<MessageType>8</MessageType>
-			<MessageType>9</MessageType>
-			<MessageType>10</MessageType>
-			<Validity>deprecated</Validity>
-			<BoolValue>
-				<ID>On</ID>
-				<Description>Tells if the switch is on (active).</Description>
-			</BoolValue>
-			<UIntValue>
-				<ID>TimeoutSec</ID>
-				<Description>The time after which the switch is automatically toggled again. Use 0 to disable this.</Description>
-				<Bits>16</Bits>
-				<MinVal>0</MinVal>
-				<MaxVal>65535</MaxVal>
-			</UIntValue>
-		</Message>
-		<Message>
-			<Name>SwitchStateExt</Name>
-			<Description>This is the state of up to 8 relais and its timeout values.</Description>
-			<MessageID>2</MessageID>
-			<MessageType>0</MessageType>
-			<MessageType>1</MessageType>
-			<MessageType>2</MessageType>
-			<MessageType>8</MessageType>
-			<MessageType>9</MessageType>
-			<MessageType>10</MessageType>
-			<Validity>deprecated</Validity>
-			<Array>
-				<Length>8</Length>
-				<BoolValue>
-					<ID>On</ID>
-					<Description/>
-				</BoolValue>
-			</Array>
-			<Array>
-				<Length>8</Length>
-				<UIntValue>
-					<ID>TimeoutSec</ID>
-					<Description>The time after which the switch is automatically toggled again. Use 0 to disable this.</Description>
-					<Bits>16</Bits>
-					<MinVal>0</MinVal>
-					<MaxVal>65535</MaxVal>
 				</UIntValue>
 			</Array>
 		</Message>
