@@ -504,7 +504,7 @@
 			<MessageType>0</MessageType>
 			<MessageType>8</MessageType>
 			<MessageType>10</MessageType>
-			<Validity>test</Validity>
+			<Validity>released</Validity>
 			<UIntValue>
 				<ID>Humidity</ID>
 				<Description>relative humidity permill, 0..1000 (other values not defined)</Description>

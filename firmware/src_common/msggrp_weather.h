@@ -279,7 +279,7 @@ static inline int32_t msg_weather_barometricpressuretemperature_get_temperature(
 // MessageGroupID: 10
 // MessageID: 4
 // Possible MessageTypes: Get, Status, AckStatus
-// Validity: test
+// Validity: released
 // Length w/o Header + HeaderExtension: 10 bits
 // Data fields: Humidity
 // Description: This is a message containing humidity.
