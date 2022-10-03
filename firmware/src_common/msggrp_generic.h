@@ -52,7 +52,7 @@ typedef enum {
 // MessageGroupID: 0
 // MessageID: 2
 // Possible MessageTypes: Get, Status, AckStatus
-// Validity: test
+// Validity: released
 // Length w/o Header + HeaderExtension: 64 bits
 // Data fields: DeviceType, VersionMajor, VersionMinor, VersionPatch, VersionHash
 // Description: Reports DeviceType and current firmware version. Version information is only available when set in source code, which is usually only done for official builds by the build robot.
@@ -248,7 +248,7 @@ static inline ErrorCodeEnum msg_generic_hardwareerror_get_errorcode(void)
 // MessageGroupID: 0
 // MessageID: 5
 // Possible MessageTypes: Get, Status, AckStatus
-// Validity: test
+// Validity: released
 // Length w/o Header + HeaderExtension: 7 bits
 // Data fields: Percentage
 // Description: Tells the current battery status in percent. Please note that the "Get" may not be answered because a device does not listen to requests.

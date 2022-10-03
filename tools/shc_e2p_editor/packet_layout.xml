@@ -190,7 +190,7 @@
 			<MessageType>0</MessageType>
 			<MessageType>8</MessageType>
 			<MessageType>10</MessageType>
-			<Validity>test</Validity>
+			<Validity>released</Validity>
 			<EnumValue>
 				<ID>DeviceType</ID>
 				<Description>The DeviceType can be used to adapt the behavior or representation of the SHC device at the server software (e.g. FHEM).</Description>
@@ -292,7 +292,7 @@
 			<MessageType>0</MessageType>
 			<MessageType>8</MessageType>
 			<MessageType>10</MessageType>
-			<Validity>test</Validity>
+			<Validity>released</Validity>
 			<UIntValue>
 				<ID>Percentage</ID>
 				<Description>The remaining capacity of the battery from 0 (empty) to 100 (full).</Description>
@@ -316,7 +316,7 @@
 			<MessageType>8</MessageType>
 			<MessageType>9</MessageType>
 			<MessageType>10</MessageType>
-			<Validity>test</Validity>
+			<Validity>released</Validity>
 			<Array>
 				<Length>8</Length>
 				<BoolValue>
@@ -335,7 +335,7 @@
 			<MessageType>8</MessageType>
 			<MessageType>9</MessageType>
 			<MessageType>10</MessageType>
-			<Validity>test</Validity>
+			<Validity>released</Validity>
 			<Array>
 				<Length>8</Length>
 				<BoolValue>
@@ -361,7 +361,7 @@
 			<MessageType>8</MessageType>
 			<MessageType>9</MessageType>
 			<MessageType>10</MessageType>
-			<Validity>test</Validity>
+			<Validity>released</Validity>
 			<UIntValue>
 				<ID>Pos</ID>
 				<Description>The number of the pin in the port.</Description>
@@ -384,7 +384,7 @@
 			<MessageType>8</MessageType>
 			<MessageType>9</MessageType>
 			<MessageType>10</MessageType>
-			<Validity>test</Validity>
+			<Validity>released</Validity>
 			<UIntValue>
 				<ID>Pos</ID>
 				<Description>The number of the pin in the port.</Description>
@@ -442,7 +442,7 @@
 			<MessageType>0</MessageType>
 			<MessageType>8</MessageType>
 			<MessageType>10</MessageType>
-			<Validity>test</Validity>
+			<Validity>released</Validity>
 			<IntValue>
 				<ID>Temperature</ID>
 				<Description>temperature [1/100 degree celsius], -50°C = -5000, 50°C = 5000</Description>
@@ -458,7 +458,7 @@
 			<MessageType>0</MessageType>
 			<MessageType>8</MessageType>
 			<MessageType>10</MessageType>
-			<Validity>test</Validity>
+			<Validity>released</Validity>
 			<UIntValue>
 				<ID>Humidity</ID>
 				<Description>relative humidity permill, 0..1000 (other values not defined)</Description>
@@ -481,7 +481,7 @@
 			<MessageType>0</MessageType>
 			<MessageType>8</MessageType>
 			<MessageType>10</MessageType>
-			<Validity>test</Validity>
+			<Validity>released</Validity>
 			<UIntValue>
 				<ID>BarometricPressure</ID>
 				<Description>barometric pressure in pascal</Description>
@@ -525,7 +525,7 @@
 			<MessageType>0</MessageType>
 			<MessageType>8</MessageType>
 			<MessageType>10</MessageType>
-			<Validity>test</Validity>
+			<Validity>released</Validity>
 			<UIntValue>
 				<ID>Brightness</ID>
 				<Description>brightness in percent</Description>
@@ -541,7 +541,7 @@
 			<MessageType>0</MessageType>
 			<MessageType>8</MessageType>
 			<MessageType>10</MessageType>
-			<Validity>test</Validity>
+			<Validity>released</Validity>
 			<UIntValue>
 				<ID>Distance</ID>
 				<Description>distance in cm</Description>
@@ -606,7 +606,7 @@
 			<MessageType>8</MessageType>
 			<MessageType>9</MessageType>
 			<MessageType>10</MessageType>
-			<Validity>test</Validity>
+			<Validity>released</Validity>
 			<UIntValue>
 				<ID>Brightness</ID>
 				<Description>The brightness in percent. 0 = Off.</Description>
@@ -625,7 +625,7 @@
 			<MessageType>8</MessageType>
 			<MessageType>9</MessageType>
 			<MessageType>10</MessageType>
-			<Validity>test</Validity>
+			<Validity>released</Validity>
 			<EnumValue>
 				<ID>AnimationMode</ID>
 				<Description>If a time is set, use this animation mode to change the brightness over time (none = leave at start state for the whole time and switch to end state at the end).</Description>
@@ -671,7 +671,7 @@
 			<MessageType>8</MessageType>
 			<MessageType>9</MessageType>
 			<MessageType>10</MessageType>
-			<Validity>test</Validity>
+			<Validity>released</Validity>
 			<UIntValue>
 				<ID>Color</ID>
 				<Description>The color is according to the 6 bit color palette used in SHC.</Description>
@@ -690,7 +690,7 @@
 			<MessageType>8</MessageType>
 			<MessageType>9</MessageType>
 			<MessageType>10</MessageType>
-			<Validity>test</Validity>
+			<Validity>released</Validity>
 			<UIntValue>
 				<ID>Repeat</ID>
 				<Description>The number of times the animation will be repeated. 0 means infinitely.</Description>

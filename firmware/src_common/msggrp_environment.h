@@ -52,7 +52,7 @@ typedef enum {
 // MessageGroupID: 11
 // MessageID: 1
 // Possible MessageTypes: Get, Status, AckStatus
-// Validity: test
+// Validity: released
 // Length w/o Header + HeaderExtension: 7 bits
 // Data fields: Brightness
 
@@ -115,7 +115,7 @@ static inline uint32_t msg_environment_brightness_get_brightness(void)
 // MessageGroupID: 11
 // MessageID: 2
 // Possible MessageTypes: Get, Status, AckStatus
-// Validity: test
+// Validity: released
 // Length w/o Header + HeaderExtension: 14 bits
 // Data fields: Distance
 

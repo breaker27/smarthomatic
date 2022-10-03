@@ -52,7 +52,7 @@ typedef enum {
 // MessageGroupID: 60
 // MessageID: 1
 // Possible MessageTypes: Get, Set, SetGet, Status, Ack, AckStatus
-// Validity: test
+// Validity: released
 // Length w/o Header + HeaderExtension: 7 bits
 // Data fields: Brightness
 // Description: This is to set a fixed brightness.
@@ -150,7 +150,7 @@ static inline uint32_t msg_dimmer_brightness_get_brightness(void)
 // MessageGroupID: 60
 // MessageID: 2
 // Possible MessageTypes: Get, Set, SetGet, Status, Ack, AckStatus
-// Validity: test
+// Validity: released
 // Length w/o Header + HeaderExtension: 32 bits
 // Data fields: AnimationMode, TimeoutSec, StartBrightness, EndBrightness
 // Description: This is the state of the dimmer output voltage and its timeout value.
@@ -307,7 +307,7 @@ static inline uint32_t msg_dimmer_animation_get_endbrightness(void)
 // MessageGroupID: 60
 // MessageID: 10
 // Possible MessageTypes: Get, Set, SetGet, Status, Ack, AckStatus
-// Validity: test
+// Validity: released
 // Length w/o Header + HeaderExtension: 6 bits
 // Data fields: Color
 // Description: This is to set a fixed color.
@@ -405,7 +405,7 @@ static inline uint32_t msg_dimmer_color_get_color(void)
 // MessageGroupID: 60
 // MessageID: 11
 // Possible MessageTypes: Get, Set, SetGet, Status, Ack, AckStatus
-// Validity: test
+// Validity: released
 // Length w/o Header + HeaderExtension: 115 bits
 // Data fields: Repeat, AutoReverse, Time, Color
 // Description: This is to set a color animation.

@@ -54,7 +54,7 @@ typedef enum {
 // MessageGroupID: 1
 // MessageID: 1
 // Possible MessageTypes: Get, Set, SetGet, Status, Ack, AckStatus
-// Validity: test
+// Validity: released
 // Length w/o Header + HeaderExtension: 8 bits
 // Data fields: On
 // Description: This is the state of the complete digital port, containing up to 8 pins.
@@ -152,7 +152,7 @@ static inline bool msg_gpio_digitalport_get_on(uint8_t index)
 // MessageGroupID: 1
 // MessageID: 2
 // Possible MessageTypes: Get, Set, SetGet, Status, Ack, AckStatus
-// Validity: test
+// Validity: released
 // Length w/o Header + HeaderExtension: 136 bits
 // Data fields: On, TimeoutSec
 // Description: This is the state of the complete digital port, containing up to 8 pins, including a timeout value per pin.
@@ -269,7 +269,7 @@ static inline uint32_t msg_gpio_digitalporttimeout_get_timeoutsec(uint8_t index)
 // MessageGroupID: 1
 // MessageID: 5
 // Possible MessageTypes: Get, Set, SetGet, Status, Ack, AckStatus
-// Validity: test
+// Validity: released
 // Length w/o Header + HeaderExtension: 4 bits
 // Data fields: Pos, On
 // Description: This represents the state of one pin of the digital port.
@@ -384,7 +384,7 @@ static inline bool msg_gpio_digitalpin_get_on(void)
 // MessageGroupID: 1
 // MessageID: 6
 // Possible MessageTypes: Get, Set, SetGet, Status, Ack, AckStatus
-// Validity: test
+// Validity: released
 // Length w/o Header + HeaderExtension: 20 bits
 // Data fields: Pos, On, TimeoutSec
 // Description: This represents the state of one pin of the digital port, including a timeout value.
