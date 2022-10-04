@@ -29,6 +29,7 @@
 #include "packet_headerext_ackstatus.h"
 #include "packet_headerext_ack.h"
 #include "packet_headerext_status.h"
+#include "packet_headerext_deliver.h"
 #include "packet_headerext_setget.h"
 #include "packet_headerext_set.h"
 #include "packet_headerext_get.h"
