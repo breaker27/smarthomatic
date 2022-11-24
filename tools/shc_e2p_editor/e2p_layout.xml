@@ -120,11 +120,11 @@
 		</EnumValue>
 		<UIntValue>
 			<ID>TransceiverWatchdogTimeout</ID>
-			<Description>Reset RFM12B module if no data is received until timeout is reached. Use this function if your specific transceiver hangs sometimes. Value is in deca seconds. Suggested setting is 48 (for 8 minutes). Set 0 to disable (default).</Description>
+			<Description>Reset RFM12B module if no data is received until timeout is reached. Use this function if your specific transceiver hangs sometimes. Value is in deca seconds. Suggested setting is 48 (for 8 minutes). Set 0 to disable.</Description>
 			<Bits>8</Bits>
 			<MinVal>0</MinVal>
 			<MaxVal>255</MaxVal>
-			<DefaultVal>0</DefaultVal>
+			<DefaultVal>48</DefaultVal>
 		</UIntValue>
 		<Reserved>
 			<Bits>3560</Bits>
@@ -669,11 +669,11 @@
 		</UIntValue>
 		<UIntValue>
 			<ID>TransceiverWatchdogTimeout</ID>
-			<Description>Reset RFM12B module if no data is received until timeout is reached. Use this function if your specific transceiver hangs sometimes. Value is in deca seconds. Suggested setting is 48 (for 8 minutes). Set 0 to disable (default).</Description>
+			<Description>Reset RFM12B module if no data is received until timeout is reached. Use this function if your specific transceiver hangs sometimes. Value is in deca seconds. Suggested setting is 48 (for 8 minutes). Set 0 to disable.</Description>
 			<Bits>8</Bits>
 			<MinVal>0</MinVal>
 			<MaxVal>255</MaxVal>
-			<DefaultVal>0</DefaultVal>
+			<DefaultVal>48</DefaultVal>
 		</UIntValue>
 		<UIntValue>
 			<ID>StatusCycle</ID>
@@ -802,11 +802,11 @@
 		</UIntValue>
 		<UIntValue>
 			<ID>TransceiverWatchdogTimeout</ID>
-			<Description>Reset RFM12B module if no data is received until timeout is reached. Use this function if your specific transceiver hangs sometimes. Value is in deca seconds. Suggested setting is 48 (for 8 minutes). Set 0 to disable (default).</Description>
+			<Description>Reset RFM12B module if no data is received until timeout is reached. Use this function if your specific transceiver hangs sometimes. Value is in deca seconds. Suggested setting is 48 (for 8 minutes). Set 0 to disable.</Description>
 			<Bits>8</Bits>
 			<MinVal>0</MinVal>
 			<MaxVal>255</MaxVal>
-			<DefaultVal>0</DefaultVal>
+			<DefaultVal>48</DefaultVal>
 		</UIntValue>
 		<Reserved>
 			<Bits>7640</Bits>
