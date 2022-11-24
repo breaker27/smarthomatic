@@ -20,6 +20,10 @@
 				<Name>PowerSwitch</Name>
 			</Element>
 			<Element>
+				<Value>45</Value>
+				<Name>Controller</Name>
+			</Element>
+			<Element>
 				<Value>50</Value>
 				<Name>RGBDimmer</Name>
 			</Element>
@@ -776,6 +780,83 @@
 		</Array>
 		<Reserved>
 			<Bits>7120</Bits>
+		</Reserved>
+	</Block>
+	<Block>
+		<Name>Controller</Name>
+		<Description>This block contains the specific configuration data that only Controller devices need.</Description>
+		<Restriction>
+			<RefID>DeviceType</RefID>
+			<Value>45</Value>
+		</Restriction>
+		<UIntValue>
+			<ID>BaseStationPacketCounter</ID>
+			<Description>This is the last remembered packet counter of a command from the base station. Packets with the same or lower number are ignored.</Description>
+			<Bits>24</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>16777215</MaxVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>TransceiverWatchdogTimeout</ID>
+			<Description>Reset RFM12B module if no data is received until timeout is reached. Use this function if your specific transceiver hangs sometimes. Value is in deca seconds. Suggested setting is 48 (for 8 minutes). Set 0 to disable.</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>255</MaxVal>
+			<DefaultVal>48</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>StatusCycle</ID>
+			<Description>This is the number of minutes after which the status should be resent, so in case of a lost message it can be received again. Set 0 to disable.</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>255</MaxVal>
+			<DefaultVal>30</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>InputPinCount</ID>
+			<Description>This is the number of input pins connected to e.g. buttons or switches.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>8</MaxVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>OutputPinCount</ID>
+			<Description>This is the number of output pins connected to e.g. LEDs.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>8</MaxVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>Width</ID>
+			<Description>This is the number of characters per line on the LCD. Typical values are 8, 16, 20, 40.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>40</MaxVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>Height</ID>
+			<Description>This is the number of lines on the LCD. Typical values are 1, 2 and 4.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>4</MaxVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>HeightVirtual</ID>
+			<Description>This is the number of additional lines that may be addressed virtually. If the number is heigher than 'Height', the pages can be cycled through with button 9 (which is not part of the buttons from the InputPinCount, which are being sent as status).</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>4</MaxVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>AutoJumpBackSeconds</ID>
+			<Description>This defines after how many seconds the display shows the first lines again after the user pressed the button to show the additional virtual lines. Set 0 to disable.</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>255</MaxVal>
+			<DefaultVal>10</DefaultVal>
+		</UIntValue>
+		<Reserved>
+			<Bits>7592</Bits>
 		</Reserved>
 	</Block>
 	<Block>

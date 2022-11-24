@@ -49,7 +49,7 @@ static inline uint32_t e2p_powerswitch_get_basestationpacketcounter(void)
 }
 
 // TransceiverWatchdogTimeout (UIntValue)
-// Description: Reset RFM12B module if no data is received until timeout is reached. Use this function if your specific transceiver hangs sometimes. Value is in deca seconds. Suggested setting is 48 (for 8 minutes). Set 0 to disable (default).
+// Description: Reset RFM12B module if no data is received until timeout is reached. Use this function if your specific transceiver hangs sometimes. Value is in deca seconds. Suggested setting is 48 (for 8 minutes). Set 0 to disable.
 
 // Set TransceiverWatchdogTimeout (UIntValue)
 // Offset: 536, length bits 8, min val 0, max val 255
