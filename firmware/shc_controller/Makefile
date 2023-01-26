@@ -17,7 +17,7 @@
 #
 
 # CPU config
-MCU            = atmega644pa
+MCU            = atmega644p
 F_CPU          = 20000000
 UART_BAUD_RATE = 4800
 #UART_DEBUG     = 1
