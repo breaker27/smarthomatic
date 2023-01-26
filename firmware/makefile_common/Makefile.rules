@@ -17,9 +17,9 @@
 #
 
 # Define all object files.
-OBJ = $(CSRC:%.c=$(OBJDIR)/%.o) $(ASRC:%.S=$(OBJDIR)/%.o) 
+OBJ = $(CSRC:%.c=$(OBJDIR)/%.o) $(ASRC:%.S=$(OBJDIR)/%.o)
 # Define all listing files.
-LST = $(CSRC:%.c=$(OBJDIR)/%.lst) $(ASRC:%.S=$(OBJDIR)/%.lst) 
+LST = $(CSRC:%.c=$(OBJDIR)/%.lst) $(ASRC:%.S=$(OBJDIR)/%.lst)
 
 # Combine all necessary flags and optional flags.
 # Add target processor to flags.
@@ -28,11 +28,11 @@ ALL_CFLAGS += -DF_CPU=$(F_CPU)UL
 ALL_CFLAGS += -DUART_BAUD_RATE=$(UART_BAUD_RATE)UL
 
 ALL_CFLAGS += -O$(OPT)
-ALL_CFLAGS += -mmcu=$(MCU) -I. 
-ALL_CFLAGS += $(CFLAGS) 
+ALL_CFLAGS += -mmcu=$(MCU) -I.
+ALL_CFLAGS += $(CFLAGS)
 ALL_CFLAGS += -Wa,-adhlns=$(OBJDIR)/$(notdir $(<:%.c=%.lst))
 ALL_CFLAGS += -MD -MP -MF $(OBJDIR)/$(notdir $(<:%.c=/%.d))
-ALL_ASFLAGS = -mmcu=$(MCU) -I. -x assembler-with-cpp 
+ALL_ASFLAGS = -mmcu=$(MCU) -I. -x assembler-with-cpp
 ALL_ASFLAGS += $(ASFLAGS)
 ALL_ASFLAGS += -Wa,-adhlns=$(OBJDIR)/$(notdir $(<:%.S=%.lst)),-gstabs
 ALL_LDFLAGS = $(LDFLAGS)
@@ -41,7 +41,7 @@ ALL_LDFLAGS += -Wl,-Map=$(OBJDIR)/$(TARGET).map,--cref
 # add UART defines used to compile some object files
 ifeq ($(UART_DEBUG),1)
 	ALL_CFLAGS += -DUART_DEBUG
-	
+
 	ifeq ($(UART_RX),1)
 		ALL_CFLAGS += -DUART_RX
 	endif
@@ -58,6 +58,8 @@ else ifeq ($(MCU),atmega169)
 	AVRDUDEMCU = m169p
 else ifeq ($(MCU),atmega324pa)
 	AVRDUDEMCU = m324pa
+else ifeq ($(MCU),atmega644p)
+	AVRDUDEMCU = m644p
 endif
 
 # Create final output files (.hex, .eep) from ELF output file.
@@ -78,7 +80,7 @@ $(OBJDIR)/%.sym: $(OBJDIR)/%.elf
 	@mkdir -p $(dir $@)
 	$(NM) -n $< > $@
 
-	
+
 # Link: create ELF output file from object files.
 .SECONDARY: $(OBJDIR)/$(TARGET).elf
 .PRECIOUS: $(OBJ)
