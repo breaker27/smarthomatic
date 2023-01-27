@@ -43,9 +43,12 @@
 #include "rfm12.h"
 #include "aes256.h"
 
-#define LED_PIN 7
-#define LED_PORT PORTD
-#define LED_DDR DDRD
+#define LED_PIN_DEFAULT  7
+#define LED_PORT_DEFAULT PORTD
+#define LED_DDR_DEFAULT  DDRD
+
+static volatile uint8_t* led_port;
+static uint8_t led_pin;
 
 // Value has to be volatile, because otherwise the adc_measure function would not
 // detect that the value was changed from the ADC interrupt.
@@ -221,27 +224,35 @@ uint16_t read_battery(void)
 	return (uint16_t)((uint32_t)1100 * 1024 / read_adc(14));
 }
 
+void util_init_led(volatile uint8_t* ddr, volatile uint8_t* port, uint8_t pin)
+{
+	led_port = port;
+	led_pin = pin;
+
+	sbi(*ddr, pin);
+}
+
 void util_init(void)
 {
-	sbi(LED_DDR, LED_PIN);
+	util_init_led(&LED_DDR_DEFAULT, &LED_PORT_DEFAULT, LED_PIN_DEFAULT);
 }
 
 void led_dbg(uint8_t ms)
 {
-	sbi(LED_PORT, LED_PIN);
+	sbi(*led_port, led_pin);
 	_delay_ms(ms);
-	cbi(LED_PORT, LED_PIN);
+	cbi(*led_port, led_pin);
 }
 
 void switch_led(bool b_on)
 {
 	if (b_on)
 	{
-		sbi(LED_PORT, LED_PIN);
+		sbi(*led_port, led_pin);
 	}
 	else
 	{
-		cbi(LED_PORT, LED_PIN);
+		cbi(*led_port, led_pin);
 	}
 }
 
@@ -251,9 +262,9 @@ void led_blink(uint16_t on, uint16_t off, uint8_t times)
 
 	for (i = 0; i < times; i++)
 	{
-		sbi(LED_PORT, LED_PIN);
+		sbi(*led_port, led_pin);
 		_delay_ms(on);
-		cbi(LED_PORT, LED_PIN);
+		cbi(*led_port, led_pin);
 		_delay_ms(off);
 	}
 }
