@@ -47,7 +47,7 @@ typedef struct {
 
 	uint8_t timeout;
 	uint8_t retry_count;
-} request_t; 
+} request_t;
 
 // The buffer holds the requests independently of the receiver ID.
 extern request_t request_buffer[REQUEST_BUFFER_SIZE];

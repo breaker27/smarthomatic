@@ -16,10 +16,10 @@
 * with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <avr/io.h> 
+#include <avr/io.h>
 
-FUSES = 
-{ 
+FUSES =
+{
 	// value 0xF7 - settings for external crystal, slowly rising power
 	.low = (FUSE_CKSEL3),
 	// value 0xD1 - EESAVE is 0, others are default
