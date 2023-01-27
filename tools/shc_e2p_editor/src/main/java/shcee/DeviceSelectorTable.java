@@ -37,7 +37,7 @@ public class DeviceSelectorTable extends JTable
 	private static final long serialVersionUID = 3772504528864774739L;
 	private DefaultTableModel model;
 	private TableRowSorter<TableModel> sorter;
-	
+
 	public DeviceSelectorTable()
 	{
 		super();
@@ -47,7 +47,7 @@ public class DeviceSelectorTable extends JTable
         model.setColumnCount(3);
 		model.setColumnIdentifiers(new String[] { "DeviceID", "Name", "DeviceType" });
         setModel(model);
-        
+
         this.getSelectionModel().addListSelectionListener(new ListSelectionListener(){
             public void valueChanged(ListSelectionEvent event) {
             	onRowSelected();
@@ -81,7 +81,7 @@ public class DeviceSelectorTable extends JTable
 
         // disable column reordering
         this.getTableHeader().setReorderingAllowed(false);
-        
+
         // set some columns to centered
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
@@ -89,10 +89,10 @@ public class DeviceSelectorTable extends JTable
 
         // load data
 	    updateTable();
-	    
+
         // sort table and select first row
 	    sorter.toggleSortOrder(0);
-	    
+
 	    if (this.getRowCount() > 0)
 	    {
 	        this.setRowSelectionInterval(0, 0);
@@ -108,10 +108,10 @@ public class DeviceSelectorTable extends JTable
 	private void addRow(int deviceID, String name, String typeID)
 	{
 		Object[] rowData = new Object[] {deviceID, name, typeID};
-		
+
 		model.addRow(rowData);
 	}
-	
+
 	/**
 	 * Look for *.xml files in the program directory and insert devices which files conform to
 	 * the schema (xsd) to the table.
@@ -119,39 +119,39 @@ public class DeviceSelectorTable extends JTable
 	public void updateTable()
 	{
 		model.setRowCount(0);
-		
+
 		File d = new File(".");
 
 		if (d.isDirectory())
 		{
 			File[] filesAndDirs = d.listFiles();
-			
+
 		    for (int i = 0; i < filesAndDirs.length; i++)
 		    {
 		    	if (filesAndDirs[i].isFile()
 		    			&& filesAndDirs[i].getName().toLowerCase().endsWith(".e2p"))
 	    		{
 		    		long length = filesAndDirs[i].length();
-		    		
-		    		if ((length == 512) || (length == 1024))
+
+		    		if ((length == 512) || (length == 1024) || (length == 2048))
 		    		{
 						String name = filesAndDirs[i].getName();
 						name = name.substring(0, name.length() - 4);
-						
+
 						addRow(0, name, "");
 		    		}
 	    		}
 		    }
 		}
-		
+
 		for (int i = 0; i < model.getRowCount(); i++)
 		{
 			updateTableDataForRow(i);
 		}
-		
+
 		sort();
 	}
-	
+
 	/**
 	 * (Re)sort the table by the currently selected sort order.
 	 */
@@ -162,7 +162,7 @@ public class DeviceSelectorTable extends JTable
 		// while the different cells of one row would be updated!
 		sorter.sort();
 	}
-	
+
 	/**
 	 * Load device data on right side panel for editing.
 	 * @param firstIndex
@@ -170,7 +170,7 @@ public class DeviceSelectorTable extends JTable
 	protected void onRowSelected()
 	{
 		int row = getSelectedRow();
-		
+
 		if (row != -1) // avoid problems with empty table
 		{
 			SHCEEMain.mySHCEEMain.loadE2pFile((String)getValueAt(getSelectedRow(), 1) + ".e2p");
@@ -185,9 +185,9 @@ public class DeviceSelectorTable extends JTable
 	public void updateTableDataForRow(int row)
 	{
 		String filename = (String)getValueAt(row, 1) + ".e2p";
-		
+
 		SHCEEMain.mySHCEEMain.loadE2pFile(filename);
-		
+
 		ValueEditorPanel ed = SHCEEMain.mySHCEEMain.valueEditor;
 
 		String deviceID = ed.findValue("DeviceID", true);

@@ -789,6 +789,7 @@
 			<RefID>DeviceType</RefID>
 			<Value>45</Value>
 		</Restriction>
+		<MicrocontrollerModel>m644p</MicrocontrollerModel>
 		<UIntValue>
 			<ID>BaseStationPacketCounter</ID>
 			<Description>This is the last remembered packet counter of a command from the base station. Packets with the same or lower number are ignored.</Description>
