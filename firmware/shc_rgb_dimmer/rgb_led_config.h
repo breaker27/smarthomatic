@@ -1,0 +1,1 @@
+#define MYTESTBLUB 1

@@ -37,6 +37,8 @@
 
 #include "../src_common/util_watchdog_init.h"
 
+#include "rgb_led.h"
+
 #define RGBLED_DDR DDRD
 #define RGBLED_PORT PORTD
 #define RGBLED_PINPORT PIND
@@ -166,13 +168,13 @@ void set_PWM(struct rgb_color_t color)
 struct rgb_color_t index2color(uint8_t color)
 {
 	struct rgb_color_t res;
-	
+
 	res.r = ((color & 0b110000) >> 4) * 85;
 	res.g = ((color & 0b001100) >> 2) * 85;
 	res.b = ((color & 0b000011) >> 0) * 85;
-	
+
 	//UART_PUTF4("Index %d to color -> %d,%d,%d\r\n", color, res.r, res.g, res.b);
-	
+
 	return res;
 }
 
@@ -192,7 +194,7 @@ void update_current_col(void)
 
 	//UART_PUTF("col_pos %d, ", col_pos);
 	//UART_PUTF3("PWM %d,%d,%d\r\n", current_col.r, current_col.g, current_col.b);
-	
+
 	set_PWM(current_col);
 }
 
@@ -204,7 +206,7 @@ ISR (TIMER2_OVF_vect)
 	{
 		return;
 	}
-	
+
 	if (step_pos < step_len)
 	{
 		step_pos++;
@@ -223,7 +225,7 @@ ISR (TIMER2_OVF_vect)
 					repeat--;
 
 			//UART_PUTF2("-- More cycles to go. New repeat = %d. Reset col_pos to %d.\r\n", repeat, rfirst);
-			
+
 			col_pos = rfirst;
 			step_pos = 0;
 			step_len = timer_cycles[anim_time[col_pos]];
@@ -242,11 +244,11 @@ ISR (TIMER2_OVF_vect)
 			col_pos++;
 			step_pos = 0;
 			step_len = timer_cycles[anim_time[col_pos]];
-			
+
 			//UART_PUTF2("--- Go to next color, new col_pos: %d. new step_len: %d\r\n", col_pos, step_len);
 		}
 	}
-	
+
 	update_current_col();
 }
 
@@ -261,7 +263,7 @@ void set_animation_fixed_color(uint8_t color_index)
 
 	//UART_PUTF("Set color nr. %d\r\n", color_index);
 	update_current_col();
-	
+
 	sei();
 }
 
@@ -271,7 +273,7 @@ void send_deviceinfo_status(void)
 
 	UART_PUTF("Send DeviceInfo: DeviceType %u,", DEVICETYPE_RGBDIMMER);
 	UART_PUTF4(" v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
-	
+
 	// Set packet content
 	pkg_header_init_generic_deviceinfo_status();
 	pkg_header_set_senderid(device_id);
@@ -305,11 +307,11 @@ void send_brightness_status(void)
 void send_status(void)
 {
 	inc_packetcounter();
-	
+
 	if (step_len == 0) // no animation running
 	{
 		UART_PUTF("Sending color status: color: %u\r\n", anim_col_i[0]);
-		
+
 		// Set packet content
 		pkg_header_init_dimmer_color_status();
 		msg_dimmer_color_set_color(anim_col_i[0]);
@@ -317,14 +319,14 @@ void send_status(void)
 	else // animation running
 	{
 		uint8_t i;
-		
+
 		// Set packet content
 		pkg_header_init_dimmer_coloranimation_status();
-		
+
 		UART_PUTF2("Sending animation status: Repeat: %u, AutoReverse: %u", repeat, autoreverse);
 		msg_dimmer_coloranimation_set_repeat(repeat);
 		msg_dimmer_coloranimation_set_autoreverse(autoreverse);
-		
+
 		for (i = 0; i < 10; i++)
 		{
 			UART_PUTF2(", Time[%u]: %u", i, anim_time[i]);
@@ -332,7 +334,7 @@ void send_status(void)
 			msg_dimmer_coloranimation_set_color(i, anim_col_i[i]);
 			msg_dimmer_coloranimation_set_time(i, anim_time[i]);
 		}
-		
+
 		UART_PUTS("\r\n");
 	}
 
@@ -344,7 +346,7 @@ void send_status(void)
 uint8_t find_last_col_pos(void)
 {
 	uint8_t i;
-	
+
 	for (i = 0; i < ANIM_COL_MAX; i++)
 	{
 		if (anim_time[i] == 0)
@@ -352,16 +354,16 @@ uint8_t find_last_col_pos(void)
 			return i - 1;
 		}
 	}
-	
+
 	return ANIM_COL_MAX - 1;
 }
 
 void copy_reverse(uint8_t from, uint8_t to, uint8_t count)
 {
 	int8_t i;
-	
+
 	//UART_PUTF3("Copy rev from %d to %d count %d\r\n", from, to, count);
-	
+
 	for (i = 0; i < count; i++)
 	{
 		anim_col[to + count - 1 - i] = anim_col[from + i];
@@ -372,9 +374,9 @@ void copy_reverse(uint8_t from, uint8_t to, uint8_t count)
 void copy_forward(uint8_t from, uint8_t to, uint8_t count)
 {
 	int8_t i;
-	
+
 	//UART_PUTF3("Copy fwd from %d to %d count %d\r\n", from, to, count);
-	
+
 	// copy in reverse direction because of overlapping range in scenario #4 "autoreverse = 0, repeat > 1"
 	for (i = count - 1; i >= 0; i--)
 	{
@@ -390,7 +392,7 @@ void init_animation(void)
 {
 	uint8_t key_idx = 10; // Marker for calculating how the values are copied (see doc).
 	uint8_t i;
-	
+
 	// Transfer initial data to RGB array, shifted by 1.
 	for (i = 0; i < 10; i++)
 	{
@@ -398,7 +400,7 @@ void init_animation(void)
 	}
 
 	anim_col[0] = current_col;
-	
+
 	// Find key_idx
 	for (i = 0; i < 10; i++)
 	{
@@ -408,10 +410,10 @@ void init_animation(void)
 			break;
 		}
 	}
-	
+
 	// calc rfirst
 	rfirst = autoreverse && (repeat % 2 == 1) ? key_idx - 1 : 2;
-	
+
 	// Copy data and set rlast and llast according "doc/initialization.png".
 	if (autoreverse && (repeat != 1))
 	{
@@ -470,7 +472,7 @@ void init_animation(void)
 void clear_anim_data(void)
 {
 	uint8_t i;
-	
+
 	for (i = 0; i < ANIM_COL_MAX; i++)
 	{
 		anim_time[i] = 0;
@@ -483,7 +485,7 @@ void clear_anim_data(void)
 void dump_animation_values(void)
 {
 	uint8_t i;
-	
+
 	UART_PUTF2("Animation repeat: %d, autoreverse: %s, ",
 		repeat, autoreverse ? "ON" : "OFF");
 	UART_PUTF3("Current color: RGB %3d,%3d,%3d\r\n", current_col.r, current_col.g, current_col.b);
@@ -494,7 +496,7 @@ void dump_animation_values(void)
 	for (i = 0; i < ANIM_COL_MAX; i++)
 	{
 		UART_PUTF("Pos %02d: color ", i);
-	
+
 		if (i < 10)
 		{
 			UART_PUTF("%02d   ", anim_col_i[i]);
@@ -505,7 +507,7 @@ void dump_animation_values(void)
 		}
 
 		UART_PUTF3("RGB %3d,%3d,%3d", anim_col[i].r, anim_col[i].g, anim_col[i].b);
-		
+
 		UART_PUTF("   time %02d\r\n", anim_time[i]);
 	}
 
@@ -519,10 +521,10 @@ void test_anim_calculation(void)
 	// change repeat and autoreverse to check the different scenarios
 	repeat = 0;
 	autoreverse = true;
-	
+
 	step_pos = 0;
 	col_pos = 0;
-			
+
 	anim_time[0] = 10;
 	anim_col_i[0] = 0;
 	anim_time[1] = 16;
@@ -538,12 +540,12 @@ void test_anim_calculation(void)
 
 	UART_PUTS("\r\n*** Initial colors ***\r\n");
 	dump_animation_values();
-	
+
 	init_animation();
-	
+
 	UART_PUTS("\r\n*** Colors after initialisation ***\r\n");
 	dump_animation_values();
-	
+
 	step_len = timer_cycles[anim_time[0]];
 
 	while (42) {}
@@ -559,15 +561,15 @@ void send_ack(uint32_t acksenderid, uint32_t ackpacketcounter, bool error)
 	}
 
 	inc_packetcounter();
-	
+
 	// set common fields
 	pkg_header_set_senderid(device_id);
 	pkg_header_set_packetcounter(packetcounter);
-	
+
 	pkg_headerext_common_set_acksenderid(acksenderid);
 	pkg_headerext_common_set_ackpacketcounter(ackpacketcounter);
 	pkg_headerext_common_set_error(error);
-	
+
 	rfm12_send_bufx();
 }
 
@@ -581,14 +583,14 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	uint32_t ackpacketcounter = pkg_header_get_packetcounter();
 
 	UART_PUTF("MessageGroupID:%u;", messagegroupid);
-	
+
 	if (messagegroupid != MESSAGEGROUP_DIMMER)
 	{
 		UART_PUTS("\r\nERR: Unsupported MessageGroupID.\r\n");
 		send_ack(acksenderid, ackpacketcounter, true);
 		return;
 	}
-	
+
 	UART_PUTF("MessageID:%u;", messageid);
 
 	if ((messageid != MESSAGEID_DIMMER_BRIGHTNESS)
@@ -618,30 +620,30 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		else // MESSAGEID_DIMMER_COLORANIMATION
 		{
 			uint8_t i;
-			
+
 			cli();
-			
+
 			repeat = msg_dimmer_coloranimation_get_repeat();
 			autoreverse = msg_dimmer_coloranimation_get_autoreverse();
 			step_pos = 0;
 			col_pos = 0;
 			anim_col[0] = current_col;
-			
+
 			UART_PUTF2("Repeat:%u;AutoReverse:%u;", repeat, autoreverse);
-			
+
 			for (i = 0; i < 10; i++)
 			{
 				anim_time[i] = msg_dimmer_coloranimation_get_time(i);
 				anim_col_i[i] = msg_dimmer_coloranimation_get_color(i);
-				
+
 				UART_PUTF2("Time[%u]:%u;", i, anim_time[i]);
 				UART_PUTF2("Color[%u]:%u;", i, anim_col_i[i]);
 			}
-			
+
 			init_animation();
 			step_len = timer_cycles[anim_time[0]];
 			update_current_col();
-			
+
 			sei();
 		}
 	}
@@ -684,13 +686,13 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 			uint8_t i;
 
 			pkg_header_init_dimmer_coloranimation_ackstatus();
-			
+
 			for (i = 0; i < 10; i++)
 			{
 				msg_dimmer_coloranimation_set_color(i, anim_col_i[i]);
 				msg_dimmer_coloranimation_set_time(i, anim_time[i]);
 			}
-			
+
 			msg_dimmer_coloranimation_set_repeat(repeat);
 			msg_dimmer_coloranimation_set_autoreverse(autoreverse);
 		}
@@ -712,7 +714,7 @@ void process_packet(uint8_t len)
 	// check SenderID
 	uint32_t senderID = pkg_header_get_senderid();
 	UART_PUTF("Packet Data: SenderID:%u;", senderID);
-	
+
 	if (senderID != 0)
 	{
 		UART_PUTS("\r\nERR: Illegal SenderID.\r\n");
@@ -729,37 +731,37 @@ void process_packet(uint8_t len)
 		UART_PUTF("\r\nERR: Received PacketCounter < %lu.\r\n", station_packetcounter);
 		return;
 	}
-	
+
 	// write received counter
 	station_packetcounter = packcnt;
-	
+
 	//e2p_powerswitch_set_basestationpacketcounter(station_packetcounter);
-	
+
 	// check MessageType
 	MessageTypeEnum messagetype = pkg_header_get_messagetype();
 	UART_PUTF("MessageType:%u;", messagetype);
-	
+
 	if ((messagetype != MESSAGETYPE_GET) && (messagetype != MESSAGETYPE_SET) && (messagetype != MESSAGETYPE_SETGET))
 	{
 		UART_PUTS("\r\nERR: Unsupported MessageType.\r\n");
 		return;
 	}
-	
+
 	// check device id
 	uint16_t rcv_id = pkg_headerext_common_get_receiverid();
 
 	UART_PUTF("ReceiverID:%u;", rcv_id);
-	
+
 	if (rcv_id != device_id)
 	{
 		UART_PUTS("\r\nWRN: DeviceID does not match.\r\n");
 		return;
 	}
-	
+
 	// check MessageGroup + MessageID
 	uint32_t messagegroupid = pkg_headerext_common_get_messagegroupid();
 	uint32_t messageid = pkg_headerext_common_get_messageid();
-	
+
 	process_request(messagetype, messagegroupid, messageid);
 }
 
@@ -771,16 +773,16 @@ int main(void)
 	_delay_ms(1000);
 
 	util_init();
-	
+
 	check_eeprom_compatibility(DEVICETYPE_RGBDIMMER);
-	
+
 	// read packetcounter, increase by cycle and write back
 	packetcounter = e2p_generic_get_packetcounter() + PACKET_COUNTER_WRITE_CYCLE;
 	e2p_generic_set_packetcounter(packetcounter);
 
 	// read last received station packetcounter
 	station_packetcounter = e2p_rgbdimmer_get_basestationpacketcounter();
-	
+
 	// read device id
 	device_id = e2p_generic_get_deviceid();
 
@@ -803,10 +805,10 @@ int main(void)
 	e2p_generic_get_aeskey(aes_key);
 
 	PWM_init();
-	
+
 	rfm_watchdog_init(device_id, e2p_rgbdimmer_get_transceiverwatchdogtimeout(), RFM_RESET_PORT_NR, RFM_RESET_PIN, RFM_RESET_PIN_STATE);
 	rfm12_init();
-	
+
 	set_animation_fixed_color(0);
 	timer2_init();
 
@@ -841,9 +843,9 @@ int main(void)
 		if (rfm12_rx_status() == STATUS_COMPLETE)
 		{
 			uint8_t len = rfm12_rx_len();
-			
+
 			rfm_watchdog_alive();
-			
+
 			if ((len == 0) || (len % 16 != 0))
 			{
 				UART_PUTF("Received garbage (%u bytes not multiple of 16): ", len);
@@ -852,18 +854,18 @@ int main(void)
 			else // try to decrypt with all keys stored in EEPROM
 			{
 				UART_PUTS("\r\nReceived data!\r\n");
-				
+
 				memcpy(bufx, rfm12_rx_buffer(), len);
 				memset(&bufx[len], 0, BUFX_LENGTH - len);
-				
+
 				//UART_PUTS("Before decryption: ");
 				//print_bytearray(bufx, len);
-					
+
 				aes256_decrypt_cbc(bufx, len);
 
 				//UART_PUTS("Decrypted bytes: ");
 				//print_bytearray(bufx, len);
-				
+
 				if (!pkg_header_check_crc32(len))
 				{
 					UART_PUTS("Received garbage (CRC wrong after decryption).\r\n");
@@ -887,7 +889,7 @@ int main(void)
 			if (!send_startup_reason(&mcusr_mirror))
 			{
 				send_status_timeout--;
-			
+
 				if (send_status_timeout == 8)
 				{
 					send_brightness_status();
@@ -898,7 +900,7 @@ int main(void)
 					send_status_timeout = SEND_STATUS_EVERY_SEC;
 					send_status();
 					led_blink(200, 0, 1);
-					
+
 					version_status_cycle++;
 				}
 				else if (version_status_cycle >= SEND_VERSION_STATUS_CYCLE)
@@ -920,7 +922,7 @@ int main(void)
 
 		loop++;
 	}
-	
+
 	// never called
 	// aes256_done(&aes_ctx);
 }
