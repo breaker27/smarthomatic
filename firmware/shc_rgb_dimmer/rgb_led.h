@@ -17,4 +17,4 @@
 */
 
 #include "rgb_led_config.h"
-#include "../src_common/rgb_led.c"
+#include "../src_common/rgb_led.h"
