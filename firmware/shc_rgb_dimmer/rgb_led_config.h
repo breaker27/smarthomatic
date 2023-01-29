@@ -16,10 +16,6 @@
 * with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define RGBLED_DDR DDRD
-#define RGBLED_PORT PORTD
-#define RGBLED_PINPORT PIND
-
 #define RGBLED_RED_PIN 6
 #define RGBLED_GRN_PIN 5
 #define RGBLED_BLU_PIN 1
