@@ -31,7 +31,9 @@ uint8_t llast;             // In the last cycle, where does it end (depends on r
 
 struct rgb_color_t current_col; // The current (mixed) color calculated within an animation.
 
-// Timer0 (8 Bit) and Timer1 (10 Bit in 8 Bit mode) are used for the PWM output for the LEDs.
+// Timer0 (8 Bit) and Timer2 (8 Bit) are used for the PWM output for the LEDs
+// and the interrupt that advances the values for the animation.
+// Timer 1 (16 Bit) is used for the tone generator (speaker).
 // Read for more information about PWM:
 // http://www.protostack.com/blog/2011/06/atmega168a-pulse-width-modulation-pwm/
 // http://extremeelectronics.co.in/avr-tutorials/pwm-signal-generation-by-using-avr-timers-part-ii/
@@ -41,34 +43,37 @@ void PWM_init(void)
 	RGBLED_RED_DDR |= (1 << RGBLED_RED_PIN);
 	RGBLED_GRN_DDR |= (1 << RGBLED_GRN_PIN);
 	RGBLED_BLU_DDR |= (1 << RGBLED_BLU_PIN);
+	SPEAKER_DDR    |= (1 << SPEAKER_PIN);
 
-	// OC0A (Red LED): Phase correct PWM, 8 Bit, TOP = 0xFF = 255, non-inverting output
+	// OC0A (Red LED):   Phase correct PWM, 8 Bit, TOP = 0xFF = 255, non-inverting output
 	// OC0B (Green LED): Phase correct PWM, 8 Bit, TOP = 0xFF = 255, non-inverting output
 	TCCR0A = (1 << WGM00) | (1 << COM0A1) | (1 << COM0B1);
 
-	// OC1A (Blue LED): Phase correct PWM, 8 Bit, TOP = 0xFF = 255, non-inverting output
-	TCCR1A = (1 << WGM10) | (1 << COM1A1);
+	// OC2B (Blue LED):  Phase correct PWM, 8 Bit, TOP = 0xFF = 255, non-inverting output
+	TCCR2A = (1 << WGM20) | (1 << COM2B1);
 
-	// Clock source for both timers = I/O clock, 1/64 prescaler -> ~ 240 Hz
+	// Clock source for timer 0 and 2 = I/O clock, 1/64 prescaler -> ~ 244 Hz
 	TCCR0B = (1 << CS01) | (1 << CS00);
-	TCCR1B = (1 << CS11) | (1 << CS10);
+	TCCR2B = (1 << CS21) | (1 << CS20);
+
+	// Timer/Counter1 Overflow Interrupt Enable
+	// Timer0 is used for counting of the animation time as well
+	TIMSK0 = (1 << TOIE0);
+
+	// OC1A (Speaker): Phase correct PWM, 16 Bit, TOP = OCR1A register, toggle OC1A on compare match
+	TCCR1A = (1 << WGM11) | (1 << WGM10) | (1 << COM1A0);
+
+	// Clock source for timers 1 = I/O clock, no prescaler
+	TCCR1B = (1 << WGM13) | (1 << CS10);
 }
 
-// Timer2 (8 Bit) is used for accurate counting of the animation time.
-void timer2_init(void)
-{
-	// Clock source = I/O clock, 1/1024 prescaler
-	TCCR2B = (1 << CS22) | (1 << CS21) | (1 << CS20);
-
-	// Timer/Counter2 Overflow Interrupt Enable
-	TIMSK2 = (1 << TOIE2);
-}
-
-void set_PWM(struct rgb_color_t color)
+void rgb_led_set_PWM(struct rgb_color_t color)
 {
 	OCR0A = (uint32_t)(rgb_led_pwm_transl[color.r]) * rgb_led_brightness_factor * rgb_led_user_brightness_factor / 10000;
 	OCR0B = (uint32_t)(rgb_led_pwm_transl[color.g]) * rgb_led_brightness_factor * rgb_led_user_brightness_factor / 10000;
-	OCR1A = (uint32_t)(rgb_led_pwm_transl[color.b]) * rgb_led_brightness_factor * rgb_led_user_brightness_factor / 10000;
+	OCR2B = (uint32_t)(rgb_led_pwm_transl[color.b]) * rgb_led_brightness_factor * rgb_led_user_brightness_factor / 10000;
+}
+
 }
 
 // Calculate an RGB value out of the index color.
@@ -111,7 +116,7 @@ void rgb_led_update_current_col(void)
 	//UART_PUTF("col_pos %d, ", col_pos);
 	//UART_PUTF3("PWM %d,%d,%d\r\n", current_col.r, current_col.g, current_col.b);
 
-	set_PWM(current_col);
+	rgb_led_set_PWM(current_col);
 }
 
 // Count up the animation_position every 1/8000000 * 1024 * 256 ms = 32.768 ms,
@@ -151,7 +156,7 @@ void rgb_led_animation_tick(void)
 		else if ((rgb_led_repeat == 1)  && (col_pos == llast))
 		{
 			//UART_PUTF("-- End of animation. Set fixed color %d\r\n", col_pos + 1);
-			set_PWM(anim_col[col_pos + 1]); // set color last time
+			rgb_led_set_PWM(anim_col[col_pos + 1]); // set color last time
 			step_len = 0;
 			return;
 		}

@@ -18,8 +18,10 @@
 
 #define RGBLED_RED_PIN 6
 #define RGBLED_GRN_PIN 5
-#define RGBLED_BLU_PIN 1
+#define RGBLED_BLU_PIN 3
+#define SPEAKER_PIN    1
 
 #define RGBLED_RED_DDR DDRD
 #define RGBLED_GRN_DDR DDRD
-#define RGBLED_BLU_DDR DDRB
+#define RGBLED_BLU_DDR DDRD
+#define SPEAKER_DDR    DDRB

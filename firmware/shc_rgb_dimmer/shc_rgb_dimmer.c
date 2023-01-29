@@ -54,9 +54,22 @@ uint32_t station_packetcounter;
 uint16_t send_status_timeout = 15;
 uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly after startup
 
+uint8_t timer1_tick_divider = 16;
+
 ISR (TIMER2_OVF_vect)
 {
-	rgb_led_animation_tick();
+	//rgb_led_animation_tick();
+}
+
+ISR (TIMER0_OVF_vect)
+{
+	timer1_tick_divider--;
+
+	if (timer1_tick_divider == 0)
+	{
+		timer1_tick_divider = 16;
+		rgb_led_animation_tick();
+	}
 }
 
 void send_deviceinfo_status(void)
@@ -353,19 +366,19 @@ void startup_animation(void)
 	struct rgb_color_t c;
 
 	c = index2color(48);
-	set_PWM(c);
+	rgb_led_set_PWM(c);
 	switch_led(true);
 	_delay_ms(500);
 	c = index2color(12);
-	set_PWM(c);
+	rgb_led_set_PWM(c);
 	switch_led(false);
 	_delay_ms(500);
 	c = index2color(3);
-	set_PWM(c);
+	rgb_led_set_PWM(c);
 	switch_led(true);
 	_delay_ms(500);
 	c = index2color(0);
-	set_PWM(c);
+	rgb_led_set_PWM(c);
 	switch_led(false);
 	_delay_ms(500);
 
@@ -411,15 +424,13 @@ int main(void)
 	// init AES key
 	e2p_generic_get_aeskey(aes_key);
 
-	PWM_init();
-
 	rfm_watchdog_init(device_id, e2p_rgbdimmer_get_transceiverwatchdogtimeout(), RFM_RESET_PORT_NR, RFM_RESET_PIN, RFM_RESET_PIN_STATE);
 	rfm12_init();
 
 	rgb_led_set_fixed_color(0);
-	timer2_init();
-
 	clear_anim_data();
+	PWM_init();
+
 	// test_anim_calculation(); // for debugging only
 
 	startup_animation();

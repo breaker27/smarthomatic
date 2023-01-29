@@ -27,9 +27,10 @@
 // The input value x means 0.05s * 1.3 ^ x and covers 30ms to 170s. Each timer cycle is 32.768ms.
 // Therefore, the values are: round((0.05s * 1.3 ^ x) / 0.032768s).
 // Animation time 0 is animation OFF, so there are 31 defined animation times.
-static const uint16_t rgb_led_timer_cycles[31] = {1, 2, 3, 4, 6, 8, 10, 12, 16, 21, 27, 36, 46, 60,
-                                  78, 102, 132, 172, 223, 290, 377, 490, 637, 828,
-                                  1077, 1400, 1820, 2366, 3075, 3998, 5197};
+static const uint16_t rgb_led_timer_cycles[31] = {
+	1, 2, 3, 4, 6, 8, 10, 12, 16, 21, 27, 36, 46, 60,
+	78, 102, 132, 172, 223, 290, 377, 490, 637, 828,
+	1077, 1400, 1820, 2366, 3075, 3998, 5197};
 
 static const uint16_t rgb_led_pwm_transl[256] = {
 	0, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 7, 7, 7, 7,
@@ -68,8 +69,7 @@ uint16_t step_len;         // length of animation step of current color to next 
 
 // function definitions
 void PWM_init(void);
-void timer2_init(void);
-void set_PWM(struct rgb_color_t color);
+void rgb_led_set_PWM(struct rgb_color_t color);
 struct rgb_color_t index2color(uint8_t color);
 void rgb_led_update_current_col(void);
 void rgb_led_animation_tick(void);
