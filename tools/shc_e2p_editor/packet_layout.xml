@@ -598,6 +598,119 @@
 		</Message>
 	</MessageGroup>
 	<MessageGroup>
+		<Name>Display</Name>
+		<Description>This message group contains messages for displays.</Description>
+		<MessageGroupID>40</MessageGroupID>
+		<Message>
+			<Name>Text</Name>
+			<Description>This is a message to get/set text content at a specified position.</Description>
+			<MessageID>1</MessageID>
+			<MessageType>0</MessageType>
+			<MessageType>1</MessageType>
+			<MessageType>2</MessageType>
+			<MessageType>8</MessageType>
+			<MessageType>9</MessageType>
+			<MessageType>10</MessageType>
+			<Validity>test</Validity>
+			<UIntValue>
+				<ID>PosX</ID>
+				<Description>X (character) position at which the text shall be displayed.</Description>
+				<Bits>7</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>79</MaxVal>
+			</UIntValue>
+			<UIntValue>
+				<ID>PosY</ID>
+				<Description>Y (line) position at which the text shall be displayed.</Description>
+				<Bits>4</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>15</MaxVal>
+			</UIntValue>
+			<UIntValue>
+				<ID>Format</ID>
+				<Description>Format, font, or other value which modifies how the text is displayed. Depends on the implementation of the device.</Description>
+				<Bits>4</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>15</MaxVal>
+				<DefaultVal>0</DefaultVal>
+			</UIntValue>
+			<ByteArray>
+				<ID>Text</ID>
+				<Description>40 bytes for the text that shall be displayed. The end of the text is marked with a 0 byte if it's shorter than 40 characters.</Description>
+				<Bytes>40</Bytes>
+			</ByteArray>
+		</Message>
+	</MessageGroup>
+	<MessageGroup>
+		<Name>Audio</Name>
+		<Description>This message group contains messages for audio input/output.</Description>
+		<MessageGroupID>50</MessageGroupID>
+		<Message>
+			<Name>Tone</Name>
+			<Description>This is a message to get/set playback of a continuous tone which doesn't stop until another one is requested.</Description>
+			<MessageID>1</MessageID>
+			<MessageType>0</MessageType>
+			<MessageType>1</MessageType>
+			<MessageType>2</MessageType>
+			<MessageType>8</MessageType>
+			<MessageType>9</MessageType>
+			<MessageType>10</MessageType>
+			<Validity>test</Validity>
+			<UIntValue>
+				<ID>Index</ID>
+				<Description>Index according frequency table. 0 means OFF.</Description>
+				<Bits>7</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>116</MaxVal>
+			</UIntValue>
+		</Message>
+		<Message>
+			<Name>Melody</Name>
+			<Description>This is a message to play a series of tones (set) or get the currently playing one.</Description>
+			<MessageID>2</MessageID>
+			<MessageType>0</MessageType>
+			<MessageType>1</MessageType>
+			<MessageType>2</MessageType>
+			<MessageType>8</MessageType>
+			<MessageType>9</MessageType>
+			<MessageType>10</MessageType>
+			<Validity>test</Validity>
+			<UIntValue>
+				<ID>Repeat</ID>
+				<Description>The number of times the melody will be repeated. 0 means infinitely.</Description>
+				<Bits>4</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>15</MaxVal>
+			</UIntValue>
+			<BoolValue>
+				<ID>AutoReverse</ID>
+				<Description>If true, the melody will be played back in the normal direction and then in reverse order.</Description>
+			</BoolValue>
+			<Array>
+				<Length>29</Length>
+				<UIntValue>
+					<ID>Time</ID>
+					<Description>The playback time between the previous tone and the new one. The number of seconds used is 0.05 * 1.3 ^ Time and covers the range from 0.03s to 170s. Use 0 to mark the end of the melody. Further values will be ignored.</Description>
+					<Bits>5</Bits>
+					<MinVal>0</MinVal>
+					<MaxVal>31</MaxVal>
+				</UIntValue>
+				<BoolValue>
+				  <ID>Slide</ID>
+				  <Description>Define if the tone is played immediately (0, default), or if a sliding tone from the previous to the new one is played back. A sliding tone from or to tone index 0 (off) is not possible. The new tone / no tone will be played back immediately in this case.</Description>
+				  <DefaultVal>0</DefaultVal>
+				</BoolValue>
+				<UIntValue>
+					<ID>Tone</ID>
+					<Description>The tone is according to the 7 bit frequency table. The last index (or the first when AutoReverse is true) of the melody will remain audible after the melody is completed.</Description>
+					<Bits>7</Bits>
+					<MinVal>0</MinVal>
+					<MaxVal>116</MaxVal>
+				</UIntValue>
+			</Array>
+		</Message>
+	</MessageGroup>
+	<MessageGroup>
 		<Name>Dimmer</Name>
 		<Description/>
 		<MessageGroupID>60</MessageGroupID>
