@@ -36,7 +36,7 @@
 #define REQUEST_ADDITIONAL_TIMEOUT_S 2 // Additional timeout per retry.
 #define MESSAGETYPE_UNUSED 255         // marker for request_t elements which are not used
 #define SLOT_UNUSED 65535              // marker for request_queue slots which are not used
-#define REQUEST_DATA_BYTES_MAX   23    // leave this at 23, which is needed for 32 byte packets with the current header format
+#define REQUEST_DATA_BYTES_MAX 55      // leave this at 55, which is needed for 64 byte packets with the current header format
 
 typedef struct {
 	uint8_t message_type; // set to MESSAGETYPE_UNUSED to show that this buffer is unused
