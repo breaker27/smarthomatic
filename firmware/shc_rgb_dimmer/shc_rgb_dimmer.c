@@ -97,7 +97,7 @@ void send_brightness_status(void)
 {
 	inc_packetcounter();
 
-	UART_PUTF("Sending color status: color: %u\r\n", rgb_led_anim_colors[0]);
+	UART_PUTF("Sending color status: color: %u\r\n", anim_colors_orig[0]);
 
 	// Set packet content
 	pkg_header_init_dimmer_brightness_status();
@@ -113,13 +113,13 @@ void send_status(void)
 {
 	inc_packetcounter();
 
-	if (step_len == 0) // no animation running
+	if (animation.step_len == 0) // no animation running
 	{
-		UART_PUTF("Sending color status: color: %u\r\n", rgb_led_anim_colors[0]);
+		UART_PUTF("Sending color status: color: %u\r\n", anim_colors_orig[0]);
 
 		// Set packet content
 		pkg_header_init_dimmer_color_status();
-		msg_dimmer_color_set_color(rgb_led_anim_colors[0]);
+		msg_dimmer_color_set_color(anim_colors_orig[0]);
 	}
 	else // animation running
 	{
@@ -128,15 +128,15 @@ void send_status(void)
 		// Set packet content
 		pkg_header_init_dimmer_coloranimation_status();
 
-		UART_PUTF2("Sending animation status: Repeat: %u, AutoReverse: %u", rgb_led_repeat, rgb_led_autoreverse);
-		msg_dimmer_coloranimation_set_repeat(rgb_led_repeat);
-		msg_dimmer_coloranimation_set_autoreverse(rgb_led_autoreverse);
+		UART_PUTF2("Sending animation status: Repeat: %u, AutoReverse: %u", animation.repeat, animation.autoreverse);
+		msg_dimmer_coloranimation_set_repeat(animation.repeat);
+		msg_dimmer_coloranimation_set_autoreverse(animation.autoreverse);
 
 		for (i = 0; i < 10; i++)
 		{
 			UART_PUTF2(", Time[%u]: %u", i, anim_time[i]);
-			UART_PUTF2(", Color[%u]: %u", i, rgb_led_anim_colors[i]);
-			msg_dimmer_coloranimation_set_color(i, rgb_led_anim_colors[i]);
+			UART_PUTF2(", Color[%u]: %u", i, anim_colors_orig[i]);
+			msg_dimmer_coloranimation_set_color(i, anim_colors_orig[i]);
 			msg_dimmer_coloranimation_set_time(i, anim_time[i]);
 		}
 
@@ -220,22 +220,21 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 
 			cli();
 
-			rgb_led_repeat = msg_dimmer_coloranimation_get_repeat();
-			rgb_led_autoreverse = msg_dimmer_coloranimation_get_autoreverse();
+			animation.repeat = msg_dimmer_coloranimation_get_repeat();
+			animation.autoreverse = msg_dimmer_coloranimation_get_autoreverse();
 
-			UART_PUTF2("Repeat:%u;AutoReverse:%u;", rgb_led_repeat, rgb_led_autoreverse);
+			UART_PUTF2("Repeat:%u;AutoReverse:%u;", animation.repeat, animation.autoreverse);
 
 			for (i = 0; i < 10; i++)
 			{
 				anim_time[i] = msg_dimmer_coloranimation_get_time(i);
-				rgb_led_anim_colors[i] = msg_dimmer_coloranimation_get_color(i);
+				anim_colors_orig[i] = msg_dimmer_coloranimation_get_color(i);
 
 				UART_PUTF2("Time[%u]:%u;", i, anim_time[i]);
-				UART_PUTF2("Color[%u]:%u;", i, rgb_led_anim_colors[i]);
+				UART_PUTF2("Color[%u]:%u;", i, anim_colors_orig[i]);
 			}
 
 			init_animation();
-			step_len = rgb_led_timer_cycles[anim_time[0]];
 			rgb_led_update_current_col();
 
 			sei();
@@ -273,7 +272,7 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		else if (messageid == MESSAGEID_DIMMER_COLOR)
 		{
 			pkg_header_init_dimmer_color_ackstatus();
-			msg_dimmer_color_set_color(rgb_led_anim_colors[0]);
+			msg_dimmer_color_set_color(anim_colors_orig[0]);
 		}
 		else // MESSAGEID_DIMMER_COLORANIMATION
 		{
@@ -283,12 +282,12 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 
 			for (i = 0; i < 10; i++)
 			{
-				msg_dimmer_coloranimation_set_color(i, rgb_led_anim_colors[i]);
+				msg_dimmer_coloranimation_set_color(i, anim_colors_orig[i]);
 				msg_dimmer_coloranimation_set_time(i, anim_time[i]);
 			}
 
-			msg_dimmer_coloranimation_set_repeat(rgb_led_repeat);
-			msg_dimmer_coloranimation_set_autoreverse(rgb_led_autoreverse);
+			msg_dimmer_coloranimation_set_repeat(animation.repeat);
+			msg_dimmer_coloranimation_set_autoreverse(animation.autoreverse);
 		}
 
 		UART_PUTS("Sending AckStatus\r\n");
@@ -385,6 +384,18 @@ void startup_animation(void)
 	led_blink(500, 0, 1);
 }
 
+void startup_sound(void)
+{
+	while (1)
+	{
+		speaker_set_fixed_tone(49);
+		_delay_ms(1000);
+		speaker_set_fixed_tone(0);
+		_delay_ms(2000);
+	}
+}
+
+// Test animation for FHEM: 3 0 10 0 9 48 9 12 9 3 10 0 0
 int main(void)
 {
 	uint8_t loop = 0;
@@ -414,7 +425,7 @@ int main(void)
 
 	UART_PUTS ("\r\n");
 	UART_PUTF4("smarthomatic RGB Dimmer v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
-	UART_PUTS("(c) 2014..2018 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTS("(c) 2014..2023 Uwe Freese, www.smarthomatic.org\r\n");
 	osccal_info();
 	UART_PUTF ("DeviceID: %u\r\n", device_id);
 	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);
@@ -428,12 +439,13 @@ int main(void)
 	rfm12_init();
 
 	rgb_led_set_fixed_color(0);
-	clear_anim_data();
 	PWM_init();
 
 	// test_anim_calculation(); // for debugging only
 
 	startup_animation();
+
+	//startup_sound();
 
 	sei();
 
