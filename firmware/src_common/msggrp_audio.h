@@ -54,7 +54,7 @@ typedef enum {
 // Possible MessageTypes: Get, Set, SetGet, Status, Ack, AckStatus
 // Validity: test
 // Length w/o Header + HeaderExtension: 7 bits
-// Data fields: Index
+// Data fields: Tone
 // Description: This is a message to get/set playback of a continuous tone which doesn't stop until another one is requested.
 
 // Function to initialize header for the MessageType "Get".
@@ -127,19 +127,19 @@ static inline void pkg_header_init_audio_tone_ackstatus(void)
   __MESSAGETYPE = 10;
 }
 
-// Index (UIntValue)
-// Description: Index according frequency table. 0 means OFF.
+// Tone (UIntValue)
+// Description: Tone according frequency table. 0 means OFF.
 
-// Set Index (UIntValue)
+// Set Tone (UIntValue)
 // Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 7, min val 0, max val 116
-static inline void msg_audio_tone_set_index(uint32_t val)
+static inline void msg_audio_tone_set_tone(uint32_t val)
 {
   array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 0, 7, val, bufx);
 }
 
-// Get Index (UIntValue)
+// Get Tone (UIntValue)
 // Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 7, min val 0, max val 116
-static inline uint32_t msg_audio_tone_get_index(void)
+static inline uint32_t msg_audio_tone_get_tone(void)
 {
   return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 0, 7, 0, 116, bufx);
 }
@@ -152,7 +152,7 @@ static inline uint32_t msg_audio_tone_get_index(void)
 // Possible MessageTypes: Get, Set, SetGet, Status, Ack, AckStatus
 // Validity: test
 // Length w/o Header + HeaderExtension: 382 bits
-// Data fields: Repeat, AutoReverse, Time, Slide, Index
+// Data fields: Repeat, AutoReverse, Time, Slide, Tone
 // Description: This is a message to play a series of tones (set) or get the currently playing one.
 
 // Function to initialize header for the MessageType "Get".
@@ -295,20 +295,20 @@ static inline bool msg_audio_melody_get_slide(uint8_t index)
   return array_read_UIntValue8((uint16_t)__HEADEROFFSETBITS + 10 + (uint16_t)index * 13, 1, 0, 1, bufx) == 1;
 }
 
-// Index (UIntValue[29])
+// Tone (UIntValue[29])
 // This sub-element with 7 bits is part of an element with 13 bits in a structured array.
 // Description: Index according frequency table. 0 means OFF. The last index (or the first when AutoReverse is true) of the melody will remain audible after the melody is completed.
 
-// Set Index (UIntValue)
+// Set Tone (UIntValue)
 // Offset: (uint16_t)__HEADEROFFSETBITS + 11 + (uint16_t)index * 13, length bits 7, min val 0, max val 116
-static inline void msg_audio_melody_set_index(uint8_t index, uint32_t val)
+static inline void msg_audio_melody_set_tone(uint8_t index, uint32_t val)
 {
   array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 11 + (uint16_t)index * 13, 7, val, bufx);
 }
 
-// Get Index (UIntValue)
+// Get Tone (UIntValue)
 // Offset: (uint16_t)__HEADEROFFSETBITS + 11 + (uint16_t)index * 13, length bits 7, min val 0, max val 116
-static inline uint32_t msg_audio_melody_get_index(uint8_t index)
+static inline uint32_t msg_audio_melody_get_tone(uint8_t index)
 {
   return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 11 + (uint16_t)index * 13, 7, 0, 116, bufx);
 }

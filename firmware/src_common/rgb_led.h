@@ -117,7 +117,7 @@ uint8_t anim_colors_orig[10];              // The 10 (indexed) colors used for t
 #define MELODY_TONE_ORIG_MAX 29        // melody length
 #define MELODY_TONE_MAX 88             // 3x melody length + 1 to unfold the tone sequence
 uint16_t melody_PWM[MELODY_TONE_MAX];  // The last active tone (index 0) + tones used for the melody. Unfolded.
-uint8_t melody_slide[MELODY_TONE_MAX]; // The last active slide mode (index 0) + values used for the melody. Unfolded.
+bool melody_slide[MELODY_TONE_MAX]; // The last active slide mode (index 0) + values used for the melody. Unfolded.
 uint8_t melody_time[MELODY_TONE_MAX];  // The times used for playing a tone / sliding between two tones. Unfolded.
                                        // 0 at pos x indicates the last tone used is x-1.
 uint8_t melody_tones_orig[29];         // The 29 (indexed) tones used for the melody, as stated in the SHC message.

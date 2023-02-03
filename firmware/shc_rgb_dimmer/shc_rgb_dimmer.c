@@ -26,6 +26,7 @@
 
 #include "../src_common/msggrp_generic.h"
 #include "../src_common/msggrp_dimmer.h"
+#include "../src_common/msggrp_audio.h"
 
 #include "../src_common/e2p_hardware.h"
 #include "../src_common/e2p_generic.h"
@@ -178,7 +179,7 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 
 	UART_PUTF("MessageGroupID:%u;", messagegroupid);
 
-	if (messagegroupid != MESSAGEGROUP_DIMMER)
+	if ((messagegroupid != MESSAGEGROUP_DIMMER) && (messagegroupid != MESSAGEGROUP_AUDIO))
 	{
 		UART_PUTS("\r\nERR: Unsupported MessageGroupID.\r\n");
 		send_ack(acksenderid, ackpacketcounter, true);
@@ -187,9 +188,14 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 
 	UART_PUTF("MessageID:%u;", messageid);
 
-	if ((messageid != MESSAGEID_DIMMER_BRIGHTNESS)
+	if (((messagegroupid == MESSAGEGROUP_DIMMER)
+		&& (messageid != MESSAGEID_DIMMER_BRIGHTNESS)
 		&& (messageid != MESSAGEID_DIMMER_COLOR)
 		&& (messageid != MESSAGEID_DIMMER_COLORANIMATION))
+		||
+		((messagegroupid == MESSAGEGROUP_AUDIO)
+		&& (messageid != MESSAGEID_AUDIO_TONE)
+		&& (messageid != MESSAGEID_AUDIO_MELODY)))
 	{
 		UART_PUTS("\r\nERR: Unsupported MessageID.\r\n");
 		send_ack(acksenderid, ackpacketcounter, true);
@@ -199,42 +205,81 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	// "Set" or "SetGet" -> modify brightness/color/animation
 	if ((messagetype == MESSAGETYPE_SET) || (messagetype == MESSAGETYPE_SETGET))
 	{
-		if (messageid == MESSAGEID_DIMMER_BRIGHTNESS)
+		if (messagegroupid == MESSAGEGROUP_DIMMER)
 		{
-			rgb_led_user_brightness_factor = msg_dimmer_brightness_get_brightness();
-			UART_PUTF("Brightness:%u;", rgb_led_user_brightness_factor);
-			rgb_led_update_current_col();
-		}
-		else if (messageid == MESSAGEID_DIMMER_COLOR)
-		{
-			uint8_t color = msg_dimmer_color_get_color();
-			UART_PUTF("Color:%u;", color);
-			rgb_led_set_fixed_color(color);
-		}
-		else // MESSAGEID_DIMMER_COLORANIMATION
-		{
-			uint8_t i;
-
-			cli();
-
-			animation.repeat = msg_dimmer_coloranimation_get_repeat();
-			animation.autoreverse = msg_dimmer_coloranimation_get_autoreverse();
-
-			UART_PUTF2("Repeat:%u;AutoReverse:%u;", animation.repeat, animation.autoreverse);
-
-			for (i = 0; i < 10; i++)
+			if (messageid == MESSAGEID_DIMMER_BRIGHTNESS)
 			{
-				anim_time[i] = msg_dimmer_coloranimation_get_time(i);
-				anim_colors_orig[i] = msg_dimmer_coloranimation_get_color(i);
-
-				UART_PUTF2("Time[%u]:%u;", i, anim_time[i]);
-				UART_PUTF2("Color[%u]:%u;", i, anim_colors_orig[i]);
+				rgb_led_user_brightness_factor = msg_dimmer_brightness_get_brightness();
+				UART_PUTF("Brightness:%u;", rgb_led_user_brightness_factor);
+				rgb_led_update_current_col();
 			}
+			else if (messageid == MESSAGEID_DIMMER_COLOR)
+			{
+				uint8_t color = msg_dimmer_color_get_color();
+				UART_PUTF("Color:%u;", color);
+				rgb_led_set_fixed_color(color);
+			}
+			else // MESSAGEID_DIMMER_COLORANIMATION
+			{
+				uint8_t i;
 
-			init_animation(true);
-			rgb_led_update_current_col();
+				cli();
 
-			sei();
+				animation.repeat = msg_dimmer_coloranimation_get_repeat();
+				animation.autoreverse = msg_dimmer_coloranimation_get_autoreverse();
+
+				UART_PUTF2("Repeat:%u;AutoReverse:%u;", animation.repeat, animation.autoreverse);
+
+				for (i = 0; i < ANIM_COL_ORIG_MAX; i++)
+				{
+					anim_time[i] = msg_dimmer_coloranimation_get_time(i);
+					anim_colors_orig[i] = msg_dimmer_coloranimation_get_color(i);
+
+					UART_PUTF2("Time[%u]:%u;", i, anim_time[i]);
+					UART_PUTF2("Color[%u]:%u;", i, anim_colors_orig[i]);
+				}
+
+				init_animation(true);
+				rgb_led_update_current_col();
+
+				sei();
+			}
+		}
+		else // MESSAGEGROUP_AUDIO
+		{
+			if (messageid == MESSAGEID_AUDIO_TONE)
+			{
+				uint8_t tone = msg_audio_tone_get_tone();
+				UART_PUTF("Tone:%u;", tone);
+				speaker_set_fixed_tone(tone);
+			}
+			else // MESSAGEID_AUDIO_MELODY
+			{
+				uint8_t i;
+
+				cli();
+
+				melody.repeat = msg_audio_melody_get_repeat();
+				melody.autoreverse = msg_audio_melody_get_autoreverse();
+
+				UART_PUTF2("Repeat:%u;AutoReverse:%u;", melody.repeat, melody.autoreverse);
+
+				for (i = 0; i < MELODY_TONE_ORIG_MAX; i++)
+				{
+					melody_time[i] = msg_audio_melody_get_time(i);
+					melody_slide[i] = msg_audio_melody_get_slide(i);
+					melody_tones_orig[i] = msg_audio_melody_get_tone(i);
+
+					UART_PUTF2("Time[%u]:%u;", i, melody_time[i]);
+					UART_PUTF2("Slide[%u]:%u;", i, melody_slide[i] ? 1 : 0);
+					UART_PUTF2("Color[%u]:%u;", i, melody_tones_orig[i]);
+				}
+
+				init_animation(false);
+				speaker_update_current_tone();
+
+				sei();
+			}
 		}
 	}
 
@@ -243,17 +288,31 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	// "Set" -> send "Ack"
 	if (messagetype == MESSAGETYPE_SET)
 	{
-		if (messageid == MESSAGEID_DIMMER_BRIGHTNESS)
+		if (messagegroupid == MESSAGEGROUP_DIMMER)
 		{
-			pkg_header_init_dimmer_brightness_ack();
+			if (messageid == MESSAGEID_DIMMER_BRIGHTNESS)
+			{
+				pkg_header_init_dimmer_brightness_ack();
+			}
+			else if (messageid == MESSAGEID_DIMMER_COLOR)
+			{
+				pkg_header_init_dimmer_color_ack();
+			}
+			else // MESSAGEID_DIMMER_COLORANIMATION
+			{
+				pkg_header_init_dimmer_coloranimation_ack();
+			}
 		}
-		else if (messageid == MESSAGEID_DIMMER_COLOR)
+		else // MESSAGEGROUP_AUDIO
 		{
-			pkg_header_init_dimmer_color_ack();
-		}
-		else // MESSAGEID_DIMMER_COLORANIMATION
-		{
-			pkg_header_init_dimmer_coloranimation_ack();
+			if (messageid == MESSAGEID_AUDIO_TONE)
+			{
+				pkg_header_init_audio_tone_ack();
+			}
+			else // MESSAGEID_AUDIO_MELODY
+			{
+				pkg_header_init_audio_melody_ack();
+			}
 		}
 
 		UART_PUTS("Sending Ack\r\n");
@@ -261,30 +320,57 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	// "Get" or "SetGet" -> send "AckStatus"
 	else
 	{
-		if (messageid == MESSAGEID_DIMMER_BRIGHTNESS)
+		if (messagegroupid == MESSAGEGROUP_DIMMER)
 		{
-			pkg_header_init_dimmer_brightness_ackstatus();
-			msg_dimmer_brightness_set_brightness(rgb_led_user_brightness_factor);
-		}
-		else if (messageid == MESSAGEID_DIMMER_COLOR)
-		{
-			pkg_header_init_dimmer_color_ackstatus();
-			msg_dimmer_color_set_color(anim_colors_orig[0]);
-		}
-		else // MESSAGEID_DIMMER_COLORANIMATION
-		{
-			uint8_t i;
-
-			pkg_header_init_dimmer_coloranimation_ackstatus();
-
-			for (i = 0; i < 10; i++)
+			if (messageid == MESSAGEID_DIMMER_BRIGHTNESS)
 			{
-				msg_dimmer_coloranimation_set_color(i, anim_colors_orig[i]);
-				msg_dimmer_coloranimation_set_time(i, anim_time[i]);
+				pkg_header_init_dimmer_brightness_ackstatus();
+				msg_dimmer_brightness_set_brightness(rgb_led_user_brightness_factor);
 			}
+			else if (messageid == MESSAGEID_DIMMER_COLOR)
+			{
+				pkg_header_init_dimmer_color_ackstatus();
+				msg_dimmer_color_set_color(anim_colors_orig[0]);
+			}
+			else // MESSAGEID_DIMMER_COLORANIMATION
+			{
+				uint8_t i;
 
-			msg_dimmer_coloranimation_set_repeat(animation.repeat);
-			msg_dimmer_coloranimation_set_autoreverse(animation.autoreverse);
+				pkg_header_init_dimmer_coloranimation_ackstatus();
+
+				for (i = 0; i < ANIM_COL_ORIG_MAX; i++)
+				{
+					msg_dimmer_coloranimation_set_color(i, anim_colors_orig[i]);
+					msg_dimmer_coloranimation_set_time(i, anim_time[i]);
+				}
+
+				msg_dimmer_coloranimation_set_repeat(animation.repeat);
+				msg_dimmer_coloranimation_set_autoreverse(animation.autoreverse);
+			}
+		}
+		else // MESSAGEGROUP_AUDIO
+		{
+			if (messageid == MESSAGEID_AUDIO_TONE)
+			{
+				pkg_header_init_audio_tone_ackstatus();
+				msg_audio_tone_set_tone(melody_tones_orig[0]);
+			}
+			else // MESSAGEID_AUDIO_MELODY
+			{
+				uint8_t i;
+
+				pkg_header_init_audio_melody_ackstatus();
+
+				for (i = 0; i < MELODY_TONE_ORIG_MAX; i++)
+				{
+					msg_audio_melody_set_tone(i, melody_tones_orig[i]);
+					msg_audio_melody_set_slide(i, melody_slide[i]);
+					msg_audio_melody_set_time(i, melody_time[i]);
+				}
+
+				msg_audio_melody_set_repeat(melody.repeat);
+				msg_audio_melody_set_autoreverse(melody.autoreverse);
+			}
 		}
 
 		UART_PUTS("Sending AckStatus\r\n");

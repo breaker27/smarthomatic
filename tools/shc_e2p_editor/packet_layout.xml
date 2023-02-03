@@ -657,8 +657,8 @@
 			<MessageType>10</MessageType>
 			<Validity>test</Validity>
 			<UIntValue>
-				<ID>Index</ID>
-				<Description>Index according frequency table. 0 means OFF.</Description>
+				<ID>Tone</ID>
+				<Description>Tone according frequency table. 0 means OFF.</Description>
 				<Bits>7</Bits>
 				<MinVal>0</MinVal>
 				<MaxVal>116</MaxVal>
@@ -701,7 +701,7 @@
 				  <DefaultVal>0</DefaultVal>
 				</BoolValue>
 				<UIntValue>
-					<ID>Index</ID>
+					<ID>Tone</ID>
 					<Description>Index according frequency table. 0 means OFF. The last index (or the first when AutoReverse is true) of the melody will remain audible after the melody is completed.</Description>
 					<Bits>7</Bits>
 					<MinVal>0</MinVal>
