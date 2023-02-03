@@ -176,8 +176,11 @@ void speaker_update_current_tone(void)
 {
 	if (melody.step_len != 0) // melody playing
 	{
-		current_tone_PWM = (uint8_t)((uint32_t)melody_PWM[melody.col_pos] * (melody.step_len - melody.step_pos) / melody.step_len
-			+ (uint32_t)melody_PWM[melody.col_pos + 1] * melody.step_pos / melody.step_len);
+		if (melody_slide[melody.col_pos])
+			current_tone_PWM = (uint16_t)((uint32_t)melody_PWM[melody.col_pos] * (melody.step_len - melody.step_pos) / melody.step_len
+				+ (uint32_t)melody_PWM[melody.col_pos + 1] * melody.step_pos / melody.step_len);
+		else
+			current_tone_PWM = melody_PWM[melody.col_pos + 1];
 	}
 
 	//UART_PUTF("melody.col_pos %d, ", melody.col_pos);
@@ -438,7 +441,7 @@ void dump_animation_values(void)
 	{
 		UART_PUTF("Pos %02d: color ", i);
 
-		if (i < 10)
+		if (i < ANIM_COL_ORIG_MAX)
 		{
 			UART_PUTF("%02d   ", anim_colors_orig[i]);
 		}
