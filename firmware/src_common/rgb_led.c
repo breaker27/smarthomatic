@@ -219,7 +219,7 @@ void animation_tick(bool RGB_LED)
 
 			par->col_pos = par->rfirst;
 			par->step_pos = 0;
-			par->step_len = rgb_led_timer_cycles[array_time[par->col_pos]];
+			par->step_len = rgb_led_timer_cycles[array_time[par->col_pos] - 1];
 		}
 		// When animation step at animation.llast is completed (animation.col_pos = animation.llast) and
 		// animation.repeat = 1, stop animation.
@@ -240,7 +240,7 @@ void animation_tick(bool RGB_LED)
 		{
 			par->col_pos++;
 			par->step_pos = 0;
-			par->step_len = rgb_led_timer_cycles[array_time[par->col_pos]];
+			par->step_len = rgb_led_timer_cycles[array_time[par->col_pos] - 1];
 
 			UART_PUTF2("--- Go to next color, new animation.col_pos: %d. new animation.step_len: %d\r\n", par->col_pos, par->step_len);
 		}
@@ -417,7 +417,7 @@ void init_animation(bool RGB_LED)
 	UART_PUTF("animation.rlast: %d\r\n", par->rlast);
 	UART_PUTF("animation.llast: %d\r\n", par->llast); */
 
-	par->step_len = rgb_led_timer_cycles[array_time[0]];
+	par->step_len = rgb_led_timer_cycles[array_time[0] - 1];
 }
 
 // Print out the animation parameters, indexed colors used in the "Set"/"SetGet" message and the
