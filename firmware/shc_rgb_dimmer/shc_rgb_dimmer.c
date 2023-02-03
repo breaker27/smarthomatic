@@ -383,13 +383,13 @@ void startup_animation(void)
 
 void startup_sound(void)
 {
-	while (1)
-	{
-		speaker_set_fixed_tone(49);
-		_delay_ms(1000);
-		speaker_set_fixed_tone(0);
-		_delay_ms(2000);
-	}
+	speaker_set_fixed_tone(49);
+	_delay_ms(50);
+	speaker_set_fixed_tone(0);
+	_delay_ms(100);
+	speaker_set_fixed_tone(49);
+	_delay_ms(50);
+	speaker_set_fixed_tone(0);
 }
 
 // Test animation for FHEM: 3 0 10 0 9 48 9 12 9 3 10 0 0
@@ -441,8 +441,8 @@ int main(void)
 	//test_anim_calculation(); // for debugging only
 	//test_melody_calculation();
 
-	startup_animation();
 	startup_sound();
+	startup_animation();
 
 	sei();
 
