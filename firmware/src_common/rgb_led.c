@@ -23,6 +23,7 @@
 uint8_t rgb_led_user_brightness_factor = 100; // additional brightness changeable by brightness message
 
 struct rgb_color_t current_col; // The current (mixed) color calculated within an animation.
+uint16_t current_tone_PWM;      // The current PWM value for the (slided) tone calculated within an melody.
 
 // Timer0 (8 Bit) and Timer2 (8 Bit) are used for the PWM output for the LEDs
 // and the interrupt that advances the values for the animation.
@@ -88,16 +89,29 @@ void rgb_led_set_PWM(struct rgb_color_t color)
 
 // Switch off speaker on special frequency_index == 0,
 // or play the frequency with the given index.
-void speaker_set_fixed_tone(uint8_t frequency_index)
+void speaker_set_PWM(uint16_t PWM_val)
 {
-	if ((frequency_index == 0) || (frequency_index > 116))
+	if (PWM_val == 0)
 	{
 		SPEAKER_DDR &= ~ (1 << SPEAKER_PIN);
 	}
 	else
 	{
-		OCR1A = pgm_read_word(&(speaker_pwm_transl[frequency_index - 1]));
+		OCR1A = PWM_val;
 		SPEAKER_DDR |= (1 << SPEAKER_PIN);
+	}
+}
+// Switch off speaker on special frequency_index == 0,
+// or play the frequency with the given index.
+void speaker_set_fixed_tone(uint8_t frequency_index)
+{
+	if ((frequency_index == 0) || (frequency_index > 116))
+	{
+		speaker_set_PWM(0);
+	}
+	else
+	{
+		speaker_set_PWM(pgm_read_word(&(speaker_pwm_transl[frequency_index - 1])));
 	}
 }
 
@@ -124,6 +138,18 @@ struct rgb_color_t index2color(uint8_t color)
 	return res;
 }
 
+uint16_t index2tonePWM(uint8_t frequency_index)
+{
+	if ((frequency_index == 0) || (frequency_index > 116))
+	{
+		return 0;
+	}
+	else
+	{
+		return pgm_read_word(&(speaker_pwm_transl[frequency_index - 1]));
+	}
+}
+
 // Calculate the color that has to be shown according to the animation settings and counters.
 // Save the color as currently active color in current_col.
 void rgb_led_update_current_col(void)
@@ -144,58 +170,86 @@ void rgb_led_update_current_col(void)
 	rgb_led_set_PWM(current_col);
 }
 
+// Calculate the tone that has to be shown according to the animation settings and counters.
+// Save the tone as currently active tone in current_tone.
+void speaker_update_current_tone(void)
+{
+	if (melody.step_len != 0) // melody playing
+	{
+		current_tone_PWM = (uint8_t)((uint32_t)melody_PWM[melody.col_pos] * (melody.step_len - melody.step_pos) / melody.step_len
+			+ (uint32_t)melody_PWM[melody.col_pos + 1] * melody.step_pos / melody.step_len);
+	}
+
+	//UART_PUTF("melody.col_pos %d, ", melody.col_pos);
+	//UART_PUTF("PWM %d\r\n", current_tone_pwm);
+
+	speaker_set_PWM(current_tone_PWM);
+}
+
 // Count up the animation_position every 1/8000000 * 1024 * 256 ms = 32.768 ms,
 // if animation is running.
-void rgb_led_animation_tick(void)
+void animation_tick(bool RGB_LED)
 {
-	if (animation.step_len == 0) // no animation running
+	struct animation_param_t* par = RGB_LED ? &animation : &melody;
+	uint8_t* array_time = RGB_LED ? anim_time : melody_time;
+
+	if (par->step_len == 0) // no animation running / melody playing
 	{
 		return;
 	}
 
-	if (animation.step_pos < animation.step_len)
+	if (par->step_pos < par->step_len)
 	{
-		animation.step_pos++;
+		par->step_pos++;
 	}
 	else
 	{
-		//UART_PUTF3("-- Anim step %d (color pos %d -> %d) finished.\r\n", animation.col_pos, animation.col_pos, animation.col_pos + 1);
+		UART_PUTF3("-- Anim step %d (color pos %d -> %d) finished.\r\n", par->col_pos, par->col_pos, par->col_pos + 1);
 
 		// When animation step at animation.rlast is completed (animation.col_pos = animation.rlast) and
 		// animation.repeat != 1, decrease animation.repeat by 1 (if not 0 already) and jump to animation.rfirst.
-		if ((animation.repeat != 1) && (animation.col_pos == animation.rlast))
+		if ((par->repeat != 1) && (par->col_pos == par->rlast))
 		{
-			animation.col_pos++;
+			par->col_pos++;
 
-			if (animation.repeat > 1)
-					animation.repeat--;
+			if (par->repeat > 1)
+					par->repeat--;
 
-			//UART_PUTF2("-- More cycles to go. New animation.repeat = %d. Reset animation.col_pos to %d.\r\n", animation.repeat, animation.rfirst);
+			UART_PUTF2("-- More cycles to go. New animation.repeat = %d. Reset animation.col_pos to %d.\r\n", par->repeat, par->rfirst);
 
-			animation.col_pos = animation.rfirst;
-			animation.step_pos = 0;
-			animation.step_len = rgb_led_timer_cycles[anim_time[animation.col_pos]];
+			par->col_pos = par->rfirst;
+			par->step_pos = 0;
+			par->step_len = rgb_led_timer_cycles[array_time[par->col_pos]];
 		}
 		// When animation step at animation.llast is completed (animation.col_pos = animation.llast) and
 		// animation.repeat = 1, stop animation.
-		else if ((animation.repeat == 1)  && (animation.col_pos == animation.llast))
+		else if ((par->repeat == 1)  && (par->col_pos == par->llast))
 		{
-			//UART_PUTF("-- End of animation. Set fixed color %d\r\n", animation.col_pos + 1);
-			rgb_led_set_PWM(anim_col[animation.col_pos + 1]); // set color last time
-			animation.step_len = 0;
+			UART_PUTF("-- End of animation. Set fixed color %d\r\n", par->col_pos + 1);
+
+			// set color/tone last time
+			if (RGB_LED)
+				rgb_led_set_PWM(anim_col[par->col_pos + 1]);
+			else
+				speaker_set_PWM(melody_PWM[par->col_pos + 1]);
+
+			par->step_len = 0;
 			return;
 		}
 		else // Within animation -> go to next color
 		{
-			animation.col_pos++;
-			animation.step_pos = 0;
-			animation.step_len = rgb_led_timer_cycles[anim_time[animation.col_pos]];
+			par->col_pos++;
+			par->step_pos = 0;
+			par->step_len = rgb_led_timer_cycles[array_time[par->col_pos]];
 
-			//UART_PUTF2("--- Go to next color, new animation.col_pos: %d. new animation.step_len: %d\r\n", animation.col_pos, animation.step_len);
+			UART_PUTF2("--- Go to next color, new animation.col_pos: %d. new animation.step_len: %d\r\n", par->col_pos, par->step_len);
 		}
 	}
 
-	rgb_led_update_current_col();
+	if (RGB_LED)
+		rgb_led_update_current_col();
+	else
+		speaker_update_current_tone();
 }
 
 void rgb_led_set_fixed_color(uint8_t color_index)
@@ -212,7 +266,6 @@ void rgb_led_set_fixed_color(uint8_t color_index)
 
 	sei();
 }
-
 
 /* unused DEBUG function
 uint8_t find_last_animation.col_pos(void)
@@ -231,56 +284,76 @@ uint8_t find_last_animation.col_pos(void)
 }
 */
 
-void copy_reverse(uint8_t from, uint8_t to, uint8_t count)
+void copy_reverse(bool RGB_LED, uint8_t from, uint8_t to, uint8_t count)
 {
-	int8_t i;
-
 	//UART_PUTF3("Copy rev from %d to %d count %d\r\n", from, to, count);
 
-	for (i = 0; i < count; i++)
-	{
-		anim_col[to + count - 1 - i] = anim_col[from + i];
-		anim_time[to + count - 1 - i] = anim_time[from + i - 1];
-	}
+	if (RGB_LED)
+		for (int8_t i = 0; i < count; i++)
+		{
+			anim_col[to + count - 1 - i] = anim_col[from + i];
+			anim_time[to + count - 1 - i] = anim_time[from + i - 1];
+		}
+	else
+		for (int8_t i = 0; i < count; i++)
+		{
+			melody_PWM[to + count - 1 - i] = melody_PWM[from + i];
+			melody_time[to + count - 1 - i] = melody_time[from + i - 1];
+		}
 }
 
-void copy_forward(uint8_t from, uint8_t to, uint8_t count)
+void copy_forward(bool RGB_LED, uint8_t from, uint8_t to, uint8_t count)
 {
-	int8_t i;
-
 	//UART_PUTF3("Copy fwd from %d to %d count %d\r\n", from, to, count);
 
 	// copy in reverse direction because of overlapping range in scenario #4 "animation.autoreverse = 0, animation.repeat > 1"
-	for (i = count - 1; i >= 0; i--)
-	{
-		anim_col[to + i] = anim_col[from + i];
-		anim_time[to + i] = anim_time[from + i];
-	}
+	if (RGB_LED)
+		for (int8_t i = count - 1; i >= 0; i--)
+		{
+			anim_col[to + i] = anim_col[from + i];
+			anim_time[to + i] = anim_time[from + i];
+		}
+	else
+		for (int8_t i = count - 1; i >= 0; i--)
+		{
+			melody_PWM[to + i] = melody_PWM[from + i];
+			melody_time[to + i] = melody_time[from + i];
+		}
 }
 
 // Set the RGB color values to play back according to the indexed colors.
 // "Unfold" the colors to a linear animation only playing forward when
 // animation.autoreverse is set.
-void init_animation(void)
+void init_animation(bool RGB_LED)
 {
-	uint8_t key_idx = 10; // Marker for calculating how the values are copied (see doc).
+	struct animation_param_t* par = RGB_LED ? &animation : &melody;
+	uint8_t* array_time           = RGB_LED ? anim_time : melody_time;
+	uint8_t pos_max               = RGB_LED ? ANIM_COL_ORIG_MAX : MELODY_TONE_ORIG_MAX;
+
+	uint8_t key_idx = pos_max; // Marker for calculating how the values are copied (see doc).
 	uint8_t i;
 
-	animation.step_pos = 0;
-	animation.col_pos = 0;
+	par->step_pos = 0;
+	par->col_pos = 0;
 
 	// Transfer initial data to RGB array, shifted by 1.
-	for (i = 0; i < 10; i++)
+	if (RGB_LED)
 	{
-		anim_col[i + 1] = index2color(anim_colors_orig[i]);
+		for (i = 0; i < pos_max; i++)
+			anim_col[i + 1] = index2color(anim_colors_orig[i]);
+		anim_col[0] = current_col;
+	}
+	else
+	{
+		for (i = 0; i < pos_max; i++)
+			melody_PWM[i + 1] = index2tonePWM(melody_tones_orig[i]);
+		melody_PWM[0] = current_tone_PWM;
 	}
 
-	anim_col[0] = current_col;
-
 	// Find key_idx
-	for (i = 0; i < 10; i++)
+	for (i = 0; i < pos_max; i++)
 	{
-		if (anim_time[i] == 0)
+		if (array_time[i] == 0)
 		{
 			key_idx = i;
 			break;
@@ -288,63 +361,63 @@ void init_animation(void)
 	}
 
 	// calc animation.rfirst
-	animation.rfirst = animation.autoreverse && (animation.repeat % 2 == 1) ? key_idx - 1 : 2;
+	par->rfirst = par->autoreverse && (par->repeat % 2 == 1) ? key_idx - 1 : 2;
 
 	// Copy data and set animation.rlast and animation.llast according "doc/initialization.png".
-	if (animation.autoreverse && (animation.repeat != 1))
+	if (par->autoreverse && (par->repeat != 1))
 	{
-		if (animation.repeat == 0) // infinite cycles (picture #3)
+		if (par->repeat == 0) // infinite cycles (picture #3)
 		{
-			copy_reverse(2, key_idx, key_idx - 1);
-			animation.rlast = animation.llast = 2 * key_idx - 3;
+			copy_reverse(RGB_LED, 2, key_idx, key_idx - 1);
+			par->rlast = par->llast = 2 * key_idx - 3;
 		}
-		else if (animation.repeat % 2 == 0) // even number of cycles (picture #2)
+		else if (par->repeat % 2 == 0) // even number of cycles (picture #2)
 		{
-			uint8_t tmp_time = anim_time[key_idx - 1];
-			copy_forward(key_idx, 2 * key_idx - 3, 1);
-			copy_reverse(2, key_idx - 1, key_idx - 2);
-			anim_time[2 * key_idx - 4] = tmp_time;
-			animation.rlast = 2 * key_idx - 5;
-			animation.llast = 2 * key_idx - 4;
-			animation.repeat /= 2;
+			uint8_t tmp_time = array_time[key_idx - 1];
+			copy_forward(RGB_LED, key_idx, 2 * key_idx - 3, 1);
+			copy_reverse(RGB_LED, 2, key_idx - 1, key_idx - 2);
+			array_time[2 * key_idx - 4] = tmp_time;
+			par->rlast = 2 * key_idx - 5;
+			par->llast = 2 * key_idx - 4;
+			par->repeat /= 2;
 		}
 		else // odd number of cycles (picture #1)
 		{
-			copy_forward(2, 2 * key_idx - 4, key_idx - 1);
-			copy_reverse(3, key_idx - 1, key_idx - 3);
-			animation.rlast = 3 * key_idx - 8;
-			animation.llast = 3 * key_idx - 7;
-			animation.repeat /= 2;
+			copy_forward(RGB_LED, 2, 2 * key_idx - 4, key_idx - 1);
+			copy_reverse(RGB_LED, 3, key_idx - 1, key_idx - 3);
+			par->rlast = 3 * key_idx - 8;
+			par->llast = 3 * key_idx - 7;
+			par->repeat /= 2;
 		}
 	}
 	else
 	{
-		if (animation.repeat == 0) // infinite cycles (picture #5)
+		if (par->repeat == 0) // infinite cycles (picture #5)
 		{
-			copy_forward(2, key_idx + 1, 1);
-			animation.rlast = animation.llast = key_idx;
-			anim_time[key_idx] = anim_time[1];
+			copy_forward(RGB_LED, 2, key_idx + 1, 1);
+			par->rlast = par->llast = key_idx;
+			array_time[key_idx] = array_time[1];
 		}
-		else if (animation.repeat == 1) // one cycle (picture #6)
+		else if (par->repeat == 1) // one cycle (picture #6)
 		{
-			animation.rlast = animation.llast = key_idx - 1;
+			par->rlast = par->llast = key_idx - 1;
 		}
 		else // 2 cycles or more (picture #4)
 		{
-			copy_forward(2, key_idx, key_idx - 1);
-			anim_time[key_idx - 1] = anim_time[1];
-			animation.rlast = key_idx - 1;
-			animation.llast = 2 * key_idx - 3;
-			animation.repeat--;
+			copy_forward(RGB_LED, 2, key_idx, key_idx - 1);
+			array_time[key_idx - 1] = array_time[1];
+			par->rlast = key_idx - 1;
+			par->llast = 2 * key_idx - 3;
+			par->repeat--;
 		}
 	}
 	/*
 	UART_PUTF("key_idx: %d\r\n", key_idx);
-	UART_PUTF("animation.rfirst: %d\r\n", animation.rfirst);
-	UART_PUTF("animation.rlast: %d\r\n", animation.rlast);
-	UART_PUTF("animation.llast: %d\r\n", animation.llast); */
+	UART_PUTF("animation.rfirst: %d\r\n", par->rfirst);
+	UART_PUTF("animation.rlast: %d\r\n", par->rlast);
+	UART_PUTF("animation.llast: %d\r\n", par->llast); */
 
-	animation.step_len = rgb_led_timer_cycles[anim_time[0]];
+	par->step_len = rgb_led_timer_cycles[array_time[0]];
 }
 
 // Print out the animation parameters, indexed colors used in the "Set"/"SetGet" message and the
@@ -388,8 +461,8 @@ void dump_animation_values(void)
 void test_anim_calculation(void)
 {
 	// change repeat and autoreverse to check the different scenarios
-	animation.repeat = 0;
-	animation.autoreverse = true;
+	animation.repeat = 1;
+	animation.autoreverse = false;
 
 	animation.step_pos = 0;
 	animation.col_pos = 0;
@@ -410,7 +483,7 @@ void test_anim_calculation(void)
 	UART_PUTS("\r\n*** Initial colors ***\r\n");
 	dump_animation_values();
 
-	init_animation();
+	init_animation(true);
 
 	UART_PUTS("\r\n*** Colors after initialisation ***\r\n");
 	dump_animation_values();

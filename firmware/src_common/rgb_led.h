@@ -103,33 +103,40 @@ struct animation_param_t
 struct animation_param_t animation;
 struct animation_param_t melody;
 
-uint8_t rgb_led_brightness_factor;        // fixed, from e2p
-uint8_t rgb_led_user_brightness_factor;   // additional brightness changeable by brightness message
+uint8_t rgb_led_brightness_factor;         // fixed, from e2p
+uint8_t rgb_led_user_brightness_factor;    // additional brightness changeable by brightness message
 
-#define ANIM_COL_MAX 31             // 3x animation length + 1 to unfold the color sequence
+#define ANIM_COL_ORIG_MAX 10               // animation length
+#define ANIM_COL_MAX 31                    // 3x animation length + 1 to unfold the color sequence
 struct rgb_color_t anim_col[ANIM_COL_MAX]; // The last active color (index 0) + colors used for the animation. Unfolded.
-uint8_t anim_time[ANIM_COL_MAX];    // The times used for animate blending between two colors. Unfolded.
-                                    // 0 at pos x indicates the last color used is x-1.
-uint8_t anim_colors_orig[10];       // The 10 (indexed) colors used for the animation.
+uint8_t anim_time[ANIM_COL_MAX];           // The times used for animate blending between two colors. Unfolded.
+                                           // 0 at pos x indicates the last color used is x-1.
+uint8_t anim_colors_orig[10];              // The 10 (indexed) colors used for the animation.
 
-#define MELODY_TONE_MAX 88          // 3x melody length + 1 to unfold the tone sequence
-uint8_t melody_tone[MELODY_TONE_MAX];  // The last active tone (index 0) + tones used for the melody. Unfolded.
-uint8_t melody_slide[MELODY_TONE_MAX]; // The slide mode last active tone (index 0) + values used for the melody. Unfolded.
+#define MELODY_TONE_ORIG_MAX 29        // melody length
+#define MELODY_TONE_MAX 88             // 3x melody length + 1 to unfold the tone sequence
+uint16_t melody_PWM[MELODY_TONE_MAX];  // The last active tone (index 0) + tones used for the melody. Unfolded.
+uint8_t melody_slide[MELODY_TONE_MAX]; // The last active slide mode (index 0) + values used for the melody. Unfolded.
 uint8_t melody_time[MELODY_TONE_MAX];  // The times used for playing a tone / sliding between two tones. Unfolded.
-                                    // 0 at pos x indicates the last tone used is x-1.
-uint8_t melody_tones_orig[10];      // The 29 (indexed) tones used for the melody, as stated in the SHC message.
+                                       // 0 at pos x indicates the last tone used is x-1.
+uint8_t melody_tones_orig[29];         // The 29 (indexed) tones used for the melody, as stated in the SHC message.
 
-// function definitions
+// general functions
 void PWM_init(void);
+void animation_tick(bool RGB_LED);
+void init_animation(bool RGB_LED);
 
+// functions for RGB LED
 void rgb_led_set_PWM(struct rgb_color_t color);
 struct rgb_color_t index2color(uint8_t color);
 void rgb_led_update_current_col(void);
-void rgb_led_animation_tick(void);
 void rgb_led_set_fixed_color(uint8_t color_index);
-void init_animation(void);
 void test_anim_calculation(void);
 
+// functions for Speaker
+void speaker_set_PWM(uint16_t PWM_val);
+uint16_t index2tonePWM(uint8_t frequency_index);
+void speaker_update_current_tone(void);
 void speaker_set_fixed_tone(uint8_t frequency_index);
 
 #endif /* _RGB_LED_H */

@@ -68,7 +68,7 @@ ISR (TIMER0_OVF_vect)
 	if (timer1_tick_divider == 0)
 	{
 		timer1_tick_divider = 16;
-		rgb_led_animation_tick();
+		animation_tick(true);
 	}
 }
 
@@ -234,7 +234,7 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 				UART_PUTF2("Color[%u]:%u;", i, anim_colors_orig[i]);
 			}
 
-			init_animation();
+			init_animation(true);
 			rgb_led_update_current_col();
 
 			sei();
