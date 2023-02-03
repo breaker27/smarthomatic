@@ -28,6 +28,7 @@
 // The input value x means 0.05s * 1.3 ^ x and covers 30ms to 170s. Each timer cycle is 32.768ms.
 // Therefore, the values are: round((0.05s * 1.3 ^ x) / 0.032768s).
 // Animation time 0 is animation OFF, so there are 31 defined animation times.
+// The time with number x on the homepage has index (x-1).
 static const uint16_t rgb_led_timer_cycles[31] = {
 	1, 2, 3, 4, 6, 8, 10, 12, 16, 21, 27, 36, 46, 60,
 	78, 102, 132, 172, 223, 290, 377, 490, 637, 828,
@@ -138,5 +139,6 @@ void speaker_set_PWM(uint16_t PWM_val);
 uint16_t index2tonePWM(uint8_t frequency_index);
 void speaker_update_current_tone(void);
 void speaker_set_fixed_tone(uint8_t frequency_index);
+void test_melody_calculation(void);
 
 #endif /* _RGB_LED_H */

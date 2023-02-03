@@ -458,12 +458,46 @@ void dump_animation_values(void)
 	UART_PUTS("\r\n");
 }
 
+// Print out the animation parameters, indexed colors used in the "Set"/"SetGet" message and the
+// calculated RGB colors.
+// Only for debugging purposes!
+void dump_melody_values(void)
+{
+	uint8_t i;
+
+	UART_PUTF2("Melody repeat: %d, autoreverse: %s, ",
+		melody.repeat, melody.autoreverse ? "ON" : "OFF");
+	UART_PUTF("Current tone: %d\r\n", current_tone_PWM);
+
+	UART_PUTF3("melody.rfirst: %d, melody.rlast: %d, melody.llast: %d\r\n",
+		melody.rfirst, melody.rlast, melody.llast);
+
+	for (i = 0; i < MELODY_TONE_MAX; i++)
+	{
+		UART_PUTF("Pos %02d: tone ", i);
+
+		if (i < MELODY_TONE_ORIG_MAX)
+		{
+			UART_PUTF("%02d   ", melody_tones_orig[i]);
+		}
+		else
+		{
+			UART_PUTS("--   ");
+		}
+
+		UART_PUTF("%5d", melody_PWM[i]);
+
+		UART_PUTF("   time %02d\r\n", melody_time[i]);
+	}
+
+	UART_PUTS("\r\n");
+}
 
 // Function to test the calculation of animation colors.
 // Call it at the beginning of the main function for debugging.
 void test_anim_calculation(void)
 {
-	// change repeat and autoreverse to check the different scenarios
+	// change repeat (0 = infinite) and autoreverse to check the different scenarios
 	animation.repeat = 1;
 	animation.autoreverse = false;
 
@@ -477,11 +511,13 @@ void test_anim_calculation(void)
 	anim_time[2] = 16;
 	anim_colors_orig[2] = 12;
 	anim_time[3] = 16;
-	anim_colors_orig[3] = 3;
-	anim_time[4] = 15;
-	anim_colors_orig[4] = 51;
-	anim_time[5] = 9;
-	anim_colors_orig[5] = 1;
+	anim_colors_orig[3] = 12;
+	anim_time[4] = 16;
+	anim_colors_orig[4] = 3;
+	anim_time[5] = 15;
+	anim_colors_orig[5] = 51;
+	anim_time[6] = 9;
+	anim_colors_orig[6] = 1;
 
 	UART_PUTS("\r\n*** Initial colors ***\r\n");
 	dump_animation_values();
@@ -491,7 +527,60 @@ void test_anim_calculation(void)
 	UART_PUTS("\r\n*** Colors after initialisation ***\r\n");
 	dump_animation_values();
 
-	animation.step_len = rgb_led_timer_cycles[anim_time[0]];
+	animation.step_len = rgb_led_timer_cycles[anim_time[0] - 1];
+
+	while (42) {}
+}
+
+// Function to test the calculation of melody tones.
+// Call it at the beginning of the main function for debugging.
+void test_melody_calculation(void)
+{
+	// change repeat (0 = infinite) and autoreverse to check the different scenarios
+	melody.repeat = 1;
+	melody.autoreverse = false;
+
+	melody.step_pos = 0;
+	melody.col_pos = 0;
+
+// 	melody_time[0] = 1;
+// 	melody_tones_orig[0] = 25;
+// 	melody_time[1] = 16;
+// 	melody_slide[1] = true;
+// 	melody_tones_orig[1] = 37;
+// 	melody_time[2] = 16;
+// 	melody_slide[2] = true;
+// 	melody_tones_orig[2] = 25;
+// 	melody_time[3] = 1;
+// 	melody_tones_orig[3] = 0;
+
+	melody_time[0] = 11;
+	melody_tones_orig[0] = 25;
+	melody_time[1] = 11;
+	melody_tones_orig[1] = 29;
+	melody_time[2] = 11;
+	melody_tones_orig[2] = 32;
+	melody_time[3] = 16;
+	melody_tones_orig[3] = 37;
+	melody_time[4] = 1;
+	melody_tones_orig[4] = 25;
+	melody_time[5] = 16;
+	melody_slide[5] = true;
+	melody_tones_orig[5] = 37;
+	melody_time[6] = 16;
+	melody_tones_orig[6] = 37;
+	melody_time[7] = 1;
+	melody_tones_orig[7] = 0;
+
+	UART_PUTS("\r\n*** Initial tones ***\r\n");
+	dump_melody_values();
+
+	init_animation(false);
+
+	UART_PUTS("\r\n*** Tones after initialisation ***\r\n");
+	dump_melody_values();
+
+	melody.step_len = rgb_led_timer_cycles[melody_time[0] - 1];
 
 	while (42) {}
 }

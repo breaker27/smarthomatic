@@ -438,11 +438,11 @@ int main(void)
 	rgb_led_set_fixed_color(0);
 	PWM_init();
 
-	// test_anim_calculation(); // for debugging only
+	//test_anim_calculation(); // for debugging only
+	//test_melody_calculation();
 
 	startup_animation();
-
-	//startup_sound();
+	startup_sound();
 
 	sei();
 
