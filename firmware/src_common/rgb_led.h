@@ -104,23 +104,23 @@ struct animation_param_t
 struct animation_param_t animation;
 struct animation_param_t melody;
 
-uint8_t rgb_led_brightness_factor;         // fixed, from e2p
-uint8_t rgb_led_user_brightness_factor;    // additional brightness changeable by brightness message
+uint8_t rgb_led_brightness_factor;           // fixed, from e2p
+uint8_t rgb_led_user_brightness_factor;      // additional brightness changeable by brightness message
 
-#define ANIM_COL_ORIG_MAX 10               // animation length
-#define ANIM_COL_MAX 31                    // 3x animation length + 1 to unfold the color sequence
-struct rgb_color_t anim_col[ANIM_COL_MAX]; // The last active color (index 0) + colors used for the animation. Unfolded.
-uint8_t anim_time[ANIM_COL_MAX];           // The times used for animate blending between two colors. Unfolded.
-                                           // 0 at pos x indicates the last color used is x-1.
-uint8_t anim_colors_orig[10];              // The 10 (indexed) colors used for the animation.
+#define ANIM_COL_ORIG_MAX 10                 // animation length
+#define ANIM_COL_MAX 31                      // 3x animation length + 1 to unfold the color sequence
+struct rgb_color_t anim_col[ANIM_COL_MAX];   // The last active color (index 0) + colors used for the animation. Unfolded.
+uint8_t anim_time[ANIM_COL_MAX];             // The times used for animate blending between two colors. Unfolded.
+                                             // 0 at pos x indicates the last color used is x-1.
+uint8_t anim_colors_orig[ANIM_COL_ORIG_MAX]; // The (indexed) colors used for the animation.
 
-#define MELODY_TONE_ORIG_MAX 29        // melody length
-#define MELODY_TONE_MAX 88             // 3x melody length + 1 to unfold the tone sequence
-uint16_t melody_PWM[MELODY_TONE_MAX];  // The last active tone (index 0) + tones used for the melody. Unfolded.
-bool melody_slide[MELODY_TONE_MAX]; // The last active slide mode (index 0) + values used for the melody. Unfolded.
-uint8_t melody_time[MELODY_TONE_MAX];  // The times used for playing a tone / sliding between two tones. Unfolded.
-                                       // 0 at pos x indicates the last tone used is x-1.
-uint8_t melody_tones_orig[29];         // The 29 (indexed) tones used for the melody, as stated in the SHC message.
+#define MELODY_TONE_ORIG_MAX 25                  // melody length
+#define MELODY_TONE_MAX 76                       // 3x melody length + 1 to unfold the tone sequence
+uint16_t melody_PWM[MELODY_TONE_MAX];            // The last active tone (index 0) + tones used for the melody. Unfolded.
+uint8_t melody_effect[MELODY_TONE_MAX];          // The last active effect (index 0) + values used for the melody. Unfolded.
+uint8_t melody_time[MELODY_TONE_MAX];            // The times used for playing a tone / sliding between two tones. Unfolded.
+										         // 0 at pos x indicates the last tone used is x-1.
+uint8_t melody_tones_orig[MELODY_TONE_ORIG_MAX]; // The (indexed) tones used for the melody, as stated in the SHC message.
 
 // general functions
 void PWM_init(void);

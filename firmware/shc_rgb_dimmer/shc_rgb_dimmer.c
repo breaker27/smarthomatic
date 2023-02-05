@@ -267,11 +267,11 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 				for (i = 0; i < MELODY_TONE_ORIG_MAX; i++)
 				{
 					melody_time[i] = msg_audio_melody_get_time(i);
-					melody_slide[i] = msg_audio_melody_get_slide(i);
+					melody_effect[i] = msg_audio_melody_get_effect(i);
 					melody_tones_orig[i] = msg_audio_melody_get_tone(i);
 
 					UART_PUTF2("Time[%u]:%u;", i, melody_time[i]);
-					UART_PUTF2("Slide[%u]:%u;", i, melody_slide[i] ? 1 : 0);
+					UART_PUTF2("Effect[%u]:%u;", i, melody_effect[i] ? 1 : 0);
 					UART_PUTF2("Color[%u]:%u;", i, melody_tones_orig[i]);
 				}
 
@@ -364,7 +364,7 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 				for (i = 0; i < MELODY_TONE_ORIG_MAX; i++)
 				{
 					msg_audio_melody_set_tone(i, melody_tones_orig[i]);
-					msg_audio_melody_set_slide(i, melody_slide[i]);
+					msg_audio_melody_set_effect(i, melody_effect[i]);
 					msg_audio_melody_set_time(i, melody_time[i]);
 				}
 

@@ -176,7 +176,7 @@ void speaker_update_current_tone(void)
 {
 	if (melody.step_len != 0) // melody playing
 	{
-		if (melody_slide[melody.col_pos])
+		if (melody_effect[melody.col_pos] == 1)
 			current_tone_PWM = (uint16_t)((uint32_t)melody_PWM[melody.col_pos] * (melody.step_len - melody.step_pos) / melody.step_len
 				+ (uint32_t)melody_PWM[melody.col_pos + 1] * melody.step_pos / melody.step_len);
 		else
@@ -546,10 +546,10 @@ void test_melody_calculation(void)
 // 	melody_time[0] = 1;
 // 	melody_tones_orig[0] = 25;
 // 	melody_time[1] = 16;
-// 	melody_slide[1] = true;
+// 	melody_effecte[1] = 1;
 // 	melody_tones_orig[1] = 37;
 // 	melody_time[2] = 16;
-// 	melody_slide[2] = true;
+// 	melody_effect[2] = 1;
 // 	melody_tones_orig[2] = 25;
 // 	melody_time[3] = 1;
 // 	melody_tones_orig[3] = 0;
@@ -565,7 +565,7 @@ void test_melody_calculation(void)
 	melody_time[4] = 1;
 	melody_tones_orig[4] = 25;
 	melody_time[5] = 16;
-	melody_slide[5] = true;
+	melody_effect[5] = 1;
 	melody_tones_orig[5] = 37;
 	melody_time[6] = 16;
 	melody_tones_orig[6] = 37;
