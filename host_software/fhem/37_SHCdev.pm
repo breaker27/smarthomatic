@@ -20,7 +20,7 @@
 # You should have received a copy of the GNU General Public License along
 # with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 ###########################################################################
-# $Id: 37_SHCdev.pm 8190 2015-03-10 21:23:03Z rr2000 $
+# $Id: 37_SHCdev.pm 26457 2022-09-30 19:32:11Z breaker27 $
 
 package main;
 
@@ -89,7 +89,9 @@ my %sets = (
   "EnvSensor"           => "",
   "RGBDimmer"           => "Color " .
                            "ColorAnimation " .
-                           "Dimmer.Brightness:slider,0,1,100",
+                           "Dimmer.Brightness:slider,0,1,100 " .
+                           "Tone " .
+                           "Melody",
   "SoilMoistureMeter"   => "",
   "Custom"              => "Dimmer.Brightness " .
                            "Dimmer.Animation"
@@ -348,6 +350,25 @@ sub SHCdev_Parse($$)
         }
       }
     }
+  } elsif ($msggroupname eq "Audio") {
+    if ($msgname eq "Tone") {
+      my $tone = $parser->getField("Tone");
+
+      readingsBulkUpdate($rhash, "tone",         $tone);
+    } elsif ($msgname eq "Melody") {
+      my $repeat = $parser->getField("Repeat");
+      my $autoreverse = $parser->getField("AutoReverse");
+      readingsBulkUpdate($rhash, "repeat", $repeat);
+      readingsBulkUpdate($rhash, "autoreverse", $autoreverse);
+      for (my $i = 0 ; $i < 25 ; $i = $i + 1) {
+        my $time  = $parser->getField("Time" , $i);
+        my $effect = $parser->getField("Effect", $i);
+        my $tone = $parser->getField("Tone", $i);
+        readingsBulkUpdate($rhash, sprintf("time%02d", $i), $time);
+        readingsBulkUpdate($rhash, sprintf("effect%02d", $i), $effect);
+        readingsBulkUpdate($rhash, sprintf("tone%02d", $i), $tone);
+      }
+    }
   } elsif ($msggroupname eq "Dimmer") {
     if ($msgname eq "Brightness") {
       my $brightness = $parser->getField("Brightness");
@@ -578,6 +599,17 @@ sub SHCdev_Set($@)
       $parser->initPacket("Dimmer", "Color", "SetGet");
       $parser->setField("Dimmer", "Color", "Color",   $color);
       SHCdev_Send($hash);
+    } elsif ($cmd eq 'Tone') {
+      #TODO Verify argument values
+      my $tone = $arg;
+
+      # DEBUG
+      # Log3 $name, 3, "$name: Tone args: $arg, $arg2, $arg3, $arg4";
+
+      readingsSingleUpdate($hash, "state", "set-tone:$tone", 1);
+      $parser->initPacket("Audio", "Tone", "SetGet");
+      $parser->setField("Audio", "Tone", "Tone",   $tone);
+      SHCdev_Send($hash);
     } elsif ($cmd eq 'ColorAnimation') {
       #TODO Verify argument values
 
@@ -608,6 +640,44 @@ sub SHCdev_Set($@)
         $parser->setField("Dimmer", "ColorAnimation", "Color", $curcolor, $i);
       }
       readingsSingleUpdate($hash, "state", "set-coloranimation", 1);
+      SHCdev_Send($hash);
+    } elsif ($cmd eq 'Melody') {
+      #TODO Verify argument values
+
+      $parser->initPacket("Audio", "Melody", "SetGet");
+      $parser->setField("Audio", "Melody", "Repeat", $arg);
+      $parser->setField("Audio", "Melody", "AutoReverse", $arg2);
+
+      my $curtime = 0;
+      my $cureffect = 0;
+      my $curtone = 0;
+      # Iterate over all given command line parameters and set Time, Effect and Tone
+      # accordingly. Fill the remaining values with zero.
+      for (my $i = 0 ; $i < 25 ; $i = $i + 1) {
+        if (!defined($aa[($i * 3) + 3])) {
+          $curtime = 0;
+        } else {
+          $curtime = $aa[($i * 3) + 3];
+        }
+        if (!defined($aa[($i * 3) + 4])) {
+          $cureffect = 0;
+        } else {
+          $cureffect = $aa[($i * 3) + 4];
+        }
+        if (!defined($aa[($i * 3) + 5])) {
+          $curtone = 0;
+        } else {
+          $curtone = $aa[($i * 3) + 5];
+        }
+
+        # DEBUG
+        # Log3 $name, 3, "$name: Nr: $i Time: $curtime Effect: $cureffect Tone: $curtone";
+
+        $parser->setField("Audio", "Melody", "Time" , $curtime, $i);
+        $parser->setField("Audio", "Melody", "Effect", $cureffect, $i);
+        $parser->setField("Audio", "Melody", "Tone", $curtone, $i);
+      }
+      readingsSingleUpdate($hash, "state", "set-melody", 1);
       SHCdev_Send($hash);
     } elsif ($cmd eq 'Dimmer.Brightness') {
       my $brightness = $arg;
@@ -788,6 +858,16 @@ sub SHCdev_Send($)
     <li>ColorAnimation &lt;Repeat&gt; &lt;AutoReverse&gt; &lt;Time0&gt; &lt;ColorNumber0&gt; &lt;Time1&gt; &lt;ColorNumber1&gt; ... up to 10 time/color pairs<br>
         A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_ColorAnimation">www.smarthomatic.org</a>
         The color palette can be found <a href="http://www.smarthomatic.org/devices/rgb_dimmer.html">here</a>
+        Supported by RGBDimmer.
+    </li><br>
+    <li>Tone &lt;ToneNumber&gt;<br>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Audio_Tone">www.smarthomatic.org</a>
+        The tone definition can be found <a href="http://www.smarthomatic.org/devices/rgb_dimmer.html">here</a>
+        Supported by RGBDimmer.
+    </li><br>
+    <li>Melody &lt;Repeat&gt; &lt;AutoReverse&gt; &lt;Time0&gt; &lt;Effect0&gt; &lt;ToneNumber0&gt; &lt;Time1&gt; &lt;Effect1&gt; &lt;ToneNumber1&gt; ... up to 25 time/effect/tone pairs<br>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Audio_Melody">www.smarthomatic.org</a>
+        The tone definition can be found <a href="http://www.smarthomatic.org/devices/rgb_dimmer.html">here</a>
         Supported by RGBDimmer.
     </li><br>
     <li>DigitalPin &lt;Pos&gt; &lt;On&gt;<br>
