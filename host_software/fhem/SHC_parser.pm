@@ -41,15 +41,14 @@
 # Sending packets:
 # ----------------
 # 1.) Init packet:
-#     $parser->initPacket("GPIO", "DigitalPin", "Set");
+#     $parser->initPacket("PowerSwitch", "SwitchState", "Set");
 # 2.) Set fields:
-#     $parser->setField("GPIO", "DigitalPin", "Pos", 0);
-#     $parser->setField("GPIO", "DigitalPin", "On", 1);
+#     $parser->setField("PowerSwitch", "SwitchState", "TimeoutSec", 8);
 # 3.) Get send string: $str = $parser->getSendString($receiverID);
 #     It includes a CRC32 as last 8 characters.
 # 4.) Send string to base station (over UART).
 ##########################################################################
-# $Id: SHC_parser.pm 8190 2015-03-10 21:23:03Z rr2000 $
+# $Id: SHC_parser.pm 26457 2022-09-30 19:32:11Z breaker27 $
 
 package SHC_parser;
 
