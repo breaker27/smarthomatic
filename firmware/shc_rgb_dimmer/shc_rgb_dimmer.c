@@ -95,7 +95,7 @@ void send_brightness_status(void)
 {
 	inc_packetcounter();
 
-	UART_PUTF("Sending color status: color: %u\r\n", anim_colors_orig[0]);
+	UART_PUTF("Sending brightness status: user brightness factor: %u\r\n", rgb_led_user_brightness_factor);
 
 	// Set packet content
 	pkg_header_init_dimmer_brightness_status();
@@ -130,12 +130,12 @@ void send_status(void)
 		msg_dimmer_coloranimation_set_repeat(animation.repeat);
 		msg_dimmer_coloranimation_set_autoreverse(animation.autoreverse);
 
-		for (i = 0; i < 10; i++)
+		for (i = 0; i < ANIM_COL_ORIG_MAX; i++)
 		{
 			UART_PUTF2(", Time[%u]: %u", i, anim_time[i]);
 			UART_PUTF2(", Color[%u]: %u", i, anim_colors_orig[i]);
-			msg_dimmer_coloranimation_set_color(i, anim_colors_orig[i]);
 			msg_dimmer_coloranimation_set_time(i, anim_time[i]);
+			msg_dimmer_coloranimation_set_color(i, anim_colors_orig[i]);
 		}
 
 		UART_PUTS("\r\n");
@@ -271,8 +271,8 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 					melody_tones_orig[i] = msg_audio_melody_get_tone(i);
 
 					UART_PUTF2("Time[%u]:%u;", i, melody_time[i]);
-					UART_PUTF2("Effect[%u]:%u;", i, melody_effect[i] ? 1 : 0);
-					UART_PUTF2("Color[%u]:%u;", i, melody_tones_orig[i]);
+					UART_PUTF2("Effect[%u]:%u;", i, melody_effect[i]);
+					UART_PUTF2("Tone[%u]:%u;", i, melody_tones_orig[i]);
 				}
 
 				init_animation(false);
@@ -363,9 +363,9 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 
 				for (i = 0; i < MELODY_TONE_ORIG_MAX; i++)
 				{
-					msg_audio_melody_set_tone(i, melody_tones_orig[i]);
-					msg_audio_melody_set_effect(i, melody_effect[i]);
 					msg_audio_melody_set_time(i, melody_time[i]);
+					msg_audio_melody_set_effect(i, melody_effect[i]);
+					msg_audio_melody_set_tone(i, melody_tones_orig[i]);
 				}
 
 				msg_audio_melody_set_repeat(melody.repeat);
