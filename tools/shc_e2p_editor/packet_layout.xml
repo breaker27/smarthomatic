@@ -697,10 +697,10 @@
 				</UIntValue>
 				<UIntValue>
 				  <ID>Effect</ID>
-				  <Description>Define how the tone is played. 0: Tone is played immediately (default). 1: A sliding tone from the previous to the new one. A sliding tone from or to tone index 0 (off) is not possible. The new tone / no tone will be played back immediately in this case. 3: With Interruptions.</Description>
+				  <Description>Define how the tone is played. 0: Tone is played immediately (default). 1: A sliding tone from the previous to the new one. A sliding tone from or to tone index 0 (off) is not possible. The new tone / no tone will be played back immediately in this case. Other values are free for future use.</Description>
 				  <Bits>3</Bits>
 					<MinVal>0</MinVal>
-					<MaxVal>7</MaxVal>
+					<MaxVal>1</MaxVal>
 					<DefaultVal>0</DefaultVal>
 				</UIntValue>
 				<UIntValue>

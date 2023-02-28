@@ -279,20 +279,20 @@ static inline uint32_t msg_audio_melody_get_time(uint8_t index)
 
 // Effect (UIntValue[25])
 // This sub-element with 3 bits is part of an element with 15 bits in a structured array.
-// Description: Define how the tone is played. 0: Tone is played immediately (default). 1: A sliding tone from the previous to the new one. A sliding tone from or to tone index 0 (off) is not possible. The new tone / no tone will be played back immediately in this case. 3: With Interruptions.
+// Description: Define how the tone is played. 0: Tone is played immediately (default). 1: A sliding tone from the previous to the new one. A sliding tone from or to tone index 0 (off) is not possible. The new tone / no tone will be played back immediately in this case. Other values are free for future use.
 
 // Set Effect (UIntValue)
-// Offset: (uint16_t)__HEADEROFFSETBITS + 10 + (uint16_t)index * 15, length bits 3, min val 0, max val 7
+// Offset: (uint16_t)__HEADEROFFSETBITS + 10 + (uint16_t)index * 15, length bits 3, min val 0, max val 1
 static inline void msg_audio_melody_set_effect(uint8_t index, uint32_t val)
 {
   array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 10 + (uint16_t)index * 15, 3, val, bufx);
 }
 
 // Get Effect (UIntValue)
-// Offset: (uint16_t)__HEADEROFFSETBITS + 10 + (uint16_t)index * 15, length bits 3, min val 0, max val 7
+// Offset: (uint16_t)__HEADEROFFSETBITS + 10 + (uint16_t)index * 15, length bits 3, min val 0, max val 1
 static inline uint32_t msg_audio_melody_get_effect(uint8_t index)
 {
-  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 10 + (uint16_t)index * 15, 3, 0, 7, bufx);
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 10 + (uint16_t)index * 15, 3, 0, 1, bufx);
 }
 
 // Tone (UIntValue[25])
