@@ -20,6 +20,8 @@
 MCU		       = atmega328
 F_CPU	       = 8000000
 UART_BAUD_RATE = 4800
+# Warning! When activating UART_DEBUG, UART output will influence RFM12
+# timing and block RFM12 communication after some time! Only use when needed!
 #UART_DEBUG     = 1
 #UART_RX        = 1
 
