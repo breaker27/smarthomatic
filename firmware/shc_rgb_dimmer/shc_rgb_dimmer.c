@@ -547,7 +547,7 @@ int main(void)
 			}
 			else // try to decrypt with all keys stored in EEPROM
 			{
-				UART_PUTS("\r\nReceived data!\r\n");
+				UART_PUTF("\r\nReceived %u bytes!\r\n", len);
 
 				memcpy(bufx, rfm12_rx_buffer(), len);
 				memset(&bufx[len], 0, BUFX_LENGTH - len);
