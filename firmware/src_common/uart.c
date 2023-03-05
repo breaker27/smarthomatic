@@ -26,7 +26,10 @@
 #include "util.h"
 
 // This buffer is used for sending strings over UART using UART_PUT... functions.
-char uartbuf[128];
+// The CRC if the string is calculated by the base station to transmit it afterwards as well, so it can be
+// checked by FHEM. Therefore it has to hold a complete line from which the CRC is calculated.
+// Example: PKT:SID=4095;PC=16777215;MT=15;RID=4095;MGID=127;MID=15;MD=ffffffffffffff11ffffffffffffff22ffffffffffffff33ffffffffffffff44ffffffffffffff55ffffffffffffff66ffffffff;be4c8cc5
+char uartbuf[180]; // use some bytes more to be safe
 
 #ifdef UART_RX
 	// All received bytes from UART are stored in this buffer by the interrupt routine. This is a ringbuffer.
