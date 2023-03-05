@@ -109,10 +109,13 @@ void decode_data(uint8_t len)
 		UART_PUTF_B("MID=%u;", messageid);
 	}
 
+	// Clean uart send buffer, otherwise it might overflow showing large packets below.
+	UART_SEND_BUF
+
 	// show raw message data for all MessageTypes with data (= all except "Get" and "Ack")
 	if ((messagetype != MESSAGETYPE_GET) && (messagetype != MESSAGETYPE_ACK))
 	{
-		uint8_t i;
+		uint16_t i;
 		uint16_t count = (((uint16_t)len * 8) - __HEADEROFFSETBITS + 7) / 8;
 
 		//UART_PUTF4("\r\n\r\nLEN=%u, START=%u, SHIFT=%u, COUNT=%u\r\n\r\n", len, start, shift, count);
