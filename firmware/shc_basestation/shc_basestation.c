@@ -62,7 +62,8 @@ uint8_t aes_key_count;
 // of all packets must be known at the PC program that's processing the data.
 void decode_data(uint8_t len)
 {
-	uint32_t messagegroupid, messageid;
+	uint32_t messagegroupid = 0;
+	uint32_t messageid = 0;
 	uint16_t u16;
 
 	pkg_header_adjust_offset();
