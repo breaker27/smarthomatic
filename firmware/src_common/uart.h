@@ -35,11 +35,13 @@
 
 #if ((BAUD_ERROR < 985) || (BAUD_ERROR > 1015))
 	#error Systematic UART baud rate error is greater than 1,5% and therefore too high!
-#endif 
+#endif
 
 /* The unbuffered functions UART_PUTS, UART_PUTF,... send out characters immediately to UART.
-   The buffered versions of the functions, UART_PUTS_B, UART_PUTF_B,... write characters only to uart_bufx.
-   The characters are sent to UART using UART_SEND_BUF, which also clears the buffer counter to 0. */
+   The buffered versions of the functions, UART_PUTS_B, UART_PUTF_B,... write characters only to uartbuf.
+   The characters are sent to UART using UART_SEND_BUF, which also clears the buffer counter to 0.
+   Warning: A buffer overflow (when making too many calls to UART_PUT*_B) is NOT DETECTED!
+   Ensure to call UART_SEND_BUF in time! */
 
 #ifdef UART_DEBUG
 	#define UART_PUTS(X)                 uart_putstr_P(PSTR((X)));
