@@ -268,12 +268,10 @@ void process_rxbuf(void)
 		{
 			if (input == 13) // ENTER key to end input
 			{
-				UART_PUTF("SET bytes_to_read to %d\n", bytes_pos);
 				bytes_to_read = bytes_pos;
 			}
 			else if (((input >= 48) && (input <= 57)) || ((input >= 65) && (input <= 70)) || ((input >= 97) && (input <= 102)))
 			{
-				UART_PUTF("SET %d ", bytes_pos);
 				cmdbuf[bytes_pos] = input;
 				bytes_pos++;
 				UART_PUTF("*** 0x%x\r\n", hex_to_byte(input));
@@ -285,7 +283,6 @@ void process_rxbuf(void)
 
 			if (bytes_pos == bytes_to_read)
 			{
-				UART_PUTF("*** Bytes to read reached, bytes_pos %d. Processing command. ***\r\n", bytes_pos);
 				cmdbuf[bytes_pos] = '\0';
 				//led_dbg(1);
 				process_cmd();
