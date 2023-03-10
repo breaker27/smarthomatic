@@ -613,18 +613,18 @@
 			<MessageType>10</MessageType>
 			<Validity>test</Validity>
 			<UIntValue>
-				<ID>PosX</ID>
-				<Description>X (character) position at which the text shall be displayed.</Description>
-				<Bits>7</Bits>
-				<MinVal>0</MinVal>
-				<MaxVal>79</MaxVal>
-			</UIntValue>
-			<UIntValue>
 				<ID>PosY</ID>
 				<Description>Y (line) position at which the text shall be displayed.</Description>
 				<Bits>4</Bits>
 				<MinVal>0</MinVal>
 				<MaxVal>15</MaxVal>
+			</UIntValue>
+			<UIntValue>
+				<ID>PosX</ID>
+				<Description>X (character) position at which the text shall be displayed.</Description>
+				<Bits>7</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>79</MaxVal>
 			</UIntValue>
 			<UIntValue>
 				<ID>Format</ID>
