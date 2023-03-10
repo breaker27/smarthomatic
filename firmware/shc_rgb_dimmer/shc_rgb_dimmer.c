@@ -467,17 +467,6 @@ void startup_animation(void)
 	led_blink(500, 0, 1);
 }
 
-void startup_sound(void)
-{
-	speaker_set_fixed_tone(49);
-	_delay_ms(50);
-	speaker_set_fixed_tone(0);
-	_delay_ms(100);
-	speaker_set_fixed_tone(49);
-	_delay_ms(50);
-	speaker_set_fixed_tone(0);
-}
-
 // Test animation for FHEM: 3 0 10 0 9 48 9 12 9 3 10 0 0
 int main(void)
 {
