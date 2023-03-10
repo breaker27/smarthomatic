@@ -798,6 +798,14 @@
 			<MaxVal>16777215</MaxVal>
 		</UIntValue>
 		<UIntValue>
+			<ID>BrightnessFactor</ID>
+			<Description>This value reduces the overall brightness. This is to easily adjust it to your needs without changing the LED series resistors. WARNING: It is recommended to use this only for testing, because it reduces the amount of different brightness levels. Changing the resistors is to be preferred.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>100</MaxVal>
+			<DefaultVal>100</DefaultVal>
+		</UIntValue>
+		<UIntValue>
 			<ID>TransceiverWatchdogTimeout</ID>
 			<Description>Reset RFM12B module if no data is received until timeout is reached. Use this function if your specific transceiver hangs sometimes. Value is in deca seconds. Suggested setting is 48 (for 8 minutes). Set 0 to disable.</Description>
 			<Bits>8</Bits>
@@ -857,7 +865,7 @@
 			<DefaultVal>10</DefaultVal>
 		</UIntValue>
 		<Reserved>
-			<Bits>7592</Bits>
+			<Bits>7584</Bits>
 		</Reserved>
 	</Block>
 	<Block>
