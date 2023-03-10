@@ -18,12 +18,17 @@
 
 #include <avr/io.h>
 
+// The fuses mentioned here are set to "0" (= "programmed").
+// Fuses not mentioned are left to "1" (= "unprogrammed").
+
 FUSES =
 {
-	// value 0xCE - settings for external crystal, slowly rising power
-	.low = (FUSE_SUT1 & FUSE_SUT0 & FUSE_CKSEL0),
+	// value 0xD7 - settings for full swing crystal oscillator (20 MHz), BOD enabled
+	.low = (FUSE_SUT1 & FUSE_CKSEL3),
 	// value 0xD1 - EESAVE is 0, others are default
 	.high = (FUSE_SPIEN & FUSE_EESAVE & FUSE_BOOTSZ1 & FUSE_BOOTSZ0),
-	// value 0xFC - set BOD to 4.3V to prevent accidentially FLASH garbage
-	.extended = (FUSE_BODLEVEL1 & FUSE_BODLEVEL0),
+	// value 0xFC - set BOD to 4.3V to prevent accidentially FLASH garbage - BOD1 + BOD0
+	//.extended = (FUSE_BODLEVEL1 & FUSE_BODLEVEL0),
+	// value 0xFD - set BOD to 2.7V to prevent accidentially FLASH garbage - BOD1
+	.extended = (FUSE_BODLEVEL1),
 };
