@@ -140,5 +140,6 @@ uint16_t index2tonePWM(uint8_t frequency_index);
 void speaker_update_current_tone(void);
 void speaker_set_fixed_tone(uint8_t frequency_index);
 void test_melody_calculation(void);
+void startup_sound(void);
 
 #endif /* _RGB_LED_H */

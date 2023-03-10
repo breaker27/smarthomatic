@@ -1,6 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2022 Uwe Freese
+* Copyright (c) 2022..2023 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -25,33 +25,30 @@
 #include "../src_common/uart.h"
 
 #include "../src_common/msggrp_generic.h"
+#include "../src_common/msggrp_dimmer.h"
+#include "../src_common/msggrp_audio.h"
+#include "../src_common/msggrp_display.h"
 #include "../src_common/msggrp_gpio.h"
 
 #include "../src_common/e2p_hardware.h"
 #include "../src_common/e2p_generic.h"
 #include "../src_common/e2p_controller.h"
 
+#define LED_PIN 7
+#define LED_PORT PORTD
+#define LED_DDR DDRD
+
 #include "../src_common/aes256.h"
 #include "../src_common/util.h"
 #include "version.h"
 
-#define BUTTON_DDR DDRD // TODO: Configurable pins like in env sensor
-#define BUTTON_PORT PORTD
-#define BUTTON_PINPORT PIND
-#define BUTTON_PIN 3
-
-#define SWITCH_DDR DDRB // TODO: Configurable pins like in env sensor
-#define SWITCH_PORT PORTB
-#define SWITCH_PINPORT PINB
-#define SWITCH_PIN 7
-
-// Power of RFM12B (since PCB rev 1.1) or RFM12 NRES (Reset) pin may be connected to PC3.
-// If not, only sw reset is used.
 #define RFM_RESET_PIN 3
 #define RFM_RESET_PORT_NR 1
 #define RFM_RESET_PIN_STATE 1
 
 #include "../src_common/util_watchdog_init.h"
+
+#include "rgb_led.h"
 
 uint16_t device_id;
 uint32_t station_packetcounter;
@@ -59,6 +56,21 @@ uint32_t station_packetcounter;
 uint16_t port_status_cycle;
 uint16_t version_status_cycle;
 uint16_t send_status_timeout = 5;
+
+#define TIMER1_TICK_DIVIDER 8 // 244 Hz / 8 = 32ms per animation_tick
+uint8_t timer1_tick_divider = TIMER1_TICK_DIVIDER;
+
+ISR (TIMER0_OVF_vect)
+{
+	timer1_tick_divider--;
+
+	if (timer1_tick_divider == 0)
+	{
+		timer1_tick_divider = TIMER1_TICK_DIVIDER;
+		animation_tick(true);
+		animation_tick(false);
+	}
+}
 
 void send_deviceinfo_status(void)
 {
@@ -80,19 +92,40 @@ void send_deviceinfo_status(void)
 	rfm12_send_bufx();
 }
 
+void send_ack(uint32_t acksenderid, uint32_t ackpacketcounter, bool error)
+{
+	// any message can be used as ack, because they are the same anyway
+	if (error)
+	{
+		UART_PUTS("Send error Ack\r\n");
+		pkg_header_init_dimmer_coloranimation_ack();
+	}
+
+	inc_packetcounter();
+
+	// set common fields
+	pkg_header_set_senderid(device_id);
+	pkg_header_set_packetcounter(packetcounter);
+
+	pkg_headerext_common_set_acksenderid(acksenderid);
+	pkg_headerext_common_set_ackpacketcounter(ackpacketcounter);
+	pkg_headerext_common_set_error(error);
+
+	rfm12_send_bufx();
+}
+
 // Process a request to this device.
 // React accordingly on the MessageType, MessageGroup and MessageID
 // and send an Ack in any case. It may be an error ack if request is not supported.
 void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint32_t messageid)
 {
-	/*
 	// remember some values before the packet buffer is destroyed
 	uint32_t acksenderid = pkg_header_get_senderid();
 	uint32_t ackpacketcounter = pkg_header_get_packetcounter();
 
 	UART_PUTF("MessageGroupID:%u;", messagegroupid);
 
-	if (messagegroupid != MESSAGEGROUP_GPIO)
+	if ((messagegroupid != MESSAGEGROUP_DIMMER) && (messagegroupid != MESSAGEGROUP_AUDIO))
 	{
 		UART_PUTS("\r\nERR: Unsupported MessageGroupID.\r\n");
 		send_ack(acksenderid, ackpacketcounter, true);
@@ -101,74 +134,203 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 
 	UART_PUTF("MessageID:%u;", messageid);
 
-	switch (messageid)
+	if (((messagegroupid == MESSAGEGROUP_DIMMER)
+		&& (messageid != MESSAGEID_DIMMER_BRIGHTNESS)
+		&& (messageid != MESSAGEID_DIMMER_COLOR)
+		&& (messageid != MESSAGEID_DIMMER_COLORANIMATION))
+		||
+		((messagegroupid == MESSAGEGROUP_AUDIO)
+		&& (messageid != MESSAGEID_AUDIO_TONE)
+		&& (messageid != MESSAGEID_AUDIO_MELODY)))
 	{
-		case MESSAGEID_GPIO_DIGITALPORT:
-			process_gpio_digitalport(messagetype);
-			break;
-		case MESSAGEID_GPIO_DIGITALPIN:
-			process_gpio_digitalpin(messagetype);
-			break;
-		case MESSAGEID_GPIO_DIGITALPORTTIMEOUT:
-			process_gpio_digitalporttimeout(messagetype);
-			break;
-		case MESSAGEID_GPIO_DIGITALPINTIMEOUT:
-			process_gpio_digitalpintimeout(messagetype);
-			break;
-		default:
-			UART_PUTS("\r\nERR: Unsupported MessageID.");
-			send_ack(acksenderid, ackpacketcounter, true);
-			return;
+		UART_PUTS("\r\nERR: Unsupported MessageID.\r\n");
+		send_ack(acksenderid, ackpacketcounter, true);
+		return;
+	}
+
+	// "Set" or "SetGet" -> modify brightness/color/animation
+	if ((messagetype == MESSAGETYPE_SET) || (messagetype == MESSAGETYPE_SETGET))
+	{
+		if (messagegroupid == MESSAGEGROUP_DIMMER)
+		{
+			if (messageid == MESSAGEID_DIMMER_BRIGHTNESS)
+			{
+				rgb_led_user_brightness_factor = msg_dimmer_brightness_get_brightness();
+				UART_PUTF("Brightness:%u;", rgb_led_user_brightness_factor);
+				rgb_led_update_current_col();
+			}
+			else if (messageid == MESSAGEID_DIMMER_COLOR)
+			{
+				uint8_t color = msg_dimmer_color_get_color();
+				UART_PUTF("Color:%u;", color);
+				rgb_led_set_fixed_color(color);
+			}
+			else // MESSAGEID_DIMMER_COLORANIMATION
+			{
+				uint8_t i;
+
+				cli();
+
+				animation.repeat = msg_dimmer_coloranimation_get_repeat();
+				animation.autoreverse = msg_dimmer_coloranimation_get_autoreverse();
+
+				UART_PUTF2("Repeat:%u;AutoReverse:%u;", animation.repeat, animation.autoreverse);
+
+				for (i = 0; i < ANIM_COL_ORIG_MAX; i++)
+				{
+					anim_time[i] = msg_dimmer_coloranimation_get_time(i);
+					anim_colors_orig[i] = msg_dimmer_coloranimation_get_color(i);
+
+					UART_PUTF2("Time[%u]:%u;", i, anim_time[i]);
+					UART_PUTF2("Color[%u]:%u;", i, anim_colors_orig[i]);
+				}
+
+				init_animation(true);
+				rgb_led_update_current_col();
+
+				sei();
+			}
+		}
+		else // MESSAGEGROUP_AUDIO
+		{
+			if (messageid == MESSAGEID_AUDIO_TONE)
+			{
+				uint8_t tone = msg_audio_tone_get_tone();
+				UART_PUTF("Tone:%u;", tone);
+				speaker_set_fixed_tone(tone);
+			}
+			else // MESSAGEID_AUDIO_MELODY
+			{
+				uint8_t i;
+
+				cli();
+
+				melody.repeat = msg_audio_melody_get_repeat();
+				melody.autoreverse = msg_audio_melody_get_autoreverse();
+
+				UART_PUTF2("Repeat:%u;AutoReverse:%u;", melody.repeat, melody.autoreverse);
+
+				for (i = 0; i < MELODY_TONE_ORIG_MAX; i++)
+				{
+					melody_time[i] = msg_audio_melody_get_time(i);
+					melody_effect[i] = msg_audio_melody_get_effect(i);
+					melody_tones_orig[i] = msg_audio_melody_get_tone(i);
+
+					UART_PUTF2("Time[%u]:%u;", i, melody_time[i]);
+					UART_PUTF2("Effect[%u]:%u;", i, melody_effect[i]);
+					UART_PUTF2("Tone[%u]:%u;", i, melody_tones_orig[i]);
+				}
+
+				init_animation(false);
+				speaker_update_current_tone();
+
+				sei();
+			}
+		}
 	}
 
 	UART_PUTS("\r\n");
 
-	// In all cases, use the digitalporttimeout message as answer.
-	// It contains the data for *all* pins and *all* timer values.
-
 	// "Set" -> send "Ack"
 	if (messagetype == MESSAGETYPE_SET)
 	{
-		pkg_header_init_gpio_digitalporttimeout_ack();
+		if (messagegroupid == MESSAGEGROUP_DIMMER)
+		{
+			if (messageid == MESSAGEID_DIMMER_BRIGHTNESS)
+			{
+				pkg_header_init_dimmer_brightness_ack();
+			}
+			else if (messageid == MESSAGEID_DIMMER_COLOR)
+			{
+				pkg_header_init_dimmer_color_ack();
+			}
+			else // MESSAGEID_DIMMER_COLORANIMATION
+			{
+				pkg_header_init_dimmer_coloranimation_ack();
+			}
+		}
+		else // MESSAGEGROUP_AUDIO
+		{
+			if (messageid == MESSAGEID_AUDIO_TONE)
+			{
+				pkg_header_init_audio_tone_ack();
+			}
+			else // MESSAGEID_AUDIO_MELODY
+			{
+				pkg_header_init_audio_melody_ack();
+			}
+		}
 
 		UART_PUTS("Sending Ack\r\n");
 	}
 	// "Get" or "SetGet" -> send "AckStatus"
 	else
 	{
-		pkg_header_init_gpio_digitalporttimeout_ackstatus();
-
-		uint8_t i;
-
-		// react on changed state (version for more than one switch...)
-		for (i = 0; i < RELAIS_COUNT; i++)
+		if (messagegroupid == MESSAGEGROUP_DIMMER)
 		{
-			// set command state incl. current timeout
-			msg_gpio_digitalporttimeout_set_on(i, cmd_state[i]);
-			msg_gpio_digitalporttimeout_set_timeoutsec(i, cmd_timeout[i]);
+			if (messageid == MESSAGEID_DIMMER_BRIGHTNESS)
+			{
+				pkg_header_init_dimmer_brightness_ackstatus();
+				msg_dimmer_brightness_set_brightness(rgb_led_user_brightness_factor);
+			}
+			else if (messageid == MESSAGEID_DIMMER_COLOR)
+			{
+				pkg_header_init_dimmer_color_ackstatus();
+				msg_dimmer_color_set_color(anim_colors_orig[0]);
+			}
+			else // MESSAGEID_DIMMER_COLORANIMATION
+			{
+				uint8_t i;
 
-			// set physical manual switch states incl. current timeout with offset 3
-			msg_gpio_digitalporttimeout_set_on(i + 3, switch_state_physical[i]);
-			msg_gpio_digitalporttimeout_set_timeoutsec(i + 3,
-				switch_state_physical[i] ? switch_on_delay_counter[i] : switch_off_delay_counter[i]);
+				pkg_header_init_dimmer_coloranimation_ackstatus();
 
-			// set relais state with offset 6
-			if (i < 2)
-				msg_gpio_digitalporttimeout_set_on(i + 6, relais_state[i]);
+				for (i = 0; i < ANIM_COL_ORIG_MAX; i++)
+				{
+					msg_dimmer_coloranimation_set_color(i, anim_colors_orig[i]);
+					msg_dimmer_coloranimation_set_time(i, anim_time[i]);
+				}
+
+				msg_dimmer_coloranimation_set_repeat(animation.repeat);
+				msg_dimmer_coloranimation_set_autoreverse(animation.autoreverse);
+			}
+		}
+		else // MESSAGEGROUP_AUDIO
+		{
+			if (messageid == MESSAGEID_AUDIO_TONE)
+			{
+				pkg_header_init_audio_tone_ackstatus();
+				msg_audio_tone_set_tone(melody_tones_orig[0]);
+			}
+			else // MESSAGEID_AUDIO_MELODY
+			{
+				uint8_t i;
+
+				pkg_header_init_audio_melody_ackstatus();
+
+				for (i = 0; i < MELODY_TONE_ORIG_MAX; i++)
+				{
+					msg_audio_melody_set_time(i, melody_time[i]);
+					msg_audio_melody_set_effect(i, melody_effect[i]);
+					msg_audio_melody_set_tone(i, melody_tones_orig[i]);
+				}
+
+				msg_audio_melody_set_repeat(melody.repeat);
+				msg_audio_melody_set_autoreverse(melody.autoreverse);
+			}
 		}
 
 		UART_PUTS("Sending AckStatus\r\n");
 	}
 
 	send_ack(acksenderid, ackpacketcounter, false);
-	send_status_timeout = 5;
-	*/
+	send_status_timeout = 15;
 }
 
 // Check if incoming message is a legitimate request for this device.
 // If not, ignore it.
 void process_packet(uint8_t len)
 {
+	// Set packet content
 	pkg_header_adjust_offset();
 
 	// check SenderID
@@ -195,7 +357,7 @@ void process_packet(uint8_t len)
 	// write received counter
 	station_packetcounter = packcnt;
 
-	e2p_controller_set_basestationpacketcounter(station_packetcounter);
+	//e2p_powerswitch_set_basestationpacketcounter(station_packetcounter);
 
 	// check MessageType
 	MessageTypeEnum messagetype = pkg_header_get_messagetype();
@@ -225,6 +387,41 @@ void process_packet(uint8_t len)
 	process_request(messagetype, messagegroupid, messageid);
 }
 
+void io_init(void)
+{
+	// disable JTAG and therefore enable pins PC2-PC4 as normal I/O pins
+	MCUCR = (1<<JTD);
+	MCUCR = (1<<JTD);
+
+	util_init_led(&LED_DDR, &LED_PORT, LED_PIN);
+}
+
+// Show colors shortly to tell user that power is connected (status LED may not be visible).
+// In parallel, let status LED blink 3 times (as usual for SHC devices).
+void startup_animation(void)
+{
+	struct rgb_color_t c;
+
+	c = index2color(48);
+	rgb_led_set_PWM(c);
+	switch_led(true);
+	_delay_ms(500);
+	c = index2color(12);
+	rgb_led_set_PWM(c);
+	switch_led(false);
+	_delay_ms(500);
+	c = index2color(3);
+	rgb_led_set_PWM(c);
+	switch_led(true);
+	_delay_ms(500);
+	c = index2color(0);
+	rgb_led_set_PWM(c);
+	switch_led(false);
+	_delay_ms(500);
+
+	led_blink(500, 0, 1);
+}
+
 int main(void)
 {
 	uint8_t loop = 0;
@@ -238,7 +435,7 @@ int main(void)
 	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
 	_delay_ms(1000);
 
-	util_init();
+	io_init();
 
 	check_eeprom_compatibility(DEVICETYPE_CONTROLLER);
 
@@ -260,29 +457,34 @@ int main(void)
 	// read device id
 	device_id = e2p_generic_get_deviceid();
 
+	rgb_led_brightness_factor = e2p_controller_get_brightnessfactor();
+
 	osccal_init();
 
 	uart_init();
 
 	UART_PUTS ("\r\n");
 	UART_PUTF4("smarthomatic Controller v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
-	UART_PUTS("(c) 2022 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTS("(c) 2022..2023 Uwe Freese, www.smarthomatic.org\r\n");
 	osccal_info();
 	UART_PUTF ("DeviceID: %u\r\n", device_id);
 	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);
 	UART_PUTF ("Last received base station PacketCounter: %u\r\n", station_packetcounter);
 	UART_PUTF ("Port status cycle: %us\r\n", port_status_cycle);
 	UART_PUTF ("Version status cycle: %u * port status cycle\r\n", version_status_cycle);
+	UART_PUTF ("E2P brightness factor: %u%%\r\n", rgb_led_brightness_factor);
 
 	// init AES key
 	e2p_generic_get_aeskey(aes_key);
 
-	led_blink(500, 500, 3);
-
-	UART_PUTS ("\r\n");
-
 	rfm_watchdog_init(device_id, e2p_controller_get_transceiverwatchdogtimeout(), RFM_RESET_PORT_NR, RFM_RESET_PIN, RFM_RESET_PIN_STATE);
 	rfm12_init();
+
+	rgb_led_set_fixed_color(0);
+	PWM_init();
+
+ 	startup_sound();
+ 	startup_animation();
 
 	sei();
 
@@ -356,7 +558,7 @@ int main(void)
 				else if (version_status_cycle_counter >= version_status_cycle)
 				{
 					version_status_cycle_counter = 0;
-//					send_deviceinfo_status();
+					send_deviceinfo_status();
 					led_blink(200, 0, 1);
 				}
 			}

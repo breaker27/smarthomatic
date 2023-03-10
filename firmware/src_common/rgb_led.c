@@ -18,6 +18,7 @@
 
 #include "rgb_led.h"
 #include <avr/interrupt.h>
+#include <util/delay.h>
 #include "uart.h"
 
 uint8_t rgb_led_user_brightness_factor = 100; // additional brightness changeable by brightness message
@@ -27,7 +28,7 @@ uint16_t current_tone_PWM;      // The current PWM value for the (slided) tone c
 
 // Timer0 (8 Bit) and Timer2 (8 Bit) are used for the PWM output for the LEDs
 // and the interrupt that advances the values for the animation.
-// Timer 1 (16 Bit) is used for the tone generator (speaker).
+// Timer1 (16 Bit) is used for the tone generator (speaker).
 // Read for more information about PWM:
 // http://www.protostack.com/blog/2011/06/atmega168a-pulse-width-modulation-pwm/
 // http://extremeelectronics.co.in/avr-tutorials/pwm-signal-generation-by-using-avr-timers-part-ii/
@@ -72,7 +73,7 @@ void PWM_init(void)
 #if (F_CPU == 8000000)
 	TCCR1B = (1 << WGM13) | (1 << WGM12) | (1 << CS10);
 #elif (F_CPU == 20000000)
-	TCCR1B = (1 << WGM13) (1 << CS10);
+	TCCR1B = (1 << WGM13) | (1 << CS10);
 #endif
 
 	// BLUE LED auf 2B, Speaker auf 1A
@@ -583,4 +584,15 @@ void test_melody_calculation(void)
 	melody.step_len = rgb_led_timer_cycles[melody_time[0] - 1];
 
 	while (42) {}
+}
+
+void startup_sound(void)
+{
+	speaker_set_fixed_tone(49);
+	_delay_ms(50);
+	speaker_set_fixed_tone(0);
+	_delay_ms(100);
+	speaker_set_fixed_tone(49);
+	_delay_ms(50);
+	speaker_set_fixed_tone(0);
 }
