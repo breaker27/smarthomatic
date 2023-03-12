@@ -145,6 +145,7 @@ parser_test("PKT:SID=27;PC=35106;MT=8;MGID=1;MID=1;MD=800000000000;");
 parser_test("PKT:SID=21;PC=680;MT=8;MGID=10;MID=1;MD=de7b00000000;");
 parser_test("PKT:SID=42;PC=103;MT=8;MGID=0;MID=3;MD=00;");
 parser_test("PKT:SID=37;PC=5115;MT=8;MGID=11;MID=3;MD=0f017ff1880a0e873064411d22811074d90441d3;");
+parser_test("PKT:SID=45;PC=100;MT=1;MGID=40;MID=1;MD=0140414243;");
 
 # Create message string for sending
 
@@ -177,3 +178,10 @@ $parser->setField("Dimmer", "ColorAnimation", "Time", 10, 4);
 $parser->setField("Dimmer", "ColorAnimation", "Color", 48, 4);
 
 print "BaseStation command = " . $parser->getSendString(50) . "\n";
+
+$parser->initPacket("Display", "Text", "Set");
+$parser->setField("Display", "Text", "PosY", 0);
+$parser->setField("Display", "Text", "PosX", 10);
+$parser->setField("Display", "Text", "Text", "ABC");
+
+print "BaseStation command = " . $parser->getSendString(45) . "\n";
