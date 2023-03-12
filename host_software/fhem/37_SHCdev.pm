@@ -707,6 +707,8 @@ sub SHCdev_Set($@)
       $parser->setField("Display", "Text", "PosY", $arg);
       $parser->setField("Display", "Text", "PosX", $arg2);
       $parser->setField("Display", "Text", "Format", $arg3);
+      $arg4 =~ s/(?<!\\)_/ /g; # replace non-escaped '_' with space
+      $arg4 =~ s/\\_/_/g;      # replace escape character from escaped '_'
       $parser->setField("Display", "Text", "Text", $arg4);
       SHCdev_Send($hash);
     } else {
@@ -891,8 +893,11 @@ sub SHCdev_Send($)
         The tone definition can be found <a href="http://www.smarthomatic.org/devices/rgb_dimmer.html">here</a>
         Supported by RGBDimmer.
     </li><br>
-    <li>Text &lt;PosY&gt; &lt;PosX&gt; &lt;Text&gt;<br>
-        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Display_Text">www.smarthomatic.org</a>.
+    <li>Text &lt;PosY&gt; &lt;PosX&gt; &lt;Format&gt; &lt;Text&gt;<br>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Display_Text">www.smarthomatic.org</a>. Supported by Controller.<br/>
+        <b>Note:</b> Since FHEM parameters can't include spaces, there is a special form to enter them.
+        To add a space to the text, use the underline character (e.g. 'Hello_world').
+        If you want to send an underline character, escape it with the backslash (e.g. '\_test\_').
     </li><br>
     <li>DigitalPin &lt;Pos&gt; &lt;On&gt;<br>
         A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#GPIO_DigitalPin">www.smarthomatic.org</a>.
