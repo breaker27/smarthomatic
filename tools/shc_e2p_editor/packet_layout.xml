@@ -213,6 +213,10 @@
 					<Name>PowerSwitch</Name>
 				</Element>
 				<Element>
+					<Value>45</Value>
+					<Name>Controller</Name>
+				</Element>
+				<Element>
 					<Value>50</Value>
 					<Name>RGBDimmer</Name>
 				</Element>
