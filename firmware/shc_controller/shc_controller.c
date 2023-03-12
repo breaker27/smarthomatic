@@ -57,6 +57,8 @@ uint16_t port_status_cycle;
 uint16_t version_status_cycle;
 uint16_t send_status_timeout = 5;
 
+char text[41];
+
 #define TIMER1_TICK_DIVIDER 8 // 244 Hz / 8 = 32ms per animation_tick
 uint8_t timer1_tick_divider = TIMER1_TICK_DIVIDER;
 
@@ -125,7 +127,7 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 
 	UART_PUTF("MessageGroupID:%u;", messagegroupid);
 
-	if ((messagegroupid != MESSAGEGROUP_DIMMER) && (messagegroupid != MESSAGEGROUP_AUDIO))
+	if ((messagegroupid != MESSAGEGROUP_DISPLAY) && (messagegroupid != MESSAGEGROUP_AUDIO) && (messagegroupid != MESSAGEGROUP_DIMMER))
 	{
 		UART_PUTS("\r\nERR: Unsupported MessageGroupID.\r\n");
 		send_ack(acksenderid, ackpacketcounter, true);
@@ -134,14 +136,17 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 
 	UART_PUTF("MessageID:%u;", messageid);
 
-	if (((messagegroupid == MESSAGEGROUP_DIMMER)
-		&& (messageid != MESSAGEID_DIMMER_BRIGHTNESS)
-		&& (messageid != MESSAGEID_DIMMER_COLOR)
-		&& (messageid != MESSAGEID_DIMMER_COLORANIMATION))
+	if (((messagegroupid == MESSAGEGROUP_DISPLAY)
+		&& (messageid != MESSAGEID_DISPLAY_TEXT))
 		||
 		((messagegroupid == MESSAGEGROUP_AUDIO)
 		&& (messageid != MESSAGEID_AUDIO_TONE)
-		&& (messageid != MESSAGEID_AUDIO_MELODY)))
+		&& (messageid != MESSAGEID_AUDIO_MELODY))
+		||
+		((messagegroupid == MESSAGEGROUP_DIMMER)
+		&& (messageid != MESSAGEID_DIMMER_BRIGHTNESS)
+		&& (messageid != MESSAGEID_DIMMER_COLOR)
+		&& (messageid != MESSAGEID_DIMMER_COLORANIMATION)))
 	{
 		UART_PUTS("\r\nERR: Unsupported MessageID.\r\n");
 		send_ack(acksenderid, ackpacketcounter, true);
@@ -191,7 +196,7 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 				sei();
 			}
 		}
-		else // MESSAGEGROUP_AUDIO
+		else if (messagegroupid == MESSAGEGROUP_AUDIO)
 		{
 			if (messageid == MESSAGEID_AUDIO_TONE)
 			{
@@ -225,6 +230,22 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 				speaker_update_current_tone();
 
 				sei();
+			}
+		}
+		else // MESSAGEGROUP_DISPLAY
+		{
+			if (messageid == MESSAGEID_DISPLAY_TEXT)
+			{
+				uint8_t y = msg_display_text_get_posy();
+				uint8_t x = msg_display_text_get_posx();
+				// Note: "Format" is not supported.
+				msg_display_text_get_text(text);
+				text[40] = 0; // set last character to zero byte in case the text in the message is 40 bytes long
+
+				UART_PUTF("PosY:%u;", y);
+				UART_PUTF("PosX:%u;", x);
+				UART_PUTS("Text:");
+				uart_putstr(text);
 			}
 		}
 	}
