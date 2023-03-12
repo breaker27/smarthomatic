@@ -37,6 +37,7 @@ my %dev_state_icons = (
   "PowerSwitch"         => ".*1\\d{7}:on:off .*0\\d{7}:off:on set.*:light_question:off",
   "Dimmer"              => "on:on off:off set.*:light_question:off",
   "EnvSensor"           => undef,
+  "Controller"          => undef,
   "RGBDimmer"           => undef,
   "SoilMoistureMeter"   => ".*H:\\s\\d\\..*:ampel_rot"
 );
@@ -45,6 +46,7 @@ my %web_cmds = (
   "PowerSwitch"         => "on:off:toggle:statusRequest",
   "Dimmer"              => "on:off:statusRequest",
   "EnvSensor"           => undef,
+  "Controller"          => undef,
   "RGBDimmer"           => undef,
   "SoilMoistureMeter"   => undef
 );
@@ -63,6 +65,10 @@ my %dev_state_format = (
     "distance",            "D: ",
     "port",                "Port: ",
     "ains",                "Ain: "
+  ],
+  "Controller"          => [
+    "color",               "Color: ",
+    "brightness",          "Brightness: "
   ],
   "RGBDimmer"           => [
     "color",               "Color: ",
@@ -87,6 +93,12 @@ my %sets = (
                            # Used from SetExtensions.pm
                            "blink on-for-timer on-till off-for-timer off-till intervals",
   "EnvSensor"           => "",
+  "Controller"          => "Color " .
+                           "ColorAnimation " .
+                           "Dimmer.Brightness:slider,0,1,100 " .
+                           "Text " .
+                           "Tone " .
+                           "Melody",
   "RGBDimmer"           => "Color " .
                            "ColorAnimation " .
                            "Dimmer.Brightness:slider,0,1,100 " .
@@ -103,6 +115,7 @@ my %gets = (
   "PowerSwitch" => "",
   "Dimmer"      => "",
   "EnvSensor"   => "din:all,1,2,3,4,5,6,7,8 ain:all,1,2,3,4,5 ain_volt:1,2,3,4,5",
+  "Controller"  => "",
   "RGBDimmer"   => "",
   "Custom"      => ""
 );
@@ -124,7 +137,7 @@ sub SHCdev_Initialize($)
                        ." readonly:1"
                        ." forceOn:1"
                        ." $readingFnAttributes"
-                       ." devtype:EnvSensor,Dimmer,PowerSwitch,RGBDimmer,SoilMoistureMeter";
+                       ." devtype:EnvSensor,Dimmer,PowerSwitch,Controller,RGBDimmer,SoilMoistureMeter";
 }
 
 #####################################
@@ -587,7 +600,7 @@ sub SHCdev_Set($@)
     } else {
       return SetExtensions($hash, "", $name, @aa);
     }
-  } elsif ($devtype eq "RGBDimmer") {
+  } elsif (($devtype eq "Controller") || ($devtype eq "RGBDimmer")) {
     if ($cmd eq 'Color') {
       #TODO Verify argument values
       my $color = $arg;
@@ -688,6 +701,13 @@ sub SHCdev_Set($@)
       readingsSingleUpdate($hash, "state", "set-brightness:$brightness", 1);
       $parser->initPacket("Dimmer", "Brightness", "SetGet");
       $parser->setField("Dimmer", "Brightness", "Brightness", $brightness);
+      SHCdev_Send($hash);
+    } elsif ($cmd eq 'Text') {
+      $parser->initPacket("Display", "Text", "SetGet");
+      $parser->setField("Display", "Text", "PosY", $arg);
+      $parser->setField("Display", "Text", "PosX", $arg2);
+      $parser->setField("Display", "Text", "Format", $arg3);
+      $parser->setField("Display", "Text", "Text", $arg4);
       SHCdev_Send($hash);
     } else {
       return SetExtensions($hash, "", $name, @aa);
@@ -810,6 +830,7 @@ sub SHCdev_Send($)
     <li>EnvSensor</li>
     <li>PowerSwitch</li>
     <li>Dimmer</li>
+    <li>Controller</li>
     <li>RGBDimmer</li>
     <li>SoilMoistureMeter</li>
   </ul><br>
@@ -844,45 +865,48 @@ sub SHCdev_Send($)
         Sets the brightness in percent. Supported by Dimmer.
     </li><br>
     <li>ani &lt;AnimationMode&gt; &lt;TimeoutSec&gt; &lt;StartBrightness&gt; &lt;EndBrightness&gt;<br>
-        Description and details available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_Animation">www.smarthomatic.org</a>
+        Description and details available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_Animation">www.smarthomatic.org</a>.
         Supported by Dimmer.
     </li><br>
     <li>statusRequest<br>
         Supported by Dimmer and PowerSwitch.
     </li><br>
     <li>Color &lt;ColorNumber&gt;<br>
-        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_Color">www.smarthomatic.org</a>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_Color">www.smarthomatic.org</a>.
         The color palette can be found <a href="http://www.smarthomatic.org/devices/rgb_dimmer.html">here</a>
         Supported by RGBDimmer.
     </li><br>
     <li>ColorAnimation &lt;Repeat&gt; &lt;AutoReverse&gt; &lt;Time0&gt; &lt;ColorNumber0&gt; &lt;Time1&gt; &lt;ColorNumber1&gt; ... up to 10 time/color pairs<br>
-        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_ColorAnimation">www.smarthomatic.org</a>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_ColorAnimation">www.smarthomatic.org</a>.
         The color palette can be found <a href="http://www.smarthomatic.org/devices/rgb_dimmer.html">here</a>
         Supported by RGBDimmer.
     </li><br>
     <li>Tone &lt;ToneNumber&gt;<br>
-        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Audio_Tone">www.smarthomatic.org</a>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Audio_Tone">www.smarthomatic.org</a>.
         The tone definition can be found <a href="http://www.smarthomatic.org/devices/rgb_dimmer.html">here</a>
         Supported by RGBDimmer.
     </li><br>
     <li>Melody &lt;Repeat&gt; &lt;AutoReverse&gt; &lt;Time0&gt; &lt;Effect0&gt; &lt;ToneNumber0&gt; &lt;Time1&gt; &lt;Effect1&gt; &lt;ToneNumber1&gt; ... up to 25 time/effect/tone pairs<br>
-        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Audio_Melody">www.smarthomatic.org</a>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Audio_Melody">www.smarthomatic.org</a>.
         The tone definition can be found <a href="http://www.smarthomatic.org/devices/rgb_dimmer.html">here</a>
         Supported by RGBDimmer.
     </li><br>
+    <li>Text &lt;PosY&gt; &lt;PosX&gt; &lt;Text&gt;<br>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Display_Text">www.smarthomatic.org</a>.
+    </li><br>
     <li>DigitalPin &lt;Pos&gt; &lt;On&gt;<br>
-        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#GPIO_DigitalPin">www.smarthomatic.org</a>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#GPIO_DigitalPin">www.smarthomatic.org</a>.
         Supported by PowerSwitch.
     </li><br>
     <li>DigitalPinTimeout &lt;Pos&gt; &lt;On&gt; &lt;Timeout&gt;<br>
-        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#GPIO_DigitalPinTimeout">www.smarthomatic.org</a>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#GPIO_DigitalPinTimeout">www.smarthomatic.org</a>.
         Supported by PowerSwitch.
     </li><br>
     <li>DigitalPort &lt;On&gt;<br>
         &lt;On&gt;<br>
         is a bit array (0 or 1) describing the port state. If less than eight bits were provided zero is assumed.
         Example: set SHC_device DigitalPort 10110000 will set pin0, pin2 and pin3 to 1.<br>
-        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#GPIO_DigitalPort">www.smarthomatic.org</a>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#GPIO_DigitalPort">www.smarthomatic.org</a>.
         Supported by PowerSwitch.
     </li><br>
     <li>DigitalPortTimeout &lt;On&gt; &lt;Timeout0&gt; .. &lt;Timeout7&gt;<br>
@@ -891,7 +915,7 @@ sub SHCdev_Send($)
         Example: set SHC_device DigitalPort 10110000 will set pin0, pin2 and pin3 to 1.<br>
         &lt;Timeout0&gt; .. &lt;Timeout7&gt;<br>
         are the timeouts for each pin. If no timeout is provided zero is assumed.
-        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#GPIO_DigitalPortTimeout">www.smarthomatic.org</a>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#GPIO_DigitalPortTimeout">www.smarthomatic.org</a>.
         Supported by PowerSwitch.
     </li><br>
     <li><a href="#setExtensions"> set extensions</a><br>
