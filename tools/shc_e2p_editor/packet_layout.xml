@@ -633,9 +633,9 @@
 			<UIntValue>
 				<ID>Format</ID>
 				<Description>Format, font, or other value which modifies how the text is displayed. Depends on the implementation of the device.</Description>
-				<Bits>4</Bits>
+				<Bits>5</Bits>
 				<MinVal>0</MinVal>
-				<MaxVal>15</MaxVal>
+				<MaxVal>31</MaxVal>
 				<DefaultVal>0</DefaultVal>
 			</UIntValue>
 			<ByteArray>
