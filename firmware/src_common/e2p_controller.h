@@ -99,110 +99,136 @@ static inline uint8_t e2p_controller_get_statuscycle(void)
   return eeprom_read_UIntValue8(552, 8, 0, 255);
 }
 
-// InputPinCount (UIntValue)
-// Description: This is the number of input pins connected to e.g. buttons or switches.
+// LCDType (EnumValue)
+// Description: Define if an LCD is connected and of which type (size) it is. Only HD44780 compatible text displays are currently supported.
 
-// Set InputPinCount (UIntValue)
-// Offset: 560, length bits 8, min val 1, max val 8
-static inline void e2p_controller_set_inputpincount(uint8_t val)
+#ifndef _ENUM_LCDType
+#define _ENUM_LCDType
+typedef enum {
+  LCDTYPE_NONE = 0,
+  LCDTYPE_4X20 = 1,
+  LCDTYPE_4X40 = 2
+} LCDTypeEnum;
+#endif /* _ENUM_LCDType */
+
+// Set LCDType (EnumValue)
+// Offset: 560, length bits 8
+static inline void e2p_controller_set_lcdtype(LCDTypeEnum val)
 {
   eeprom_write_UIntValue(560, 8, val);
 }
 
+// Get LCDType (EnumValue)
+// Offset: 560, length bits 8
+static inline LCDTypeEnum e2p_controller_get_lcdtype(void)
+{
+  return eeprom_read_UIntValue8(560, 8, 0, 255);
+}
+
+// LCDPages (UIntValue)
+// Description: This is the number of additional pages that may be addressed virtually and selected with Up/Down buttons.
+
+// Set LCDPages (UIntValue)
+// Offset: 568, length bits 8, min val 0, max val 1
+static inline void e2p_controller_set_lcdpages(uint8_t val)
+{
+  eeprom_write_UIntValue(568, 8, val);
+}
+
+// Get LCDPages (UIntValue)
+// Offset: 568, length bits 8, min val 0, max val 1
+static inline uint8_t e2p_controller_get_lcdpages(void)
+{
+  return eeprom_read_UIntValue8(568, 8, 0, 1);
+}
+
+// PageJumpBackSeconds (UIntValue)
+// Description: This defines after how many seconds the display shows the first page again after the user pressed the button to show the additional virtual lines. Set 0 to disable.
+
+// Set PageJumpBackSeconds (UIntValue)
+// Offset: 576, length bits 8, min val 0, max val 255
+static inline void e2p_controller_set_pagejumpbackseconds(uint8_t val)
+{
+  eeprom_write_UIntValue(576, 8, val);
+}
+
+// Get PageJumpBackSeconds (UIntValue)
+// Offset: 576, length bits 8, min val 0, max val 255
+static inline uint8_t e2p_controller_get_pagejumpbackseconds(void)
+{
+  return eeprom_read_UIntValue8(576, 8, 0, 255);
+}
+
+// MenuJumpBackSeconds (UIntValue)
+// Description: This defines after how many seconds the selection of menu options is cancelled if the user doesn't press any button anymore. The menu options are not saved in this case. Set 0 to disable.
+
+// Set MenuJumpBackSeconds (UIntValue)
+// Offset: 584, length bits 8, min val 0, max val 255
+static inline void e2p_controller_set_menujumpbackseconds(uint8_t val)
+{
+  eeprom_write_UIntValue(584, 8, val);
+}
+
+// Get MenuJumpBackSeconds (UIntValue)
+// Offset: 584, length bits 8, min val 0, max val 255
+static inline uint8_t e2p_controller_get_menujumpbackseconds(void)
+{
+  return eeprom_read_UIntValue8(584, 8, 0, 255);
+}
+
+// MenuOption (ByteArray[4])
+// Description: These are up to 4 strings that define options that the user can select. Each entry is defined with a name and several options to select, which are separated with a pipe character '|'. Leave the string empty when there shall be no more options to select.
+
+// Set MenuOption (ByteArray)
+// Offset: 592, length bits 640
+static inline void e2p_controller_set_menuoption(uint8_t index, void *src)
+{
+  eeprom_write_block(src, (uint8_t *)((592 + (uint16_t)index * 640) / 8), 80);
+}
+
+// Get MenuOption (ByteArray)
+// Offset: 592, length bits 640
+static inline void e2p_controller_get_menuoption(uint8_t index, void *dst)
+{
+  eeprom_read_block(dst, (uint8_t *)((592 + (uint16_t)index * 640) / 8), 80);
+}
+
+// InputPinCount (UIntValue)
+// Description: This is the number of input pins connected to e.g. buttons or switches.
+
+// Set InputPinCount (UIntValue)
+// Offset: 3152, length bits 8, min val 1, max val 8
+static inline void e2p_controller_set_inputpincount(uint8_t val)
+{
+  eeprom_write_UIntValue(3152, 8, val);
+}
+
 // Get InputPinCount (UIntValue)
-// Offset: 560, length bits 8, min val 1, max val 8
+// Offset: 3152, length bits 8, min val 1, max val 8
 static inline uint8_t e2p_controller_get_inputpincount(void)
 {
-  return eeprom_read_UIntValue8(560, 8, 1, 8);
+  return eeprom_read_UIntValue8(3152, 8, 1, 8);
 }
 
 // OutputPinCount (UIntValue)
 // Description: This is the number of output pins connected to e.g. LEDs.
 
 // Set OutputPinCount (UIntValue)
-// Offset: 568, length bits 8, min val 1, max val 8
+// Offset: 3160, length bits 8, min val 1, max val 8
 static inline void e2p_controller_set_outputpincount(uint8_t val)
 {
-  eeprom_write_UIntValue(568, 8, val);
+  eeprom_write_UIntValue(3160, 8, val);
 }
 
 // Get OutputPinCount (UIntValue)
-// Offset: 568, length bits 8, min val 1, max val 8
+// Offset: 3160, length bits 8, min val 1, max val 8
 static inline uint8_t e2p_controller_get_outputpincount(void)
 {
-  return eeprom_read_UIntValue8(568, 8, 1, 8);
+  return eeprom_read_UIntValue8(3160, 8, 1, 8);
 }
 
-// Width (UIntValue)
-// Description: This is the number of characters per line on the LCD. Typical values are 8, 16, 20, 40.
-
-// Set Width (UIntValue)
-// Offset: 576, length bits 8, min val 1, max val 40
-static inline void e2p_controller_set_width(uint8_t val)
-{
-  eeprom_write_UIntValue(576, 8, val);
-}
-
-// Get Width (UIntValue)
-// Offset: 576, length bits 8, min val 1, max val 40
-static inline uint8_t e2p_controller_get_width(void)
-{
-  return eeprom_read_UIntValue8(576, 8, 1, 40);
-}
-
-// Height (UIntValue)
-// Description: This is the number of lines on the LCD. Typical values are 1, 2 and 4.
-
-// Set Height (UIntValue)
-// Offset: 584, length bits 8, min val 1, max val 4
-static inline void e2p_controller_set_height(uint8_t val)
-{
-  eeprom_write_UIntValue(584, 8, val);
-}
-
-// Get Height (UIntValue)
-// Offset: 584, length bits 8, min val 1, max val 4
-static inline uint8_t e2p_controller_get_height(void)
-{
-  return eeprom_read_UIntValue8(584, 8, 1, 4);
-}
-
-// HeightVirtual (UIntValue)
-// Description: This is the number of additional lines that may be addressed virtually. If the number is heigher than 'Height', the pages can be cycled through with button 9 (which is not part of the buttons from the InputPinCount, which are being sent as status).
-
-// Set HeightVirtual (UIntValue)
-// Offset: 592, length bits 8, min val 1, max val 4
-static inline void e2p_controller_set_heightvirtual(uint8_t val)
-{
-  eeprom_write_UIntValue(592, 8, val);
-}
-
-// Get HeightVirtual (UIntValue)
-// Offset: 592, length bits 8, min val 1, max val 4
-static inline uint8_t e2p_controller_get_heightvirtual(void)
-{
-  return eeprom_read_UIntValue8(592, 8, 1, 4);
-}
-
-// AutoJumpBackSeconds (UIntValue)
-// Description: This defines after how many seconds the display shows the first lines again after the user pressed the button to show the additional virtual lines. Set 0 to disable.
-
-// Set AutoJumpBackSeconds (UIntValue)
-// Offset: 600, length bits 8, min val 0, max val 255
-static inline void e2p_controller_set_autojumpbackseconds(uint8_t val)
-{
-  eeprom_write_UIntValue(600, 8, val);
-}
-
-// Get AutoJumpBackSeconds (UIntValue)
-// Offset: 600, length bits 8, min val 0, max val 255
-static inline uint8_t e2p_controller_get_autojumpbackseconds(void)
-{
-  return eeprom_read_UIntValue8(600, 8, 0, 255);
-}
-
-// Reserved area with 7584 bits
-// Offset: 608
+// Reserved area with 5024 bits
+// Offset: 3168
 
 
 #endif /* _E2P_CONTROLLER_H */
