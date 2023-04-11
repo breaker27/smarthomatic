@@ -88,14 +88,23 @@ void vlcd_putc(char c)
 
 void vlcd_puts(const char* s)
 {
-	while ((*s) && (vlcd_x + 1 < vlcd_chars_per_line))
+	while (*s)
 	{
-		lcd_data[vlcd_y][vlcd_x] = *s;
+		if (*s == '\n')
+		{
+			if (vlcd_y < VIRTUAL_LCD_SCREEN_HEIGHT)
+				vlcd_gotoyx(vlcd_y + 1, vlcd_lastx);
+		}
+		else if (vlcd_x + 1 < vlcd_chars_per_line)
+		{
+			lcd_data[vlcd_y][vlcd_x] = *s;
 
-		if (vlcd_y / 4 == current_page)
-			lcd_putc(*s);
+			if (vlcd_y / 4 == current_page)
+				lcd_putc(*s);
 
-		vlcd_x++;
+			vlcd_x++;
+		}
+
 		s++;
 	}
 }
