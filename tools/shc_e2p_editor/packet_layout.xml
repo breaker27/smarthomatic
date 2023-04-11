@@ -646,6 +646,35 @@
 		</Message>
 	</MessageGroup>
 	<MessageGroup>
+		<Name>Controller</Name>
+		<Description>This message group contains messages for controller / HMI devices.</Description>
+		<MessageGroupID>45</MessageGroupID>
+		<Message>
+			<Name>MenuSelection</Name>
+			<Description>These are the indexes of the values the user selected in menu items. The meaning of the indexes depends on the configuration of the controller device. The value 255 should be treated as 'not updated' or 'not to be updated' (in a Set/SetGet request), but this is device dependent.</Description>
+			<MessageID>1</MessageID>
+			<MessageType>0</MessageType>
+			<MessageType>1</MessageType>
+			<MessageType>2</MessageType>
+			<MessageType>3</MessageType>
+			<MessageType>8</MessageType>
+			<MessageType>9</MessageType>
+			<MessageType>10</MessageType>
+			<Validity>test</Validity>
+			<Array>
+				<Length>16</Length>
+				<UIntValue>
+					<ID>Index</ID>
+					<Description>The index of the selected value of a menu entry.</Description>
+					<Bits>8</Bits>
+					<MinVal>0</MinVal>
+					<MaxVal>255</MaxVal>
+					<DefaultVal>0</DefaultVal>
+				</UIntValue>
+			</Array>
+		</Message>
+	</MessageGroup>
+	<MessageGroup>
 		<Name>Audio</Name>
 		<Description>This message group contains messages for audio input/output.</Description>
 		<MessageGroupID>50</MessageGroupID>
