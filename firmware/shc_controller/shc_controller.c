@@ -28,6 +28,7 @@
 #include "../src_common/msggrp_dimmer.h"
 #include "../src_common/msggrp_audio.h"
 #include "../src_common/msggrp_display.h"
+#include "../src_common/msggrp_controller.h"
 #include "../src_common/msggrp_gpio.h"
 
 #include "../src_common/e2p_hardware.h"
@@ -63,6 +64,8 @@
 #define MENU_SET_PIN      1
 #define MENU_CANCEL_PIN   2
 
+#define WAIT_DELIVER_ACK_SEC 10
+
 #include "../src_common/util_watchdog_init.h"
 
 #include "rgb_led.h"
@@ -80,9 +83,10 @@ typedef enum {
 uint16_t device_id;
 uint32_t station_packetcounter;
 
-uint16_t port_status_cycle;
+uint16_t menu_status_cycle;
 uint16_t version_status_cycle;
 uint16_t send_status_timeout = 5;
+uint16_t wait_deliver_ack = 0;
 
 bool first_lcd_text = true;
 
@@ -91,6 +95,10 @@ uint8_t menu_value[4] = { 0, 0, 0, 0 };
 uint8_t menu_value_bak[4] = { 0, 0, 0, 0 };
 uint8_t menu_item_name_length_max = 0;
 uint8_t menu_item_max = 0;
+uint8_t jump_back_sec = 0;
+uint8_t jump_back_sec_menu = 0;
+uint8_t jump_back_sec_page = 0;
+SoundEnum sound = 0;
 char text[41];
 
 #define TIMER1_TICK_DIVIDER 8 // 244 Hz / 8 = 32ms per animation_tick
@@ -132,6 +140,39 @@ void send_deviceinfo_status(void)
 	msg_generic_deviceinfo_set_versionminor(VERSION_MINOR);
 	msg_generic_deviceinfo_set_versionpatch(VERSION_PATCH);
 	msg_generic_deviceinfo_set_versionhash(VERSION_HASH);
+
+	rfm12_send_bufx();
+}
+
+void send_controller_menuselection_status(bool deliver)
+{
+	uint8_t i;
+
+	inc_packetcounter();
+
+	// Set packet content
+	if (deliver)
+	{
+		UART_PUTS("Deliver MenuSelection: ");
+		pkg_header_init_controller_menuselection_deliver();
+	}
+	else
+	{
+		UART_PUTS("Send MenuSelection Status: ");
+		pkg_header_init_controller_menuselection_status();
+	}
+
+	pkg_header_set_senderid(device_id);
+	pkg_header_set_packetcounter(packetcounter);
+
+
+	for (i = 0; i < 4; i++)
+	{
+		msg_controller_menuselection_set_index(i, menu_value[i]);
+		UART_PUTF(" %u", menu_value[i]);
+	}
+
+	UART_PUTS("\r\n");
 
 	rfm12_send_bufx();
 }
@@ -497,6 +538,73 @@ uint8_t findccount(const char* s, char c)
 	return count;
 }
 
+void key_tone_ok(void)
+{
+	if ((sound == SOUND_KEY) || (sound == SOUND_KEY_SAVECANCEL))
+	{
+		speaker_set_fixed_tone(49);
+		_delay_ms(10);
+		speaker_set_fixed_tone(0);
+	}
+}
+
+void key_tone_err(void)
+{
+	if ((sound == SOUND_KEY) || (sound == SOUND_KEY_SAVECANCEL))
+	{
+		speaker_set_fixed_tone(37);
+		_delay_ms(10);
+		speaker_set_fixed_tone(0);
+	}
+}
+
+// Play back "OK"/"NOK" melody asynchronously in the background.
+void melody_async(bool ok)
+{
+	if ((sound == SOUND_SAVECANCEL) || (sound == SOUND_KEY_SAVECANCEL))
+	{
+		cli();
+
+		melody.repeat = 1;
+		melody.autoreverse = false;
+
+		melody_time[0]       = 4;
+		melody_time[1]       = 4;
+		melody_time[2]       = 4;
+		melody_time[3]       = 4;
+		melody_effect[0]     = 0;
+		melody_effect[1]     = 0;
+		melody_effect[2]     = 0;
+		melody_effect[3]     = 0;
+		melody_tones_orig[1] = 44;
+		melody_tones_orig[3] = 0;
+
+		if (ok)
+		{
+			melody_tones_orig[0] = 41;
+			melody_tones_orig[2] = 49;
+		}
+		else
+		{
+			melody_tones_orig[0] = 49;
+			melody_tones_orig[2] = 37;
+		}
+
+		init_animation(false);
+		speaker_update_current_tone();
+
+		sei();
+	}
+}
+
+// make 20ms delay, call rfm12 tick and remember watchdog time
+void rfm12_delay20(void)
+{
+	_delay_ms(20);
+	rfm12_tick();
+	rfm_watchdog_count(20);
+}
+
 void init_menu(void)
 {
 	uint8_t i, j, x;
@@ -574,35 +682,62 @@ void init_menu(void)
 			}
 		}
 	}
+
+	jump_back_sec = jump_back_sec_menu;
+}
+
+void vlcd_blink_text(uint8_t y, char * s, bool error_beep)
+{
+	uint8_t i, j;
+
+	for (i = 0; i < 4; i++)
+	{
+		vlcd_gotoyx(y, 0);
+
+		if (error_beep)
+			speaker_set_fixed_tone(13);
+
+		vlcd_puts(s);
+
+		for (j = 0; j < 25; j++)
+			rfm12_delay20();
+
+		vlcd_gotoyx(y, 0);
+
+		if (error_beep)
+			speaker_set_fixed_tone(0);
+
+		VLCD_PUTS("                    ");
+
+		for (j = 0; j < 25; j++)
+			rfm12_delay20();
+	}
 }
 
 void leave_menu(bool save)
 {
 	uint8_t i;
 
-	if (!save)
+	vlcd_clear_page(2);
+
+	if (save)
+	{
+		key_tone_ok();
+		wait_deliver_ack = WAIT_DELIVER_ACK_SEC;
+	}
+	else
+	{
+		melody_async(false);
+
 		for (i = 0; i < 4; i++)
 			menu_value[i] = menu_value_bak[i];
 
-	vlcd_clear_page(2);
-
-	for (i = 0; i < 4; i++)
-	{
-		vlcd_gotoyx(9, 0);
-
-		if (save)
-			vlcd_puts(" *** Speichern ***");
-		else
-			vlcd_puts("  *** Abbruch ***");
-
-		_delay_ms(500);
-
-		vlcd_gotoyx(9, 0);
-		vlcd_puts("                  ");
-		_delay_ms(500);
+		vlcd_blink_text(9, "  *** Abbruch ***", false);
+		vlcd_set_page(0);
 	}
 
 	menu_item = -1;
+	jump_back_sec = 0;
 }
 
 void menu_item_print(uint8_t item, bool selected)
@@ -645,20 +780,30 @@ void menu_up(void)
 {
 	if (menu_item > 0)
 	{
+		key_tone_ok();
 		menu_item_print(menu_item, false);
 		menu_item--;
 		menu_item_print(menu_item, true);
 	}
+	else
+		key_tone_err();
+
+	jump_back_sec = jump_back_sec_menu;
 }
 
 void menu_down(void)
 {
 	if (menu_item < menu_item_max)
 	{
+		key_tone_ok();
 		menu_item_print(menu_item, false);
 		menu_item++;
 		menu_item_print(menu_item, true);
 	}
+	else
+		key_tone_err();
+
+	jump_back_sec = jump_back_sec_menu;
 }
 
 void menu_right(void)
@@ -669,18 +814,28 @@ void menu_right(void)
 
 	if (menu_value[menu_item] < value_count - 1)
 	{
+		key_tone_ok();
 		menu_value[menu_item]++;
 		menu_item_print(menu_item, true);
 	}
+	else
+		key_tone_err();
+
+	jump_back_sec = jump_back_sec_menu;
 }
 
 void menu_left(void)
 {
 	if (menu_value[menu_item] > 0)
 	{
+		key_tone_ok();
 		menu_value[menu_item]--;
 		menu_item_print(menu_item, true);
 	}
+	else
+		key_tone_err();
+
+	jump_back_sec = jump_back_sec_menu;
 }
 
 void handle_key(uint8_t skey)
@@ -690,13 +845,13 @@ void handle_key(uint8_t skey)
 		case KEY_SET:
 			if (menu_item == -1)
 			{
+				key_tone_ok();
 				init_menu();
-				vlcd_page(2);
+				vlcd_set_page(2);
 			}
 			else
 			{
 				leave_menu(true);
-				vlcd_page(0);
 			}
 			break;
 		case KEY_CANCEL:
@@ -704,17 +859,48 @@ void handle_key(uint8_t skey)
 			{
 				leave_menu(false);
 			}
-			vlcd_page(0);
+			else if (vlcd_get_page() != 0)
+			{
+				key_tone_ok();
+				vlcd_set_page(0);
+			}
+			else
+			{
+				key_tone_err();
+			}
+			jump_back_sec = 0;
 			break;
 		case KEY_UP:
 			if (menu_item == -1)
-				vlcd_page(0);
+			{
+				if (vlcd_get_page() != 0)
+				{
+					key_tone_ok();
+					vlcd_set_page(0);
+				}
+				else
+				{
+					key_tone_err();
+				}
+				jump_back_sec = 0;
+			}
 			else
 				menu_up();
 			break;
 		case KEY_DOWN:
 			if (menu_item == -1)
-				vlcd_page(1);
+			{
+				if (vlcd_get_page() != 1)
+				{
+					key_tone_ok();
+					vlcd_set_page(1);
+				}
+				else
+				{
+					key_tone_err();
+				}
+				jump_back_sec = jump_back_sec_page;
+			}
 			else
 				menu_down();
 			break;
@@ -785,14 +971,6 @@ void startup_animation(void)
 	led_blink(500, 0, 1);
 }
 
-// make 20ms delay, call rfm12 tick and remember watchdog time
-void rfm12_delay20(void)
-{
-	_delay_ms(20);
-	rfm12_tick();
-	rfm_watchdog_count(20);
-}
-
 MenuKeyEnum detect_key(void)
 {
 	if (!(MENU_CURSOR_PINREG & (1 << MENU_UP_PIN)))
@@ -821,6 +999,9 @@ MenuKeyEnum detect_key_debounced(void)
 	{
 		key = detect_key();
 
+		if (key == KEY_NONE)
+			return key;
+
 		if (key == last_key)
 			ms += 20;
 		else
@@ -836,6 +1017,8 @@ MenuKeyEnum detect_key_debounced(void)
 	}
 }
 
+// TODO: Senden und Empfangen von Controller-MenuSelection Nachrichten, inkl. Deliver-Retry.
+
 int main(void)
 {
 	uint8_t loop = 0;
@@ -843,6 +1026,7 @@ int main(void)
 	uint16_t version_status_cycle;
 	uint16_t version_status_cycle_counter;
 	uint8_t lcd_type;
+
 	MenuKeyEnum key;
 
 	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
@@ -851,6 +1035,9 @@ int main(void)
 	check_eeprom_compatibility(DEVICETYPE_CONTROLLER);
 	lcd_type = e2p_controller_get_lcdtype();
 	device_id = e2p_generic_get_deviceid();
+	jump_back_sec_menu = e2p_controller_get_pagejumpbackseconds();
+	jump_back_sec_page = e2p_controller_get_menujumpbackseconds();
+	sound = e2p_controller_get_sound();
 
 	io_init();
 	uart_init();
@@ -867,13 +1054,7 @@ int main(void)
 		VLCD_PUTF4("v%u.%u.%u (%08lx)", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
 		vlcd_gotoyx(3, 0);
 		VLCD_PUTF("DeviceID: %u", device_id);
-		vlcd_gotoyx(4, 0);
-		VLCD_PUTS("Page 2!");
 	}
-
-	// init button input
-//	cbi(BUTTON_DDR, BUTTON_PIN);
-//	sbi(BUTTON_PORT, BUTTON_PIN);
 
 	// read packetcounter, increase by cycle and write back
 	packetcounter = e2p_generic_get_packetcounter() + PACKET_COUNTER_WRITE_CYCLE;
@@ -882,8 +1063,8 @@ int main(void)
 	// read last received station packetcounter
 	station_packetcounter = e2p_controller_get_basestationpacketcounter();
 
-	port_status_cycle = (uint16_t)e2p_controller_get_statuscycle() * 60;
-	version_status_cycle = (uint16_t)(90000UL / port_status_cycle); // once every 25 hours
+	menu_status_cycle = (uint16_t)e2p_controller_get_statuscycle() * 60;
+	version_status_cycle = (uint16_t)(90000UL / menu_status_cycle); // once every 25 hours
 	version_status_cycle_counter = version_status_cycle - 1; // send right after startup
 
 	rgb_led_brightness_factor = e2p_controller_get_brightnessfactor();
@@ -897,9 +1078,13 @@ int main(void)
 	UART_PUTF ("DeviceID: %u\r\n", device_id);
 	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);
 	UART_PUTF ("Last received base station PacketCounter: %u\r\n", station_packetcounter);
-	UART_PUTF ("Port status cycle: %us\r\n", port_status_cycle);
+	UART_PUTF ("Menu status cycle: %us\r\n", menu_status_cycle);
 	UART_PUTF ("Version status cycle: %u * port status cycle\r\n", version_status_cycle);
 	UART_PUTF ("E2P brightness factor: %u%%\r\n", rgb_led_brightness_factor);
+	UART_PUTF ("LCD type: %u\r\n", lcd_type);
+	UART_PUTF ("Page jump back seconds: %u\r\n", jump_back_sec_page);
+	UART_PUTF ("Menu jump back seconds: %u\r\n", jump_back_sec_menu);
+	UART_PUTF ("Sound: %u\r\n", sound);
 
 	// init AES key
 	e2p_generic_get_aeskey(aes_key);
@@ -955,29 +1140,49 @@ int main(void)
 		}
 
 		// tasks that are done every second
-		if (loop == 50)
+		if ((wait_deliver_ack == WAIT_DELIVER_ACK_SEC) || (loop == 50))
 		{
 			loop = 0;
 
-			// when timeout active, flash LED
-			/*if (cmd_timeout[0])
+			if (wait_deliver_ack > 0)
 			{
-				led_blink(10, 10, 1);
-			}
-			else
-			{
-				_delay_ms(20);
-// 			}*/
+				if (wait_deliver_ack % 2 == 0)
+				{
+					vlcd_gotoyx(9, 0);
+					VLCD_PUTS("** Sende Optionen **");
+					vlcd_gotoyx(10, 0);
+					VLCD_PUTF("**   Versuch %u   **", (WAIT_DELIVER_ACK_SEC + 2 - wait_deliver_ack) / 2);
+					send_controller_menuselection_status(true);
+				}
 
+				wait_deliver_ack--;
+
+				if (wait_deliver_ack == 0)
+				{
+					vlcd_blink_text(10, "** Fehlgeschlagen **", true);
+					vlcd_set_page(0);
+				}
+			}
+			else if (jump_back_sec > 0)
+			{
+				jump_back_sec--;
+
+				if (jump_back_sec == 0)
+				{
+					if (menu_item != -1)
+						leave_menu(false);
+					vlcd_set_page(0);
+				}
+			}
 			// send status from time to time
-			if (!send_startup_reason(&mcusr_mirror))
+			else if (!send_startup_reason(&mcusr_mirror))
 			{
 				send_status_timeout--;
 
 				if (send_status_timeout == 0)
 				{
-//					send_status_timeout = port_status_cycle;
-//					send_gpio_digitalporttimeout_status();
+					send_status_timeout = menu_status_cycle;
+					send_controller_menuselection_status(false);
 					led_blink(200, 0, 1);
 
 					version_status_cycle_counter++;
@@ -995,18 +1200,22 @@ int main(void)
 			rfm12_delay20();
 		}
 
-		key = detect_key_debounced();
-
-		if (key != KEY_NONE)
+		// Key handling is disabled when waiting for a deliver ack from basestation
+		if (wait_deliver_ack == 0)
 		{
-			handle_key(key);
+			key = detect_key_debounced();
 
-			while ((~MENU_CURSOR_PINREG & ((1 << MENU_UP_PIN) | (1 << MENU_DOWN_PIN) | (1 << MENU_LEFT_PIN) | (1 << MENU_RIGHT_PIN)))
-				| (~MENU_SET_PINREG & ((1 << MENU_SET_PIN) | (1 << MENU_CANCEL_PIN))))
-				rfm12_delay20();
+			if (key != KEY_NONE)
+			{
+				handle_key(key);
 
-			for (i = 0; i < 5; i++)
-				rfm12_delay20();
+				while ((~MENU_CURSOR_PINREG & ((1 << MENU_UP_PIN) | (1 << MENU_DOWN_PIN) | (1 << MENU_LEFT_PIN) | (1 << MENU_RIGHT_PIN)))
+					| (~MENU_SET_PINREG & ((1 << MENU_SET_PIN) | (1 << MENU_CANCEL_PIN))))
+					rfm12_delay20();
+
+				for (i = 0; i < 5; i++)
+					rfm12_delay20();
+			}
 		}
 
 		loop++;

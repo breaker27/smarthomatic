@@ -34,7 +34,7 @@ char lcd_data[VIRTUAL_LCD_SCREEN_HEIGHT][VIRTUAL_LCD_SCREEN_WIDTH];
 uint8_t vlcd_chars_per_line = 20;
 uint8_t current_page = 0;
 
-uint8_t vlcd_lasty, vlcd_lastx, vlcd_y, vlcd_x;
+uint8_t vlcd_lastx, vlcd_y, vlcd_x;
 
 void clear_lcd_data(void)
 {
@@ -111,14 +111,14 @@ void vlcd_puts(const char* s)
 
 void vlcd_gotoyx(uint8_t y, uint8_t x)
 {
-	vlcd_lasty = vlcd_y = y;
+	vlcd_y = y;
 	vlcd_lastx = vlcd_x = x;
 
 	if (y / 4 == current_page)
 		lcd_gotoyx(y % 4, x);
 }
 
-void vlcd_page(uint8_t page)
+void vlcd_set_page(uint8_t page)
 {
 	if ((page < VIRTUAL_LCD_PAGES) && (current_page != page))
 	{
@@ -132,4 +132,9 @@ void vlcd_page(uint8_t page)
 				lcd_putc(lcd_data[page * 4 + y][x]);
 		}
 	}
+}
+
+uint8_t vlcd_get_page(void)
+{
+	return current_page;
 }

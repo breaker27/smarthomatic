@@ -42,6 +42,7 @@ void vlcd_clear_page(uint8_t page);
 void vlcd_putc(char c);
 void vlcd_puts(const char* s);
 void vlcd_gotoyx(uint8_t y, uint8_t x);
-void vlcd_page(uint8_t page);
+void vlcd_set_page(uint8_t page);
+uint8_t vlcd_get_page(void);
 
 #endif /* _VLCD_H */
