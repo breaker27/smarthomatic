@@ -193,21 +193,31 @@ static inline void e2p_controller_get_menuoption(uint8_t index, void *dst)
   eeprom_read_block(dst, (uint8_t *)((592 + (uint16_t)index * 640) / 8), 80);
 }
 
-// InputPinCount (UIntValue)
-// Description: This is the number of input pins connected to e.g. buttons or switches.
+// Sound (EnumValue)
+// Description: Defines if key presses and saving menu entries / cancelling the menu are acknowledged with sounds.
 
-// Set InputPinCount (UIntValue)
-// Offset: 3152, length bits 8, min val 1, max val 8
-static inline void e2p_controller_set_inputpincount(uint8_t val)
+#ifndef _ENUM_Sound
+#define _ENUM_Sound
+typedef enum {
+  SOUND_SILENT = 0,
+  SOUND_KEY = 1,
+  SOUND_SAVECANCEL = 2,
+  SOUND_KEY_SAVECANCEL = 3
+} SoundEnum;
+#endif /* _ENUM_Sound */
+
+// Set Sound (EnumValue)
+// Offset: 3152, length bits 8
+static inline void e2p_controller_set_sound(SoundEnum val)
 {
   eeprom_write_UIntValue(3152, 8, val);
 }
 
-// Get InputPinCount (UIntValue)
-// Offset: 3152, length bits 8, min val 1, max val 8
-static inline uint8_t e2p_controller_get_inputpincount(void)
+// Get Sound (EnumValue)
+// Offset: 3152, length bits 8
+static inline SoundEnum e2p_controller_get_sound(void)
 {
-  return eeprom_read_UIntValue8(3152, 8, 1, 8);
+  return eeprom_read_UIntValue8(3152, 8, 0, 255);
 }
 
 // OutputPinCount (UIntValue)

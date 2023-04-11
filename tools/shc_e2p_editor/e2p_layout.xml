@@ -805,7 +805,7 @@
 			<Bits>8</Bits>
 			<MinVal>0</MinVal>
 			<MaxVal>255</MaxVal>
-			<DefaultVal>30</DefaultVal>
+			<DefaultVal>10</DefaultVal>
 		</UIntValue>
 		<EnumValue>
 			<ID>LCDType</ID>
@@ -839,7 +839,7 @@
 			<Bits>8</Bits>
 			<MinVal>0</MinVal>
 			<MaxVal>255</MaxVal>
-			<DefaultVal>10</DefaultVal>
+			<DefaultVal>30</DefaultVal>
 		</UIntValue>
 		<UIntValue>
 			<ID>MenuJumpBackSeconds</ID>
@@ -847,7 +847,7 @@
 			<Bits>8</Bits>
 			<MinVal>0</MinVal>
 			<MaxVal>255</MaxVal>
-			<DefaultVal>10</DefaultVal>
+			<DefaultVal>30</DefaultVal>
 		</UIntValue>
 		<Array>
 			<Length>4</Length>
@@ -857,13 +857,28 @@
 				<Bytes>80</Bytes>
 			</ByteArray>
 		</Array>
-		<UIntValue>
-			<ID>InputPinCount</ID>
-			<Description>This is the number of input pins connected to e.g. buttons or switches.</Description>
+		<EnumValue>
+			<ID>Sound</ID>
+			<Description>Defines if key presses and saving menu entries / cancelling the menu are acknowledged with sounds.</Description>
 			<Bits>8</Bits>
-			<MinVal>1</MinVal>
-			<MaxVal>8</MaxVal>
-		</UIntValue>
+			<Element>
+				<Value>0</Value>
+				<Name>Silent</Name>
+			</Element>
+			<Element>
+				<Value>1</Value>
+				<Name>Key</Name>
+			</Element>
+			<Element>
+				<Value>2</Value>
+				<Name>SaveCancel</Name>
+			</Element>
+			<Element>
+				<Value>3</Value>
+				<Name>Key_SaveCancel</Name>
+			</Element>
+			<DefaultVal>3</DefaultVal>
+		</EnumValue>
 		<UIntValue>
 			<ID>OutputPinCount</ID>
 			<Description>This is the number of output pins connected to e.g. LEDs.</Description>
