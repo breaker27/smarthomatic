@@ -64,7 +64,7 @@
 #define MENU_SET_PIN      1
 #define MENU_CANCEL_PIN   2
 
-#define WAIT_DELIVER_ACK_SEC 10
+#define DELIVER_ACK_RETRIES 12 // real tries are one lower, because the last cycle is only for waiting for the Ack
 
 #include "../src_common/util_watchdog_init.h"
 
@@ -87,7 +87,8 @@ uint32_t deliver_packetcounter;
 uint16_t menu_status_cycle;
 uint16_t version_status_cycle;
 uint16_t send_status_timeout = 5;
-uint16_t wait_deliver_ack = 0;
+uint16_t deliver_ack_retries = 0;
+//uint32_t deliver_ack_packetcounter[DELIVER_ACK_RETRIES - 1];
 
 bool first_lcd_text = true;
 
@@ -229,13 +230,13 @@ void send_controller_menuselection_status(bool deliver)
 	// Set packet content
 	if (deliver)
 	{
-		UART_PUTS("Deliver MenuSelection: ");
-		pkg_header_init_controller_menuselection_deliver();
 		deliver_packetcounter = packetcounter;
+		UART_PUTF2("Deliver MenuSelection (Retry %u, PacketCounter %lu):", DELIVER_ACK_RETRIES - deliver_ack_retries, deliver_packetcounter);
+		pkg_header_init_controller_menuselection_deliver();
 	}
 	else
 	{
-		UART_PUTS("Send MenuSelection Status: ");
+		UART_PUTS("Send MenuSelection Status:");
 		pkg_header_init_controller_menuselection_status();
 	}
 
@@ -284,35 +285,39 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	uint32_t acksenderid = pkg_header_get_senderid();
 	uint32_t ackpacketcounter = pkg_header_get_packetcounter();
 
-	UART_PUTF("MessageGroupID:%u;", messagegroupid);
-
-	if ((messagegroupid != MESSAGEGROUP_DISPLAY) && (messagegroupid != MESSAGEGROUP_AUDIO) && (messagegroupid != MESSAGEGROUP_DIMMER) && (messagegroupid != MESSAGEGROUP_CONTROLLER))
+	// An ACK doesn't contain message group and message id. So only check it for other message types.
+	if (messagetype != MESSAGETYPE_ACK)
 	{
-		UART_PUTS("\r\nERR: Unsupported MessageGroupID.\r\n");
-		send_ack(acksenderid, ackpacketcounter, true);
-		return;
-	}
+		UART_PUTF("MessageGroupID:%u;", messagegroupid);
 
-	UART_PUTF("MessageID:%u;", messageid);
+		if ((messagegroupid != MESSAGEGROUP_DISPLAY) && (messagegroupid != MESSAGEGROUP_AUDIO) && (messagegroupid != MESSAGEGROUP_DIMMER) && (messagegroupid != MESSAGEGROUP_CONTROLLER))
+		{
+			UART_PUTS("\r\nERR: Unsupported MessageGroupID.\r\n");
+			send_ack(acksenderid, ackpacketcounter, true);
+			return;
+		}
 
-	if (((messagegroupid == MESSAGEGROUP_DISPLAY)
-		&& (messageid != MESSAGEID_DISPLAY_TEXT))
-		||
-		((messagegroupid == MESSAGEGROUP_AUDIO)
-		&& (messageid != MESSAGEID_AUDIO_TONE)
-		&& (messageid != MESSAGEID_AUDIO_MELODY))
-		||
-		((messagegroupid == MESSAGEGROUP_CONTROLLER)
-		&& (messageid != MESSAGEID_CONTROLLER_MENUSELECTION))
-		||
-		((messagegroupid == MESSAGEGROUP_DIMMER)
-		&& (messageid != MESSAGEID_DIMMER_BRIGHTNESS)
-		&& (messageid != MESSAGEID_DIMMER_COLOR)
-		&& (messageid != MESSAGEID_DIMMER_COLORANIMATION)))
-	{
-		UART_PUTS("\r\nERR: Unsupported MessageID.\r\n");
-		send_ack(acksenderid, ackpacketcounter, true);
-		return;
+		UART_PUTF("MessageID:%u;", messageid);
+
+		if (((messagegroupid == MESSAGEGROUP_DISPLAY)
+			&& (messageid != MESSAGEID_DISPLAY_TEXT))
+			||
+			((messagegroupid == MESSAGEGROUP_AUDIO)
+			&& (messageid != MESSAGEID_AUDIO_TONE)
+			&& (messageid != MESSAGEID_AUDIO_MELODY))
+			||
+			((messagegroupid == MESSAGEGROUP_CONTROLLER)
+			&& (messageid != MESSAGEID_CONTROLLER_MENUSELECTION))
+			||
+			((messagegroupid == MESSAGEGROUP_DIMMER)
+			&& (messageid != MESSAGEID_DIMMER_BRIGHTNESS)
+			&& (messageid != MESSAGEID_DIMMER_COLOR)
+			&& (messageid != MESSAGEID_DIMMER_COLORANIMATION)))
+		{
+			UART_PUTS("\r\nERR: Unsupported MessageID.\r\n");
+			send_ack(acksenderid, ackpacketcounter, true);
+			return;
+		}
 	}
 
 	// "Set" or "SetGet" -> modify brightness/color/animation
@@ -421,8 +426,6 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		}
 	}
 
-	UART_PUTS("\r\n");
-
 	// "Set" -> send "Ack"
 	if (messagetype == MESSAGETYPE_SET)
 	{
@@ -453,7 +456,7 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 			}
 		}
 
-		UART_PUTS("Sending Ack\r\n");
+		UART_PUTS("\r\nSending Ack\r\n");
 		send_ack(acksenderid, ackpacketcounter, false);
 		send_status_timeout = 15;
 	}
@@ -513,39 +516,37 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 			}
 		}
 
-		UART_PUTS("Sending AckStatus\r\n");
+		UART_PUTS("\r\nSending AckStatus\r\n");
 		send_ack(acksenderid, ackpacketcounter, false);
 		send_status_timeout = 15;
 	}
 	// ACK for a previous "deliver" message?
 	else if (messagetype == MESSAGETYPE_ACK)
 	{
-		if (messagegroupid == MESSAGEGROUP_CONTROLLER)
-		{
-			if (messageid == MESSAGEID_CONTROLLER_MENUSELECTION)
-			{
-				acksenderid = pkg_headerext_common_get_acksenderid();
-				ackpacketcounter = pkg_headerext_common_get_ackpacketcounter();
-				uint8_t error = pkg_headerext_common_get_error();
-				UART_PUTF_B("ASID=%u;", acksenderid);
-				UART_PUTF_B("APC=%lu;", ackpacketcounter);
-				UART_PUTF_B("E=%u;\r\n", error);
+		ackpacketcounter = pkg_headerext_common_get_ackpacketcounter();
+		uint8_t error = pkg_headerext_common_get_error();
+		UART_PUTF("AckPacketCounter=%lu;", ackpacketcounter);
+		UART_PUTF("Error=%u;\r\n", error);
 
-				if (wait_deliver_ack == 0)
-					UART_PUTS("Ack received, but not expected. Ignoring!\r\n")
-				else if (ackpacketcounter == deliver_packetcounter)
-					UART_PUTS("Ack received, but wrong packetcounter. Ignoring!\r\n")
-				else if (error != 0)
-					UART_PUTS("Ack received, but error bit set. Ignoring!\r\n")
-				else
-				{
-					UART_PUTS("Deliver message successfully acknowledged!\r\n");
-					wait_deliver_ack = 0;
-					melody_async(true);
-					vlcd_blink_text(10, "**  Erfolgreich!  **", false);
-					vlcd_set_page(0);
-				}
-			}
+		if (deliver_ack_retries == 0)
+		{
+			UART_PUTS("Ack received, but not expected. Ignoring!\r\n");
+		}
+		else if ((ackpacketcounter < deliver_packetcounter - DELIVER_ACK_RETRIES / 2) || (ackpacketcounter > deliver_packetcounter))
+		{
+			UART_PUTF("Ack received, but packetcounter is wrong (expected %lu). Ignoring!\r\n", deliver_packetcounter);
+		}
+		else if (error != 0)
+		{
+			UART_PUTS("Ack received, but error bit set. Ignoring!\r\n");
+		}
+		else
+		{
+			UART_PUTF("Deliver message successfully acknowledged after %u sec!\r\n", DELIVER_ACK_RETRIES - deliver_ack_retries);
+			deliver_ack_retries = 0;
+			melody_async(true);
+			vlcd_blink_text(10, "**  Erfolgreich!  **", false);
+			vlcd_set_page(0);
 		}
 	}
 }
@@ -616,6 +617,17 @@ void process_packet(uint8_t len)
 	// check MessageGroup + MessageID
 	uint32_t messagegroupid = pkg_headerext_common_get_messagegroupid();
 	uint32_t messageid = pkg_headerext_common_get_messageid();
+
+	if (messagetype == MESSAGETYPE_ACK)
+	{
+		messagegroupid = 0;
+		messageid = 0;
+	}
+	else
+	{
+		messagegroupid = pkg_headerext_common_get_messagegroupid();
+		messageid = pkg_headerext_common_get_messageid();
+	}
 
 	process_request(messagetype, messagegroupid, messageid);
 }
@@ -768,7 +780,7 @@ void leave_menu(bool save)
 	if (save)
 	{
 		key_tone_ok();
-		wait_deliver_ack = WAIT_DELIVER_ACK_SEC;
+		deliver_ack_retries = DELIVER_ACK_RETRIES;
 	}
 	else
 	{
@@ -1183,24 +1195,32 @@ int main(void)
 		}
 
 		// tasks that are done every second
-		if ((wait_deliver_ack == WAIT_DELIVER_ACK_SEC) || (loop == 50))
+		if ((deliver_ack_retries == DELIVER_ACK_RETRIES) || (loop == 50))
 		{
 			loop = 0;
 
-			if (wait_deliver_ack > 0)
+			if (deliver_ack_retries > 0)
 			{
-				if (wait_deliver_ack % 2 == 0)
+				deliver_ack_retries--;
+
+				if (deliver_ack_retries > DELIVER_ACK_RETRIES / 2)
 				{
+					rfm12_rx_clear();
 					vlcd_gotoyx(9, 0);
 					VLCD_PUTS("** Sende Optionen **");
 					vlcd_gotoyx(10, 0);
-					VLCD_PUTF("**   Versuch %u   **", (WAIT_DELIVER_ACK_SEC + 2 - wait_deliver_ack) / 2);
+					VLCD_PUTF("**   Versuch %u    **", DELIVER_ACK_RETRIES - deliver_ack_retries);
 					send_controller_menuselection_status(true);
 				}
-
-				wait_deliver_ack--;
-
-				if (wait_deliver_ack == 0)
+				else if (deliver_ack_retries > 0)
+				{
+					rfm12_rx_clear();
+					vlcd_gotoyx(9, 0);
+					VLCD_PUTS("** Sende Optionen **");
+					vlcd_gotoyx(10, 0);
+					VLCD_PUTF("**    Warte %2u    **", DELIVER_ACK_RETRIES - deliver_ack_retries);
+				}
+				else
 				{
 					vlcd_blink_text(10, "** Fehlgeschlagen **", true);
 					vlcd_set_page(0);
@@ -1243,8 +1263,8 @@ int main(void)
 			rfm12_delay20();
 		}
 
-		// Key handling is disabled when waiting for a deliver ack from basestation
-		if (wait_deliver_ack == 0)
+		// Key handling is enabled only when not waiting for a deliver ack from basestation
+		if (deliver_ack_retries == 0)
 		{
 			key = detect_key_debounced();
 
