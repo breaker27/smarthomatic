@@ -81,7 +81,7 @@ void decode_data(uint8_t len)
 	UART_PUTF_B("MT=%u;", messagetype);
 
 	// show ReceiverID for all requests
-	if ((messagetype == MESSAGETYPE_GET) || (messagetype == MESSAGETYPE_SET) || (messagetype == MESSAGETYPE_SETGET))
+	if ((messagetype == MESSAGETYPE_GET) || (messagetype == MESSAGETYPE_SET) || (messagetype == MESSAGETYPE_SETGET) || (messagetype == MESSAGETYPE_DELIVER))
 	{
 		uint16_t receiverid = pkg_headerext_common_get_receiverid();
 		UART_PUTF_B("RID=%u;", receiverid);
@@ -292,7 +292,7 @@ int main(void)
 
 	UART_PUTS("\r\n");
 	UART_PUTF4("smarthomatic Base Station v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
-	UART_PUTS("(c) 2012..2015 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTS("(c) 2012..2023 Uwe Freese, www.smarthomatic.org\r\n");
 	UART_PUTF("Device ID: %u\r\n", device_id);
 	UART_PUTF("Packet counter: %lu\r\n", packetcounter);
 	UART_PUTF("AES key count: %u\r\n", aes_key_count);
