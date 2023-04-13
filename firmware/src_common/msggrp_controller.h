@@ -54,7 +54,7 @@ typedef enum {
 // Validity: test
 // Length w/o Header + HeaderExtension: 128 bits
 // Data fields: Index
-// Description: These are the indexes of the values the user selected in menu items. The meaning of the indexes depends on the configuration of the controller device. The value 255 should be treated as 'not updated' or 'not to be updated' (in a Set/SetGet request), but this is device dependent.
+// Description: These are the value indexes of selected menu items. It depends on the configuration of a specific controller device which value each index represents. The indexes of selected menu entries should start with 1, and 0 should be treated as 'not updated' (in a Status/AckStatus/Deliver message) or 'not to be updated' (in a Set/SetGet request). This is to allow smaller (16 byte) packets when there are few menu entries.
 
 // Function to initialize header for the MessageType "Get".
 static inline void pkg_header_init_controller_menuselection_get(void)
