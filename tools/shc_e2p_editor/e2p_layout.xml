@@ -108,6 +108,20 @@
 				<Bytes>32</Bytes>
 			</ByteArray>
 		</Array>
+		<EnumValue>
+			<ID>UartBaudRate</ID>
+			<Description>Select which baud rate to use for communication with the base station. Use 19200 (0,2% baud rate error @20 MHz) for standard speed, which should work with any connected device. Use 115200 (1,4% baud rate error @20 MHz) to speed up communication to the base station.</Description>
+			<Bits>8</Bits>
+			<Element>
+				<Value>19</Value>
+				<Name>19200</Name>
+			</Element>
+			<Element>
+				<Value>115</Value>
+				<Name>115200</Name>
+			</Element>
+			<DefaultVal>19</DefaultVal>
+		</EnumValue>
 		<UIntValue>
 			<ID>TransceiverWatchdogTimeout</ID>
 			<Description>Reset RFM12B module if no data is received until timeout is reached. Use this function if your specific transceiver hangs sometimes. Value is in deca seconds. Suggested setting is 48 (for 8 minutes). Set 0 to disable.</Description>
@@ -117,7 +131,7 @@
 			<DefaultVal>48</DefaultVal>
 		</UIntValue>
 		<Reserved>
-			<Bits>3568</Bits>
+			<Bits>3560</Bits>
 		</Reserved>
 	</Block>
 	<Block>
