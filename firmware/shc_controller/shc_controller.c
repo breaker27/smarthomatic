@@ -82,6 +82,7 @@ typedef enum {
 
 uint16_t device_id;
 uint32_t station_packetcounter;
+uint32_t deliver_packetcounter;
 
 uint16_t menu_status_cycle;
 uint16_t version_status_cycle;
@@ -124,6 +125,81 @@ ISR (TIMER0_OVF_vect)
 	}
 }
 
+// Play back "OK"/"NOK" melody asynchronously in the background.
+void melody_async(bool ok)
+{
+	if ((sound == SOUND_SAVECANCEL) || (sound == SOUND_KEY_SAVECANCEL))
+	{
+		cli();
+
+		melody.repeat = 1;
+		melody.autoreverse = false;
+
+		melody_time[0]       = 4;
+		melody_time[1]       = 4;
+		melody_time[2]       = 4;
+		melody_time[3]       = 4;
+		melody_effect[0]     = 0;
+		melody_effect[1]     = 0;
+		melody_effect[2]     = 0;
+		melody_effect[3]     = 0;
+		melody_tones_orig[1] = 44;
+		melody_tones_orig[3] = 0;
+
+		if (ok)
+		{
+			melody_tones_orig[0] = 41;
+			melody_tones_orig[2] = 49;
+		}
+		else
+		{
+			melody_tones_orig[0] = 49;
+			melody_tones_orig[2] = 37;
+		}
+
+		init_animation(false);
+		speaker_update_current_tone();
+
+		sei();
+	}
+}
+
+// make 20ms delay, call rfm12 tick and remember watchdog time
+void rfm12_delay20(void)
+{
+	_delay_ms(20);
+	rfm12_tick();
+	rfm_watchdog_count(20);
+}
+
+void vlcd_blink_text(uint8_t y, char * s, bool error_beep)
+{
+	uint8_t i, j;
+
+	for (i = 0; i < 4; i++)
+	{
+		vlcd_gotoyx(y, 0);
+
+		if (error_beep)
+			speaker_set_fixed_tone(13);
+
+		vlcd_puts(s);
+
+		for (j = 0; j < 25; j++)
+			rfm12_delay20();
+
+		vlcd_gotoyx(y, 0);
+
+		if (error_beep)
+			speaker_set_fixed_tone(0);
+
+		VLCD_PUTS("                    ");
+
+		for (j = 0; j < 25; j++)
+			rfm12_delay20();
+	}
+}
+
 void send_deviceinfo_status(void)
 {
 	inc_packetcounter();
@@ -155,6 +231,7 @@ void send_controller_menuselection_status(bool deliver)
 	{
 		UART_PUTS("Deliver MenuSelection: ");
 		pkg_header_init_controller_menuselection_deliver();
+		deliver_packetcounter = packetcounter;
 	}
 	else
 	{
@@ -165,11 +242,10 @@ void send_controller_menuselection_status(bool deliver)
 	pkg_header_set_senderid(device_id);
 	pkg_header_set_packetcounter(packetcounter);
 
-
 	for (i = 0; i < 4; i++)
 	{
-		msg_controller_menuselection_set_index(i, menu_value[i]);
-		UART_PUTF(" %u", menu_value[i]);
+		msg_controller_menuselection_set_index(i, menu_value[i] + 1);
+		UART_PUTF(" %u", menu_value[i] + 1);
 	}
 
 	UART_PUTS("\r\n");
@@ -210,7 +286,7 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 
 	UART_PUTF("MessageGroupID:%u;", messagegroupid);
 
-	if ((messagegroupid != MESSAGEGROUP_DISPLAY) && (messagegroupid != MESSAGEGROUP_AUDIO) && (messagegroupid != MESSAGEGROUP_DIMMER))
+	if ((messagegroupid != MESSAGEGROUP_DISPLAY) && (messagegroupid != MESSAGEGROUP_AUDIO) && (messagegroupid != MESSAGEGROUP_DIMMER) && (messagegroupid != MESSAGEGROUP_CONTROLLER))
 	{
 		UART_PUTS("\r\nERR: Unsupported MessageGroupID.\r\n");
 		send_ack(acksenderid, ackpacketcounter, true);
@@ -225,6 +301,9 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		((messagegroupid == MESSAGEGROUP_AUDIO)
 		&& (messageid != MESSAGEID_AUDIO_TONE)
 		&& (messageid != MESSAGEID_AUDIO_MELODY))
+		||
+		((messagegroupid == MESSAGEGROUP_CONTROLLER)
+		&& (messageid != MESSAGEID_CONTROLLER_MENUSELECTION))
 		||
 		((messagegroupid == MESSAGEGROUP_DIMMER)
 		&& (messageid != MESSAGEID_DIMMER_BRIGHTNESS)
@@ -375,9 +454,11 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		}
 
 		UART_PUTS("Sending Ack\r\n");
+		send_ack(acksenderid, ackpacketcounter, false);
+		send_status_timeout = 15;
 	}
 	// "Get" or "SetGet" -> send "AckStatus"
-	else
+	else if ((messagetype == MESSAGETYPE_GET) || (messagetype == MESSAGETYPE_SETGET))
 	{
 		if (messagegroupid == MESSAGEGROUP_DIMMER)
 		{
@@ -433,10 +514,40 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		}
 
 		UART_PUTS("Sending AckStatus\r\n");
+		send_ack(acksenderid, ackpacketcounter, false);
+		send_status_timeout = 15;
 	}
+	// ACK for a previous "deliver" message?
+	else if (messagetype == MESSAGETYPE_ACK)
+	{
+		if (messagegroupid == MESSAGEGROUP_CONTROLLER)
+		{
+			if (messageid == MESSAGEID_CONTROLLER_MENUSELECTION)
+			{
+				acksenderid = pkg_headerext_common_get_acksenderid();
+				ackpacketcounter = pkg_headerext_common_get_ackpacketcounter();
+				uint8_t error = pkg_headerext_common_get_error();
+				UART_PUTF_B("ASID=%u;", acksenderid);
+				UART_PUTF_B("APC=%lu;", ackpacketcounter);
+				UART_PUTF_B("E=%u;\r\n", error);
 
-	send_ack(acksenderid, ackpacketcounter, false);
-	send_status_timeout = 15;
+				if (wait_deliver_ack == 0)
+					UART_PUTS("Ack received, but not expected. Ignoring!\r\n")
+				else if (ackpacketcounter == deliver_packetcounter)
+					UART_PUTS("Ack received, but wrong packetcounter. Ignoring!\r\n")
+				else if (error != 0)
+					UART_PUTS("Ack received, but error bit set. Ignoring!\r\n")
+				else
+				{
+					UART_PUTS("Deliver message successfully acknowledged!\r\n");
+					wait_deliver_ack = 0;
+					melody_async(true);
+					vlcd_blink_text(10, "**  Erfolgreich!  **", false);
+					vlcd_set_page(0);
+				}
+			}
+		}
+	}
 }
 
 // Check if incoming message is a legitimate request for this device.
@@ -476,20 +587,29 @@ void process_packet(uint8_t len)
 	MessageTypeEnum messagetype = pkg_header_get_messagetype();
 	UART_PUTF("MessageType:%u;", messagetype);
 
-	if ((messagetype != MESSAGETYPE_GET) && (messagetype != MESSAGETYPE_SET) && (messagetype != MESSAGETYPE_SETGET))
+	if ((messagetype != MESSAGETYPE_GET) && (messagetype != MESSAGETYPE_SET) && (messagetype != MESSAGETYPE_SETGET) && (messagetype != MESSAGETYPE_ACK))
 	{
 		UART_PUTS("\r\nERR: Unsupported MessageType.\r\n");
 		return;
 	}
 
 	// check device id
-	uint16_t rcv_id = pkg_headerext_common_get_receiverid();
+	uint16_t rcv_id;
 
-	UART_PUTF("ReceiverID:%u;", rcv_id);
+	if (messagetype == MESSAGETYPE_ACK)
+	{
+		rcv_id = pkg_headerext_common_get_acksenderid();
+		UART_PUTF("AckSenderID:%u;", rcv_id);
+	}
+	else
+	{
+		rcv_id = pkg_headerext_common_get_receiverid();
+		UART_PUTF("ReceiverID:%u;", rcv_id);
+	}
 
 	if (rcv_id != device_id)
 	{
-		UART_PUTS("\r\nWRN: DeviceID does not match.\r\n");
+		UART_PUTS("\r\nDeviceID does not match.\r\n");
 		return;
 	}
 
@@ -556,53 +676,6 @@ void key_tone_err(void)
 		_delay_ms(10);
 		speaker_set_fixed_tone(0);
 	}
-}
-
-// Play back "OK"/"NOK" melody asynchronously in the background.
-void melody_async(bool ok)
-{
-	if ((sound == SOUND_SAVECANCEL) || (sound == SOUND_KEY_SAVECANCEL))
-	{
-		cli();
-
-		melody.repeat = 1;
-		melody.autoreverse = false;
-
-		melody_time[0]       = 4;
-		melody_time[1]       = 4;
-		melody_time[2]       = 4;
-		melody_time[3]       = 4;
-		melody_effect[0]     = 0;
-		melody_effect[1]     = 0;
-		melody_effect[2]     = 0;
-		melody_effect[3]     = 0;
-		melody_tones_orig[1] = 44;
-		melody_tones_orig[3] = 0;
-
-		if (ok)
-		{
-			melody_tones_orig[0] = 41;
-			melody_tones_orig[2] = 49;
-		}
-		else
-		{
-			melody_tones_orig[0] = 49;
-			melody_tones_orig[2] = 37;
-		}
-
-		init_animation(false);
-		speaker_update_current_tone();
-
-		sei();
-	}
-}
-
-// make 20ms delay, call rfm12 tick and remember watchdog time
-void rfm12_delay20(void)
-{
-	_delay_ms(20);
-	rfm12_tick();
-	rfm_watchdog_count(20);
 }
 
 void init_menu(void)
@@ -684,34 +757,6 @@ void init_menu(void)
 	}
 
 	jump_back_sec = jump_back_sec_menu;
-}
-
-void vlcd_blink_text(uint8_t y, char * s, bool error_beep)
-{
-	uint8_t i, j;
-
-	for (i = 0; i < 4; i++)
-	{
-		vlcd_gotoyx(y, 0);
-
-		if (error_beep)
-			speaker_set_fixed_tone(13);
-
-		vlcd_puts(s);
-
-		for (j = 0; j < 25; j++)
-			rfm12_delay20();
-
-		vlcd_gotoyx(y, 0);
-
-		if (error_beep)
-			speaker_set_fixed_tone(0);
-
-		VLCD_PUTS("                    ");
-
-		for (j = 0; j < 25; j++)
-			rfm12_delay20();
-	}
 }
 
 void leave_menu(bool save)
@@ -1016,8 +1061,6 @@ MenuKeyEnum detect_key_debounced(void)
 		rfm12_delay20();
 	}
 }
-
-// TODO: Senden und Empfangen von Controller-MenuSelection Nachrichten, inkl. Deliver-Retry.
 
 int main(void)
 {
