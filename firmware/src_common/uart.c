@@ -308,6 +308,7 @@ void process_rxbuf(void)
 			UART_PUTS("sKK00RRRRGGMMDD...........Get\r\n");
 			UART_PUTS("sKK01RRRRGGMMDD...........Set\r\n");
 			UART_PUTS("sKK02RRRRGGMMDD...........SetGet\r\n");
+			UART_PUTS("sKK03RRRRGGMMDD...........Deliver\r\n");
 			UART_PUTS("sKK08GGMMDD...............Status\r\n");
 			UART_PUTS("sKK09SSSSPPPPPPEE.........Ack\r\n");
 			UART_PUTS("sKK0ASSSSPPPPPPEEGGMMDD...AckStatus\r\n");

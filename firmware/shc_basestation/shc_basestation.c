@@ -262,6 +262,36 @@ void send_packet(uint8_t aes_key_nr, uint8_t packet_len)
 	rfm12_send_bufx();
 }
 
+void send_deliver_ack(int aes_key_nr)
+{
+	pkg_header_adjust_offset();
+
+	if (pkg_header_get_messagetype() == MESSAGETYPE_DELIVER)
+	{
+		if (pkg_headerext_common_get_receiverid() == device_id)
+		{
+			UART_PUTS("Sending Deliver Ack: ");
+			uint16_t senderid = pkg_header_get_senderid();
+			uint32_t packetcounter = pkg_header_get_packetcounter();
+			UART_PUTF("SID=%u, ", senderid);
+			UART_PUTF("PC=%lu\r\n", packetcounter);
+
+			// init packet buffer
+			memset(&bufx[0], 0, sizeof(bufx));
+
+			// set message type
+			pkg_header_set_messagetype(MESSAGETYPE_ACK);
+			pkg_header_adjust_offset();
+			pkg_headerext_common_set_acksenderid(senderid);
+			pkg_headerext_common_set_ackpacketcounter(packetcounter);
+			pkg_headerext_common_set_error(0);
+
+			send_packet(aes_key_nr, 16);
+			led_blink(200, 0, 1);
+		}
+	}
+}
+
 int main(void)
 {
 	uint8_t aes_key_nr;
@@ -423,6 +453,8 @@ int main(void)
 						UART_PUTF("Received (AES key %u): ", aes_key_nr);
 						print_bytearray(bufx, len);
 
+						send_deliver_ack(aes_key_nr);
+
 						break;
 					}
 				}
@@ -464,15 +496,6 @@ int main(void)
 
 			uint8_t string_offset_data = 0;
 
-			/*
-			UART_PUTS("sKK00RRRRGGMM.............Get\r\n");
-			UART_PUTS("sKK01RRRRGGMMDD...........Set\r\n");
-			UART_PUTS("sKK02RRRRGGMMDD...........SetGet\r\n");
-			UART_PUTS("sKK08GGMMDD...............Status\r\n");
-			UART_PUTS("sKK09SSSSPPPPPPEE.........Ack\r\n");
-			UART_PUTS("sKK0ASSSSPPPPPPEEGGMMDD...AckStatus\r\n");
-			*/
-
 			// set header extension fields in bufx to the values given as hex string in the user input
 			uint16_t receiverid = 0;
 			switch (message_type)
@@ -480,6 +503,7 @@ int main(void)
 				case MESSAGETYPE_GET:
 				case MESSAGETYPE_SET:
 				case MESSAGETYPE_SETGET:
+				case MESSAGETYPE_DELIVER:
 					receiverid = hex_to_uint16((uint8_t *)cmdbuf, 5);
 					pkg_headerext_common_set_receiverid(receiverid);
 					pkg_headerext_common_set_messagegroupid(hex_to_uint8((uint8_t *)cmdbuf, 9));
@@ -539,8 +563,8 @@ int main(void)
 			uint8_t packet_len = ((uint16_t)__HEADEROFFSETBITS + (uint16_t)messagedata_len_raw * 8 + 7) / 8;
 			packet_len = ((packet_len - 1) / 16 + 1) * 16;
 
-			// send packet which doesn't require an acknowledge immediately
-			if ((message_type != MESSAGETYPE_GET) && (message_type != MESSAGETYPE_SET) && (message_type != MESSAGETYPE_SETGET))
+			// send packet immediately when it doesn't require an acknowledge
+			if ((message_type != MESSAGETYPE_GET) && (message_type != MESSAGETYPE_SET) && (message_type != MESSAGETYPE_SETGET) && (message_type != MESSAGETYPE_DELIVER))
 			{
 				send_packet(aes_key_nr, packet_len);
 				led_blink(200, 0, 1);
