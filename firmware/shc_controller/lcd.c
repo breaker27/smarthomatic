@@ -262,7 +262,7 @@ void lcd_clear()
 
 void lcd_putc(char c)
 {
-	UART_PUTF("CHAR %u\r\n", (uint8_t)c);
+//	UART_PUTF("CHAR %u\r\n", (uint8_t)c);
 
 	switch ((uint8_t)c)
 	{
