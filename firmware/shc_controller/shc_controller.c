@@ -168,9 +168,31 @@ void melody_async(bool ok)
 // make 20ms delay, call rfm12 tick and remember watchdog time
 void rfm12_delay20(void)
 {
-	_delay_ms(20);
-	rfm12_tick();
+	uint8_t i;
+
+	for (i = 0; i < 4; i++)
+	{
+		_delay_ms(5);
+		rfm12_tick();
+	}
+
 	rfm_watchdog_count(20);
+}
+
+void led200_rfm12tick(void)
+{
+	uint8_t i;
+
+	switch_led(true);
+
+	for (i = 0; i < 40; i++)
+	{
+		_delay_ms(5);
+		rfm12_tick();
+	}
+
+	switch_led(false);
+	rfm_watchdog_count(200);
 }
 
 void vlcd_blink_text(uint8_t y, char * s, bool error_beep)
@@ -1205,16 +1227,15 @@ int main(void)
 
 				if (deliver_ack_retries > DELIVER_ACK_RETRIES / 2)
 				{
-					rfm12_rx_clear();
 					vlcd_gotoyx(9, 0);
 					VLCD_PUTS("** Sende Optionen **");
 					vlcd_gotoyx(10, 0);
 					VLCD_PUTF("**   Versuch %u    **", DELIVER_ACK_RETRIES - deliver_ack_retries);
 					send_controller_menuselection_status(true);
+					led200_rfm12tick();
 				}
 				else if (deliver_ack_retries > 0)
 				{
-					rfm12_rx_clear();
 					vlcd_gotoyx(9, 0);
 					VLCD_PUTS("** Sende Optionen **");
 					vlcd_gotoyx(10, 0);
@@ -1246,7 +1267,7 @@ int main(void)
 				{
 					send_status_timeout = menu_status_cycle;
 					send_controller_menuselection_status(false);
-					led_blink(200, 0, 1);
+					led200_rfm12tick();
 
 					version_status_cycle_counter++;
 				}
@@ -1254,7 +1275,7 @@ int main(void)
 				{
 					version_status_cycle_counter = 0;
 					send_deviceinfo_status();
-					led_blink(200, 0, 1);
+					led200_rfm12tick();
 				}
 			}
 		}

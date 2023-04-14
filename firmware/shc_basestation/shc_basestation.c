@@ -262,8 +262,40 @@ void send_packet(uint8_t aes_key_nr, uint8_t packet_len)
 	rfm12_send_bufx();
 }
 
+// make 20ms delay, call rfm12 tick and remember watchdog time
+void rfm12_delay20(void)
+{
+	uint8_t i;
+
+	for (i = 0; i < 4; i++)
+	{
+		_delay_ms(5);
+		rfm12_tick();
+	}
+
+	rfm_watchdog_count(20);
+}
+
+void led200_rfm12tick(void)
+{
+	uint8_t i;
+
+	switch_led(true);
+
+	for (i = 0; i < 40; i++)
+	{
+		_delay_ms(5);
+		rfm12_tick();
+	}
+
+	switch_led(false);
+	rfm_watchdog_count(200);
+}
+
 void send_deliver_ack(int aes_key_nr)
 {
+	uint8_t i;
+
 	pkg_header_adjust_offset();
 
 	if (pkg_header_get_messagetype() == MESSAGETYPE_DELIVER)
@@ -287,7 +319,14 @@ void send_deliver_ack(int aes_key_nr)
 			pkg_headerext_common_set_error(0);
 
 			send_packet(aes_key_nr, 16);
-			led_blink(200, 0, 1);
+			led200_rfm12tick();
+
+			// check additional 200ms for free air channel and send out immediately
+			for (i = 0; i < 40; i++)
+			{
+				_delay_ms(5);
+				rfm12_tick();
+			}
 		}
 	}
 }
@@ -453,6 +492,7 @@ int main(void)
 						UART_PUTF("Received (AES key %u): ", aes_key_nr);
 						print_bytearray(bufx, len);
 
+						//rfm12_rx_clear(); // TEST!
 						send_deliver_ack(aes_key_nr);
 
 						break;
@@ -567,13 +607,13 @@ int main(void)
 			if ((message_type != MESSAGETYPE_GET) && (message_type != MESSAGETYPE_SET) && (message_type != MESSAGETYPE_SETGET) && (message_type != MESSAGETYPE_DELIVER))
 			{
 				send_packet(aes_key_nr, packet_len);
-				led_blink(200, 0, 1);
+				led200_rfm12tick();
 			}
 			else if (receiverid == 4095)
 			{
 				UART_PUTS("Sending broadcast request without using queue.\r\n");
 				send_packet(aes_key_nr, packet_len);
-				led_blink(200, 0, 1);
+				led200_rfm12tick();
 			}
 			else // enqueue request (don't send immediately)
 			{
@@ -606,7 +646,7 @@ int main(void)
 			{
 				UART_PUTS("Repeating request.\r\n");
 				send_packet((*request).aes_key, (*request).data_bytes + 9); // header size = 9 bytes!
-				led_blink(200, 0, 1);
+				led200_rfm12tick();
 
 				print_request_queue();
 			}
@@ -617,12 +657,8 @@ int main(void)
 		}
 		else
 		{
-			_delay_ms(20);
+			rfm12_delay20();
 		}
-
-		rfm_watchdog_count(20);
-
-		rfm12_tick();
 
 		loop++;
 
