@@ -59,7 +59,7 @@
 // If not, only sw reset is used.
 #define RFM_RESET_PIN 3
 #define RFM_RESET_PORT_NR 1
-#define RFM_RESET_PIN_STATE 1
+#define RFM_RESET_PIN_STATE 0
 
 #include "../src_common/util_watchdog_init.h"
 
