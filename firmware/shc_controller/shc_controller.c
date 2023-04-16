@@ -64,7 +64,7 @@
 #define MENU_SET_PIN      1
 #define MENU_CANCEL_PIN   2
 
-#define DELIVER_ACK_RETRIES 12 // real tries are one lower, because the last cycle is only for waiting for the Ack
+#define DELIVER_ACK_RETRIES 6 // real tries are one lower, because the last cycle is only for waiting for the Ack
 
 #include "../src_common/util_watchdog_init.h"
 
@@ -163,36 +163,6 @@ void melody_async(bool ok)
 
 		sei();
 	}
-}
-
-// make 20ms delay, call rfm12 tick and remember watchdog time
-void rfm12_delay20(void)
-{
-	uint8_t i;
-
-	for (i = 0; i < 4; i++)
-	{
-		_delay_ms(5);
-		rfm12_tick();
-	}
-
-	rfm_watchdog_count(20);
-}
-
-void led200_rfm12tick(void)
-{
-	uint8_t i;
-
-	switch_led(true);
-
-	for (i = 0; i < 40; i++)
-	{
-		_delay_ms(5);
-		rfm12_tick();
-	}
-
-	switch_led(false);
-	rfm_watchdog_count(200);
 }
 
 void vlcd_blink_text(uint8_t y, char * s, bool error_beep)
@@ -1225,21 +1195,14 @@ int main(void)
 			{
 				deliver_ack_retries--;
 
-				if (deliver_ack_retries > DELIVER_ACK_RETRIES / 2)
+				if (deliver_ack_retries > 0)
 				{
 					vlcd_gotoyx(9, 0);
 					VLCD_PUTS("** Sende Optionen **");
 					vlcd_gotoyx(10, 0);
 					VLCD_PUTF("**   Versuch %u    **", DELIVER_ACK_RETRIES - deliver_ack_retries);
 					send_controller_menuselection_status(true);
-					led200_rfm12tick();
-				}
-				else if (deliver_ack_retries > 0)
-				{
-					vlcd_gotoyx(9, 0);
-					VLCD_PUTS("** Sende Optionen **");
-					vlcd_gotoyx(10, 0);
-					VLCD_PUTF("**    Warte %2u    **", DELIVER_ACK_RETRIES - deliver_ack_retries);
+					rfm12_send_wait_led();
 				}
 				else
 				{
@@ -1267,7 +1230,7 @@ int main(void)
 				{
 					send_status_timeout = menu_status_cycle;
 					send_controller_menuselection_status(false);
-					led200_rfm12tick();
+					rfm12_send_wait_led();
 
 					version_status_cycle_counter++;
 				}
@@ -1275,7 +1238,7 @@ int main(void)
 				{
 					version_status_cycle_counter = 0;
 					send_deviceinfo_status();
-					led200_rfm12tick();
+					rfm12_send_wait_led();
 				}
 			}
 		}

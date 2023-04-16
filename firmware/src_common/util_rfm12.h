@@ -1,6 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2014 Uwe Freese
+* Copyright (c) 2023 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -16,8 +16,11 @@
 * with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "util_generic.c"
-#include "util_hw.c"
-#include "util_watchdog.c"
-#include "util_rfm12.c"
-#include "e2p_access.c"
+#ifndef _UTIL_RFM12_H
+#define _UTIL_RFM12_H
+
+void rfm12_delay20(void);
+uint16_t rfm12_send_wait_led(void);
+void rfm12_delay10_led(void);
+
+#endif
