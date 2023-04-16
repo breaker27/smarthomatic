@@ -235,7 +235,7 @@ void send_controller_menuselection_status(bool deliver)
 	pkg_header_set_senderid(device_id);
 	pkg_header_set_packetcounter(packetcounter);
 
-	for (i = 0; i < 4; i++)
+	for (i = 0; i <= menu_item_max; i++)
 	{
 		msg_controller_menuselection_set_index(i, menu_value[i] + 1);
 		UART_PUTF(" %u", menu_value[i] + 1);
@@ -682,21 +682,12 @@ void key_tone_err(void)
 	}
 }
 
-void init_menu(void)
+void init_menu_item_max(void)
 {
-	uint8_t i, j, x;
-	uint8_t len;
-	uint8_t value_count;
+	uint8_t i;
 
-	// remember value in case the user aborts the menu
-	for (i = 0; i < 4; i++)
-		menu_value_bak[i] = menu_value[i];
-
-	menu_item = 0;
-
-	// find max length of menu item names
+	// find number of menu items and max length of menu value names
 	menu_item_name_length_max = 0;
-
 	menu_item_max = 0;
 
 	for (i = 0; i < 4; i++)
@@ -709,6 +700,19 @@ void init_menu(void)
 			menu_item_max = i;
 		}
 	}
+}
+
+void init_menu(void)
+{
+	uint8_t i, j, x;
+	uint8_t len;
+	uint8_t value_count;
+
+	// remember value in case the user aborts the menu
+	for (i = 0; i < 4; i++)
+		menu_value_bak[i] = menu_value[i];
+
+	menu_item = 0;
 
 	// print menu entries
 	for (i = 0; i < 4; i++)
@@ -1085,6 +1089,7 @@ int main(void)
 	jump_back_sec_menu = e2p_controller_get_pagejumpbackseconds();
 	jump_back_sec_page = e2p_controller_get_menujumpbackseconds();
 	sound = e2p_controller_get_sound();
+	init_menu_item_max();
 
 	io_init();
 	uart_init();
