@@ -273,7 +273,7 @@ void send_deliver_ack(int aes_key_nr)
 			UART_PUTS("Sending Deliver Ack: ");
 			uint16_t senderid = pkg_header_get_senderid();
 			uint32_t packetcounter = pkg_header_get_packetcounter();
-			UART_PUTF("SID=%u, ", senderid);
+			UART_PUTF("SID=%u;", senderid);
 			UART_PUTF("PC=%lu\r\n", packetcounter);
 
 			// init packet buffer
