@@ -1,6 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013..2022 Uwe Freese
+* Copyright (c) 2013..2023 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -438,6 +438,7 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	{
 		UART_PUTS("\r\nERR: Unsupported MessageGroupID.\r\n");
 		send_ack(acksenderid, ackpacketcounter, true);
+		rfm12_send_wait_led();
 		return;
 	}
 
@@ -460,6 +461,7 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		default:
 			UART_PUTS("\r\nERR: Unsupported MessageID.");
 			send_ack(acksenderid, ackpacketcounter, true);
+			rfm12_send_wait_led();
 			return;
 	}
 
@@ -503,6 +505,7 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	}
 
 	send_ack(acksenderid, ackpacketcounter, false);
+	rfm12_send_wait_led();
 	send_status_timeout = 5;
 }
 
@@ -703,11 +706,11 @@ int main(void)
 			// when timeout active, flash LED
 			if (cmd_timeout[0])
 			{
-				led_blink(10, 10, 1);
+				rfm12_delay10_led();
 			}
 			else
 			{
-				_delay_ms(20);
+				rfm12_delay20();
 			}
 
 			// Count down switch delays
@@ -764,7 +767,7 @@ int main(void)
 				{
 					send_status_timeout = port_status_cycle;
 					send_gpio_digitalporttimeout_status();
-					led_blink(200, 0, 1);
+					rfm12_send_wait_led();
 
 					version_status_cycle_counter++;
 				}
@@ -772,20 +775,16 @@ int main(void)
 				{
 					version_status_cycle_counter = 0;
 					send_deviceinfo_status();
-					led_blink(200, 0, 1);
+					rfm12_send_wait_led();
 				}
 			}
 		}
 		else
 		{
-			_delay_ms(20);
+			rfm12_delay20();
 		}
 
 		switch_led(cmd_state[0]);
-
-		rfm_watchdog_count(20);
-
-		rfm12_tick();
 
 		button = !(BUTTON_PINPORT & (1 << BUTTON_PIN));
 
