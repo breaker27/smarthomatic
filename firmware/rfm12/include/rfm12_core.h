@@ -156,9 +156,9 @@
 
 //default channel free time, if not defined elsewhere
 // UF 14.04.23: Default from lib was 200. We call rfm12_tick() usually every 5ms. A 16 byte packet takes ~13ms.
-// Therefore a reduced CHANNEL_FREE_TIME of 50 (~250ms) should be enough.
+// A reduced CHANNEL_FREE_TIME of 30 (~150ms) should be enough.
 #ifndef CHANNEL_FREE_TIME
-	#define CHANNEL_FREE_TIME 50
+	#define CHANNEL_FREE_TIME 30
 #endif
 
 /*
