@@ -175,7 +175,7 @@ inline void lcd_data(unsigned char c)
 
 void lcd_init_internal(uint8_t controller_nr)
 {
-	unsigned int i;
+	uint8_t i;
 
 	last_controller_nr = controller_nr;
 
@@ -202,7 +202,8 @@ void lcd_init_internal(uint8_t controller_nr)
 	// Entry mode set: auto shift cursor
 	lcd_command(0b00000100);
 
-	lcd_clear();
+	lcd_command(LCD_CMD_CLEAR);
+    _delay_ms(5);
 
 	// write user characters to LCD
 	lcd_command(0b01000000);
@@ -213,8 +214,6 @@ void lcd_init_internal(uint8_t controller_nr)
 		lcd_data(user_chars[i]);
 	}
 	_delay_ms(1);
-
-	lcd_clear();
 }
 
 void lcd_init(bool big4x40)
@@ -275,6 +274,9 @@ void lcd_putc(char c)
 		case 7:
 		case 8:
 			c -= 1;
+			break;
+		case 176: // °
+			c = 223;
 			break;
 		case 228: // ä
 			c = 225;
