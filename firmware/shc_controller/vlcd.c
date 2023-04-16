@@ -95,7 +95,7 @@ void vlcd_puts(const char* s)
 			if (vlcd_y < VIRTUAL_LCD_SCREEN_HEIGHT)
 				vlcd_gotoyx(vlcd_y + 1, vlcd_lastx);
 		}
-		else if (vlcd_x + 1 < vlcd_chars_per_line)
+		else if (vlcd_x < vlcd_chars_per_line)
 		{
 			lcd_data[vlcd_y][vlcd_x] = *s;
 
