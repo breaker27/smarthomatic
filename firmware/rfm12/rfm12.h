@@ -1,6 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013..2015 Uwe Freese
+* Copyright (c) 2013..2023 Uwe Freese
 *
 * Original authors of RFM 12 library:
 *    Peter Fuhrmann, Hans-Gert Dahmen, Soeren Heisrath
@@ -37,7 +37,7 @@
  *      ( thou shalt not change lines below )         *
  *                                                    *
  ******************************************************/
- 
+
 #ifndef _RFM12_H
 #define _RFM12_H
 
@@ -83,9 +83,6 @@ void rfm12_sw_reset(void);
 	void rfm12_rx_clear(void);
 #endif /* !(RFM12_TRANSMIT_ONLY) */
 
-//FIXME: the tx function should return a status, do we need to do this also?
-// uint8_t rfm12_tx_status();
-
 #if (RFM12_NORETURNS)
 //see rfm12.c for more documentation
 void rfm12_start_tx(uint8_t type, uint8_t length);
@@ -115,12 +112,12 @@ typedef struct
 {
 	//! Sync bytes for receiver to start filling fifo.
 	uint8_t sync[2];
-	
+
 	//! Length byte - number of bytes in buffer.
 	uint8_t len;
 
 	//! Type field for the simple airlab protocol.
-	uint8_t type;		
+	uint8_t type;
 
 	//! Checksum over the former two members.
 	uint8_t checksum;
@@ -143,21 +140,21 @@ typedef struct
 		//! Indicates if the buffer is free or completed.
 		/** \see \ref rxtx_states "States for rx and tx buffers" */
 		volatile uint8_t status;
-		
+
 		//! Length byte - number of bytes in buffer.
 		uint8_t len;
 
-		//! Type field for the simple airlab protocol.		
+		//! Type field for the simple airlab protocol.
 		uint8_t type;
-		
+
 		//! Checksum over the type and length header fields
 		uint8_t checksum;
-		
+
 		//! The actual receive buffer data
-		uint8_t buffer[RFM12_RX_BUFFER_SIZE]; 
+		uint8_t buffer[RFM12_RX_BUFFER_SIZE];
 	} rf_rx_buffer_t;
-#endif /* !(RFM12_TRANSMIT_ONLY) */	
- 
+#endif /* !(RFM12_TRANSMIT_ONLY) */
+
 
 //! Control and status structure.
 /** This data structure keeps all control and some status related variables. \n
@@ -171,40 +168,40 @@ typedef struct
 {
 	//! This controls the library internal state machine.
 	volatile uint8_t rfm12_state;
-	
+
 	//! Transmit buffer status.
 	/** \see \ref rxtx_states "States for rx and tx buffers" */
 	volatile uint8_t txstate;
-	
+
 	//! Number of bytes to transmit or receive.
 	/** This refers to the overall data size, including header data and sync bytes. */
 	uint8_t num_bytes;
-	
+
 	//! Counter for the bytes we are transmitting or receiving at the moment.
 	uint8_t bytecount;
 
 	//if receive mode is not disabled (default)
-	#if !(RFM12_TRANSMIT_ONLY)	
+	#if !(RFM12_TRANSMIT_ONLY)
 		//! Points to the receive buffer that will be filled next.
 		rf_rx_buffer_t * rf_buffer_in;
-		
+
 		//! Points to the receive buffer that will be returned for the next read.
 		rf_rx_buffer_t * rf_buffer_out;
-		
+
 		//! the number of the currently used in receive buffer.
 		uint8_t buffer_in_num;
-		
+
 		//! the number of the currently used out receive buffer.
 		uint8_t buffer_out_num;
 	#endif /* !(RFM12_TRANSMIT_ONLY) */
-	
+
 	//wakeup timer feature
 	#if RFM12_USE_WAKEUP_TIMER
 		//! Power management shadow register.
 		/** The wakeup timer feature needs to buffer the current power management state. */
 		uint16_t pwrmgt_shadow;
 	#endif /* RFM12_USE_WAKEUP_TIMER */
-	
+
 	#if RFM12_LOW_BATT_DETECTOR
 		//! Low battery detector status.
 		/** \see \ref batt_states "States for the low battery detection feature",
@@ -235,6 +232,15 @@ extern rfm12_control_t ctrl;
 /************************
  * INLINE FUNCTIONS
  */
+
+//! Inline function to return the rx buffer status byte.
+/** \returns STATUS_FREE or STATUS_COMPLETE
+* \see \ref rxtx_states "rx buffer states", rfm12_rx_len(), rfm12_rx_type(), rfm12_rx_buffer(), rfm12_rx_clear() and rf_rx_buffer_t
+*/
+static inline uint8_t rfm12_tx_status(void)
+{
+	return ctrl.txstate;
+}
 
 //if receive mode is not disabled (default)
 #if !(RFM12_TRANSMIT_ONLY)
