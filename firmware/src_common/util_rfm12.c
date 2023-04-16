@@ -47,7 +47,7 @@ void rfm12_delay10_led(void)
 }
 
 // Send out waiting RFM12 packet from tx buffer.
-// Let LED stay on for 150ms.
+// Let LED toggle for 150ms.
 // Wait max. 300ms for sending out the data.
 // Typical and minimal time is 150ms (according CHANNEL_FREE_TIME in rfm12.c and 5ms cycle of rfm12_tick).
 // Functions returns the time needed to send out the packet (depends on availability of air channel).
@@ -55,8 +55,9 @@ uint16_t rfm12_send_wait_led(void)
 {
 	uint8_t i;
 	uint8_t j = 0;
+	bool led_on = get_led_on();
 
-	switch_led(true);
+	switch_led(!led_on);
 
 	for (i = 1; i <= 60; i++)
 	{
@@ -68,7 +69,7 @@ uint16_t rfm12_send_wait_led(void)
 			j = i;
 
 		if (i == 30)
-			switch_led(false);
+			switch_led(led_on);
 
 		// end loop immediately when packet was sent, min. after 150ms, max. 300ms
 		if ((i >= 30) && (j > 0))

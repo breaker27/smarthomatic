@@ -256,6 +256,11 @@ void switch_led(bool b_on)
 	}
 }
 
+bool get_led_on(void)
+{
+	return (*led_port & (1 << led_pin)) ? true : false;
+}
+
 void led_blink(uint16_t on, uint16_t off, uint8_t times)
 {
 	uint8_t i;
