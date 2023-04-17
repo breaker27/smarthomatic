@@ -193,7 +193,7 @@ void lcd_init_internal(uint8_t controller_nr)
 	lcd_en();
 	_delay_ms(5);
 
-	// 4 Bit data length, 2-line display, 5x7 Font
+	// 4 Bit data length, 2-line display, 5x8 Font
 	lcd_command(0b00101000);
 
 	// Display on, Cursor off, Cursor blink off
