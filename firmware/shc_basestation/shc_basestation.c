@@ -439,6 +439,10 @@ int main(void)
 
 					aes256_decrypt_cbc(bufx, len);
 
+					// Set the (len+1)th byte to 0, because the last packet content (from the last byte)
+					// may be smaller than 8 bits and is read per byte in decode_data.
+					bufx[len] = 0;
+
 					//UART_PUTS("Decrypted bytes: ");
 					//print_bytearray(bufx, len);
 
