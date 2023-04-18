@@ -165,13 +165,14 @@ void melody_async(bool ok)
 	}
 }
 
-void vlcd_blink_text(uint8_t y, char * s, bool error_beep)
+void vlcd_blink_text(uint8_t y, uint8_t x, char * s, bool error_beep)
 {
 	uint8_t i, j;
+	uint8_t len = strlen(s);
 
 	for (i = 0; i < 4; i++)
 	{
-		vlcd_gotoyx(y, 0);
+		vlcd_gotoyx(y, x);
 
 		if (error_beep)
 			speaker_set_fixed_tone(13);
@@ -181,12 +182,13 @@ void vlcd_blink_text(uint8_t y, char * s, bool error_beep)
 		for (j = 0; j < 25; j++)
 			rfm12_delay20();
 
-		vlcd_gotoyx(y, 0);
+		vlcd_gotoyx(y, x);
 
 		if (error_beep)
 			speaker_set_fixed_tone(0);
 
-		VLCD_PUTS("                    ");
+		for (j = 0; j < len; j++)
+			vlcd_putc(' ');
 
 		for (j = 0; j < 25; j++)
 			rfm12_delay20();
@@ -537,7 +539,8 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 			UART_PUTF("Deliver message successfully acknowledged after %u sec!\r\n", DELIVER_ACK_RETRIES - deliver_ack_retries);
 			deliver_ack_retries = 0;
 			melody_async(true);
-			vlcd_blink_text(10, "**  Erfolgreich!  **", false);
+			e2p_controller_get_menutextsuccess(text);
+			vlcd_blink_text(10, (vlcd_chars_per_line - strlen(text)) / 2, text, false);
 			vlcd_set_page(0);
 		}
 	}
@@ -772,6 +775,7 @@ void leave_menu(bool save)
 	uint8_t i;
 
 	vlcd_clear_page(2);
+	e2p_controller_get_menutextcancel(text);
 
 	if (save)
 	{
@@ -785,7 +789,7 @@ void leave_menu(bool save)
 		for (i = 0; i < 4; i++)
 			menu_value[i] = menu_value_bak[i];
 
-		vlcd_blink_text(9, "  *** Abbruch ***", false);
+		vlcd_blink_text(9, (vlcd_chars_per_line - strlen(text)) / 2, text, false);
 		vlcd_set_page(0);
 	}
 
@@ -1202,16 +1206,18 @@ int main(void)
 
 				if (deliver_ack_retries > 0)
 				{
-					vlcd_gotoyx(9, 0);
-					VLCD_PUTS("** Sende Optionen **");
-					vlcd_gotoyx(10, 0);
-					VLCD_PUTF("**   Versuch %u    **", DELIVER_ACK_RETRIES - deliver_ack_retries);
+					e2p_controller_get_menutextsendoptions(text);
+					vlcd_gotoyx(9, (vlcd_chars_per_line - strlen(text)) / 2);
+					vlcd_puts(text);
+					vlcd_gotoyx(10, vlcd_chars_per_line / 2);
+					VLCD_PUTF("%u", DELIVER_ACK_RETRIES - deliver_ack_retries);
 					send_controller_menuselection_status(true);
 					rfm12_send_wait_led();
 				}
 				else
 				{
-					vlcd_blink_text(10, "** Fehlgeschlagen **", true);
+					e2p_controller_get_menutextfailed(text);
+					vlcd_blink_text(10, (vlcd_chars_per_line - strlen(text)) / 2, text, true);
 					vlcd_set_page(0);
 				}
 			}

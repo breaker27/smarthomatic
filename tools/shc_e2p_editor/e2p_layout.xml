@@ -819,8 +819,30 @@
 			<Bits>8</Bits>
 			<MinVal>0</MinVal>
 			<MaxVal>255</MaxVal>
-			<DefaultVal>10</DefaultVal>
+			<DefaultVal>20</DefaultVal>
 		</UIntValue>
+		<EnumValue>
+			<ID>Sound</ID>
+			<Description>Defines if key presses and saving menu entries / cancelling the menu are acknowledged with sounds.</Description>
+			<Bits>8</Bits>
+			<Element>
+				<Value>0</Value>
+				<Name>Silent</Name>
+			</Element>
+			<Element>
+				<Value>1</Value>
+				<Name>Key</Name>
+			</Element>
+			<Element>
+				<Value>2</Value>
+				<Name>SaveCancel</Name>
+			</Element>
+			<Element>
+				<Value>3</Value>
+				<Name>Key_SaveCancel</Name>
+			</Element>
+			<DefaultVal>3</DefaultVal>
+		</EnumValue>
 		<EnumValue>
 			<ID>LCDType</ID>
 			<Description>Define if an LCD is connected and of which type (size) it is. Only HD44780 compatible text displays are currently supported.</Description>
@@ -837,7 +859,7 @@
 				<Value>2</Value>
 				<Name>4x40</Name>
 			</Element>
-			<DefaultVal>0</DefaultVal>
+			<DefaultVal>1</DefaultVal>
 		</EnumValue>
 		<UIntValue>
 			<ID>LCDPages</ID>
@@ -871,28 +893,30 @@
 				<Bytes>80</Bytes>
 			</ByteArray>
 		</Array>
-		<EnumValue>
-			<ID>Sound</ID>
-			<Description>Defines if key presses and saving menu entries / cancelling the menu are acknowledged with sounds.</Description>
-			<Bits>8</Bits>
-			<Element>
-				<Value>0</Value>
-				<Name>Silent</Name>
-			</Element>
-			<Element>
-				<Value>1</Value>
-				<Name>Key</Name>
-			</Element>
-			<Element>
-				<Value>2</Value>
-				<Name>SaveCancel</Name>
-			</Element>
-			<Element>
-				<Value>3</Value>
-				<Name>Key_SaveCancel</Name>
-			</Element>
-			<DefaultVal>3</DefaultVal>
-		</EnumValue>
+		<ByteArray>
+			<ID>MenuTextSendOptions</ID>
+			<Description>This text is shown when menu options are sent. The default text is 'Sending Options'. You can use 'Sende Optionen' as german translation.</Description>
+			<Bytes>20</Bytes>
+			<DefaultVal>53656E64696E67204F7074696F6E730000000000</DefaultVal>
+		</ByteArray>
+		<ByteArray>
+			<ID>MenuTextSuccess</ID>
+			<Description>This text is shown when sending menu options was successful. The default text is 'Success'. You can use 'Erfolgreich' as german translation.</Description>
+			<Bytes>20</Bytes>
+			<DefaultVal>5375636365737300000000000000000000000000</DefaultVal>
+		</ByteArray>
+		<ByteArray>
+			<ID>MenuTextFailed</ID>
+			<Description>This text is shown when sending menu options failed. The default text is 'Failed'. You can use 'Fehlgeschlagen' as german translation.</Description>
+			<Bytes>20</Bytes>
+			<DefaultVal>4661696C65640000000000000000000000000000</DefaultVal>
+		</ByteArray>
+		<ByteArray>
+			<ID>MenuTextCancel</ID>
+			<Description>This text is shown when sending menu options was cancelled. The default text is 'Cancelled'. You can use 'Abbruch' as german translation.</Description>
+			<Bytes>20</Bytes>
+			<DefaultVal>43616E63656C6C65640000000000000000000000</DefaultVal>
+		</ByteArray>
 		<UIntValue>
 			<ID>OutputPinCount</ID>
 			<Description>This is the number of output pins connected to e.g. LEDs.</Description>
@@ -901,7 +925,7 @@
 			<MaxVal>8</MaxVal>
 		</UIntValue>
 		<Reserved>
-			<Bits>5024</Bits>
+			<Bits>4384</Bits>
 		</Reserved>
 	</Block>
 	<Block>
