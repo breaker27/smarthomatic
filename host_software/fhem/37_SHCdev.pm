@@ -28,6 +28,7 @@ use strict;
 use feature qw(switch);
 use warnings;
 use SetExtensions;
+use Encode qw(encode_utf8 decode_utf8);
 
 use SHC_parser;
 
@@ -361,6 +362,18 @@ sub SHCdev_Parse($$)
             readingsBulkUpdate($rhash, "numberConcentration_PM" . $pmStr, $numberConcentration / 10); # value was in 1/10 µm
           }
         }
+      }
+    }
+  } elsif ($msggroupname eq "Controller") {
+    if ($msgname eq "MenuSelection") {
+      my $index;
+
+      for (my $i = 0 ; $i < 16 ; $i = $i + 1) {
+        $index = $parser->getField("Index" , $i);
+        # index 0 indicates the value was not changed / doesn't exist
+        if ($index != 0) {
+          readingsBulkUpdate($rhash, sprintf("index%02d", $i), $index);
+		}
       }
     }
   } elsif ($msggroupname eq "Audio") {
@@ -707,8 +720,17 @@ sub SHCdev_Set($@)
       $parser->setField("Display", "Text", "PosY", $arg);
       $parser->setField("Display", "Text", "PosX", $arg2);
       $parser->setField("Display", "Text", "Format", $arg3);
+      $arg4 = decode_utf8($arg4);
       $arg4 =~ s/(?<!\\)_/ /g; # replace non-escaped '_' with space
       $arg4 =~ s/\\_/_/g;      # replace escape character from escaped '_'
+      $arg4 =~ s/(?<!\\)\\1/\x01/g; # replace \1 with character 1 (user character)
+      $arg4 =~ s/(?<!\\)\\2/\x02/g; # replace \2 with character 2 (user character)
+      $arg4 =~ s/(?<!\\)\\3/\x03/g; # replace \3 with character 3 (user character)
+      $arg4 =~ s/(?<!\\)\\4/\x04/g; # replace \4 with character 4 (user character)
+      $arg4 =~ s/(?<!\\)\\5/\x05/g; # replace \5 with character 5 (user character)
+      $arg4 =~ s/(?<!\\)\\6/\x06/g; # replace \6 with character 6 (user character)
+      $arg4 =~ s/(?<!\\)\\7/\x07/g; # replace \7 with character 7 (user character)
+      $arg4 =~ s/(?<!\\)\\8/\x08/g; # replace \8 with character 8 (user character)
       $parser->setField("Display", "Text", "Text", $arg4);
       SHCdev_Send($hash);
     } else {
