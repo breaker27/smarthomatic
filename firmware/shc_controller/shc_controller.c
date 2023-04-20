@@ -83,6 +83,7 @@ typedef enum {
 uint16_t device_id;
 uint32_t station_packetcounter;
 uint32_t deliver_packetcounter;
+uint8_t lcd_pages;
 
 uint16_t menu_status_cycle;
 uint16_t version_status_cycle;
@@ -722,7 +723,7 @@ void init_menu(void)
 	{
 		e2p_controller_get_menuoption(i, text);
 
-		vlcd_gotoyx(8 + i, 0);
+		vlcd_gotoyx((VIRTUAL_LCD_PAGES - 1) * 4 + i, 0);
 
 		if (text[0] != 0)
 		{
@@ -789,7 +790,7 @@ void leave_menu(bool save)
 		for (i = 0; i < 4; i++)
 			menu_value[i] = menu_value_bak[i];
 
-		vlcd_blink_text(9, (vlcd_chars_per_line - strlen(text)) / 2, text, false);
+		vlcd_blink_text((VIRTUAL_LCD_PAGES - 1) * 4 + 1, (vlcd_chars_per_line - strlen(text)) / 2, text, false);
 		vlcd_set_page(0);
 	}
 
@@ -803,7 +804,7 @@ void menu_item_print(uint8_t item, bool selected)
 
 	e2p_controller_get_menuoption(item, text);
 	x = menu_item_name_length_max + 2;
-	vlcd_gotoyx(8 + item, x);
+	vlcd_gotoyx((VIRTUAL_LCD_PAGES - 1) * 4 + item, x);
 
 	if (selected)
 		vlcd_putc('[');
@@ -904,7 +905,7 @@ void handle_key(uint8_t skey)
 			{
 				key_tone_ok();
 				init_menu();
-				vlcd_set_page(2);
+				vlcd_set_page((VIRTUAL_LCD_PAGES - 1));
 			}
 			else
 			{
@@ -930,10 +931,10 @@ void handle_key(uint8_t skey)
 		case KEY_UP:
 			if (menu_item == -1)
 			{
-				if (vlcd_get_page() != 0)
+				if (vlcd_get_page() > 0)
 				{
 					key_tone_ok();
-					vlcd_set_page(0);
+					vlcd_set_page(vlcd_get_page() - 1);
 				}
 				else
 				{
@@ -947,10 +948,10 @@ void handle_key(uint8_t skey)
 		case KEY_DOWN:
 			if (menu_item == -1)
 			{
-				if (vlcd_get_page() != 1)
+				if (vlcd_get_page() < lcd_pages - 1)
 				{
 					key_tone_ok();
-					vlcd_set_page(1);
+					vlcd_set_page(vlcd_get_page() + 1);
 				}
 				else
 				{
@@ -1093,6 +1094,7 @@ int main(void)
 	jump_back_sec_menu = e2p_controller_get_pagejumpbackseconds();
 	jump_back_sec_page = e2p_controller_get_menujumpbackseconds();
 	sound = e2p_controller_get_sound();
+	lcd_pages = e2p_controller_get_lcdpages();
 	init_menu_item_max();
 
 	io_init();
@@ -1207,9 +1209,9 @@ int main(void)
 				if (deliver_ack_retries > 0)
 				{
 					e2p_controller_get_menutextsendoptions(text);
-					vlcd_gotoyx(9, (vlcd_chars_per_line - strlen(text)) / 2);
+					vlcd_gotoyx((VIRTUAL_LCD_PAGES - 1) * 4 + 1, (vlcd_chars_per_line - strlen(text)) / 2);
 					vlcd_puts(text);
-					vlcd_gotoyx(10, vlcd_chars_per_line / 2);
+					vlcd_gotoyx((VIRTUAL_LCD_PAGES - 1) * 4 + 2, vlcd_chars_per_line / 2);
 					VLCD_PUTF("%u", DELIVER_ACK_RETRIES - deliver_ack_retries);
 					send_controller_menuselection_status(true);
 					rfm12_send_wait_led();
@@ -1217,7 +1219,7 @@ int main(void)
 				else
 				{
 					e2p_controller_get_menutextfailed(text);
-					vlcd_blink_text(10, (vlcd_chars_per_line - strlen(text)) / 2, text, true);
+					vlcd_blink_text((VIRTUAL_LCD_PAGES - 1) * 4 + 2, (vlcd_chars_per_line - strlen(text)) / 2, text, true);
 					vlcd_set_page(0);
 				}
 			}

@@ -153,20 +153,20 @@ static inline LCDTypeEnum e2p_controller_get_lcdtype(void)
 }
 
 // LCDPages (UIntValue)
-// Description: This is the number of additional pages that may be addressed virtually and selected with Up/Down buttons.
+// Description: This is the number of pages that may be addressed virtually and selected with Up/Down buttons. If you fill less than 4 pages with content and want to avoid that the user can switch to empty pages, reduce the number accordingly.
 
 // Set LCDPages (UIntValue)
-// Offset: 576, length bits 8, min val 0, max val 1
+// Offset: 576, length bits 8, min val 1, max val 4
 static inline void e2p_controller_set_lcdpages(uint8_t val)
 {
   eeprom_write_UIntValue(576, 8, val);
 }
 
 // Get LCDPages (UIntValue)
-// Offset: 576, length bits 8, min val 0, max val 1
+// Offset: 576, length bits 8, min val 1, max val 4
 static inline uint8_t e2p_controller_get_lcdpages(void)
 {
-  return eeprom_read_UIntValue8(576, 8, 0, 1);
+  return eeprom_read_UIntValue8(576, 8, 1, 4);
 }
 
 // PageJumpBackSeconds (UIntValue)

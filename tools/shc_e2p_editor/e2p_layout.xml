@@ -863,11 +863,11 @@
 		</EnumValue>
 		<UIntValue>
 			<ID>LCDPages</ID>
-			<Description>This is the number of additional pages that may be addressed virtually and selected with Up/Down buttons.</Description>
+			<Description>This is the number of pages that may be addressed virtually and selected with Up/Down buttons. If you fill less than 4 pages with content and want to avoid that the user can switch to empty pages, reduce the number accordingly.</Description>
 			<Bits>8</Bits>
-			<MinVal>0</MinVal>
-			<MaxVal>1</MaxVal>
-			<DefaultVal>1</DefaultVal>
+			<MinVal>1</MinVal>
+			<MaxVal>4</MaxVal>
+			<DefaultVal>4</DefaultVal>
 		</UIntValue>
 		<UIntValue>
 			<ID>PageJumpBackSeconds</ID>

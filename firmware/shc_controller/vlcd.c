@@ -26,7 +26,6 @@
 
 char* vlcdbuf = "*l*c*d**b*u*f*f*e*r**l*c*d**b*u*f*f*e*r*";
 
-#define VIRTUAL_LCD_PAGES         3
 #define VIRTUAL_LCD_SCREEN_HEIGHT 4 * VIRTUAL_LCD_PAGES
 #define VIRTUAL_LCD_SCREEN_WIDTH  40
 char lcd_data[VIRTUAL_LCD_SCREEN_HEIGHT][VIRTUAL_LCD_SCREEN_WIDTH];
