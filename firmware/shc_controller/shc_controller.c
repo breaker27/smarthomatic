@@ -541,7 +541,7 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 			deliver_ack_retries = 0;
 			melody_async(true);
 			e2p_controller_get_menutextsuccess(text);
-			vlcd_blink_text(10, (vlcd_chars_per_line - strlen(text)) / 2, text, false);
+			vlcd_blink_text((VIRTUAL_LCD_PAGES - 1) * 4 + 2, (vlcd_chars_per_line - strlen(text)) / 2, text, false);
 			vlcd_set_page(0);
 		}
 	}
@@ -717,6 +717,8 @@ void init_menu(void)
 		menu_value_bak[i] = menu_value[i];
 
 	menu_item = 0;
+
+	vlcd_clear_page(VIRTUAL_LCD_PAGES - 1);
 
 	// print menu entries
 	for (i = 0; i < 4; i++)
