@@ -618,10 +618,10 @@
 			<Validity>test</Validity>
 			<UIntValue>
 				<ID>PosY</ID>
-				<Description>Y (line) position at which the text shall be displayed.</Description>
-				<Bits>4</Bits>
+				<Description>Y (line) position at which the text shall be displayed. Line numbers above 3 are for the corresponding virtual lines / pages.</Description>
+				<Bits>5</Bits>
 				<MinVal>0</MinVal>
-				<MaxVal>15</MaxVal>
+				<MaxVal>31</MaxVal>
 			</UIntValue>
 			<UIntValue>
 				<ID>PosX</ID>

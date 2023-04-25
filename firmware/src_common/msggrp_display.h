@@ -52,7 +52,7 @@ typedef enum {
 // MessageID: 1
 // Possible MessageTypes: Get, Set, SetGet, Status, Ack, AckStatus
 // Validity: test
-// Length w/o Header + HeaderExtension: 335 bits
+// Length w/o Header + HeaderExtension: 336 bits
 // Data fields: PosY, PosX, Format, Text
 // Description: This is a message to get/set text content at a specified position.
 
@@ -127,71 +127,71 @@ static inline void pkg_header_init_display_text_ackstatus(void)
 }
 
 // PosY (UIntValue)
-// Description: Y (line) position at which the text shall be displayed.
+// Description: Y (line) position at which the text shall be displayed. Line numbers above 3 are for the corresponding virtual lines / pages.
 
 // Set PosY (UIntValue)
-// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 4, min val 0, max val 15
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 5, min val 0, max val 31
 static inline void msg_display_text_set_posy(uint32_t val)
 {
-  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 0, 4, val, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 0, 5, val, bufx);
 }
 
 // Get PosY (UIntValue)
-// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 4, min val 0, max val 15
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 5, min val 0, max val 31
 static inline uint32_t msg_display_text_get_posy(void)
 {
-  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 0, 4, 0, 15, bufx);
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 0, 5, 0, 31, bufx);
 }
 
 // PosX (UIntValue)
 // Description: X (character) position at which the text shall be displayed.
 
 // Set PosX (UIntValue)
-// Offset: (uint16_t)__HEADEROFFSETBITS + 4, length bits 7, min val 0, max val 79
+// Offset: (uint16_t)__HEADEROFFSETBITS + 5, length bits 7, min val 0, max val 79
 static inline void msg_display_text_set_posx(uint32_t val)
 {
-  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 4, 7, val, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 5, 7, val, bufx);
 }
 
 // Get PosX (UIntValue)
-// Offset: (uint16_t)__HEADEROFFSETBITS + 4, length bits 7, min val 0, max val 79
+// Offset: (uint16_t)__HEADEROFFSETBITS + 5, length bits 7, min val 0, max val 79
 static inline uint32_t msg_display_text_get_posx(void)
 {
-  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 4, 7, 0, 79, bufx);
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 5, 7, 0, 79, bufx);
 }
 
 // Format (UIntValue)
 // Description: Format, font, or other value which modifies how the text is displayed. Depends on the implementation of the device.
 
 // Set Format (UIntValue)
-// Offset: (uint16_t)__HEADEROFFSETBITS + 11, length bits 4, min val 0, max val 15
+// Offset: (uint16_t)__HEADEROFFSETBITS + 12, length bits 4, min val 0, max val 15
 static inline void msg_display_text_set_format(uint32_t val)
 {
-  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 11, 4, val, bufx);
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 12, 4, val, bufx);
 }
 
 // Get Format (UIntValue)
-// Offset: (uint16_t)__HEADEROFFSETBITS + 11, length bits 4, min val 0, max val 15
+// Offset: (uint16_t)__HEADEROFFSETBITS + 12, length bits 4, min val 0, max val 15
 static inline uint32_t msg_display_text_get_format(void)
 {
-  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 11, 4, 0, 15, bufx);
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 12, 4, 0, 15, bufx);
 }
 
 // Text (ByteArray)
 // Description: 40 bytes for the text that shall be displayed. The end of the text is marked with a 0 byte if it's shorter than 40 characters.
 
 // Set Text (ByteArray)
-// Offset: (uint16_t)__HEADEROFFSETBITS + 15, length bytes 40
+// Offset: (uint16_t)__HEADEROFFSETBITS + 16, length bytes 40
 static inline void msg_display_text_set_text(void *src)
 {
-  array_write_ByteArray((uint16_t)__HEADEROFFSETBITS + 15, 40, src, bufx);
+  array_write_ByteArray((uint16_t)__HEADEROFFSETBITS + 16, 40, src, bufx);
 }
 
 // Get Text (ByteArray)
-// Offset: (uint16_t)__HEADEROFFSETBITS + 15, length bytes 40
+// Offset: (uint16_t)__HEADEROFFSETBITS + 16, length bytes 40
 static inline void msg_display_text_get_text(void *dst)
 {
-  array_read_ByteArray((uint16_t)__HEADEROFFSETBITS + 15, 40, dst, bufx);
+  array_read_ByteArray((uint16_t)__HEADEROFFSETBITS + 16, 40, dst, bufx);
 }
 
 #endif /* _MSGGRP_DISPLAY_H */
