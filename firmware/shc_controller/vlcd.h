@@ -26,7 +26,7 @@
 #include <util/delay.h>
 #include <stdbool.h>
 
-#define VIRTUAL_LCD_PAGES 5
+#define VIRTUAL_LCD_PAGES 9
 
 extern char* vlcdbuf;
 extern uint8_t vlcd_chars_per_line;
