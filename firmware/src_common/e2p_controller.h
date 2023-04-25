@@ -29,7 +29,7 @@
 // E2P Block "Controller"
 // ======================
 // Start offset (bit): 512
-// Overall block length: 7680 bits
+// Overall block length: 15872 bits
 
 // BaseStationPacketCounter (UIntValue)
 // Description: This is the last remembered packet counter of a command from the base station. Packets with the same or lower number are ignored.
@@ -153,20 +153,20 @@ static inline LCDTypeEnum e2p_controller_get_lcdtype(void)
 }
 
 // LCDPages (UIntValue)
-// Description: This is the number of pages that may be addressed virtually and selected with Up/Down buttons. If you fill less than 4 pages with content and want to avoid that the user can switch to empty pages, reduce the number accordingly.
+// Description: This is the number of pages that may be addressed virtually and selected with Up/Down buttons. If you fill less than 8 pages with content and want to avoid that the user can switch to empty pages, reduce the number accordingly.
 
 // Set LCDPages (UIntValue)
-// Offset: 576, length bits 8, min val 1, max val 4
+// Offset: 576, length bits 8, min val 1, max val 8
 static inline void e2p_controller_set_lcdpages(uint8_t val)
 {
   eeprom_write_UIntValue(576, 8, val);
 }
 
 // Get LCDPages (UIntValue)
-// Offset: 576, length bits 8, min val 1, max val 4
+// Offset: 576, length bits 8, min val 1, max val 8
 static inline uint8_t e2p_controller_get_lcdpages(void)
 {
-  return eeprom_read_UIntValue8(576, 8, 1, 4);
+  return eeprom_read_UIntValue8(576, 8, 1, 8);
 }
 
 // PageJumpBackSeconds (UIntValue)
@@ -203,110 +203,153 @@ static inline uint8_t e2p_controller_get_menujumpbackseconds(void)
   return eeprom_read_UIntValue8(592, 8, 0, 255);
 }
 
-// MenuOption (ByteArray[4])
-// Description: These are up to 4 strings that define options that the user can select. Each entry is defined with a name and several options to select, which are separated with a pipe character '|'. Leave the string empty when there shall be no more options to select.
+// BacklightMode (EnumValue)
+// Description: Defines the initial behaviour for the backlight after startup. Can be changed by the Controller-Backlight message. On: Backlight is always on. Off: Backlight is always off. Auto: Backlight is switched on for AutoBacklightTimeSec seconds when a key is pressed or after startup. Otherwise it's off.
+
+#ifndef _ENUM_BacklightMode
+#define _ENUM_BacklightMode
+typedef enum {
+  BACKLIGHTMODE_ON = 0,
+  BACKLIGHTMODE_OFF = 1,
+  BACKLIGHTMODE_AUTO = 2
+} BacklightModeEnum;
+#endif /* _ENUM_BacklightMode */
+
+// Set BacklightMode (EnumValue)
+// Offset: 600, length bits 8
+static inline void e2p_controller_set_backlightmode(BacklightModeEnum val)
+{
+  eeprom_write_UIntValue(600, 8, val);
+}
+
+// Get BacklightMode (EnumValue)
+// Offset: 600, length bits 8
+static inline BacklightModeEnum e2p_controller_get_backlightmode(void)
+{
+  return eeprom_read_UIntValue8(600, 8, 0, 255);
+}
+
+// AutoBacklightTimeSec (UIntValue)
+// Description: This defines after how many seconds the backlight is switched off in mode Auto.
+
+// Set AutoBacklightTimeSec (UIntValue)
+// Offset: 608, length bits 8, min val 1, max val 255
+static inline void e2p_controller_set_autobacklighttimesec(uint8_t val)
+{
+  eeprom_write_UIntValue(608, 8, val);
+}
+
+// Get AutoBacklightTimeSec (UIntValue)
+// Offset: 608, length bits 8, min val 1, max val 255
+static inline uint8_t e2p_controller_get_autobacklighttimesec(void)
+{
+  return eeprom_read_UIntValue8(608, 8, 1, 255);
+}
+
+// MenuOption (ByteArray[8])
+// Description: These are up to 16 strings that define options that the user can select. Each entry is defined with a name and several options to select, which are separated with a pipe character '|'. Leave the string empty when there shall be no more options to select. Currently, only the first 4 entries are supported.
 
 // Set MenuOption (ByteArray)
-// Offset: 600, length bits 640
+// Offset: 616, length bits 960
 static inline void e2p_controller_set_menuoption(uint8_t index, void *src)
 {
-  eeprom_write_block(src, (uint8_t *)((600 + (uint16_t)index * 640) / 8), 80);
+  eeprom_write_block(src, (uint8_t *)((616 + (uint16_t)index * 960) / 8), 120);
 }
 
 // Get MenuOption (ByteArray)
-// Offset: 600, length bits 640
+// Offset: 616, length bits 960
 static inline void e2p_controller_get_menuoption(uint8_t index, void *dst)
 {
-  eeprom_read_block(dst, (uint8_t *)((600 + (uint16_t)index * 640) / 8), 80);
+  eeprom_read_block(dst, (uint8_t *)((616 + (uint16_t)index * 960) / 8), 120);
+}
+
+// MenuOptionIndex (UIntValue[8])
+// Description: This is the index of the currently selected value. It's saved to the E2P to be available also after power loss.
+
+// Set MenuOptionIndex (UIntValue)
+// Offset: 8296, length bits 8, min val 0, max val 255
+static inline void e2p_controller_set_menuoptionindex(uint8_t index, uint8_t val)
+{
+  eeprom_write_UIntValue(8296 + (uint16_t)index * 8, 8, val);
+}
+
+// Get MenuOptionIndex (UIntValue)
+// Offset: 8296, length bits 8, min val 0, max val 255
+static inline uint8_t e2p_controller_get_menuoptionindex(uint8_t index)
+{
+  return eeprom_read_UIntValue8(8296 + (uint16_t)index * 8, 8, 0, 255);
 }
 
 // MenuTextSendOptions (ByteArray)
 // Description: This text is shown when menu options are sent. The default text is 'Sending Options'. You can use 'Sende Optionen' as german translation.
 
 // Set MenuTextSendOptions (ByteArray)
-// Offset: 3160, length bits 160
+// Offset: 8360, length bits 160
 static inline void e2p_controller_set_menutextsendoptions(void *src)
 {
-  eeprom_write_block(src, (uint8_t *)((3160) / 8), 20);
+  eeprom_write_block(src, (uint8_t *)((8360) / 8), 20);
 }
 
 // Get MenuTextSendOptions (ByteArray)
-// Offset: 3160, length bits 160
+// Offset: 8360, length bits 160
 static inline void e2p_controller_get_menutextsendoptions(void *dst)
 {
-  eeprom_read_block(dst, (uint8_t *)((3160) / 8), 20);
+  eeprom_read_block(dst, (uint8_t *)((8360) / 8), 20);
 }
 
 // MenuTextSuccess (ByteArray)
 // Description: This text is shown when sending menu options was successful. The default text is 'Success'. You can use 'Erfolgreich' as german translation.
 
 // Set MenuTextSuccess (ByteArray)
-// Offset: 3320, length bits 160
+// Offset: 8520, length bits 160
 static inline void e2p_controller_set_menutextsuccess(void *src)
 {
-  eeprom_write_block(src, (uint8_t *)((3320) / 8), 20);
+  eeprom_write_block(src, (uint8_t *)((8520) / 8), 20);
 }
 
 // Get MenuTextSuccess (ByteArray)
-// Offset: 3320, length bits 160
+// Offset: 8520, length bits 160
 static inline void e2p_controller_get_menutextsuccess(void *dst)
 {
-  eeprom_read_block(dst, (uint8_t *)((3320) / 8), 20);
+  eeprom_read_block(dst, (uint8_t *)((8520) / 8), 20);
 }
 
 // MenuTextFailed (ByteArray)
 // Description: This text is shown when sending menu options failed. The default text is 'Failed'. You can use 'Fehlgeschlagen' as german translation.
 
 // Set MenuTextFailed (ByteArray)
-// Offset: 3480, length bits 160
+// Offset: 8680, length bits 160
 static inline void e2p_controller_set_menutextfailed(void *src)
 {
-  eeprom_write_block(src, (uint8_t *)((3480) / 8), 20);
+  eeprom_write_block(src, (uint8_t *)((8680) / 8), 20);
 }
 
 // Get MenuTextFailed (ByteArray)
-// Offset: 3480, length bits 160
+// Offset: 8680, length bits 160
 static inline void e2p_controller_get_menutextfailed(void *dst)
 {
-  eeprom_read_block(dst, (uint8_t *)((3480) / 8), 20);
+  eeprom_read_block(dst, (uint8_t *)((8680) / 8), 20);
 }
 
 // MenuTextCancel (ByteArray)
 // Description: This text is shown when sending menu options was cancelled. The default text is 'Cancelled'. You can use 'Abbruch' as german translation.
 
 // Set MenuTextCancel (ByteArray)
-// Offset: 3640, length bits 160
+// Offset: 8840, length bits 160
 static inline void e2p_controller_set_menutextcancel(void *src)
 {
-  eeprom_write_block(src, (uint8_t *)((3640) / 8), 20);
+  eeprom_write_block(src, (uint8_t *)((8840) / 8), 20);
 }
 
 // Get MenuTextCancel (ByteArray)
-// Offset: 3640, length bits 160
+// Offset: 8840, length bits 160
 static inline void e2p_controller_get_menutextcancel(void *dst)
 {
-  eeprom_read_block(dst, (uint8_t *)((3640) / 8), 20);
+  eeprom_read_block(dst, (uint8_t *)((8840) / 8), 20);
 }
 
-// OutputPinCount (UIntValue)
-// Description: This is the number of output pins connected to e.g. LEDs.
-
-// Set OutputPinCount (UIntValue)
-// Offset: 3800, length bits 8, min val 1, max val 8
-static inline void e2p_controller_set_outputpincount(uint8_t val)
-{
-  eeprom_write_UIntValue(3800, 8, val);
-}
-
-// Get OutputPinCount (UIntValue)
-// Offset: 3800, length bits 8, min val 1, max val 8
-static inline uint8_t e2p_controller_get_outputpincount(void)
-{
-  return eeprom_read_UIntValue8(3800, 8, 1, 8);
-}
-
-// Reserved area with 4384 bits
-// Offset: 3808
+// Reserved area with 7384 bits
+// Offset: 9000
 
 
 #endif /* _E2P_CONTROLLER_H */

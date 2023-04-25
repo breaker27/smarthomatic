@@ -863,11 +863,11 @@
 		</EnumValue>
 		<UIntValue>
 			<ID>LCDPages</ID>
-			<Description>This is the number of pages that may be addressed virtually and selected with Up/Down buttons. If you fill less than 4 pages with content and want to avoid that the user can switch to empty pages, reduce the number accordingly.</Description>
+			<Description>This is the number of pages that may be addressed virtually and selected with Up/Down buttons. If you fill less than 8 pages with content and want to avoid that the user can switch to empty pages, reduce the number accordingly.</Description>
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
-			<MaxVal>4</MaxVal>
-			<DefaultVal>4</DefaultVal>
+			<MaxVal>8</MaxVal>
+			<DefaultVal>2</DefaultVal>
 		</UIntValue>
 		<UIntValue>
 			<ID>PageJumpBackSeconds</ID>
@@ -885,13 +885,49 @@
 			<MaxVal>255</MaxVal>
 			<DefaultVal>30</DefaultVal>
 		</UIntValue>
+		<EnumValue>
+			<ID>BacklightMode</ID>
+			<Description>Defines the initial behaviour for the backlight after startup. Can be changed by the Controller-Backlight message. On: Backlight is always on. Off: Backlight is always off. Auto: Backlight is switched on for AutoBacklightTimeSec seconds when a key is pressed or after startup. Otherwise it's off.</Description>
+			<Bits>8</Bits>
+			<Element>
+				<Value>0</Value>
+				<Name>On</Name>
+			</Element>
+			<Element>
+				<Value>1</Value>
+				<Name>Off</Name>
+			</Element>
+			<Element>
+				<Value>2</Value>
+				<Name>Auto</Name>
+			</Element>
+			<DefaultVal>0</DefaultVal>
+		</EnumValue>
+		<UIntValue>
+			<ID>AutoBacklightTimeSec</ID>
+			<Description>This defines after how many seconds the backlight is switched off in mode Auto.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>255</MaxVal>
+			<DefaultVal>30</DefaultVal>
+		</UIntValue>
 		<Array>
-			<Length>4</Length>
+			<Length>8</Length>
 			<ByteArray>
 				<ID>MenuOption</ID>
-				<Description>These are up to 4 strings that define options that the user can select. Each entry is defined with a name and several options to select, which are separated with a pipe character '|'. Leave the string empty when there shall be no more options to select.</Description>
-				<Bytes>80</Bytes>
+				<Description>These are up to 16 strings that define options that the user can select. Each entry is defined with a name and several options to select, which are separated with a pipe character '|'. Leave the string empty when there shall be no more options to select. Currently, only the first 4 entries are supported.</Description>
+				<Bytes>120</Bytes>
 			</ByteArray>
+		</Array>
+		<Array>
+			<Length>8</Length>
+			<UIntValue>
+				<ID>MenuOptionIndex</ID>
+				<Description>This is the index of the currently selected value. It's saved to the E2P to be available also after power loss.</Description>
+				<Bits>8</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>255</MaxVal>
+			</UIntValue>
 		</Array>
 		<ByteArray>
 			<ID>MenuTextSendOptions</ID>
@@ -917,15 +953,8 @@
 			<Bytes>20</Bytes>
 			<DefaultVal>43616E63656C6C65640000000000000000000000</DefaultVal>
 		</ByteArray>
-		<UIntValue>
-			<ID>OutputPinCount</ID>
-			<Description>This is the number of output pins connected to e.g. LEDs.</Description>
-			<Bits>8</Bits>
-			<MinVal>1</MinVal>
-			<MaxVal>8</MaxVal>
-		</UIntValue>
 		<Reserved>
-			<Bits>4384</Bits>
+			<Bits>7384</Bits>
 		</Reserved>
 	</Block>
 	<Block>
