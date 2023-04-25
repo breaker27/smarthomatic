@@ -95,7 +95,7 @@ bool first_lcd_text = true;
 
 int8_t  menu_item = -1; // -1 == Menu OFF
 uint8_t menu_value[4] = { 0, 0, 0, 0 };
-uint8_t menu_value_bak[4] = { 0, 0, 0, 0 };
+uint8_t menu_value_tmp[4] = { 0, 0, 0, 0 };
 uint8_t menu_item_name_length_max = 0;
 uint8_t menu_item_max = 0;
 uint8_t jump_back_sec = 0;
@@ -240,7 +240,12 @@ void send_controller_menuselection_status(bool deliver)
 
 	for (i = 0; i <= menu_item_max; i++)
 	{
-		msg_controller_menuselection_set_index(i, menu_value[i] + 1);
+		// when delivering, use the temporary values the user selected in the menu
+		if (deliver)
+			msg_controller_menuselection_set_index(i, menu_value_tmp[i] + 1);
+		else
+			msg_controller_menuselection_set_index(i, menu_value[i] + 1);
+
 		UART_PUTF(" %u", menu_value[i] + 1);
 	}
 
@@ -538,6 +543,14 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		else
 		{
 			UART_PUTF("Deliver message successfully acknowledged after %u sec!\r\n", DELIVER_ACK_RETRIES - deliver_ack_retries);
+
+			// store selected values in main array and e2p
+			for (uint8_t i = 0; i < 4; i++)
+			{
+				menu_value[i] = menu_value_tmp[i];
+				e2p_controller_set_menuoptionindex(i, menu_value[i]);
+			}
+
 			deliver_ack_retries = 0;
 			melody_async(true);
 			e2p_controller_get_menutextsuccess(text);
@@ -712,9 +725,9 @@ void init_menu(void)
 	uint8_t len;
 	uint8_t value_count;
 
-	// remember value in case the user aborts the menu
+	// use temporary values, in case the user aborts the menu
 	for (i = 0; i < 4; i++)
-		menu_value_bak[i] = menu_value[i];
+		menu_value_tmp[i] = menu_value[i];
 
 	menu_item = 0;
 
@@ -747,7 +760,7 @@ void init_menu(void)
 				else
 					vlcd_putc(' ');
 
-				j = findc(text, '|', menu_value[i] + 1) + 1;
+				j = findc(text, '|', menu_value_tmp[i] + 1) + 1;
 
 				while (text[j] && (text[j] != '|'))
 				{
@@ -775,22 +788,18 @@ void init_menu(void)
 
 void leave_menu(bool save)
 {
-	uint8_t i;
-
 	vlcd_clear_page(2);
 	e2p_controller_get_menutextcancel(text);
 
 	if (save)
 	{
+		// values are not saved to e2p and menu_value array now, but only after reception of deliver ack!
 		key_tone_ok();
 		deliver_ack_retries = DELIVER_ACK_RETRIES;
 	}
 	else
 	{
 		melody_async(false);
-
-		for (i = 0; i < 4; i++)
-			menu_value[i] = menu_value_bak[i];
 
 		vlcd_blink_text((VIRTUAL_LCD_PAGES - 1) * 4 + 1, (vlcd_chars_per_line - strlen(text)) / 2, text, false);
 		vlcd_set_page(0);
@@ -813,7 +822,7 @@ void menu_item_print(uint8_t item, bool selected)
 	else
 		vlcd_putc(' ');
 
-	j = findc(text, '|', menu_value[item] + 1) + 1;
+	j = findc(text, '|', menu_value_tmp[item] + 1) + 1;
 
 	while (text[j] && (text[j] != '|'))
 	{
@@ -872,10 +881,10 @@ void menu_right(void)
 
 	uint8_t value_count = findccount(text, '|');
 
-	if (menu_value[menu_item] < value_count - 1)
+	if (menu_value_tmp[menu_item] < value_count - 1)
 	{
 		key_tone_ok();
-		menu_value[menu_item]++;
+		menu_value_tmp[menu_item]++;
 		menu_item_print(menu_item, true);
 	}
 	else
@@ -886,10 +895,10 @@ void menu_right(void)
 
 void menu_left(void)
 {
-	if (menu_value[menu_item] > 0)
+	if (menu_value_tmp[menu_item] > 0)
 	{
 		key_tone_ok();
-		menu_value[menu_item]--;
+		menu_value_tmp[menu_item]--;
 		menu_item_print(menu_item, true);
 	}
 	else
@@ -1077,6 +1086,11 @@ MenuKeyEnum detect_key_debounced(void)
 	}
 }
 
+// TODO: Merke gesetzte Menüoptionen in E2P, wenn Deliver OK ist. Ansonsten alte Werte wiederholen, so wie auch bei Abbruch.
+// TODO: Setzen der Menüoption von außen (auch in FHEM umsetzen!).
+// TODO: Support kleines LCD (inkl. Test).
+// TODO: Backlight Mode: On, Off, Auto + AutoBacklightTimeSec unterstützen
+
 int main(void)
 {
 	uint8_t loop = 0;
@@ -1115,6 +1129,9 @@ int main(void)
 		vlcd_gotoyx(3, 0);
 		VLCD_PUTF("DeviceID: %u", device_id);
 	}
+
+	for (i = 0; i < 4; i++)
+		menu_value[i] = e2p_controller_get_menuoptionindex(i);
 
 	// read packetcounter, increase by cycle and write back
 	packetcounter = e2p_generic_get_packetcounter() + PACKET_COUNTER_WRITE_CYCLE;
