@@ -644,6 +644,42 @@
 				<Bytes>40</Bytes>
 			</ByteArray>
 		</Message>
+		<Message>
+			<Name>Backlight</Name>
+			<Description>This is a message to get/set the backlight mode of a display.</Description>
+			<MessageID>2</MessageID>
+			<MessageType>0</MessageType>
+			<MessageType>1</MessageType>
+			<MessageType>2</MessageType>
+			<MessageType>8</MessageType>
+			<MessageType>9</MessageType>
+			<MessageType>10</MessageType>
+			<Validity>test</Validity>
+			<EnumValue>
+				<ID>Mode</ID>
+				<Description>The backlight mode defines when the backlight is switched on. The setting 'Auto' means the backlight is switched on automatically after user interaction and off after a timeout.</Description>
+				<Bits>4</Bits>
+				<Element>
+					<Value>0</Value>
+					<Name>On</Name>
+				</Element>
+				<Element>
+					<Value>1</Value>
+					<Name>Off</Name>
+				</Element>
+				<Element>
+					<Value>2</Value>
+					<Name>Auto</Name>
+				</Element>
+			</EnumValue>
+			<UIntValue>
+				<ID>AutoTimeoutSec</ID>
+				<Description>This is the timeout in seconds after which the backlight is switched off in mode 'Auto'. The value 0 shall be treated as not to change the value when sending a request to the device.</Description>
+				<Bits>8</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>255</MaxVal>
+			</UIntValue>
+		</Message>
 	</MessageGroup>
 	<MessageGroup>
 		<Name>Controller</Name>

@@ -42,7 +42,8 @@
 
 // ENUM for MessageIDs of this MessageGroup
 typedef enum {
-  MESSAGEID_DISPLAY_TEXT = 1
+  MESSAGEID_DISPLAY_TEXT = 1,
+  MESSAGEID_DISPLAY_BACKLIGHT = 2
 } DISPLAY_MessageIDEnum;
 
 
@@ -192,6 +193,130 @@ static inline void msg_display_text_set_text(void *src)
 static inline void msg_display_text_get_text(void *dst)
 {
   array_read_ByteArray((uint16_t)__HEADEROFFSETBITS + 16, 40, dst, bufx);
+}
+
+
+// Message "display_backlight"
+// ---------------------------
+// MessageGroupID: 40
+// MessageID: 2
+// Possible MessageTypes: Get, Set, SetGet, Status, Ack, AckStatus
+// Validity: test
+// Length w/o Header + HeaderExtension: 12 bits
+// Data fields: Mode, AutoTimeoutSec
+// Description: This is a message to get/set the backlight mode of a display.
+
+// Function to initialize header for the MessageType "Get".
+static inline void pkg_header_init_display_backlight_get(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(0);
+  pkg_headerext_get_set_messagegroupid(40);
+  pkg_headerext_get_set_messageid(2);
+  __HEADEROFFSETBITS = 95;
+  __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 0;
+}
+
+// Function to initialize header for the MessageType "Set".
+static inline void pkg_header_init_display_backlight_set(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(1);
+  pkg_headerext_set_set_messagegroupid(40);
+  pkg_headerext_set_set_messageid(2);
+  __HEADEROFFSETBITS = 95;
+  __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 1;
+}
+
+// Function to initialize header for the MessageType "SetGet".
+static inline void pkg_header_init_display_backlight_setget(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(2);
+  pkg_headerext_setget_set_messagegroupid(40);
+  pkg_headerext_setget_set_messageid(2);
+  __HEADEROFFSETBITS = 95;
+  __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 2;
+}
+
+// Function to initialize header for the MessageType "Status".
+static inline void pkg_header_init_display_backlight_status(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(8);
+  pkg_headerext_status_set_messagegroupid(40);
+  pkg_headerext_status_set_messageid(2);
+  __HEADEROFFSETBITS = 83;
+  __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 8;
+}
+
+// Function to initialize header for the MessageType "Ack".
+static inline void pkg_header_init_display_backlight_ack(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(9);
+  __HEADEROFFSETBITS = 109;
+  __PACKETSIZEBYTES = 16;
+  __MESSAGETYPE = 9;
+}
+
+// Function to initialize header for the MessageType "AckStatus".
+static inline void pkg_header_init_display_backlight_ackstatus(void)
+{
+  memset(&bufx[0], 0, sizeof(bufx));
+  pkg_header_set_messagetype(10);
+  pkg_headerext_ackstatus_set_messagegroupid(40);
+  pkg_headerext_ackstatus_set_messageid(2);
+  __HEADEROFFSETBITS = 120;
+  __PACKETSIZEBYTES = 32;
+  __MESSAGETYPE = 10;
+}
+
+// Mode (EnumValue)
+// Description: The backlight mode defines when the backlight is switched on. The setting 'Auto' means the backlight is switched on automatically after user interaction and off after a timeout.
+
+#ifndef _ENUM_Mode
+#define _ENUM_Mode
+typedef enum {
+  MODE_ON = 0,
+  MODE_OFF = 1,
+  MODE_AUTO = 2
+} ModeEnum;
+#endif /* _ENUM_Mode */
+
+// Set Mode (EnumValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 4
+static inline void msg_display_backlight_set_mode(ModeEnum val)
+{
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 0, 4, val, bufx);
+}
+
+// Get Mode (EnumValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 4
+static inline ModeEnum msg_display_backlight_get_mode(void)
+{
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 0, 4, 0, 15, bufx);
+}
+
+// AutoTimeoutSec (UIntValue)
+// Description: This is the timeout in seconds after which the backlight is switched off in mode 'Auto'. The value 0 shall be treated as not to change the value when sending a request to the device.
+
+// Set AutoTimeoutSec (UIntValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 4, length bits 8, min val 0, max val 255
+static inline void msg_display_backlight_set_autotimeoutsec(uint32_t val)
+{
+  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 4, 8, val, bufx);
+}
+
+// Get AutoTimeoutSec (UIntValue)
+// Offset: (uint16_t)__HEADEROFFSETBITS + 4, length bits 8, min val 0, max val 255
+static inline uint32_t msg_display_backlight_get_autotimeoutsec(void)
+{
+  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 4, 8, 0, 255, bufx);
 }
 
 #endif /* _MSGGRP_DISPLAY_H */

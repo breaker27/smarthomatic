@@ -84,12 +84,15 @@ uint16_t device_id;
 uint32_t station_packetcounter;
 uint32_t deliver_packetcounter;
 uint8_t lcd_pages;
+uint8_t backlight_mode = 0;
+uint8_t auto_backlight_time_sec = 0;
+uint8_t auto_backlight_timeout = 0;
 
-uint16_t menu_status_cycle;
-uint16_t version_status_cycle;
-uint16_t send_status_timeout = 5;
+uint16_t menu_selection_status_cycle = 0;
+uint16_t backlight_status_cycle = 0;
+uint32_t version_status_cycle = 0;
+
 uint16_t deliver_ack_retries = 0;
-//uint32_t deliver_ack_packetcounter[DELIVER_ACK_RETRIES - 1];
 
 bool first_lcd_text = true;
 
@@ -196,6 +199,14 @@ void vlcd_blink_text(uint8_t y, uint8_t x, char * s, bool error_beep)
 	}
 }
 
+void lcd_backlight(bool on)
+{
+	if (on)
+		sbi(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN);
+	else
+		cbi(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN);
+}
+
 void send_deviceinfo_status(void)
 {
 	inc_packetcounter();
@@ -212,6 +223,22 @@ void send_deviceinfo_status(void)
 	msg_generic_deviceinfo_set_versionminor(VERSION_MINOR);
 	msg_generic_deviceinfo_set_versionpatch(VERSION_PATCH);
 	msg_generic_deviceinfo_set_versionhash(VERSION_HASH);
+
+	rfm12_send_bufx();
+}
+
+void send_display_backlight_mode(void)
+{
+	inc_packetcounter();
+
+	UART_PUTF2("Send Backlight: Mode %u, AutoTimeoutSec %u\r\n", backlight_mode, auto_backlight_time_sec);
+
+	// Set packet content
+	pkg_header_init_display_backlight_status();
+	pkg_header_set_senderid(device_id);
+	pkg_header_set_packetcounter(packetcounter);
+	msg_display_backlight_set_mode(backlight_mode);
+	msg_display_backlight_set_autotimeoutsec(auto_backlight_time_sec);
 
 	rfm12_send_bufx();
 }
@@ -300,7 +327,8 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		UART_PUTF("MessageID:%u;", messageid);
 
 		if (((messagegroupid == MESSAGEGROUP_DISPLAY)
-			&& (messageid != MESSAGEID_DISPLAY_TEXT))
+			&& (messageid != MESSAGEID_DISPLAY_TEXT)
+			&& (messageid != MESSAGEID_DISPLAY_BACKLIGHT))
 			||
 			((messagegroupid == MESSAGEGROUP_AUDIO)
 			&& (messageid != MESSAGEID_AUDIO_TONE)
@@ -399,6 +427,18 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 				sei();
 			}
 		}
+		else if (messagegroupid == MESSAGEGROUP_CONTROLLER)
+		{
+			if (messageid == MESSAGEID_CONTROLLER_MENUSELECTION)
+			{
+				for (uint8_t i = 0; i < 4; i++)
+				{
+					menu_value[i] = msg_controller_menuselection_get_index(i);
+					e2p_controller_set_menuoptionindex(i, menu_value[i]);
+					UART_PUTF2("Index[%u]:%u;", i, menu_value[i]);
+				}
+			}
+		}
 		else // MESSAGEGROUP_DISPLAY
 		{
 			if (messageid == MESSAGEID_DISPLAY_TEXT)
@@ -423,6 +463,19 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 				vlcd_gotoyx(y, x);
 				vlcd_puts(text);
 			}
+			else if (messageid == MESSAGEID_DISPLAY_BACKLIGHT)
+			{
+				backlight_mode = msg_display_backlight_get_mode();
+				UART_PUTF("Mode:%u;", backlight_mode);
+				lcd_backlight(backlight_mode == BACKLIGHTMODE_ON);
+
+				uint8_t t = msg_display_backlight_get_autotimeoutsec();
+
+				if (t != 0) {
+					auto_backlight_time_sec = t;
+					UART_PUTF("AutoBacklightTimeSec:%u;", t);
+				}
+			}
 		}
 	}
 
@@ -444,7 +497,7 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 				pkg_header_init_dimmer_coloranimation_ack();
 			}
 		}
-		else // MESSAGEGROUP_AUDIO
+		else if (messagegroupid == MESSAGEGROUP_AUDIO)
 		{
 			if (messageid == MESSAGEID_AUDIO_TONE)
 			{
@@ -455,10 +508,27 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 				pkg_header_init_audio_melody_ack();
 			}
 		}
+		else if (messagegroupid == MESSAGEGROUP_CONTROLLER)
+		{
+			if (messageid == MESSAGEID_CONTROLLER_MENUSELECTION)
+			{
+				pkg_header_init_controller_menuselection_ack();
+			}
+		}
+		else if (messagegroupid == MESSAGEGROUP_DISPLAY)
+		{
+			if (messageid == MESSAGEID_DISPLAY_TEXT)
+			{
+				pkg_header_init_display_text_ack();
+			}
+			else if (messageid == MESSAGEID_DISPLAY_BACKLIGHT)
+			{
+				pkg_header_init_display_backlight_ack();
+			}
+		}
 
 		UART_PUTS("\r\nSending Ack\r\n");
 		send_ack(acksenderid, ackpacketcounter, false);
-		send_status_timeout = 15;
 	}
 	// "Get" or "SetGet" -> send "AckStatus"
 	else if ((messagetype == MESSAGETYPE_GET) || (messagetype == MESSAGETYPE_SETGET))
@@ -491,7 +561,35 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 				msg_dimmer_coloranimation_set_autoreverse(animation.autoreverse);
 			}
 		}
-		else // MESSAGEGROUP_AUDIO
+		else if (messagegroupid == MESSAGEGROUP_CONTROLLER)
+		{
+			if (messageid == MESSAGEID_CONTROLLER_MENUSELECTION)
+			{
+				pkg_header_init_controller_menuselection_ackstatus();
+
+				for (uint8_t i = 0; i < 4; i++)
+				{
+					msg_controller_menuselection_set_index(i, menu_value[i]);
+				}
+			}
+		}
+		else if (messagegroupid == MESSAGEGROUP_DISPLAY)
+		{
+			if (messageid == MESSAGEID_DISPLAY_TEXT)
+			{
+				// Irregularly answer with an ackstatus with empty data.
+				// (We don't want to repeat the text.)
+				pkg_header_init_display_text_ackstatus();
+				// ... setting content skipped!
+			}
+			else if (messageid == MESSAGEID_DISPLAY_BACKLIGHT)
+			{
+				pkg_header_init_display_backlight_ackstatus();
+				msg_display_backlight_set_mode(backlight_mode);
+				msg_display_backlight_set_autotimeoutsec(auto_backlight_time_sec);
+			}
+		}
+		else if (messagegroupid == MESSAGEGROUP_AUDIO)
 		{
 			if (messageid == MESSAGEID_AUDIO_TONE)
 			{
@@ -518,7 +616,6 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 
 		UART_PUTS("\r\nSending AckStatus\r\n");
 		send_ack(acksenderid, ackpacketcounter, false);
-		send_status_timeout = 15;
 	}
 	// ACK for a previous "deliver" message?
 	else if (messagetype == MESSAGETYPE_ACK)
@@ -986,14 +1083,6 @@ void handle_key(uint8_t skey)
 	}
 }
 
-void lcd_backlight(bool on)
-{
-	if (on)
-		sbi(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN);
-	else
-		cbi(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN);
-}
-
 void io_init(void)
 {
 	// disable JTAG and therefore enable pins PC2-PC4 as normal I/O pins
@@ -1086,17 +1175,19 @@ MenuKeyEnum detect_key_debounced(void)
 	}
 }
 
-// TODO: Merke gesetzte Menüoptionen in E2P, wenn Deliver OK ist. Ansonsten alte Werte wiederholen, so wie auch bei Abbruch.
-// TODO: Setzen der Menüoption von außen (auch in FHEM umsetzen!).
+// TODO: In FHEM umsetzen, die Menu Selection zu setzen.
 // TODO: Support kleines LCD (inkl. Test).
-// TODO: Backlight Mode: On, Off, Auto + AutoBacklightTimeSec unterstützen
+// TODO: ATMega 1248(?) und mehr Menüoptionen (16 x 120 Zeichen)
 
 int main(void)
 {
 	uint8_t loop = 0;
 	uint8_t i;
-	uint16_t version_status_cycle;
-	uint16_t version_status_cycle_counter;
+
+	uint32_t version_status_cycle_counter;
+	uint16_t menu_selection_status_cycle_counter;
+	uint16_t backlight_status_cycle_counter;
+
 	uint8_t lcd_type;
 
 	MenuKeyEnum key;
@@ -1109,6 +1200,8 @@ int main(void)
 	device_id = e2p_generic_get_deviceid();
 	jump_back_sec_menu = e2p_controller_get_pagejumpbackseconds();
 	jump_back_sec_page = e2p_controller_get_menujumpbackseconds();
+	backlight_mode = e2p_controller_get_backlightmode();
+	auto_backlight_time_sec = e2p_controller_get_autobacklighttimesec();
 	sound = e2p_controller_get_sound();
 	lcd_pages = e2p_controller_get_lcdpages();
 	init_menu_item_max();
@@ -1119,7 +1212,15 @@ int main(void)
 	if (lcd_type != LCDTYPE_NONE)
 	{
 		vlcd_init(lcd_type == LCDTYPE_4X40);
-		lcd_backlight(true);
+
+		if ((backlight_mode == BACKLIGHTMODE_ON) || (backlight_mode == BACKLIGHTMODE_AUTO))
+			lcd_backlight(true);
+
+		if (backlight_mode == BACKLIGHTMODE_AUTO)
+		{
+			auto_backlight_timeout = auto_backlight_time_sec;
+		}
+
 		vlcd_gotoyx(0, 0);
 		VLCD_PUTS("smarthomatic");
 		vlcd_gotoyx(1, 0);
@@ -1140,9 +1241,14 @@ int main(void)
 	// read last received station packetcounter
 	station_packetcounter = e2p_controller_get_basestationpacketcounter();
 
-	menu_status_cycle = (uint16_t)e2p_controller_get_statuscycle() * 60;
-	version_status_cycle = (uint16_t)(90000UL / menu_status_cycle); // once every 25 hours
-	version_status_cycle_counter = version_status_cycle - 1; // send right after startup
+	version_status_cycle        = (uint32_t)(90000UL); // once every 25 hours
+	menu_selection_status_cycle = (uint16_t)e2p_controller_get_menuselectionstatuscycle() * 60;
+	backlight_status_cycle      = (uint16_t)e2p_controller_get_backlightstatuscycle() * 60;
+
+	// send all status messages right after startup
+	version_status_cycle_counter        = version_status_cycle - 5;
+	menu_selection_status_cycle_counter = menu_selection_status_cycle - 10;
+	backlight_status_cycle_counter      = backlight_status_cycle - 15;
 
 	rgb_led_brightness_factor = e2p_controller_get_brightnessfactor();
 
@@ -1155,12 +1261,15 @@ int main(void)
 	UART_PUTF ("DeviceID: %u\r\n", device_id);
 	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);
 	UART_PUTF ("Last received base station PacketCounter: %u\r\n", station_packetcounter);
-	UART_PUTF ("Menu status cycle: %us\r\n", menu_status_cycle);
-	UART_PUTF ("Version status cycle: %u * port status cycle\r\n", version_status_cycle);
+	UART_PUTF ("Version status cycle: %lus\r\n", version_status_cycle);
+	UART_PUTF ("Menu selection status cycle: %us\r\n", menu_selection_status_cycle);
+	UART_PUTF ("Backlight status cycle: %us\r\n", backlight_status_cycle);
 	UART_PUTF ("E2P brightness factor: %u%%\r\n", rgb_led_brightness_factor);
 	UART_PUTF ("LCD type: %u\r\n", lcd_type);
 	UART_PUTF ("Page jump back seconds: %u\r\n", jump_back_sec_page);
 	UART_PUTF ("Menu jump back seconds: %u\r\n", jump_back_sec_menu);
+	UART_PUTF ("Backlight mode: %u\r\n", backlight_mode);
+	UART_PUTF ("Auto backlight time seconds: %u\r\n", auto_backlight_time_sec);
 	UART_PUTF ("Sound: %u\r\n", sound);
 
 	// init AES key
@@ -1242,35 +1351,61 @@ int main(void)
 					vlcd_set_page(0);
 				}
 			}
-			else if (jump_back_sec > 0)
+			else
 			{
-				jump_back_sec--;
-
-				if (jump_back_sec == 0)
+				if (jump_back_sec > 0)
 				{
-					if (menu_item != -1)
-						leave_menu(false);
-					vlcd_set_page(0);
+					jump_back_sec--;
+
+					if (jump_back_sec == 0)
+					{
+						if (menu_item != -1)
+							leave_menu(false);
+						vlcd_set_page(0);
+					}
+				}
+
+				version_status_cycle_counter++;
+				menu_selection_status_cycle_counter++;
+				backlight_status_cycle_counter++;
+
+				// send status from time to time
+				if (!send_startup_reason(&mcusr_mirror))
+				{
+					//UART_PUTF2("Status counters: version %lu/%lu, ", version_status_cycle_counter, version_status_cycle);
+					//UART_PUTF2("menu selection %u/%u, ", menu_selection_status_cycle_counter, menu_selection_status_cycle);
+					//UART_PUTF2("backlight %u/%u\r\n", backlight_status_cycle_counter, backlight_status_cycle);
+
+					if (version_status_cycle_counter >= version_status_cycle)
+					{
+						version_status_cycle_counter = 0;
+						send_deviceinfo_status();
+						rfm12_send_wait_led();
+					}
+					else if (menu_selection_status_cycle_counter >= menu_selection_status_cycle)
+					{
+						menu_selection_status_cycle_counter = 0;
+						send_controller_menuselection_status(false);
+						rfm12_send_wait_led();
+					}
+					else if (backlight_status_cycle_counter >= backlight_status_cycle)
+					{
+						backlight_status_cycle_counter = 0;
+						send_display_backlight_mode();
+						rfm12_send_wait_led();
+					}
 				}
 			}
-			// send status from time to time
-			else if (!send_startup_reason(&mcusr_mirror))
-			{
-				send_status_timeout--;
 
-				if (send_status_timeout == 0)
+			if (backlight_mode == BACKLIGHTMODE_AUTO) {
+				if (auto_backlight_timeout > 0)
 				{
-					send_status_timeout = menu_status_cycle;
-					send_controller_menuselection_status(false);
-					rfm12_send_wait_led();
+					auto_backlight_timeout--;
 
-					version_status_cycle_counter++;
-				}
-				else if (version_status_cycle_counter >= version_status_cycle)
-				{
-					version_status_cycle_counter = 0;
-					send_deviceinfo_status();
-					rfm12_send_wait_led();
+					if (auto_backlight_timeout == 0)
+					{
+						lcd_backlight(false);
+					}
 				}
 			}
 		}
@@ -1286,6 +1421,13 @@ int main(void)
 
 			if (key != KEY_NONE)
 			{
+				if (backlight_mode == BACKLIGHTMODE_AUTO) {
+					if (auto_backlight_timeout == 0)
+						lcd_backlight(true);
+
+					auto_backlight_timeout = auto_backlight_time_sec;
+				}
+
 				handle_key(key);
 
 				while ((~MENU_CURSOR_PINREG & ((1 << MENU_UP_PIN) | (1 << MENU_DOWN_PIN) | (1 << MENU_LEFT_PIN) | (1 << MENU_RIGHT_PIN)))
