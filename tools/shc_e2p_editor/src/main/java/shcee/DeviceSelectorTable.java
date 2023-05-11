@@ -133,7 +133,7 @@ public class DeviceSelectorTable extends JTable
 	    		{
 		    		long length = filesAndDirs[i].length();
 
-		    		if ((length == 512) || (length == 1024) || (length == 2048))
+		    		if ((length == 512) || (length == 1024) || (length == 2048) || (length == 4096))
 		    		{
 						String name = filesAndDirs[i].getName();
 						name = name.substring(0, name.length() - 4);
