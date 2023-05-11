@@ -60,6 +60,8 @@ else ifeq ($(MCU),atmega324pa)
 	AVRDUDEMCU = m324pa
 else ifeq ($(MCU),atmega644p)
 	AVRDUDEMCU = m644p
+else ifeq ($(MCU),atmega1284p)
+	AVRDUDEMCU = m1284p
 endif
 
 # Create final output files (.hex, .eep) from ELF output file.
