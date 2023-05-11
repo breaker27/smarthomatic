@@ -1177,7 +1177,6 @@ MenuKeyEnum detect_key_debounced(void)
 
 // TODO: In FHEM umsetzen, die Menu Selection zu setzen.
 // TODO: Support kleines LCD (inkl. Test).
-// TODO: ATMega 1248(?) und mehr Menüoptionen (16 x 120 Zeichen)
 
 int main(void)
 {

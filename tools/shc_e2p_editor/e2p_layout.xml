@@ -789,7 +789,7 @@
 			<RefID>DeviceType</RefID>
 			<Value>45</Value>
 		</Restriction>
-		<MicrocontrollerModel>m644p</MicrocontrollerModel>
+		<MicrocontrollerModel>m1284p</MicrocontrollerModel>
 		<UIntValue>
 			<ID>BaseStationPacketCounter</ID>
 			<Description>This is the last remembered packet counter of a command from the base station. Packets with the same or lower number are ignored.</Description>
@@ -799,7 +799,7 @@
 		</UIntValue>
 		<UIntValue>
 			<ID>BrightnessFactor</ID>
-			<Description>This value reduces the overall brightness. This is to easily adjust it to your needs without changing the LED series resistors. WARNING: It is recommended to use this only for testing, because it reduces the amount of different brightness levels. Changing the resistors is to be preferred.</Description>
+			<Description>This value reduces the overall brightness for the RGB LEDs. This is to easily adjust it to your needs without changing the LED series resistors. WARNING: It is recommended to use this only for testing, because it reduces the amount of different brightness levels. Changing the resistors is to be preferred.</Description>
 			<Bits>8</Bits>
 			<MinVal>1</MinVal>
 			<MaxVal>100</MaxVal>
@@ -883,7 +883,7 @@
 			<Bits>8</Bits>
 			<MinVal>0</MinVal>
 			<MaxVal>255</MaxVal>
-			<DefaultVal>30</DefaultVal>
+			<DefaultVal>60</DefaultVal>
 		</UIntValue>
 		<UIntValue>
 			<ID>MenuJumpBackSeconds</ID>
@@ -891,7 +891,7 @@
 			<Bits>8</Bits>
 			<MinVal>0</MinVal>
 			<MaxVal>255</MaxVal>
-			<DefaultVal>30</DefaultVal>
+			<DefaultVal>60</DefaultVal>
 		</UIntValue>
 		<EnumValue>
 			<ID>BacklightMode</ID>
@@ -920,7 +920,7 @@
 			<DefaultVal>60</DefaultVal>
 		</UIntValue>
 		<Array>
-			<Length>8</Length>
+			<Length>16</Length>
 			<ByteArray>
 				<ID>MenuOption</ID>
 				<Description>These are up to 16 strings that define options that the user can select. Each entry is defined with a name and several options to select, which are separated with a pipe character '|'. Leave the string empty when there shall be no more options to select. Currently, only the first 4 entries are supported.</Description>
@@ -928,7 +928,7 @@
 			</ByteArray>
 		</Array>
 		<Array>
-			<Length>8</Length>
+			<Length>16</Length>
 			<UIntValue>
 				<ID>MenuOptionIndex</ID>
 				<Description>This is the index of the currently selected value. It's saved to the E2P to be available also after power loss.</Description>
@@ -962,7 +962,7 @@
 			<DefaultVal>43616E63656C6C65640000000000000000000000</DefaultVal>
 		</ByteArray>
 		<Reserved>
-			<Bits>7384</Bits>
+			<Bits>16016</Bits>
 		</Reserved>
 	</Block>
 	<Block>

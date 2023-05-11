@@ -29,7 +29,7 @@
 // E2P Block "Controller"
 // ======================
 // Start offset (bit): 512
-// Overall block length: 15880 bits
+// Overall block length: 32256 bits
 
 // BaseStationPacketCounter (UIntValue)
 // Description: This is the last remembered packet counter of a command from the base station. Packets with the same or lower number are ignored.
@@ -49,7 +49,7 @@ static inline uint32_t e2p_controller_get_basestationpacketcounter(void)
 }
 
 // BrightnessFactor (UIntValue)
-// Description: This value reduces the overall brightness. This is to easily adjust it to your needs without changing the LED series resistors. WARNING: It is recommended to use this only for testing, because it reduces the amount of different brightness levels. Changing the resistors is to be preferred.
+// Description: This value reduces the overall brightness for the RGB LEDs. This is to easily adjust it to your needs without changing the LED series resistors. WARNING: It is recommended to use this only for testing, because it reduces the amount of different brightness levels. Changing the resistors is to be preferred.
 
 // Set BrightnessFactor (UIntValue)
 // Offset: 536, length bits 8, min val 1, max val 100
@@ -263,7 +263,7 @@ static inline uint8_t e2p_controller_get_autobacklighttimesec(void)
   return eeprom_read_UIntValue8(616, 8, 1, 255);
 }
 
-// MenuOption (ByteArray[8])
+// MenuOption (ByteArray[16])
 // Description: These are up to 16 strings that define options that the user can select. Each entry is defined with a name and several options to select, which are separated with a pipe character '|'. Leave the string empty when there shall be no more options to select. Currently, only the first 4 entries are supported.
 
 // Set MenuOption (ByteArray)
@@ -280,93 +280,93 @@ static inline void e2p_controller_get_menuoption(uint8_t index, void *dst)
   eeprom_read_block(dst, (uint8_t *)((624 + (uint16_t)index * 960) / 8), 120);
 }
 
-// MenuOptionIndex (UIntValue[8])
+// MenuOptionIndex (UIntValue[16])
 // Description: This is the index of the currently selected value. It's saved to the E2P to be available also after power loss.
 
 // Set MenuOptionIndex (UIntValue)
-// Offset: 8304, length bits 8, min val 0, max val 255
+// Offset: 15984, length bits 8, min val 0, max val 255
 static inline void e2p_controller_set_menuoptionindex(uint8_t index, uint8_t val)
 {
-  eeprom_write_UIntValue(8304 + (uint16_t)index * 8, 8, val);
+  eeprom_write_UIntValue(15984 + (uint16_t)index * 8, 8, val);
 }
 
 // Get MenuOptionIndex (UIntValue)
-// Offset: 8304, length bits 8, min val 0, max val 255
+// Offset: 15984, length bits 8, min val 0, max val 255
 static inline uint8_t e2p_controller_get_menuoptionindex(uint8_t index)
 {
-  return eeprom_read_UIntValue8(8304 + (uint16_t)index * 8, 8, 0, 255);
+  return eeprom_read_UIntValue8(15984 + (uint16_t)index * 8, 8, 0, 255);
 }
 
 // MenuTextSendOptions (ByteArray)
 // Description: This text is shown when menu options are sent. The default text is 'Sending Options'. You can use 'Sende Optionen' as german translation.
 
 // Set MenuTextSendOptions (ByteArray)
-// Offset: 8368, length bits 160
+// Offset: 16112, length bits 160
 static inline void e2p_controller_set_menutextsendoptions(void *src)
 {
-  eeprom_write_block(src, (uint8_t *)((8368) / 8), 20);
+  eeprom_write_block(src, (uint8_t *)((16112) / 8), 20);
 }
 
 // Get MenuTextSendOptions (ByteArray)
-// Offset: 8368, length bits 160
+// Offset: 16112, length bits 160
 static inline void e2p_controller_get_menutextsendoptions(void *dst)
 {
-  eeprom_read_block(dst, (uint8_t *)((8368) / 8), 20);
+  eeprom_read_block(dst, (uint8_t *)((16112) / 8), 20);
 }
 
 // MenuTextSuccess (ByteArray)
 // Description: This text is shown when sending menu options was successful. The default text is 'Success'. You can use 'Erfolgreich' as german translation.
 
 // Set MenuTextSuccess (ByteArray)
-// Offset: 8528, length bits 160
+// Offset: 16272, length bits 160
 static inline void e2p_controller_set_menutextsuccess(void *src)
 {
-  eeprom_write_block(src, (uint8_t *)((8528) / 8), 20);
+  eeprom_write_block(src, (uint8_t *)((16272) / 8), 20);
 }
 
 // Get MenuTextSuccess (ByteArray)
-// Offset: 8528, length bits 160
+// Offset: 16272, length bits 160
 static inline void e2p_controller_get_menutextsuccess(void *dst)
 {
-  eeprom_read_block(dst, (uint8_t *)((8528) / 8), 20);
+  eeprom_read_block(dst, (uint8_t *)((16272) / 8), 20);
 }
 
 // MenuTextFailed (ByteArray)
 // Description: This text is shown when sending menu options failed. The default text is 'Failed'. You can use 'Fehlgeschlagen' as german translation.
 
 // Set MenuTextFailed (ByteArray)
-// Offset: 8688, length bits 160
+// Offset: 16432, length bits 160
 static inline void e2p_controller_set_menutextfailed(void *src)
 {
-  eeprom_write_block(src, (uint8_t *)((8688) / 8), 20);
+  eeprom_write_block(src, (uint8_t *)((16432) / 8), 20);
 }
 
 // Get MenuTextFailed (ByteArray)
-// Offset: 8688, length bits 160
+// Offset: 16432, length bits 160
 static inline void e2p_controller_get_menutextfailed(void *dst)
 {
-  eeprom_read_block(dst, (uint8_t *)((8688) / 8), 20);
+  eeprom_read_block(dst, (uint8_t *)((16432) / 8), 20);
 }
 
 // MenuTextCancel (ByteArray)
 // Description: This text is shown when sending menu options was cancelled. The default text is 'Cancelled'. You can use 'Abbruch' as german translation.
 
 // Set MenuTextCancel (ByteArray)
-// Offset: 8848, length bits 160
+// Offset: 16592, length bits 160
 static inline void e2p_controller_set_menutextcancel(void *src)
 {
-  eeprom_write_block(src, (uint8_t *)((8848) / 8), 20);
+  eeprom_write_block(src, (uint8_t *)((16592) / 8), 20);
 }
 
 // Get MenuTextCancel (ByteArray)
-// Offset: 8848, length bits 160
+// Offset: 16592, length bits 160
 static inline void e2p_controller_get_menutextcancel(void *dst)
 {
-  eeprom_read_block(dst, (uint8_t *)((8848) / 8), 20);
+  eeprom_read_block(dst, (uint8_t *)((16592) / 8), 20);
 }
 
-// Reserved area with 7384 bits
-// Offset: 9008
+// Reserved area with 16016 bits
+// Offset: 16752
 
 
 #endif /* _E2P_CONTROLLER_H */
