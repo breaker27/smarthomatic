@@ -105,7 +105,7 @@ uint8_t jump_back_sec = 0;
 uint8_t jump_back_sec_menu = 0;
 uint8_t jump_back_sec_page = 0;
 SoundEnum sound = 0;
-char text[41];
+char text[121];
 
 #define TIMER1_TICK_DIVIDER 8 // 244 Hz / 8 = 32ms per animation_tick
 uint8_t timer1_tick_divider = TIMER1_TICK_DIVIDER;
@@ -205,6 +205,22 @@ void lcd_backlight(bool on)
 		sbi(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN);
 	else
 		cbi(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN);
+}
+
+// count occurrences of a character in a string
+uint8_t findccount(const char* s, char c)
+{
+	uint8_t count = 0;
+
+	while (*s)
+	{
+		if (*s == c)
+			count++;
+
+		s++;
+	}
+
+	return count;
 }
 
 void send_deviceinfo_status(void)
@@ -431,11 +447,24 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		{
 			if (messageid == MESSAGEID_CONTROLLER_MENUSELECTION)
 			{
-				for (uint8_t i = 0; i < 4; i++)
+				uint8_t i, x, value_count;
+
+				for (i = 0; i <= menu_item_max; i++)
 				{
-					menu_value[i] = msg_controller_menuselection_get_index(i);
-					e2p_controller_set_menuoptionindex(i, menu_value[i]);
-					UART_PUTF2("Index[%u]:%u;", i, menu_value[i]);
+					x = msg_controller_menuselection_get_index(i);
+					UART_PUTF2("Index[%u]:%u;", i, x);
+
+					if (x != 0) { // 0 = not to be updated
+						e2p_controller_get_menuoption(i, text);
+
+						value_count = findccount(text, '|');
+
+						if (x <= value_count) // within range of available options?
+						{
+							menu_value[i] = x - 1;
+							e2p_controller_set_menuoptionindex(i, menu_value[i]);
+						}
+					}
 				}
 			}
 		}
@@ -567,9 +596,9 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 			{
 				pkg_header_init_controller_menuselection_ackstatus();
 
-				for (uint8_t i = 0; i < 4; i++)
+				for (uint8_t i = 0; i <= menu_item_max; i++)
 				{
-					msg_controller_menuselection_set_index(i, menu_value[i]);
+					msg_controller_menuselection_set_index(i, menu_value[i] + 1);
 				}
 			}
 		}
@@ -760,22 +789,6 @@ uint8_t findc(const char* s, char c, uint8_t occurrence)
 	return 255;
 }
 
-// count occurrences of a character in a string
-uint8_t findccount(const char* s, char c)
-{
-	uint8_t count = 0;
-
-	while (*s)
-	{
-		if (*s == c)
-			count++;
-
-		s++;
-	}
-
-	return count;
-}
-
 void key_tone_ok(void)
 {
 	if ((sound == SOUND_KEY) || (sound == SOUND_KEY_SAVECANCEL))
@@ -796,14 +809,23 @@ void key_tone_err(void)
 	}
 }
 
+// find number of menu items and max length of menu value names
 void init_menu_item_max(void)
 {
 	uint8_t i;
-
-	// find number of menu items and max length of menu value names
 	menu_item_name_length_max = 0;
 	menu_item_max = 0;
 
+	// enforce that one item is available
+	e2p_controller_get_menuoption(0, text);
+
+	if (text[0] == 0)
+	{
+		strcpy(text, "Option1|Value1|Value2");
+		e2p_controller_set_menuoption(0, text);
+	}
+
+	// search for last item
 	for (i = 0; i < 4; i++)
 	{
 		e2p_controller_get_menuoption(i, text);
@@ -813,6 +835,8 @@ void init_menu_item_max(void)
 			menu_item_name_length_max = max8(menu_item_name_length_max, findc(text, '|', 1));
 			menu_item_max = i;
 		}
+		else
+			break;
 	}
 }
 
@@ -1175,7 +1199,6 @@ MenuKeyEnum detect_key_debounced(void)
 	}
 }
 
-// TODO: In FHEM umsetzen, die Menu Selection zu setzen.
 // TODO: Support kleines LCD (inkl. Test).
 
 int main(void)
@@ -1306,6 +1329,10 @@ int main(void)
 				print_bytearray(bufx, len);
 
 				aes256_decrypt_cbc(bufx, len);
+
+				// Set the (len+1)th byte to 0, because the last packet content (from the last byte)
+				// may be smaller than 8 bits and is read per byte in decode_data.
+				bufx[len] = 0;
 
 				UART_PUTS("Decrypted bytes: ");
 				print_bytearray(bufx, len);
