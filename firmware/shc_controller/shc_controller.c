@@ -909,7 +909,7 @@ void init_menu(void)
 
 void leave_menu(bool save)
 {
-	vlcd_clear_page(2);
+	vlcd_clear_page(VIRTUAL_LCD_PAGES - 1);
 	e2p_controller_get_menutextcancel(text);
 
 	if (save)
