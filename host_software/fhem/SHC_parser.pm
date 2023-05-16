@@ -272,10 +272,14 @@ sub parse
 
   $sendMode = 0;
 
+  # PKT:SID=56;PC=1816;MT=3;RID=0;MGID=45;MID=1;MD=010105;efc28d5e
   if (
     (
       $msg =~
 /^PKT:SID=(\d+);PC=(\d+);MT=(\d+);MGID=(\d+);MID=(\d+);MD=([^;]+);.*/
+    )
+    || ($msg =~
+/^PKT:SID=(\d+);PC=(\d+);MT=(3);RID=0;MGID=(\d+);MID=(\d+);MD=([^;]+);.*/
     )
     || ($msg =~
 /^PKT:SID=(\d+);PC=(\d+);MT=(\d+);ASID=\d+;APC=\d+;E=\d+;MGID=(\d+);MID=(\d+);MD=([^;]+);.*/

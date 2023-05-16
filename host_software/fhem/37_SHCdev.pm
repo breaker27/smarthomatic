@@ -225,7 +225,7 @@ sub SHCdev_Parse($$)
     return "UNDEFINED SHCdev_$rname SHCdev $raddr";
   }
 
-  if (($msgtypename ne "Status") && ($msgtypename ne "AckStatus")) {
+  if (($msgtypename ne "Status") && ($msgtypename ne "AckStatus") && ($msgtypename ne "Deliver")) {
     Log3 $name, 3, "$rname: Ignoring MessageType $msgtypename";
     return "";
   }
