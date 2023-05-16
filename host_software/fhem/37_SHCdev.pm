@@ -726,7 +726,7 @@ sub SHCdev_Set($@)
       $parser->setField("Dimmer", "Brightness", "Brightness", $brightness);
       SHCdev_Send($hash);
     } elsif ($cmd eq 'Text') {
-      $parser->initPacket("Display", "Text", "SetGet");
+      $parser->initPacket("Display", "Text", "Set");
       $parser->setField("Display", "Text", "PosY", $arg);
       $parser->setField("Display", "Text", "PosX", $arg2);
       $parser->setField("Display", "Text", "Format", $arg3);
