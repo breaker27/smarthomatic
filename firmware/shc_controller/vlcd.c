@@ -68,8 +68,6 @@ void vlcd_clear_page(uint8_t page)
 
 	if (page == current_page)
 		lcd_clear();
-
-	lcd_clear();
 }
 
 void vlcd_putc(char c)
@@ -127,7 +125,7 @@ void vlcd_set_page(uint8_t page)
 		{
 			lcd_gotoyx(y, 0);
 
-			for (uint8_t x = 0; x < VIRTUAL_LCD_SCREEN_WIDTH; x++)
+			for (uint8_t x = 0; x < vlcd_chars_per_line; x++)
 				lcd_putc(lcd_data[page * 4 + y][x]);
 		}
 	}
