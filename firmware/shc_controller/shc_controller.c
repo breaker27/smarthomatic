@@ -1199,8 +1199,6 @@ MenuKeyEnum detect_key_debounced(void)
 	}
 }
 
-// TODO: Support kleines LCD (inkl. Test).
-
 int main(void)
 {
 	uint8_t loop = 0;
@@ -1214,7 +1212,7 @@ int main(void)
 
 	MenuKeyEnum key;
 
-	// delay 1s to avoid further communication with uart or RFM12 when my programmer resets the MC after 500ms...
+	// delay 1s to avoid further communication with UART or RFM12 when my programmer resets the MC after 500ms...
 	_delay_ms(1000);
 
 	check_eeprom_compatibility(DEVICETYPE_CONTROLLER);
