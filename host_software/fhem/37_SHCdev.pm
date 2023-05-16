@@ -98,6 +98,8 @@ my %sets = (
                            "ColorAnimation " .
                            "Dimmer.Brightness:slider,0,1,100 " .
                            "Text " .
+                           "MenuSelection " .
+                           "Backlight " .
                            "Tone " .
                            "Melody",
   "RGBDimmer"           => "Color " .
@@ -417,6 +419,14 @@ sub SHCdev_Parse($$)
         readingsBulkUpdate($rhash, "color$i", $color);
       }
     }
+  } elsif ($msggroupname eq "Display") {
+    if ($msgname eq "Backlight") {
+      my $mode = $parser->getField("Mode");
+      my $autotimeoutsec = $parser->getField("AutoTimeoutSec");
+
+      readingsBulkUpdate($rhash, "backlightMode",        $mode);
+      readingsBulkUpdate($rhash, "backlightAutoTimeSec", $autotimeoutsec);
+	}
   }
 
   # If the devtype is defined add, if not already done, the according webCmds and devStateIcons
@@ -733,6 +743,19 @@ sub SHCdev_Set($@)
       $arg4 =~ s/(?<!\\)\\8/\x08/g; # replace \8 with character 8 (user character)
       $parser->setField("Display", "Text", "Text", $arg4);
       SHCdev_Send($hash);
+    } elsif ($cmd eq 'Backlight') {
+      $parser->initPacket("Display", "Backlight", "SetGet");
+      $parser->setField("Display", "Backlight", "Mode", $arg);
+      $parser->setField("Display", "Backlight", "AutoTimeoutSec", $arg2);
+      SHCdev_Send($hash);
+    } elsif ($cmd eq 'MenuSelection') {
+      $parser->initPacket("Controller", "MenuSelection", "SetGet");
+      for (my $i = 0 ; $i < 16 ; $i = $i + 1) {
+        if (defined($aa[$i + 1])) {
+          $parser->setField("Controller", "MenuSelection", "Index", $aa[$i + 1], $i);
+        }
+      }
+      SHCdev_Send($hash);
     } else {
       return SetExtensions($hash, "", $name, @aa);
     }
@@ -916,10 +939,16 @@ sub SHCdev_Send($)
         Supported by RGBDimmer.
     </li><br>
     <li>Text &lt;PosY&gt; &lt;PosX&gt; &lt;Format&gt; &lt;Text&gt;<br>
-        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Display_Text">www.smarthomatic.org</a>. Supported by Controller.<br/>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Display_Text">www.smarthomatic.org</a>. Supported by Controller.<br>
         <b>Note:</b> Since FHEM parameters can't include spaces, there is a special form to enter them.
         To add a space to the text, use the underline character (e.g. 'Hello_world').
         If you want to send an underline character, escape it with the backslash (e.g. '\_test\_').
+    </li><br>
+    <li>MenuSelection &lt;Index00&gt; &lt;Index01&gt; ... &lt;Index15&gt;<br>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Controller_MenuSelection">www.smarthomatic.org</a>. Supported by Controller.
+    </li><br>
+    <li>Backlight &lt;Mode&gt; &lt;AutoTimeoutSec&gt;<br>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Display_Backlight">www.smarthomatic.org</a>. Supported by Controller.
     </li><br>
     <li>DigitalPin &lt;Pos&gt; &lt;On&gt;<br>
         A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#GPIO_DigitalPin">www.smarthomatic.org</a>.
