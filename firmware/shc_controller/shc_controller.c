@@ -35,6 +35,17 @@
 #include "../src_common/e2p_generic.h"
 #include "../src_common/e2p_controller.h"
 
+#include "../src_common/aes256.h"
+#include "../src_common/util.h"
+#include "../src_common/util_watchdog_init.h"
+#include "version.h"
+#include "vlcd.h"
+#include "rgb_led.h"
+
+#define RFM_RESET_PIN 3
+#define RFM_RESET_PORT_NR 1
+#define RFM_RESET_PIN_STATE 1
+
 #define LED_PIN 7
 #define LED_PORT PORTD
 #define LED_DDR DDRD
@@ -42,15 +53,6 @@
 #define LCD_BACKLIGHT_PORT  PORTC
 #define LCD_BACKLIGHT_DDR   DDRC
 #define LCD_BACKLIGHT_PIN   2
-
-#include "../src_common/aes256.h"
-#include "../src_common/util.h"
-#include "version.h"
-#include "vlcd.h"
-
-#define RFM_RESET_PIN 3
-#define RFM_RESET_PORT_NR 1
-#define RFM_RESET_PIN_STATE 1
 
 #define MENU_CURSOR_PORT   PORTA
 #define MENU_CURSOR_PINREG PINA
@@ -66,10 +68,6 @@
 
 #define DELIVER_ACK_RETRIES 6 // real tries are one lower, because the last cycle is only for waiting for the Ack
 
-#include "../src_common/util_watchdog_init.h"
-
-#include "rgb_led.h"
-
 typedef enum {
 	KEY_NONE = 0,
 	KEY_UP = 1,
@@ -83,18 +81,18 @@ typedef enum {
 uint16_t device_id;
 uint32_t station_packetcounter;
 uint32_t deliver_packetcounter;
+
+uint32_t version_status_cycle = 0;
+uint16_t menu_selection_status_cycle = 0;
+uint16_t backlight_status_cycle = 0;
+uint16_t deliver_ack_retries = 0;
+
 uint8_t lcd_pages;
+bool first_lcd_text = true;
+
 uint8_t backlight_mode = 0;
 uint8_t auto_backlight_time_sec = 0;
 uint8_t auto_backlight_timeout = 0;
-
-uint16_t menu_selection_status_cycle = 0;
-uint16_t backlight_status_cycle = 0;
-uint32_t version_status_cycle = 0;
-
-uint16_t deliver_ack_retries = 0;
-
-bool first_lcd_text = true;
 
 int8_t  menu_item = -1; // -1 == Menu OFF
 uint8_t menu_value[4] = { 0, 0, 0, 0 };
@@ -208,7 +206,7 @@ void lcd_backlight(bool on)
 }
 
 // count occurrences of a character in a string
-uint8_t findccount(const char* s, char c)
+uint8_t find_char_count(const char* s, char c)
 {
 	uint8_t count = 0;
 
@@ -457,7 +455,7 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 					if (x != 0) { // 0 = not to be updated
 						e2p_controller_get_menuoption(i, text);
 
-						value_count = findccount(text, '|');
+						value_count = find_char_count(text, '|');
 
 						if (x <= value_count) // within range of available options?
 						{
@@ -768,7 +766,7 @@ void process_packet(uint8_t len)
 }
 
 // return first position of character in string
-uint8_t findc(const char* s, char c, uint8_t occurrence)
+uint8_t find_char(const char* s, char c, uint8_t occurrence)
 {
 	uint8_t pos = 0;
 
@@ -832,7 +830,7 @@ void init_menu_item_max(void)
 
 		if (text[0] != 0)
 		{
-			menu_item_name_length_max = max8(menu_item_name_length_max, findc(text, '|', 1));
+			menu_item_name_length_max = max8(menu_item_name_length_max, find_char(text, '|', 1));
 			menu_item_max = i;
 		}
 		else
@@ -863,8 +861,8 @@ void init_menu(void)
 
 		if (text[0] != 0)
 		{
-			len = findc(text, '|', 1);
-			value_count = findccount(text, '|');
+			len = find_char(text, '|', 1);
+			value_count = find_char_count(text, '|');
 
 			if (value_count > 0)
 			{
@@ -881,7 +879,7 @@ void init_menu(void)
 				else
 					vlcd_putc(' ');
 
-				j = findc(text, '|', menu_value_tmp[i] + 1) + 1;
+				j = find_char(text, '|', menu_value_tmp[i] + 1) + 1;
 
 				while (text[j] && (text[j] != '|'))
 				{
@@ -943,7 +941,7 @@ void menu_item_print(uint8_t item, bool selected)
 	else
 		vlcd_putc(' ');
 
-	j = findc(text, '|', menu_value_tmp[item] + 1) + 1;
+	j = find_char(text, '|', menu_value_tmp[item] + 1) + 1;
 
 	while (text[j] && (text[j] != '|'))
 	{
@@ -1000,7 +998,7 @@ void menu_right(void)
 {
 	e2p_controller_get_menuoption(menu_item, text);
 
-	uint8_t value_count = findccount(text, '|');
+	uint8_t value_count = find_char_count(text, '|');
 
 	if (menu_value_tmp[menu_item] < value_count - 1)
 	{
