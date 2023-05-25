@@ -1265,8 +1265,8 @@ int main(void)
 
 	// send all status messages right after startup
 	version_status_cycle_counter        = version_status_cycle - 5;
-	menu_selection_status_cycle_counter = menu_selection_status_cycle - 10;
-	backlight_status_cycle_counter      = backlight_status_cycle - 15;
+	menu_selection_status_cycle_counter = menu_selection_status_cycle == 0 ? 0 : menu_selection_status_cycle - 10;
+	backlight_status_cycle_counter      = backlight_status_cycle == 0 ? 0 : backlight_status_cycle - 15;
 
 	rgb_led_brightness_factor = e2p_controller_get_brightnessfactor();
 
@@ -1388,8 +1388,12 @@ int main(void)
 				}
 
 				version_status_cycle_counter++;
-				menu_selection_status_cycle_counter++;
-				backlight_status_cycle_counter++;
+
+				if (menu_selection_status_cycle)
+					menu_selection_status_cycle_counter++;
+
+				if (backlight_status_cycle)
+					backlight_status_cycle_counter++;
 
 				// send status from time to time
 				if (!send_startup_reason(&mcusr_mirror))
@@ -1404,13 +1408,13 @@ int main(void)
 						send_deviceinfo_status();
 						rfm12_send_wait_led();
 					}
-					else if (menu_selection_status_cycle_counter >= menu_selection_status_cycle)
+					else if (menu_selection_status_cycle && (menu_selection_status_cycle_counter >= menu_selection_status_cycle))
 					{
 						menu_selection_status_cycle_counter = 0;
 						send_controller_menuselection_status(false);
 						rfm12_send_wait_led();
 					}
-					else if (backlight_status_cycle_counter >= backlight_status_cycle)
+					else if (backlight_status_cycle && (backlight_status_cycle_counter >= backlight_status_cycle))
 					{
 						backlight_status_cycle_counter = 0;
 						send_display_backlight_mode();
