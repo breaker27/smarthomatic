@@ -815,11 +815,11 @@
 		</UIntValue>
 		<UIntValue>
 			<ID>MenuSelectionStatusCycle</ID>
-			<Description>This is the number of minutes after which the menu selection should be resent, so in case of a lost message it can be received again. Since MenuSelection updates are sent with a Deliver message, it's usually not necessary to send it often. Set 0 to disable.</Description>
+			<Description>This is the number of minutes after which the menu selection should be resent, so in case of a lost message it can be received again. Since MenuSelection updates are sent with a Deliver message, it's usually not necessary to send it often. In case the menu contains relative time values it is even problematic to send it when not explicitly selected by the user. Set 0 to disable.</Description>
 			<Bits>8</Bits>
 			<MinVal>0</MinVal>
 			<MaxVal>255</MaxVal>
-			<DefaultVal>40</DefaultVal>
+			<DefaultVal>0</DefaultVal>
 		</UIntValue>
 		<UIntValue>
 			<ID>BacklightStatusCycle</ID>
