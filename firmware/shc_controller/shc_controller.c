@@ -1190,7 +1190,7 @@ MenuKeyEnum detect_key_debounced(void)
 			ms = 0;
 		}
 
-		if (ms >= 80)
+		if (ms >= 20)
 			return key;
 
 		rfm12_delay20();
