@@ -56,7 +56,7 @@ void PWM_init(void)
 	// OC2B (Blue LED):  Phase correct PWM, 8 Bit, TOP = 0xFF = 255, non-inverting output
 	TCCR2A = (1 << WGM20) | (1 << COM2B1);
 
-	// Clock source for timer 0 and 2 = I/O clock, 1/64 prescaler -> ~ 244 Hz
+	// Clock source for timer 0 and 2 = I/O clock, 1/64 prescaler -> ~ 244 Hz at 8 Mhz, ~ 610 Hz at 20 MHz
 	TCCR0B = (1 << CS01) | (1 << CS00);
 	TCCR2B = (1 << CS21) | (1 << CS20);
 

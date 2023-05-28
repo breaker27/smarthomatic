@@ -55,7 +55,7 @@ uint32_t station_packetcounter;
 uint16_t send_status_timeout = 15;
 uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly after startup
 
-#define TIMER1_TICK_DIVIDER 8 // 244 Hz / 8 = 32ms per animation_tick
+#define TIMER1_TICK_DIVIDER (F_CPU / 1000000) // 244 Hz / 8 = 32ms per animation_tick
 uint8_t timer1_tick_divider = TIMER1_TICK_DIVIDER;
 
 ISR (TIMER0_OVF_vect)

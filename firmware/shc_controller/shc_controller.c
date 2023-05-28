@@ -105,7 +105,7 @@ uint8_t jump_back_sec_page = 0;
 SoundEnum sound = 0;
 char text[121];
 
-#define TIMER1_TICK_DIVIDER 8 // 244 Hz / 8 = 32ms per animation_tick
+#define TIMER1_TICK_DIVIDER (F_CPU / 1000000) // 610 Hz / 20 = 32ms per animation_tick
 uint8_t timer1_tick_divider = TIMER1_TICK_DIVIDER;
 
 uint8_t max8(uint8_t a, uint8_t b)
@@ -138,10 +138,10 @@ void melody_async(bool ok)
 		melody.repeat = 1;
 		melody.autoreverse = false;
 
-		melody_time[0]       = 4;
-		melody_time[1]       = 4;
-		melody_time[2]       = 4;
-		melody_time[3]       = 4;
+		melody_time[0]       = 2;
+		melody_time[1]       = 2;
+		melody_time[2]       = 2;
+		melody_time[3]       = 2;
 		melody_effect[0]     = 0;
 		melody_effect[1]     = 0;
 		melody_effect[2]     = 0;
