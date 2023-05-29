@@ -2,7 +2,7 @@
 # This file is part of the smarthomatic module for FHEM.
 #
 # Copyright (c) 2014 Stefan Baumann
-#               2014, 2015, 2019, 2022 Uwe Freese
+#               2014, 2015, 2019, 2022, 2023 Uwe Freese
 #
 # You can find smarthomatic at www.smarthomatic.org.
 # You can find FHEM at www.fhem.de.
@@ -376,6 +376,11 @@ sub SHCdev_Parse($$)
         if ($index != 0) {
           readingsBulkUpdate($rhash, sprintf("index%02d", $i), $index);
 		}
+      }
+
+      # remember delivery (= user selection)
+      if ($msgtypename eq "Deliver") {
+        readingsBulkUpdate($rhash, "menuSelectionDelivery", 1);
       }
     }
   } elsif ($msggroupname eq "Audio") {
@@ -945,7 +950,8 @@ sub SHCdev_Send($)
         If you want to send an underline character, escape it with the backslash (e.g. '\_test\_').
     </li><br>
     <li>MenuSelection &lt;Index00&gt; &lt;Index01&gt; ... &lt;Index15&gt;<br>
-        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Controller_MenuSelection">www.smarthomatic.org</a>. Supported by Controller.
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Controller_MenuSelection">www.smarthomatic.org</a>. Supported by Controller.<br>
+        When the MenuSelection was initiated by the user with the controller, the reading <b>menuSelectionDelivery</b> will be set additionally to the index00, ... readings. This can be used to distinguish if the menu selection was user initiated or done programmatically by a FHEM "set" command, especially to keep more than one controller with the same options in sync reacting on a change of the menuSelectionDelivery reading.
     </li><br>
     <li>Backlight &lt;Mode&gt; &lt;AutoTimeoutSec&gt;<br>
         A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Display_Backlight">www.smarthomatic.org</a>. Supported by Controller.
