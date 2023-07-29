@@ -136,7 +136,7 @@ void io_init(void)
 	sbi(BUTTON_PORT, BUTTON_LEFT_PIN);
 	cbi(BUTTON_DDR,  BUTTON_RIGHT_PIN);
 	sbi(BUTTON_PORT, BUTTON_RIGHT_PIN);
-	
+
 	// set output pins
 	sbi(WINCH_PWR_DDR, WINCH_PWR_PIN);
 }
@@ -182,7 +182,7 @@ void winch_accelerate(int8_t startPercentage, int8_t endPercentage, uint16_t ms)
 {
 	int16_t steps = ms / 20;
 	int16_t speed;
-	
+
 	if ((startPercentage == 0) && (endPercentage != 0)) // switch power ON
 	{
 		UART_PUTS("Switching winch power ON\r\n");
@@ -191,13 +191,13 @@ void winch_accelerate(int8_t startPercentage, int8_t endPercentage, uint16_t ms)
 		sbi(WINCH_DDR, WINCH_PIN);
 		_delay_ms(1000);
 	}
-	
+
 	/*
 	UART_PUTF("startPercentage: %d\r\n", startPercentage);
 	UART_PUTF("endPercentage: %d\r\n", endPercentage);
 	UART_PUTF("ms: %d\r\n", ms);
 	UART_PUTF("steps: %d\r\n", steps); */
-	
+
 	for (uint8_t i = 0; i < steps; i++)
 	{
 		speed = startPercentage + ((int16_t)endPercentage - startPercentage) * i / steps;
@@ -207,10 +207,10 @@ void winch_accelerate(int8_t startPercentage, int8_t endPercentage, uint16_t ms)
 		winch_speed(speed);
 		_delay_ms(20);
 	}
-	
+
 	winch_speed(endPercentage);
 	UART_PUTF("end: %d\r\n", endPercentage);
-	
+
 	if ((startPercentage != 0) && (endPercentage == 0)) // switch power OFF
 	{
 		UART_PUTS("Switching winch power OFF\r\n");
@@ -230,7 +230,7 @@ void print_switch_state(void)
 	for (i = 1; i <= SWITCH_COUNT; i++)
 	{
 		UART_PUTF("Switch %u ", i);
-		
+
 		if (switch_state[i - 1])
 		{
 			UART_PUTS("ON");
@@ -239,9 +239,9 @@ void print_switch_state(void)
 		{
 			UART_PUTS("OFF");
 		}
-		
+
 		if (switch_timeout[i - 1])
-		{		
+		{
 			UART_PUTF(" (Timeout: %us)", switch_timeout[i - 1]);
 		}
 
@@ -250,9 +250,9 @@ void print_switch_state(void)
 }
 
 void send_gpio_digitalporttimeout_status(void)
-{	
+{
 	uint8_t i;
-	
+
 	UART_PUTS("Sending GPIO DigitalPortTimeout Status:\r\n");
 
 	print_switch_state();
@@ -263,7 +263,7 @@ void send_gpio_digitalporttimeout_status(void)
 	pkg_header_init_gpio_digitalporttimeout_status();
 	pkg_header_set_senderid(device_id);
 	pkg_header_set_packetcounter(packetcounter);
-	
+
 	for (i = 0; i < SWITCH_COUNT; i++)
 	{
 		msg_gpio_digitalporttimeout_set_on(i, switch_state[i]);
@@ -277,14 +277,14 @@ void send_deviceinfo_status(void)
 {
 	inc_packetcounter();
 
-	UART_PUTF("Send DeviceInfo: DeviceType %u,", DEVICETYPE_POWERSWITCH);
+	UART_PUTF("Send DeviceInfo: DeviceType %u,", DEVICETYPE_TEAMAKER);
 	UART_PUTF4(" v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
-	
+
 	// Set packet content
 	pkg_header_init_generic_deviceinfo_status();
 	pkg_header_set_senderid(device_id);
 	pkg_header_set_packetcounter(packetcounter);
-	msg_generic_deviceinfo_set_devicetype(DEVICETYPE_POWERSWITCH);
+	msg_generic_deviceinfo_set_devicetype(DEVICETYPE_TEAMAKER);
 	msg_generic_deviceinfo_set_versionmajor(VERSION_MAJOR);
 	msg_generic_deviceinfo_set_versionminor(VERSION_MINOR);
 	msg_generic_deviceinfo_set_versionpatch(VERSION_PATCH);
@@ -310,7 +310,7 @@ void switchRelais(int8_t num, bool on, uint16_t timeout, bool dbgmsg)
 	if (switch_state[num] != on)
 	{
 		switch_state[num] = on;
-		
+
 		if (on)
 		{
 			sbi(RELAIS_PORT, RELAIS_PIN_START + num);
@@ -322,12 +322,12 @@ void switchRelais(int8_t num, bool on, uint16_t timeout, bool dbgmsg)
 			switch_led(0);
 		}
 	}
-	
+
 	if (e2p_powerswitch_get_switchstate(num) != on)
 	{
 		e2p_powerswitch_set_switchstate(num, on);
 	}
-	
+
 	if (switch_timeout[num] != timeout)
 	{
 		switch_timeout[num] = timeout;
@@ -349,7 +349,7 @@ void process_packet(uint8_t len)
 	// check SenderID
 	uint32_t senderID = pkg_header_get_senderid();
 	UART_PUTF("Packet Data: SenderID:%u;", senderID);
-	
+
 	if (senderID != 0)
 	{
 		UART_PUTS("\r\nERR: Illegal SenderID.\r\n");
@@ -366,37 +366,37 @@ void process_packet(uint8_t len)
 		UART_PUTF("\r\nERR: Received PacketCounter < %lu.\r\n", station_packetcounter);
 		return;
 	}
-	
+
 	// write received counter
 	station_packetcounter = packcnt;
-	
+
 	e2p_teamaker_set_basestationpacketcounter(station_packetcounter);
-	
+
 	// check MessageType
 	MessageTypeEnum messagetype = pkg_header_get_messagetype();
 	UART_PUTF("MessageType:%u;", messagetype);
-	
+
 	if ((messagetype != MESSAGETYPE_GET) && (messagetype != MESSAGETYPE_SET) && (messagetype != MESSAGETYPE_SETGET))
 	{
 		UART_PUTS("\r\nERR: Unsupported MessageType.\r\n");
 		return;
 	}
-	
+
 	// check device id
 	uint16_t rcv_id = pkg_headerext_common_get_receiverid();
 
 	UART_PUTF("ReceiverID:%u;", rcv_id);
-	
+
 	if (rcv_id != device_id)
 	{
 		UART_PUTS("\r\nWRN: DeviceID does not match.\r\n");
 		return;
 	}
-	
+
 	// check MessageGroup + MessageID
 	uint32_t messagegroupid = pkg_headerext_common_get_messagegroupid();
 	uint32_t messageid = pkg_headerext_common_get_messageid();
-	
+
 	//process_request(messagetype, messagegroupid, messageid);
 }
 
@@ -406,7 +406,7 @@ void process_packet(uint8_t len)
 button_t get_button(void)
 {
 	uint8_t state = BUTTON_PINPORT;
-	
+
 	if (0 == (state & (1 << BUTTON_UP_PIN)))
 	{
 		return BUTTON_UP;
@@ -433,11 +433,11 @@ button_t get_button(void)
 void button_wait_up(void)
 {
 	uint8_t count = 0;
-	
+
 	while (count < BUTTON_DEBOUNCE_COUNT)
 	{
 		_delay_ms(BUTTON_DEBOUNCE_DELAY_MS);
-		
+
 		if (get_button() == BUTTON_NONE)
 		{
 			count++;
@@ -455,14 +455,14 @@ button_t button_wait_down(void)
 	uint8_t count = 0;
 	button_t last;
 	button_t current = BUTTON_NONE;
-	
+
 	while (count < BUTTON_DEBOUNCE_COUNT)
 	{
 		_delay_ms(BUTTON_DEBOUNCE_DELAY_MS);
-		
+
 		last = current;
 		current = get_button();
-		
+
 		if ((last == current) && (current != BUTTON_NONE))
 		{
 			count++;
@@ -472,7 +472,7 @@ button_t button_wait_down(void)
 			count = 0;
 		}
 	}
-	
+
 	return current;
 }
 
@@ -507,7 +507,7 @@ int main(void)
 
 	util_init();
 	/*
-	//check_eeprom_compatibility(DEVICETYPE_POWERSWITCH);
+	//check_eeprom_compatibility(DEVICETYPE_TEAMAKER);
 
 	// read packetcounter, increase by cycle and write back
 	packetcounter = e2p_generic_get_packetcounter() + PACKET_COUNTER_WRITE_CYCLE;
@@ -515,7 +515,7 @@ int main(void)
 
 	// read last received station packetcounter
 	station_packetcounter = e2p_powerswitch_get_basestationpacketcounter();
-	
+
 	// read device id
 	device_id = e2p_generic_get_deviceid();
 
@@ -531,46 +531,46 @@ int main(void)
 	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);
 	print_switch_state();
 	UART_PUTF ("Last received base station PacketCounter: %u\r\n\r\n", station_packetcounter);
-	
+
 	lcd_init();
-	
+
 	/* // show all characters
 	i = 0;
 	char xx[2] = {0x73,0x00};
-	
+
 	while (1)
 	{
 		lcd_gotoxy(0, 0);
 		LCD_PUTF("i = %d ", i);
 
 		lcd_gotoxy(0, 1);
-		
+
 		for (j = 0; j < 16; j++)
 		{
 			xx[0] = i * 16 + j;
-			
+
 			LCD_PUTF("%s", xx);
 			i++;
 		}
-		
+
 		_delay_ms(10000);
-		
+
 		i = (i + 1) % 16;
 	}
 	*/
-	
+
 	LCD_PUTS("--- TeaMaker ---");
 	lcd_gotoxy(0, 1);
 	LCD_PUTF4("%u.%u.%u %08lx", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
 
 	// init AES key
 	e2p_generic_get_aeskey(aes_key);
-	
+
 	PWM_init();
-	
+
 	io_init();
-	
-	
+
+
 	// winch test
 	while (42)
 	{
@@ -581,11 +581,11 @@ int main(void)
 		winch_accelerate(-100, 0, 1000);
 		_delay_ms(10000);
 	}
-	
+
 	onewire_init();
-	
+
 	bool res = onewire_get_rom_id(rom_id);
-		
+
 	if (res) // error, no slave found
 	{
 		while (1)
@@ -593,7 +593,7 @@ int main(void)
 			led_blink(50, 50, 1);
 		}
 	}
-	
+
 	UART_PUTS("1-wire ROM ID: ");
 	print_bytearray(rom_id, 8);
 
@@ -607,7 +607,7 @@ int main(void)
 		LCD_PUTF2("Temp: %u.%02u degC", temperature / 100, temperature % 100);
 		_delay_ms(100);
 	} */
-	
+
 	menu_pos_t menu_pos = MENU_CONFIRMATION;
 	uint8_t brewing_preset_pos = 0;
 	uint8_t brewing_preset_count = e2p_teamaker_get_presetcount();
@@ -615,7 +615,7 @@ int main(void)
 	uint8_t timer_count = 5;
 	uint8_t countdown_pos = 0;
 	uint8_t countdown_count = 5;
-	
+
 	uint8_t brewing_regulation_range_above = 0;
 	uint8_t brewing_regulation_range_below = 0;
 	uint8_t warming_regulation_range_above = 0;
@@ -624,27 +624,27 @@ int main(void)
 	uint8_t brewing_PWM_cycle_cec = 0;
 	uint8_t warming_PWM_percentage = 0;
 	uint8_t warming_PWM_cycle_cec = 0;
-	
+
 	load_preset(0);
-	
-	
-	
-	
+
+
+
+
 	while (1)
 	{
 		switch (menu_pos)
 		{
 			case MENU_CONFIRMATION:
 				lcd_clear();
-				
+
 				e2p_teamaker_get_startupconfirmationmessage(lcdbuf);
-				
+
 				for (i = 0; i < LCD_HEIGHT; i++)
 				{
 					lcd_gotoxy(0, i);
 					lcd_nputstr(lcdbuf + i * LCD_WIDTH, LCD_WIDTH);
 				}
-				
+
 				switch (button())
 				{
 					case BUTTON_RIGHT:
@@ -656,13 +656,13 @@ int main(void)
 
 				break;
 
-			case MENU_BREWING_PRESET: 
+			case MENU_BREWING_PRESET:
 				lcd_clear();
 				LCD_PUTF("%s", preset_name); // user perceived number counts from 1 on
 				lcd_gotoxy(0,1);
-				
+
 				LCD_PUTF3("%d:%02d   %d°C", brewing_time_sec / 60, brewing_time_sec % 60, brewing_temperature / 10);
-				
+
 				switch (button())
 				{
 					case BUTTON_UP:
@@ -682,13 +682,13 @@ int main(void)
 					default:
 						break;
 				}
-				
+
 				break;
-			
+
 			case MENU_START_MODE_NOW:
 				lcd_clear();
 				LCD_PUTS("Start now");
-				
+
 				switch (button())
 				{
 					case BUTTON_UP:
@@ -706,13 +706,13 @@ int main(void)
 					default:
 						break;
 				}
-				
+
 				break;
-				
+
 			case MENU_START_MODE_TIMER:
 				lcd_clear();
 				LCD_PUTF("Timer %d", timer_pos);
-				
+
 				switch (button())
 				{
 					case BUTTON_UP:
@@ -729,11 +729,11 @@ int main(void)
 				}
 
 				break;
-				
+
 			case MENU_START_MODE_COUNTDOWN:
 				lcd_clear();
 				LCD_PUTF("Countdown %d", countdown_pos);
-				
+
 				switch (button())
 				{
 					case BUTTON_UP:
@@ -750,19 +750,19 @@ int main(void)
 				}
 
 				break;
-				
+
 			case MENU_WAIT_START_TIME:
 				lcd_clear();
 				LCD_PUTS("Wait for stime");
 				_delay_ms(5000);
 				menu_pos = MENU_CONFIRMATION;
-				
+
 				break;
 		}
 	}
-	
-	
-	
+
+
+
 
 //	rfm_watchdog_init(device_id, e2p_powerswitch_get_transceiverwatchdogtimeout(), RFM_RESET_PORT_NR, RFM_RESET_PIN);
 //	rfm12_init();

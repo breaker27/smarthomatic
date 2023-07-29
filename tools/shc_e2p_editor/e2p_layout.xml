@@ -20,6 +20,10 @@
 				<Name>PowerSwitch</Name>
 			</Element>
 			<Element>
+				<Value>45</Value>
+				<Name>Controller</Name>
+			</Element>
+			<Element>
 				<Value>50</Value>
 				<Name>RGBDimmer</Name>
 			</Element>
@@ -120,11 +124,11 @@
 		</EnumValue>
 		<UIntValue>
 			<ID>TransceiverWatchdogTimeout</ID>
-			<Description>Reset RFM12B module if no data is received until timeout is reached. Use this function if your specific transceiver hangs sometimes. Value is in deca seconds. Suggested setting is 48 (for 8 minutes). Set 0 to disable (default).</Description>
+			<Description>Reset RFM12B module if no data is received until timeout is reached. Use this function if your specific transceiver hangs sometimes. Value is in deca seconds. Suggested setting is 48 (for 8 minutes). Set 0 to disable.</Description>
 			<Bits>8</Bits>
 			<MinVal>0</MinVal>
 			<MaxVal>255</MaxVal>
-			<DefaultVal>0</DefaultVal>
+			<DefaultVal>48</DefaultVal>
 		</UIntValue>
 		<Reserved>
 			<Bits>3560</Bits>
@@ -661,18 +665,34 @@
 			<Value>40</Value>
 		</Restriction>
 		<UIntValue>
-			<ID>SupportedSwitches</ID>
-			<Description>This is a bit field about the connected switches.</Description>
-			<Bits>8</Bits>
-			<MinVal>1</MinVal>
-			<MaxVal>3</MaxVal>
-		</UIntValue>
-		<UIntValue>
 			<ID>BaseStationPacketCounter</ID>
 			<Description>This is the last remembered packet counter of a command from the base station. Packets with the same or lower number are ignored.</Description>
 			<Bits>24</Bits>
 			<MinVal>0</MinVal>
 			<MaxVal>16777215</MaxVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>TransceiverWatchdogTimeout</ID>
+			<Description>Reset RFM12B module if no data is received until timeout is reached. Use this function if your specific transceiver hangs sometimes. Value is in deca seconds. Suggested setting is 48 (for 8 minutes). Set 0 to disable.</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>255</MaxVal>
+			<DefaultVal>48</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>StatusCycle</ID>
+			<Description>This is the number of minutes after which the status should be resent, so in case of a lost message it can be received again. Set 0 to disable.</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>255</MaxVal>
+			<DefaultVal>30</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>SupportedSwitches</ID>
+			<Description>This is the number of connected switches.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>3</MaxVal>
 		</UIntValue>
 		<Array>
 			<Length>8</Length>
@@ -691,14 +711,6 @@
 				<MaxVal>65767</MaxVal>
 			</UIntValue>
 		</Array>
-		<UIntValue>
-			<ID>TransceiverWatchdogTimeout</ID>
-			<Description>Reset RFM12B module if no data is received until timeout is reached. Use this function if your specific transceiver hangs sometimes. Value is in deca seconds. Suggested setting is 48 (for 8 minutes). Set 0 to disable (default).</Description>
-			<Bits>8</Bits>
-			<MinVal>0</MinVal>
-			<MaxVal>255</MaxVal>
-			<DefaultVal>0</DefaultVal>
-		</UIntValue>
 		<Array>
 			<Length>8</Length>
 			<EnumValue>
@@ -744,8 +756,213 @@
 				<DefaultVal>0</DefaultVal>
 			</EnumValue>
 		</Array>
+		<Array>
+		  <Length>8</Length>
+		  <UIntValue>
+		    <ID>SwitchOnDelay</ID>
+		    <Description>This field contains for the 8 switches the times in seconds after which the change of a switch to state "ON" is considered to affect the relais state. If the switch changes to "OFF" again within the delay time, it is cleared and no change of the relais state will happen. If the relais state is changed via command within the delay time, the relais state will consider the old switch state until the delay time is over. After restart (power loss), the delay will not be considered, so the switch state is considered immediately.</Description>
+		    <Bits>16</Bits>
+		    <MinVal>0</MinVal>
+		    <MaxVal>65535</MaxVal>
+		    <DefaultVal>0</DefaultVal>
+		  </UIntValue>
+		</Array>
+		<Array>
+		  <Length>8</Length>
+		  <UIntValue>
+		    <ID>SwitchOffDelay</ID>
+		    <Description>This field contains for the 8 switches the times in seconds after which the change of a switch to state "OFF" is considered to affect the relais state. The behaviour is equivalent to SwitchOnDelay.</Description>
+		    <Bits>16</Bits>
+		    <MinVal>0</MinVal>
+		    <MaxVal>65535</MaxVal>
+		    <DefaultVal>0</DefaultVal>
+		  </UIntValue>
+		</Array>
 		<Reserved>
-			<Bits>7384</Bits>
+			<Bits>7120</Bits>
+		</Reserved>
+	</Block>
+	<Block>
+		<Name>Controller</Name>
+		<Description>This block contains the specific configuration data that only Controller devices need.</Description>
+		<Restriction>
+			<RefID>DeviceType</RefID>
+			<Value>45</Value>
+		</Restriction>
+		<MicrocontrollerModel>m1284p</MicrocontrollerModel>
+		<UIntValue>
+			<ID>BaseStationPacketCounter</ID>
+			<Description>This is the last remembered packet counter of a command from the base station. Packets with the same or lower number are ignored.</Description>
+			<Bits>24</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>16777215</MaxVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>BrightnessFactor</ID>
+			<Description>This value reduces the overall brightness for the RGB LEDs. This is to easily adjust it to your needs without changing the LED series resistors. WARNING: It is recommended to use this only for testing, because it reduces the amount of different brightness levels. Changing the resistors is to be preferred.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>100</MaxVal>
+			<DefaultVal>100</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>TransceiverWatchdogTimeout</ID>
+			<Description>Reset RFM12B module if no data is received until timeout is reached. Use this function if your specific transceiver hangs sometimes. Value is in deca seconds. Suggested setting is 48 (for 8 minutes). Set 0 to disable.</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>255</MaxVal>
+			<DefaultVal>48</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>MenuSelectionStatusCycle</ID>
+			<Description>This is the number of minutes after which the menu selection should be resent, so in case of a lost message it can be received again. Since MenuSelection updates are sent with a Deliver message, it's usually not necessary to send it often. In case the menu contains relative time values it is even problematic to send it when not explicitly selected by the user. Set 0 to disable.</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>255</MaxVal>
+			<DefaultVal>0</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>BacklightStatusCycle</ID>
+			<Description>This is the number of minutes after which the backlight setting should be resent, so in case of a lost message it can be received again. Set 0 to disable.</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>255</MaxVal>
+			<DefaultVal>120</DefaultVal>
+		</UIntValue>
+		<EnumValue>
+			<ID>Sound</ID>
+			<Description>Defines if key presses and saving menu entries / cancelling the menu are acknowledged with sounds.</Description>
+			<Bits>8</Bits>
+			<Element>
+				<Value>0</Value>
+				<Name>Silent</Name>
+			</Element>
+			<Element>
+				<Value>1</Value>
+				<Name>Key</Name>
+			</Element>
+			<Element>
+				<Value>2</Value>
+				<Name>SaveCancel</Name>
+			</Element>
+			<Element>
+				<Value>3</Value>
+				<Name>Key_SaveCancel</Name>
+			</Element>
+			<DefaultVal>3</DefaultVal>
+		</EnumValue>
+		<EnumValue>
+			<ID>LCDType</ID>
+			<Description>Define if an LCD is connected and of which type (size) it is. Only HD44780 compatible text displays are currently supported.</Description>
+			<Bits>8</Bits>
+			<Element>
+				<Value>0</Value>
+				<Name>None</Name>
+			</Element>
+			<Element>
+				<Value>1</Value>
+				<Name>4x20</Name>
+			</Element>
+			<Element>
+				<Value>2</Value>
+				<Name>4x40</Name>
+			</Element>
+			<DefaultVal>1</DefaultVal>
+		</EnumValue>
+		<UIntValue>
+			<ID>LCDPages</ID>
+			<Description>This is the number of pages that may be addressed virtually and selected with Up/Down buttons. If you fill less than 8 pages with content and want to avoid that the user can switch to empty pages, reduce the number accordingly.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>8</MaxVal>
+			<DefaultVal>2</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>PageJumpBackSeconds</ID>
+			<Description>This defines after how many seconds the display shows the first page again after the user pressed the button to show the additional virtual lines. Set 0 to disable.</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>255</MaxVal>
+			<DefaultVal>60</DefaultVal>
+		</UIntValue>
+		<UIntValue>
+			<ID>MenuJumpBackSeconds</ID>
+			<Description>This defines after how many seconds the selection of menu options is cancelled if the user doesn't press any button anymore. The menu options are not saved in this case. Set 0 to disable.</Description>
+			<Bits>8</Bits>
+			<MinVal>0</MinVal>
+			<MaxVal>255</MaxVal>
+			<DefaultVal>60</DefaultVal>
+		</UIntValue>
+		<EnumValue>
+			<ID>BacklightMode</ID>
+			<Description>Defines the initial behaviour for the backlight after startup. Can be changed by the Controller-Backlight message. On: Backlight is always on. Off: Backlight is always off. Auto: Backlight is switched on for AutoBacklightTimeSec seconds when a key is pressed or after startup. Otherwise it's off.</Description>
+			<Bits>8</Bits>
+			<Element>
+				<Value>0</Value>
+				<Name>On</Name>
+			</Element>
+			<Element>
+				<Value>1</Value>
+				<Name>Off</Name>
+			</Element>
+			<Element>
+				<Value>2</Value>
+				<Name>Auto</Name>
+			</Element>
+			<DefaultVal>0</DefaultVal>
+		</EnumValue>
+		<UIntValue>
+			<ID>AutoBacklightTimeSec</ID>
+			<Description>This defines after how many seconds the backlight is switched off in mode Auto.</Description>
+			<Bits>8</Bits>
+			<MinVal>1</MinVal>
+			<MaxVal>255</MaxVal>
+			<DefaultVal>60</DefaultVal>
+		</UIntValue>
+		<Array>
+			<Length>16</Length>
+			<ByteArray>
+				<ID>MenuOption</ID>
+				<Description>These are up to 16 strings that define options that the user can select. Each entry is defined with a name and several options to select, which are separated with a pipe character '|'. Leave the string empty when there shall be no more options to select. Currently, only the first 4 entries are supported.</Description>
+				<Bytes>120</Bytes>
+			</ByteArray>
+		</Array>
+		<Array>
+			<Length>16</Length>
+			<UIntValue>
+				<ID>MenuOptionIndex</ID>
+				<Description>This is the index of the currently selected value. It's saved to the E2P to be available also after power loss.</Description>
+				<Bits>8</Bits>
+				<MinVal>0</MinVal>
+				<MaxVal>255</MaxVal>
+			</UIntValue>
+		</Array>
+		<ByteArray>
+			<ID>MenuTextSendOptions</ID>
+			<Description>This text is shown when menu options are sent. The default text is 'Sending Options'. You can use 'Sende Optionen' as german translation.</Description>
+			<Bytes>20</Bytes>
+			<DefaultVal>53656E64696E67204F7074696F6E730000000000</DefaultVal>
+		</ByteArray>
+		<ByteArray>
+			<ID>MenuTextSuccess</ID>
+			<Description>This text is shown when sending menu options was successful. The default text is 'Success'. You can use 'Erfolgreich' as german translation.</Description>
+			<Bytes>20</Bytes>
+			<DefaultVal>5375636365737300000000000000000000000000</DefaultVal>
+		</ByteArray>
+		<ByteArray>
+			<ID>MenuTextFailed</ID>
+			<Description>This text is shown when sending menu options failed. The default text is 'Failed'. You can use 'Fehlgeschlagen' as german translation.</Description>
+			<Bytes>20</Bytes>
+			<DefaultVal>4661696C65640000000000000000000000000000</DefaultVal>
+		</ByteArray>
+		<ByteArray>
+			<ID>MenuTextCancel</ID>
+			<Description>This text is shown when sending menu options was cancelled. The default text is 'Cancelled'. You can use 'Abbruch' as german translation.</Description>
+			<Bytes>20</Bytes>
+			<DefaultVal>43616E63656C6C65640000000000000000000000</DefaultVal>
+		</ByteArray>
+		<Reserved>
+			<Bits>16016</Bits>
 		</Reserved>
 	</Block>
 	<Block>
@@ -772,11 +989,11 @@
 		</UIntValue>
 		<UIntValue>
 			<ID>TransceiverWatchdogTimeout</ID>
-			<Description>Reset RFM12B module if no data is received until timeout is reached. Use this function if your specific transceiver hangs sometimes. Value is in deca seconds. Suggested setting is 48 (for 8 minutes). Set 0 to disable (default).</Description>
+			<Description>Reset RFM12B module if no data is received until timeout is reached. Use this function if your specific transceiver hangs sometimes. Value is in deca seconds. Suggested setting is 48 (for 8 minutes). Set 0 to disable.</Description>
 			<Bits>8</Bits>
 			<MinVal>0</MinVal>
 			<MaxVal>255</MaxVal>
-			<DefaultVal>0</DefaultVal>
+			<DefaultVal>48</DefaultVal>
 		</UIntValue>
 		<Reserved>
 			<Bits>7640</Bits>
@@ -1000,7 +1217,7 @@
 			<DefaultVal>8</DefaultVal>
 		</UIntValue>
 		<Reserved>
-			<Bits>7576</Bits>
+			<Bits>7592</Bits>
 		</Reserved>
 	</Block>
 	<Block>

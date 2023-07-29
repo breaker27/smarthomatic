@@ -18,12 +18,12 @@
 * You should have received a copy of the GNU General Public License along
 * with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 */
- 
+
 #ifndef _RFM12_CORE_H
 #define _RFM12_CORE_H
 
 /************************
-* VARIOUS RFM RELATED DEFINES FOR INTERNAL USE	
+* VARIOUS RFM RELATED DEFINES FOR INTERNAL USE
 *(defines which shall be visible to the user are located in rfm12.h)
 */
 
@@ -44,9 +44,9 @@
 
 
 /************************
-* LIBRARY DEFAULT SETTINGS	
+* LIBRARY DEFAULT SETTINGS
  */
- 
+
 //if notreturns is not defined, we won't use this feature
 #ifndef RFM12_NORETURNS
 	#define RFM12_NORETURNS 0
@@ -86,7 +86,7 @@
 	//define PWRMGMT_LOW_BATT  with low batt detector
 	//it will be used later
 	#define PWRMGMT_LOW_BATT (RFM12_PWRMGT_EB)
-	
+
 	//check if the default power management setting has the LB bit set
 	//and warn the user if it's not
 	#ifdef PWRMGT_DEFAULT
@@ -108,7 +108,7 @@
 	//define PWRMGMT_LOW_BATT  with low batt detector
 	//it will be used later
 	#define PWRMGMT_WKUP (RFM12_PWRMGT_EW)
-	
+
 	//check if the default power management setting has the EW bit set
 	//and warn the user if it's not
 	#ifdef PWRMGT_DEFAULT
@@ -139,7 +139,7 @@
 #ifndef RFM12_UART_DEBUG
 	#define RFM12_UART_DEBUG 0
 #endif
- 
+
 //default value for powermanagement register
 #ifndef PWRMGT_DEFAULT
 	#define PWRMGT_DEFAULT (RFM12_PWRMGT_DC | PWRMGMT_WKUP | PWRMGMT_LOW_BATT)
@@ -155,8 +155,10 @@
 #endif
 
 //default channel free time, if not defined elsewhere
+// UF 14.04.23: Default from lib was 200. We call rfm12_tick() usually every 5ms. A 16 byte packet takes ~13ms.
+// A reduced CHANNEL_FREE_TIME of 30 (~150ms) should be enough.
 #ifndef CHANNEL_FREE_TIME
-	#define CHANNEL_FREE_TIME 200
+	#define CHANNEL_FREE_TIME 30
 #endif
 
 /*

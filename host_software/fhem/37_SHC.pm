@@ -2,7 +2,7 @@
 # This file is part of the smarthomatic module for FHEM.
 #
 # Copyright (c) 2014 Stefan Baumann
-#               2015 Uwe Freese
+#               2015, 2022 Uwe Freese
 #
 # You can find smarthomatic at www.smarthomatic.org.
 # You can find FHEM at www.fhem.de.
@@ -20,7 +20,7 @@
 # You should have received a copy of the GNU General Public License along
 # with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 ###########################################################################
-# $Id: 37_SHC.pm 8190 2015-03-10 21:23:03Z rr2000 $
+# $Id: 37_SHC.pm 26451 2022-09-28 19:51:36Z breaker27 $
 
 package main;
 
@@ -28,6 +28,7 @@ use strict;
 use warnings;
 use Time::HiRes qw(gettimeofday);
 use Digest::CRC qw(crc32); # linux packet libdigest-crc-perl
+use DevIo;
 
 sub SHC_Parse($$$$);
 sub SHC_Read($);
@@ -49,8 +50,6 @@ sub SHC_Initialize($)
 {
   my ($hash) = @_;
 
-  require "$attr{global}{modpath}/FHEM/DevIo.pm";
-
   # Provider
   $hash->{ReadFn}  = "SHC_Read";
   $hash->{WriteFn} = "SHC_Write";
@@ -71,7 +70,7 @@ sub SHC_Define($$)
   my @a = split("[ \t][ \t]*", $def);
 
   if (@a != 3) {
-    my $msg = "wrong syntax: define <name> SHC {devicename[\@baudrate] " . "| devicename\@directio}";
+    my $msg = "wrong syntax: define <name> SHC {devicename[\@baudrate]}";
     Log3 undef, 2, $msg;
     return $msg;
   }
@@ -80,7 +79,7 @@ sub SHC_Define($$)
 
   my $name = $a[0];
   my $dev  = $a[2];
-  $dev .= "\@19200" if ($dev !~ m/\@/);
+  $dev .= "\@115200" if ($dev !~ m/\@/);
 
   $hash->{Clients}    = $clientsSHC;
   $hash->{MatchList}  = \%matchListSHC;
@@ -223,7 +222,6 @@ sub SHC_ReadAnswer($$$$)
       undef, $mpandata
       );
   }
-
 }
 
 #####################################
@@ -274,7 +272,7 @@ sub SHC_Parse($$$$)
   if ($dmsg =~ m/^PKT:SID=0;/) { # "echo" from message sent by FHEM itself
   	return;
   }
-  	
+
   if ($dmsg !~ m/^PKT:SID=/) {
 
     # Messages just to dipose
@@ -305,7 +303,7 @@ sub SHC_Parse($$$$)
       Log3 $name, 4, "$name: $dmsg";
       return;
     }
-	
+
     # -Verbosity level 1
     if ( $dmsg =~ m/^CRC Error/ )
     {
@@ -321,13 +319,13 @@ sub SHC_Parse($$$$)
   # check CRC of "PKT:..." message and ignore message if necessary
   my $crc = crc32(substr($dmsg, 4, length($dmsg) - 12));
   $crc = sprintf("%08x", $crc);
-  
+
   if ($crc ne substr($dmsg, length($dmsg) - 8))
   {
 	Log3 $name, 1, "$name: CRC Error (" . $crc . ") $dmsg";
 	return;
   }
-  
+
   $hash->{"${name}_MSGCNT"}++;
   $hash->{"${name}_TIME"} = TimeNow();
   $hash->{RAWMSG} = $rmsg;
@@ -377,20 +375,24 @@ sub SHC_SimpleWrite(@)
 1;
 
 =pod
+=item summary    support the basestation of smarthomatic (www.smarthomatic.org)
+=item summary_DE Unterstützung der Basisstation von smarthomatic (www.smarthomatic.org)
 =begin html
 
 <a name="SHC"></a>
 <h3>SHC</h3>
 <ul>
-  SHC is the basestation module that supports a family of RF devices available 
+  SHC is the basestation module that supports a family of RF devices available
   at <a href="http://http://www.smarthomatic.org">www.smarthomatic.org</a>.
 
-  This module provides the IODevice for the <a href="#SHCdev">SHCdev</a> 
+  This module provides the IODevice for the <a href="#SHCdev">SHCdev</a>
   modules that implement the SHCdev protocol.<br><br>
 
   Note: this module may require the Device::SerialPort or Win32::SerialPort
   module if you attach the device via USB and the OS sets strange default
-  parameters for serial devices.<br><br>
+  parameters for serial devices.<br>
+  It also requires Digest::CRC because the communication to the basestation
+  is secured by a CRC.<br><br>
 
   <a name="SHC_Define"></a>
   <b>Define</b>
@@ -403,7 +405,7 @@ sub SHC_SimpleWrite(@)
 
       You can also specify a baudrate if the device name contains the @
       character, e.g.: /dev/ttyUSB0@57600. Please note that the default
-      baudrate for the SHC base station is 19200 baud.<br><br>
+      baudrate for the SHC base station is 115200 baud.<br><br>
 
       Example:<br>
       <ul>

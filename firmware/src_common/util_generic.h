@@ -27,7 +27,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-// used as buffer for sending data to SHT
+// Buffer for receiving data from / sending data to RFM12.
+// Size is 64 bytes (for the RMF12 data) + 1 zero-byte.
 #define BUFX_LENGTH 65
 uint8_t bufx[BUFX_LENGTH];
 

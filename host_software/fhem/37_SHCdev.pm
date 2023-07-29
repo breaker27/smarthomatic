@@ -2,7 +2,7 @@
 # This file is part of the smarthomatic module for FHEM.
 #
 # Copyright (c) 2014 Stefan Baumann
-#               2014, 2015, 2019 Uwe Freese
+#               2014, 2015, 2019, 2022, 2023 Uwe Freese
 #
 # You can find smarthomatic at www.smarthomatic.org.
 # You can find FHEM at www.fhem.de.
@@ -20,7 +20,7 @@
 # You should have received a copy of the GNU General Public License along
 # with smarthomatic. If not, see <http://www.gnu.org/licenses/>.
 ###########################################################################
-# $Id: 37_SHCdev.pm 8190 2015-03-10 21:23:03Z rr2000 $
+# $Id: 37_SHCdev.pm 26457 2022-09-30 19:32:11Z breaker27 $
 
 package main;
 
@@ -28,6 +28,7 @@ use strict;
 use feature qw(switch);
 use warnings;
 use SetExtensions;
+use Encode qw(encode_utf8 decode_utf8);
 
 use SHC_parser;
 
@@ -37,6 +38,7 @@ my %dev_state_icons = (
   "PowerSwitch"         => ".*1\\d{7}:on:off .*0\\d{7}:off:on set.*:light_question:off",
   "Dimmer"              => "on:on off:off set.*:light_question:off",
   "EnvSensor"           => undef,
+  "Controller"          => undef,
   "RGBDimmer"           => undef,
   "SoilMoistureMeter"   => ".*H:\\s\\d\\..*:ampel_rot"
 );
@@ -45,6 +47,7 @@ my %web_cmds = (
   "PowerSwitch"         => "on:off:toggle:statusRequest",
   "Dimmer"              => "on:off:statusRequest",
   "EnvSensor"           => undef,
+  "Controller"          => undef,
   "RGBDimmer"           => undef,
   "SoilMoistureMeter"   => undef
 );
@@ -63,6 +66,10 @@ my %dev_state_format = (
     "distance",            "D: ",
     "port",                "Port: ",
     "ains",                "Ain: "
+  ],
+  "Controller"          => [
+    "color",               "Color: ",
+    "brightness",          "Brightness: "
   ],
   "RGBDimmer"           => [
     "color",               "Color: ",
@@ -87,9 +94,19 @@ my %sets = (
                            # Used from SetExtensions.pm
                            "blink on-for-timer on-till off-for-timer off-till intervals",
   "EnvSensor"           => "",
+  "Controller"          => "Color " .
+                           "ColorAnimation " .
+                           "Dimmer.Brightness:slider,0,1,100 " .
+                           "Text " .
+                           "MenuSelection " .
+                           "Backlight " .
+                           "Tone " .
+                           "Melody",
   "RGBDimmer"           => "Color " .
                            "ColorAnimation " .
-                           "Dimmer.Brightness:slider,0,1,100",
+                           "Dimmer.Brightness:slider,0,1,100 " .
+                           "Tone " .
+                           "Melody",
   "SoilMoistureMeter"   => "",
   "Custom"              => "Dimmer.Brightness " .
                            "Dimmer.Animation"
@@ -101,6 +118,7 @@ my %gets = (
   "PowerSwitch" => "",
   "Dimmer"      => "",
   "EnvSensor"   => "din:all,1,2,3,4,5,6,7,8 ain:all,1,2,3,4,5 ain_volt:1,2,3,4,5",
+  "Controller"  => "",
   "RGBDimmer"   => "",
   "Custom"      => ""
 );
@@ -122,7 +140,7 @@ sub SHCdev_Initialize($)
                        ." readonly:1"
                        ." forceOn:1"
                        ." $readingFnAttributes"
-                       ." devtype:EnvSensor,Dimmer,PowerSwitch,RGBDimmer,SoilMoistureMeter";
+                       ." devtype:EnvSensor,Dimmer,PowerSwitch,Controller,RGBDimmer,SoilMoistureMeter";
 }
 
 #####################################
@@ -207,7 +225,7 @@ sub SHCdev_Parse($$)
     return "UNDEFINED SHCdev_$rname SHCdev $raddr";
   }
 
-  if (($msgtypename ne "Status") && ($msgtypename ne "AckStatus")) {
+  if (($msgtypename ne "Status") && ($msgtypename ne "AckStatus") && ($msgtypename ne "Deliver")) {
     Log3 $name, 3, "$rname: Ignoring MessageType $msgtypename";
     return "";
   }
@@ -227,183 +245,193 @@ sub SHCdev_Parse($$)
   # remember PacketCounter (which every message provides)
   readingsBulkUpdate($rhash, "packetCounter", $packetcounter);
 
-  given ($msggroupname) {
-    when ('Generic') {
-      given ($msgname) {
-        when ('Version') {
-          my $major = $parser->getField("Major");
-          my $minor = $parser->getField("Minor");
-          my $patch = $parser->getField("Patch");
-          my $vhash = $parser->getField("Hash");
+  if ($msggroupname eq "Generic") {
+    if ($msgname eq "Version") {
+      my $major = $parser->getField("Major");
+      my $minor = $parser->getField("Minor");
+      my $patch = $parser->getField("Patch");
+      my $vhash = $parser->getField("Hash");
 
-          readingsBulkUpdate($rhash, "version", "$major.$minor.$patch-$vhash");
-        }
-		when ('DeviceInfo') {
-		  my $devtype = $parser->getField("DeviceType");
-          my $major = $parser->getField("VersionMajor");
-          my $minor = $parser->getField("VersionMinor");
-          my $patch = $parser->getField("VersionPatch");
-          my $vhash = $parser->getField("VersionHash");
+      readingsBulkUpdate($rhash, "version", "$major.$minor.$patch-$vhash");
+    } elsif ($msgname eq "DeviceInfo") {
+      my $devtype = $parser->getField("DeviceType");
+      my $major = $parser->getField("VersionMajor");
+      my $minor = $parser->getField("VersionMinor");
+      my $patch = $parser->getField("VersionPatch");
+      my $vhash = $parser->getField("VersionHash");
 
-		  # Assign device type
-		  my $devtypeOld = AttrVal( $rname, "devtype", undef );
-		  if (!defined($devtypeOld)) {
-			$attr{$rname}{devtype} = $devtype;
-			Log3 $name, 3, "$rname: Assign device type = " . $attr{$rname}{devtype};
-		  }
-
-          readingsBulkUpdate($rhash, "version", "$major.$minor.$patch-$vhash");
-        }
-		when ('HardwareError') {
-          readingsBulkUpdate($rhash, "hardwareErrorCode", $parser->getField("ErrorCode"));
-        }
-		when ('BatteryStatus') {
-          readingsBulkUpdate($rhash, "battery", $parser->getField("Percentage"));
-        }
+      # Assign device type
+      my $devtypeOld = AttrVal( $rname, "devtype", undef );
+      if (!defined($devtypeOld)) {
+        $attr{$rname}{devtype} = $devtype;
+        Log3 $name, 3, "$rname: Assign device type = " . $attr{$rname}{devtype};
       }
+
+      readingsBulkUpdate($rhash, "version", "$major.$minor.$patch-$vhash");
+    } elsif ($msgname eq "HardwareError") {
+      readingsBulkUpdate($rhash, "hardwareErrorCode", $parser->getField("ErrorCode"));
+    } elsif ($msgname eq "BatteryStatus") {
+      readingsBulkUpdate($rhash, "battery", $parser->getField("Percentage"));
     }
-    when ('GPIO') {
-      given ($msgname) {
-        when ('DigitalPortTimeout') {
-          my $pins = "";
-          for (my $i = 0 ; $i < 8 ; $i++) {
-            my $pinx = $parser->getField("On", $i);
-            my $timeoutx = $parser->getField("TimeoutSec", $i);
-            my $channel = $i + 1;
-			if ($channel == 1)
-			{
-				readingsBulkUpdate($rhash, "on", $pinx);
-			}
-            readingsBulkUpdate($rhash, "pin" . $channel, $pinx);
-            readingsBulkUpdate($rhash, "timeout" . $channel, $timeoutx);
-            $pins .= $pinx;
-          }
-          readingsBulkUpdate($rhash, "port", $pins);
+  } elsif ($msggroupname eq "GPIO") {
+    if ($msgname eq "DigitalPortTimeout") {
+      my $pins = "";
+      for (my $i = 0 ; $i < 8 ; $i++) {
+        my $pinx = $parser->getField("On", $i);
+        my $timeoutx = $parser->getField("TimeoutSec", $i);
+        my $channel = $i + 1;
+        if ($channel == 1) {
+          readingsBulkUpdate($rhash, "on", $pinx);
         }
-        when ('DigitalPort') {
-          my $pins = "";
-          for (my $i = 0 ; $i < 8 ; $i++) {
-            my $pinx = $parser->getField("On", $i);
-            my $channel = $i + 1;
-			if ($channel == 1)
-			{
-				readingsBulkUpdate($rhash, "on", $pinx);
-			}
-            readingsBulkUpdate($rhash, "pin" . $channel, $pinx);
-            $pins .= $pinx;
-          }
-          readingsBulkUpdate($rhash, "port", $pins);
-        }
-        when ('AnalogPort') {
-          my $pins = "";
-          for (my $i = 0 ; $i < 5 ; $i++) {
-            my $pinx_on = $parser->getField("On", $i);
-            my $pinx_volt = $parser->getField("Voltage", $i);
-            my $channel = $i + 1;
-            readingsBulkUpdate($rhash, "ain" . $channel, $pinx_on);
-            readingsBulkUpdate($rhash, "ain_volt" . $channel, $pinx_volt);
-            $pins .= $pinx_on;
-          }
-          readingsBulkUpdate($rhash, "ains", $pins);
-        }
+        readingsBulkUpdate($rhash, "pin" . $channel, $pinx);
+        readingsBulkUpdate($rhash, "timeout" . $channel, $timeoutx);
+        $pins .= $pinx;
       }
-    }
-    when ('Weather') {
-      given ($msgname) {
-        when ('Temperature') {
-          my $tmp = $parser->getField("Temperature") / 100;    # parser returns centigrade
-
-          readingsBulkUpdate($rhash, "temperature", $tmp);
+      readingsBulkUpdate($rhash, "port", $pins);
+    } elsif ($msgname eq "DigitalPort") {
+      my $pins = "";
+      for (my $i = 0 ; $i < 8 ; $i++) {
+        my $pinx = $parser->getField("On", $i);
+        my $channel = $i + 1;
+        if ($channel == 1) {
+          readingsBulkUpdate($rhash, "on", $pinx);
         }
-        when ('HumidityTemperature') {
-          my $hum = $parser->getField("Humidity") / 10;        # parser returns 1/10 percent
-          my $tmp = $parser->getField("Temperature") / 100;    # parser returns centigrade
-
-          readingsBulkUpdate($rhash, "humidity",    $hum);
-          readingsBulkUpdate($rhash, "temperature", $tmp);
-        }
-        when ('BarometricPressureTemperature') {
-          my $bar = $parser->getField("BarometricPressure") / 100;    # parser returns pascal, use hPa
-          my $tmp = $parser->getField("Temperature") / 100;           # parser returns centigrade
-
-          readingsBulkUpdate($rhash, "barometric_pressure", $bar);
-          readingsBulkUpdate($rhash, "temperature",         $tmp);
-        }
-        when ('Humidity') {
-          my $hum = $parser->getField("Humidity") / 10;        # parser returns 1/10 percent
-
-          readingsBulkUpdate($rhash, "humidity",    $hum);
-        }
+        readingsBulkUpdate($rhash, "pin" . $channel, $pinx);
+        $pins .= $pinx;
       }
+      readingsBulkUpdate($rhash, "port", $pins);
+    } elsif ($msgname eq "AnalogPort") {
+      my $pins = "";
+      for (my $i = 0 ; $i < 5 ; $i++) {
+        my $pinx_on = $parser->getField("On", $i);
+        my $pinx_volt = $parser->getField("Voltage", $i);
+        my $channel = $i + 1;
+        readingsBulkUpdate($rhash, "ain" . $channel, $pinx_on);
+        readingsBulkUpdate($rhash, "ain_volt" . $channel, $pinx_volt);
+        $pins .= $pinx_on;
+      }
+      readingsBulkUpdate($rhash, "ains", $pins);
     }
-    when ('Environment') {
-      given ($msgname) {
-        when ('Brightness') {
-          my $brt = $parser->getField("Brightness");
-          readingsBulkUpdate($rhash, "brightness", $brt);
-        }
-        when ('Distance') {
-          my $brt = $parser->getField("Distance");
-          readingsBulkUpdate($rhash, "distance", $brt);
-        }
-        when ('ParticulateMatter') {
-          my $size = $parser->getField("TypicalParticleSize");
+  } elsif ($msggroupname eq "Weather") {
+    if ($msgname eq "Temperature") {
+      my $tmp = $parser->getField("Temperature") / 100;    # parser returns centigrade
 
-          if ($size != 1023) # 1023 means invalid
-          {
-            readingsBulkUpdate($rhash, "typicalParticleSize", $size / 100); # value was in 1/100 µm
+      readingsBulkUpdate($rhash, "temperature", $tmp);
+    } elsif ($msgname eq "HumidityTemperature") {
+      my $hum = $parser->getField("Humidity") / 10;        # parser returns 1/10 percent
+      my $tmp = $parser->getField("Temperature") / 100;    # parser returns centigrade
+
+      readingsBulkUpdate($rhash, "humidity",    $hum);
+      readingsBulkUpdate($rhash, "temperature", $tmp);
+    } elsif ($msgname eq "BarometricPressureTemperature") {
+      my $bar = $parser->getField("BarometricPressure") / 100;    # parser returns pascal, use hPa
+      my $tmp = $parser->getField("Temperature") / 100;           # parser returns centigrade
+
+      readingsBulkUpdate($rhash, "barometric_pressure", $bar);
+      readingsBulkUpdate($rhash, "temperature",         $tmp);
+    } elsif ($msgname eq "Humidity") {
+      my $hum = $parser->getField("Humidity") / 10;        # parser returns 1/10 percent
+
+      readingsBulkUpdate($rhash, "humidity",    $hum);
+    }
+  } elsif ($msggroupname eq "Environment") {
+    if ($msgname eq "Brightness") {
+      my $brt = $parser->getField("Brightness");
+      readingsBulkUpdate($rhash, "brightness", $brt);
+    } elsif ($msgname eq "Distance") {
+      my $brt = $parser->getField("Distance");
+      readingsBulkUpdate($rhash, "distance", $brt);
+    } elsif ($msgname eq "ParticulateMatter") {
+      my $size = $parser->getField("TypicalParticleSize");
+
+      if ($size != 1023) { # 1023 means invalid
+        readingsBulkUpdate($rhash, "typicalParticleSize", $size / 100); # value was in 1/100 µm
+      }
+
+      for (my $i = 0 ; $i < 5 ; $i++) {
+        $size = $parser->getField("Size", $i);
+
+        if ($size) { # 0 means array element not used
+          my $pmStr = int($size / 10) . "." . ($size % 10);
+          my $massConcentration = $parser->getField("MassConcentration", $i);
+          my $numberConcentration = $parser->getField("NumberConcentration", $i);
+
+          if ($massConcentration != 1023) { # 1023 means invalid
+            readingsBulkUpdate($rhash, "massConcentration_PM" . $pmStr, $massConcentration / 10); # value was in 1/10 µm
           }
 
-          for (my $i = 0 ; $i < 5 ; $i++) {
-            $size = $parser->getField("Size", $i);
-
-            if ($size) # 0 means array element not used
-            {
-              my $pmStr = int($size / 10) . "." . ($size % 10);
-              my $massConcentration = $parser->getField("MassConcentration", $i);
-              my $numberConcentration = $parser->getField("NumberConcentration", $i);
-
-              if ($massConcentration != 1023) # 1023 means invalid
-              {
-                readingsBulkUpdate($rhash, "massConcentration_PM" . $pmStr, $massConcentration / 10); # value was in 1/10 µm
-              }
-
-              if ($numberConcentration != 4095) # 4095 means invalid
-              {
-                readingsBulkUpdate($rhash, "numberConcentration_PM" . $pmStr, $numberConcentration / 10); # value was in 1/10 µm
-              }
-            }
+          if ($numberConcentration != 4095) { # 4095 means invalid
+            readingsBulkUpdate($rhash, "numberConcentration_PM" . $pmStr, $numberConcentration / 10); # value was in 1/10 µm
           }
         }
       }
     }
-    when ('Dimmer') {
-      given ($msgname) {
-        when ('Brightness') {
-          my $brightness = $parser->getField("Brightness");
-          my $on = $brightness == 0 ? 0 : 1;
+  } elsif ($msggroupname eq "Controller") {
+    if ($msgname eq "MenuSelection") {
+      my $index;
 
-          readingsBulkUpdate($rhash, "on",         $on);
-          readingsBulkUpdate($rhash, "brightness", $brightness);
-        }
-        when ('Color') {
-          my $color = $parser->getField("Color");
-          readingsBulkUpdate($rhash, "color", $color);
-        }
-        when ('ColorAnimation') {
-          my $repeat = $parser->getField("Repeat");
-          my $autoreverse = $parser->getField("AutoReverse");
-          readingsBulkUpdate($rhash, "repeat", $repeat);
-          readingsBulkUpdate($rhash, "autoreverse", $autoreverse);
-          for (my $i = 0 ; $i < 10 ; $i = $i + 1) {
-            my $time  = $parser->getField("Time" , $i);
-            my $color = $parser->getField("Color", $i);
-            readingsBulkUpdate($rhash, "time$i", $time);
-            readingsBulkUpdate($rhash, "color$i", $color);
-          }
-        }
+      for (my $i = 0 ; $i < 16 ; $i = $i + 1) {
+        $index = $parser->getField("Index" , $i);
+        # index 0 indicates the value was not changed / doesn't exist
+        if ($index != 0) {
+          readingsBulkUpdate($rhash, sprintf("index%02d", $i), $index);
+		}
+      }
+
+      # remember delivery (= user selection)
+      if ($msgtypename eq "Deliver") {
+        readingsBulkUpdate($rhash, "menuSelectionDelivery", 1);
       }
     }
+  } elsif ($msggroupname eq "Audio") {
+    if ($msgname eq "Tone") {
+      my $tone = $parser->getField("Tone");
+
+      readingsBulkUpdate($rhash, "tone",         $tone);
+    } elsif ($msgname eq "Melody") {
+      my $repeat = $parser->getField("Repeat");
+      my $autoreverse = $parser->getField("AutoReverse");
+      readingsBulkUpdate($rhash, "repeat", $repeat);
+      readingsBulkUpdate($rhash, "autoreverse", $autoreverse);
+      for (my $i = 0 ; $i < 25 ; $i = $i + 1) {
+        my $time  = $parser->getField("Time" , $i);
+        my $effect = $parser->getField("Effect", $i);
+        my $tone = $parser->getField("Tone", $i);
+        readingsBulkUpdate($rhash, sprintf("time%02d", $i), $time);
+        readingsBulkUpdate($rhash, sprintf("effect%02d", $i), $effect);
+        readingsBulkUpdate($rhash, sprintf("tone%02d", $i), $tone);
+      }
+    }
+  } elsif ($msggroupname eq "Dimmer") {
+    if ($msgname eq "Brightness") {
+      my $brightness = $parser->getField("Brightness");
+      my $on = $brightness == 0 ? 0 : 1;
+
+      readingsBulkUpdate($rhash, "on",         $on);
+      readingsBulkUpdate($rhash, "brightness", $brightness);
+    } elsif ($msgname eq "Color") {
+      my $color = $parser->getField("Color");
+      readingsBulkUpdate($rhash, "color", $color);
+    } elsif ($msgname eq "ColorAnimation") {
+      my $repeat = $parser->getField("Repeat");
+      my $autoreverse = $parser->getField("AutoReverse");
+      readingsBulkUpdate($rhash, "repeat", $repeat);
+      readingsBulkUpdate($rhash, "autoreverse", $autoreverse);
+      for (my $i = 0 ; $i < 10 ; $i = $i + 1) {
+        my $time  = $parser->getField("Time" , $i);
+        my $color = $parser->getField("Color", $i);
+        readingsBulkUpdate($rhash, "time$i", $time);
+        readingsBulkUpdate($rhash, "color$i", $color);
+      }
+    }
+  } elsif ($msggroupname eq "Display") {
+    if ($msgname eq "Backlight") {
+      my $mode = $parser->getField("Mode");
+      my $autotimeoutsec = $parser->getField("AutoTimeoutSec");
+
+      readingsBulkUpdate($rhash, "backlightMode",        $mode);
+      readingsBulkUpdate($rhash, "backlightAutoTimeSec", $autotimeoutsec);
+	}
   }
 
   # If the devtype is defined add, if not already done, the according webCmds and devStateIcons
@@ -490,175 +518,251 @@ sub SHCdev_Set($@)
 
   my $readonly = AttrVal($name, "readonly", "0");
 
-  given ($devtype) {
-    when ('PowerSwitch') {
+  if ($devtype eq "PowerSwitch") {
 
-      # Timeout functionality for SHCdev is not implemented, because FHEMs internal notification system
-      # is able to do this as well. Even more it supports intervals, off-for-timer, off-till ...
+    # Timeout functionality for SHCdev is not implemented, because FHEMs internal notification system
+    # is able to do this as well. Even more it supports intervals, off-for-timer, off-till ...
 
-      if ($cmd eq 'toggle') {
-		$cmd = ReadingsVal($name, "on", "0") eq "0" ? "on" : "off";
-      }
-
-      if (!$readonly && $cmd eq 'off') {
-        readingsSingleUpdate($hash, "state", "set-$cmd", 1);
-        $parser->initPacket("GPIO", "DigitalPin", "SetGet");
-        $parser->setField("GPIO", "DigitalPin", "Pos", 0);
-        $parser->setField("GPIO", "DigitalPin", "On", 0);
-        SHCdev_Send($hash);
-      } elsif (!$readonly && $cmd eq 'on') {
-        readingsSingleUpdate($hash, "state", "set-$cmd", 1);
-        $parser->initPacket("GPIO", "DigitalPin", "SetGet");
-        $parser->setField("GPIO", "DigitalPin", "Pos", 0);
-        $parser->setField("GPIO", "DigitalPin", "On", 1);
-        SHCdev_Send($hash);
-      } elsif ($cmd eq 'statusRequest') {
-        $parser->initPacket("GPIO", "DigitalPin", "Get");
-        SHCdev_Send($hash);
-      } elsif ($cmd eq 'DigitalPort') {
-        $parser->initPacket("GPIO", "DigitalPort", "SetGet");
-        # if not enough (less than 8) pinbits are available use zero as default
-        my $pinbits = $arg . "00000000";
-        for (my $i = 0 ; $i < 8 ; $i = $i + 1) {
-          $parser->setField("GPIO", "DigitalPort", "On", substr($pinbits, $i , 1), $i);
-        }
-        SHCdev_Send($hash);
-      } elsif ($cmd eq 'DigitalPortTimeout') { # TODO implement correctly
-        $parser->initPacket("GPIO", "DigitalPortTimeout", "SetGet");
-        # if not enough (less than 8) pinbits are available use zero as default
-        my $pinbits = $arg . "00000000";
-        for (my $i = 0 ; $i < 8 ; $i = $i + 1) {
-          my $pintimeout = "0";   # default value for timeout
-          if (exists  $aa[$i + 2]) {
-            $pintimeout = $aa[$i + 2];
-          }
-          Log3 $name, 3, "$name: $i: Pin: " . substr($pinbits, $i , 1) . " Timeout: $pintimeout";
-          $parser->setField("GPIO", "DigitalPortTimeout", "On", substr($pinbits, $i , 1), $i);
-          $parser->setField("GPIO", "DigitalPortTimeout", "TimeoutSec", $pintimeout, $i);
-        }
-        SHCdev_Send($hash);
-      } elsif ($cmd eq 'DigitalPin') {
-        $parser->initPacket("GPIO", "DigitalPin", "SetGet");
-        $parser->setField("GPIO", "DigitalPin", "Pos", $arg);
-        $parser->setField("GPIO", "DigitalPin", "On", $arg2);
-        SHCdev_Send($hash);
-      } elsif ($cmd eq 'DigitalPinTimeout') {
-        $parser->initPacket("GPIO", "DigitalPinTimeout", "SetGet");
-        $parser->setField("GPIO", "DigitalPinTimeout", "Pos", $arg);
-        $parser->setField("GPIO", "DigitalPinTimeout", "On", $arg2);
-        $parser->setField("GPIO", "DigitalPinTimeout", "TimeoutSec", $arg3);
-        SHCdev_Send($hash);
-      } else {
-        return SetExtensions($hash, "", $name, @aa);
-      }
+    if ($cmd eq 'toggle') {
+      $cmd = ReadingsVal($name, "on", "0") eq "0" ? "on" : "off";
     }
-    when ('Dimmer') {
 
-      # Timeout functionality for SHCdev is not implemented, because FHEMs internal notification system
-      # is able to do this as well. Even more it supports intervals, off-for-timer, off-till ...
-
-      if ($cmd eq 'toggle') {
-        $cmd = ReadingsVal($name, "state", "on") eq "off" ? "on" : "off";
+    if (!$readonly && $cmd eq 'off') {
+      readingsSingleUpdate($hash, "state", "set-$cmd", 1);
+      $parser->initPacket("GPIO", "DigitalPin", "SetGet");
+      $parser->setField("GPIO", "DigitalPin", "Pos", 0);
+      $parser->setField("GPIO", "DigitalPin", "On", 0);
+      SHCdev_Send($hash);
+    } elsif (!$readonly && $cmd eq 'on') {
+      readingsSingleUpdate($hash, "state", "set-$cmd", 1);
+      $parser->initPacket("GPIO", "DigitalPin", "SetGet");
+      $parser->setField("GPIO", "DigitalPin", "Pos", 0);
+      $parser->setField("GPIO", "DigitalPin", "On", 1);
+      SHCdev_Send($hash);
+    } elsif ($cmd eq 'statusRequest') {
+      $parser->initPacket("GPIO", "DigitalPin", "Get");
+      SHCdev_Send($hash);
+    } elsif ($cmd eq 'DigitalPort') {
+      $parser->initPacket("GPIO", "DigitalPort", "SetGet");
+      # if not enough (less than 8) pinbits are available use zero as default
+      my $pinbits = $arg . "00000000";
+      for (my $i = 0 ; $i < 8 ; $i = $i + 1) {
+        $parser->setField("GPIO", "DigitalPort", "On", substr($pinbits, $i , 1), $i);
       }
-
-      if (!$readonly && $cmd eq 'off') {
-        readingsSingleUpdate($hash, "state", "set-$cmd", 1);
-        $parser->initPacket("Dimmer", "Brightness", "SetGet");
-        $parser->setField("Dimmer", "Brightness", "Brightness", 0);
-        SHCdev_Send($hash);
-      } elsif (!$readonly && $cmd eq 'on') {
-        readingsSingleUpdate($hash, "state", "set-$cmd", 1);
-        $parser->initPacket("Dimmer", "Brightness", "SetGet");
-        $parser->setField("Dimmer", "Brightness", "Brightness", 100);
-        SHCdev_Send($hash);
-      } elsif (!$readonly && $cmd eq 'pct') {
-        my $brightness = $arg;
-
-        # DEBUG
-        # Log3 $name, 3, "$name: Args: $arg, $arg2, $arg3, $brightness";
-
-        readingsSingleUpdate($hash, "state", "set-pct:$brightness", 1);
-        $parser->initPacket("Dimmer", "Brightness", "SetGet");
-        $parser->setField("Dimmer", "Brightness", "Brightness", $brightness);
-        SHCdev_Send($hash);
-      } elsif (!$readonly && $cmd eq 'ani') {
-
-        #TODO Verify argument values
-        my $brightness = $arg;
-
-        # DEBUG
-        # Log3 $name, 3, "$name: ani args: $arg, $arg2, $arg3, $arg4, $brightness";
-
-        readingsSingleUpdate($hash, "state", "set-ani", 1);
-        $parser->initPacket("Dimmer", "Animation", "SetGet");
-        $parser->setField("Dimmer", "Animation", "AnimationMode",   $arg);
-        $parser->setField("Dimmer", "Animation", "TimeoutSec",      $arg2);
-        $parser->setField("Dimmer", "Animation", "StartBrightness", $arg3);
-        $parser->setField("Dimmer", "Animation", "EndBrightness",   $arg4);
-        SHCdev_Send($hash);
-      } elsif ($cmd eq 'statusRequest') {
-        $parser->initPacket("Dimmer", "Brightness", "Get");
-        SHCdev_Send($hash);
-      } else {
-        return SetExtensions($hash, "", $name, @aa);
-      }
-    }
-    when ('RGBDimmer') {
-      if ($cmd eq 'Color') {
-        #TODO Verify argument values
-        my $color = $arg;
-
-        # DEBUG
-        # Log3 $name, 3, "$name: Color args: $arg, $arg2, $arg3, $arg4";
-
-        readingsSingleUpdate($hash, "state", "set-color:$color", 1);
-        $parser->initPacket("Dimmer", "Color", "SetGet");
-        $parser->setField("Dimmer", "Color", "Color",   $color);
-        SHCdev_Send($hash);
-      } elsif ($cmd eq 'ColorAnimation') {
-        #TODO Verify argument values
-
-        $parser->initPacket("Dimmer", "ColorAnimation", "SetGet");
-        $parser->setField("Dimmer", "ColorAnimation", "Repeat", $arg);
-        $parser->setField("Dimmer", "ColorAnimation", "AutoReverse", $arg2);
-
-        my $curtime = 0;
-        my $curcolor = 0;
-        # Iterate over all given command line parameters and set Time and Color
-        # accordingly. Fill the remaining values with zero.
-        for (my $i = 0 ; $i < 10 ; $i = $i + 1) {
-          if (!defined($aa[($i * 2) + 3])) {
-            $curtime = 0;
-          } else {
-            $curtime = $aa[($i * 2) + 3];
-          }
-          if (!defined($aa[($i * 2) + 4])) {
-            $curcolor = 0;
-          } else {
-            $curcolor = $aa[($i * 2) + 4];
-          }
-
-          # DEBUG
-          # Log3 $name, 3, "$name: Nr: $i Time: $curtime Color: $curcolor";
-
-          $parser->setField("Dimmer", "ColorAnimation", "Time" , $curtime, $i);
-          $parser->setField("Dimmer", "ColorAnimation", "Color", $curcolor, $i);
+      SHCdev_Send($hash);
+    } elsif ($cmd eq 'DigitalPortTimeout') { # TODO implement correctly
+      $parser->initPacket("GPIO", "DigitalPortTimeout", "SetGet");
+      # if not enough (less than 8) pinbits are available use zero as default
+      my $pinbits = $arg . "00000000";
+      for (my $i = 0 ; $i < 8 ; $i = $i + 1) {
+        my $pintimeout = "0";   # default value for timeout
+        if (exists  $aa[$i + 2]) {
+          $pintimeout = $aa[$i + 2];
         }
-        readingsSingleUpdate($hash, "state", "set-coloranimation", 1);
-        SHCdev_Send($hash);
-      } elsif ($cmd eq 'Dimmer.Brightness') {
-        my $brightness = $arg;
+        Log3 $name, 3, "$name: $i: Pin: " . substr($pinbits, $i , 1) . " Timeout: $pintimeout";
+        $parser->setField("GPIO", "DigitalPortTimeout", "On", substr($pinbits, $i , 1), $i);
+        $parser->setField("GPIO", "DigitalPortTimeout", "TimeoutSec", $pintimeout, $i);
+      }
+      SHCdev_Send($hash);
+    } elsif ($cmd eq 'DigitalPin') {
+      $parser->initPacket("GPIO", "DigitalPin", "SetGet");
+      $parser->setField("GPIO", "DigitalPin", "Pos", $arg);
+      $parser->setField("GPIO", "DigitalPin", "On", $arg2);
+      SHCdev_Send($hash);
+    } elsif ($cmd eq 'DigitalPinTimeout') {
+      $parser->initPacket("GPIO", "DigitalPinTimeout", "SetGet");
+      $parser->setField("GPIO", "DigitalPinTimeout", "Pos", $arg);
+      $parser->setField("GPIO", "DigitalPinTimeout", "On", $arg2);
+      $parser->setField("GPIO", "DigitalPinTimeout", "TimeoutSec", $arg3);
+      SHCdev_Send($hash);
+    } else {
+      return SetExtensions($hash, "", $name, @aa);
+    }
+  } elsif ($devtype eq "Dimmer") {
+
+    # Timeout functionality for SHCdev is not implemented, because FHEMs internal notification system
+    # is able to do this as well. Even more it supports intervals, off-for-timer, off-till ...
+
+    if ($cmd eq 'toggle') {
+      $cmd = ReadingsVal($name, "state", "on") eq "off" ? "on" : "off";
+    }
+
+    if (!$readonly && $cmd eq 'off') {
+      readingsSingleUpdate($hash, "state", "set-$cmd", 1);
+      $parser->initPacket("Dimmer", "Brightness", "SetGet");
+      $parser->setField("Dimmer", "Brightness", "Brightness", 0);
+      SHCdev_Send($hash);
+    } elsif (!$readonly && $cmd eq 'on') {
+      readingsSingleUpdate($hash, "state", "set-$cmd", 1);
+      $parser->initPacket("Dimmer", "Brightness", "SetGet");
+      $parser->setField("Dimmer", "Brightness", "Brightness", 100);
+      SHCdev_Send($hash);
+    } elsif (!$readonly && $cmd eq 'pct') {
+      my $brightness = $arg;
+
+      # DEBUG
+      # Log3 $name, 3, "$name: Args: $arg, $arg2, $arg3, $brightness";
+
+      readingsSingleUpdate($hash, "state", "set-pct:$brightness", 1);
+      $parser->initPacket("Dimmer", "Brightness", "SetGet");
+      $parser->setField("Dimmer", "Brightness", "Brightness", $brightness);
+      SHCdev_Send($hash);
+    } elsif (!$readonly && $cmd eq 'ani') {
+
+      #TODO Verify argument values
+      my $brightness = $arg;
+
+      # DEBUG
+      # Log3 $name, 3, "$name: ani args: $arg, $arg2, $arg3, $arg4, $brightness";
+
+      readingsSingleUpdate($hash, "state", "set-ani", 1);
+      $parser->initPacket("Dimmer", "Animation", "SetGet");
+      $parser->setField("Dimmer", "Animation", "AnimationMode",   $arg);
+      $parser->setField("Dimmer", "Animation", "TimeoutSec",      $arg2);
+      $parser->setField("Dimmer", "Animation", "StartBrightness", $arg3);
+      $parser->setField("Dimmer", "Animation", "EndBrightness",   $arg4);
+      SHCdev_Send($hash);
+    } elsif ($cmd eq 'statusRequest') {
+      $parser->initPacket("Dimmer", "Brightness", "Get");
+      SHCdev_Send($hash);
+    } else {
+      return SetExtensions($hash, "", $name, @aa);
+    }
+  } elsif (($devtype eq "Controller") || ($devtype eq "RGBDimmer")) {
+    if ($cmd eq 'Color') {
+      #TODO Verify argument values
+      my $color = $arg;
+
+      # DEBUG
+      # Log3 $name, 3, "$name: Color args: $arg, $arg2, $arg3, $arg4";
+
+      readingsSingleUpdate($hash, "state", "set-color:$color", 1);
+      $parser->initPacket("Dimmer", "Color", "SetGet");
+      $parser->setField("Dimmer", "Color", "Color",   $color);
+      SHCdev_Send($hash);
+    } elsif ($cmd eq 'Tone') {
+      #TODO Verify argument values
+      my $tone = $arg;
+
+      # DEBUG
+      # Log3 $name, 3, "$name: Tone args: $arg, $arg2, $arg3, $arg4";
+
+      readingsSingleUpdate($hash, "state", "set-tone:$tone", 1);
+      $parser->initPacket("Audio", "Tone", "SetGet");
+      $parser->setField("Audio", "Tone", "Tone",   $tone);
+      SHCdev_Send($hash);
+    } elsif ($cmd eq 'ColorAnimation') {
+      #TODO Verify argument values
+
+      $parser->initPacket("Dimmer", "ColorAnimation", "SetGet");
+      $parser->setField("Dimmer", "ColorAnimation", "Repeat", $arg);
+      $parser->setField("Dimmer", "ColorAnimation", "AutoReverse", $arg2);
+
+      my $curtime = 0;
+      my $curcolor = 0;
+      # Iterate over all given command line parameters and set Time and Color
+      # accordingly. Fill the remaining values with zero.
+      for (my $i = 0 ; $i < 10 ; $i = $i + 1) {
+        if (!defined($aa[($i * 2) + 3])) {
+          $curtime = 0;
+        } else {
+          $curtime = $aa[($i * 2) + 3];
+        }
+        if (!defined($aa[($i * 2) + 4])) {
+          $curcolor = 0;
+        } else {
+          $curcolor = $aa[($i * 2) + 4];
+        }
 
         # DEBUG
-        # Log3 $name, 3, "$name: Args: $arg, $arg2, $arg3, $brightness";
+        # Log3 $name, 3, "$name: Nr: $i Time: $curtime Color: $curcolor";
 
-        readingsSingleUpdate($hash, "state", "set-brightness:$brightness", 1);
-        $parser->initPacket("Dimmer", "Brightness", "SetGet");
-        $parser->setField("Dimmer", "Brightness", "Brightness", $brightness);
-        SHCdev_Send($hash);
-      } else {
-        return SetExtensions($hash, "", $name, @aa);
+        $parser->setField("Dimmer", "ColorAnimation", "Time" , $curtime, $i);
+        $parser->setField("Dimmer", "ColorAnimation", "Color", $curcolor, $i);
       }
+      readingsSingleUpdate($hash, "state", "set-coloranimation", 1);
+      SHCdev_Send($hash);
+    } elsif ($cmd eq 'Melody') {
+      #TODO Verify argument values
+
+      $parser->initPacket("Audio", "Melody", "SetGet");
+      $parser->setField("Audio", "Melody", "Repeat", $arg);
+      $parser->setField("Audio", "Melody", "AutoReverse", $arg2);
+
+      my $curtime = 0;
+      my $cureffect = 0;
+      my $curtone = 0;
+      # Iterate over all given command line parameters and set Time, Effect and Tone
+      # accordingly. Fill the remaining values with zero.
+      for (my $i = 0 ; $i < 25 ; $i = $i + 1) {
+        if (!defined($aa[($i * 3) + 3])) {
+          $curtime = 0;
+        } else {
+          $curtime = $aa[($i * 3) + 3];
+        }
+        if (!defined($aa[($i * 3) + 4])) {
+          $cureffect = 0;
+        } else {
+          $cureffect = $aa[($i * 3) + 4];
+        }
+        if (!defined($aa[($i * 3) + 5])) {
+          $curtone = 0;
+        } else {
+          $curtone = $aa[($i * 3) + 5];
+        }
+
+        # DEBUG
+        # Log3 $name, 3, "$name: Nr: $i Time: $curtime Effect: $cureffect Tone: $curtone";
+
+        $parser->setField("Audio", "Melody", "Time" , $curtime, $i);
+        $parser->setField("Audio", "Melody", "Effect", $cureffect, $i);
+        $parser->setField("Audio", "Melody", "Tone", $curtone, $i);
+      }
+      readingsSingleUpdate($hash, "state", "set-melody", 1);
+      SHCdev_Send($hash);
+    } elsif ($cmd eq 'Dimmer.Brightness') {
+      my $brightness = $arg;
+
+      # DEBUG
+      # Log3 $name, 3, "$name: Args: $arg, $arg2, $arg3, $brightness";
+
+      readingsSingleUpdate($hash, "state", "set-brightness:$brightness", 1);
+      $parser->initPacket("Dimmer", "Brightness", "SetGet");
+      $parser->setField("Dimmer", "Brightness", "Brightness", $brightness);
+      SHCdev_Send($hash);
+    } elsif ($cmd eq 'Text') {
+      $parser->initPacket("Display", "Text", "Set");
+      $parser->setField("Display", "Text", "PosY", $arg);
+      $parser->setField("Display", "Text", "PosX", $arg2);
+      $parser->setField("Display", "Text", "Format", $arg3);
+      $arg4 = decode_utf8($arg4);
+      $arg4 =~ s/(?<!\\)_/ /g; # replace non-escaped '_' with space
+      $arg4 =~ s/\\_/_/g;      # replace escape character from escaped '_'
+      $arg4 =~ s/(?<!\\)\\1/\x01/g; # replace \1 with character 1 (user character)
+      $arg4 =~ s/(?<!\\)\\2/\x02/g; # replace \2 with character 2 (user character)
+      $arg4 =~ s/(?<!\\)\\3/\x03/g; # replace \3 with character 3 (user character)
+      $arg4 =~ s/(?<!\\)\\4/\x04/g; # replace \4 with character 4 (user character)
+      $arg4 =~ s/(?<!\\)\\5/\x05/g; # replace \5 with character 5 (user character)
+      $arg4 =~ s/(?<!\\)\\6/\x06/g; # replace \6 with character 6 (user character)
+      $arg4 =~ s/(?<!\\)\\7/\x07/g; # replace \7 with character 7 (user character)
+      $arg4 =~ s/(?<!\\)\\8/\x08/g; # replace \8 with character 8 (user character)
+      $parser->setField("Display", "Text", "Text", $arg4);
+      SHCdev_Send($hash);
+    } elsif ($cmd eq 'Backlight') {
+      $parser->initPacket("Display", "Backlight", "SetGet");
+      $parser->setField("Display", "Backlight", "Mode", $arg);
+      $parser->setField("Display", "Backlight", "AutoTimeoutSec", $arg2);
+      SHCdev_Send($hash);
+    } elsif ($cmd eq 'MenuSelection') {
+      $parser->initPacket("Controller", "MenuSelection", "SetGet");
+      for (my $i = 0 ; $i < 16 ; $i = $i + 1) {
+        if (defined($aa[$i + 1])) {
+          $parser->setField("Controller", "MenuSelection", "Index", $aa[$i + 1], $i);
+        }
+      }
+      SHCdev_Send($hash);
+    } else {
+      return SetExtensions($hash, "", $name, @aa);
     }
   }
 
@@ -685,63 +789,61 @@ sub SHCdev_Get($@)
     return "No get commands for " . $devtype . " device type supported ";
   }
 
-  given ($devtype) {
-    when ('EnvSensor') {
-      if ($cmd eq 'din') {
-        if ($arg =~ /[1-8]/) {
-          my $channel = "din" . $arg;
-          if ( defined($hash->{READINGS}{$channel})
-            && defined($hash->{READINGS}{$channel}{VAL}))
-          {
-            return "$name.$channel => " . $hash->{READINGS}{$channel}{VAL};
-          }
-          return "Error: \"input " . $channel . "\" readings not yet available or not supported by device";
-        }
-        elsif ($arg eq "all")
+  if ($devtype eq "EnvSensor") {
+    if ($cmd eq 'din') {
+      if ($arg =~ /[1-8]/) {
+        my $channel = "din" . $arg;
+        if ( defined($hash->{READINGS}{$channel})
+          && defined($hash->{READINGS}{$channel}{VAL}))
         {
-          if ( defined($hash->{READINGS}{port})
-            && defined($hash->{READINGS}{port}{VAL}))
-          {
-            return "$name.port => " . $hash->{READINGS}{port}{VAL};
-          }
-          return "Error: \"input all\" readings not yet available or not supported by device";
+          return "$name.$channel => " . $hash->{READINGS}{$channel}{VAL};
         }
+        return "Error: \"input " . $channel . "\" readings not yet available or not supported by device";
       }
-      if ($cmd eq 'ain') {
-        if ($arg =~ /[1-5]/) {
-          my $channel = "ain" . $arg;
-          if ( defined($hash->{READINGS}{$channel})
-            && defined($hash->{READINGS}{$channel}{VAL}))
-          {
-            return "$name.$channel => " . $hash->{READINGS}{$channel}{VAL};
-          }
-          return "Error: \"input " . $channel . "\" readings not yet available or not supported by device";
-        }
-        elsif ($arg eq "all")
+      elsif ($arg eq "all")
+      {
+        if ( defined($hash->{READINGS}{port})
+          && defined($hash->{READINGS}{port}{VAL}))
         {
-          if ( defined($hash->{READINGS}{ains})
-            && defined($hash->{READINGS}{ains}{VAL}))
-          {
-            return "$name.ains => " . $hash->{READINGS}{ains}{VAL};
-          }
-          return "Error: \"input all\" readings not yet available or not supported by device";
+          return "$name.port => " . $hash->{READINGS}{port}{VAL};
         }
+        return "Error: \"input all\" readings not yet available or not supported by device";
       }
-      if ($cmd eq 'ain_volt') {
-        if ($arg =~ /[1-5]/) {
-          my $channel = "ain_volt" . $arg;
-          if ( defined($hash->{READINGS}{$channel})
-            && defined($hash->{READINGS}{$channel}{VAL}))
-          {
-            return "$name.$channel => " . $hash->{READINGS}{$channel}{VAL};
-          }
-          return "Error: \"input " . $channel . "\" readings not yet available or not supported by device";
-        }
-      }
-
-      # This return is required to provide the get commands in the web interface
-      return "Unknown argument $cmd, choose one of " . $gets{$devtype};
     }
+    if ($cmd eq 'ain') {
+      if ($arg =~ /[1-5]/) {
+        my $channel = "ain" . $arg;
+        if ( defined($hash->{READINGS}{$channel})
+          && defined($hash->{READINGS}{$channel}{VAL}))
+        {
+          return "$name.$channel => " . $hash->{READINGS}{$channel}{VAL};
+        }
+        return "Error: \"input " . $channel . "\" readings not yet available or not supported by device";
+      }
+      elsif ($arg eq "all")
+      {
+        if ( defined($hash->{READINGS}{ains})
+          && defined($hash->{READINGS}{ains}{VAL}))
+        {
+          return "$name.ains => " . $hash->{READINGS}{ains}{VAL};
+        }
+        return "Error: \"input all\" readings not yet available or not supported by device";
+      }
+    }
+    if ($cmd eq 'ain_volt') {
+      if ($arg =~ /[1-5]/) {
+        my $channel = "ain_volt" . $arg;
+        if ( defined($hash->{READINGS}{$channel})
+          && defined($hash->{READINGS}{$channel}{VAL}))
+        {
+          return "$name.$channel => " . $hash->{READINGS}{$channel}{VAL};
+        }
+        return "Error: \"input " . $channel . "\" readings not yet available or not supported by device";
+      }
+    }
+
+    # This return is required to provide the get commands in the web interface
+    return "Unknown argument $cmd, choose one of " . $gets{$devtype};
   }
   return undef;
 }
@@ -764,6 +866,8 @@ sub SHCdev_Send($)
 1;
 
 =pod
+=item summary    support of several smarthomatic devices (www.smarthomatic.org)
+=item summary_DE Unterstützung verschiedener smarthomatic-Geräte (www.smarthomatic.org)
 =begin html
 
 <a name="SHCdev"></a>
@@ -778,6 +882,7 @@ sub SHCdev_Send($)
     <li>EnvSensor</li>
     <li>PowerSwitch</li>
     <li>Dimmer</li>
+    <li>Controller</li>
     <li>RGBDimmer</li>
     <li>SoilMoistureMeter</li>
   </ul><br>
@@ -812,35 +917,58 @@ sub SHCdev_Send($)
         Sets the brightness in percent. Supported by Dimmer.
     </li><br>
     <li>ani &lt;AnimationMode&gt; &lt;TimeoutSec&gt; &lt;StartBrightness&gt; &lt;EndBrightness&gt;<br>
-        Description and details available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_Animation">www.smarthomatic.org</a>
+        Description and details available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_Animation">www.smarthomatic.org</a>.
         Supported by Dimmer.
     </li><br>
     <li>statusRequest<br>
         Supported by Dimmer and PowerSwitch.
     </li><br>
     <li>Color &lt;ColorNumber&gt;<br>
-        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_Color">www.smarthomatic.org</a>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_Color">www.smarthomatic.org</a>.
         The color palette can be found <a href="http://www.smarthomatic.org/devices/rgb_dimmer.html">here</a>
         Supported by RGBDimmer.
     </li><br>
     <li>ColorAnimation &lt;Repeat&gt; &lt;AutoReverse&gt; &lt;Time0&gt; &lt;ColorNumber0&gt; &lt;Time1&gt; &lt;ColorNumber1&gt; ... up to 10 time/color pairs<br>
-        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_ColorAnimation">www.smarthomatic.org</a>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Dimmer_ColorAnimation">www.smarthomatic.org</a>.
         The color palette can be found <a href="http://www.smarthomatic.org/devices/rgb_dimmer.html">here</a>
         Supported by RGBDimmer.
     </li><br>
+    <li>Tone &lt;ToneNumber&gt;<br>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Audio_Tone">www.smarthomatic.org</a>.
+        The tone definition can be found <a href="http://www.smarthomatic.org/devices/rgb_dimmer.html">here</a>
+        Supported by RGBDimmer.
+    </li><br>
+    <li>Melody &lt;Repeat&gt; &lt;AutoReverse&gt; &lt;Time0&gt; &lt;Effect0&gt; &lt;ToneNumber0&gt; &lt;Time1&gt; &lt;Effect1&gt; &lt;ToneNumber1&gt; ... up to 25 time/effect/tone pairs<br>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Audio_Melody">www.smarthomatic.org</a>.
+        The tone definition can be found <a href="http://www.smarthomatic.org/devices/rgb_dimmer.html">here</a>
+        Supported by RGBDimmer.
+    </li><br>
+    <li>Text &lt;PosY&gt; &lt;PosX&gt; &lt;Format&gt; &lt;Text&gt;<br>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Display_Text">www.smarthomatic.org</a>. Supported by Controller.<br>
+        <b>Note:</b> Since FHEM parameters can't include spaces, there is a special form to enter them.
+        To add a space to the text, use the underline character (e.g. 'Hello_world').
+        If you want to send an underline character, escape it with the backslash (e.g. '\_test\_').
+    </li><br>
+    <li>MenuSelection &lt;Index00&gt; &lt;Index01&gt; ... &lt;Index15&gt;<br>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Controller_MenuSelection">www.smarthomatic.org</a>. Supported by Controller.<br>
+        When the MenuSelection was initiated by the user with the controller, the reading <b>menuSelectionDelivery</b> will be set additionally to the index00, ... readings. This can be used to distinguish if the menu selection was user initiated or done programmatically by a FHEM "set" command, especially to keep more than one controller with the same options in sync reacting on a change of the menuSelectionDelivery reading.
+    </li><br>
+    <li>Backlight &lt;Mode&gt; &lt;AutoTimeoutSec&gt;<br>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#Display_Backlight">www.smarthomatic.org</a>. Supported by Controller.
+    </li><br>
     <li>DigitalPin &lt;Pos&gt; &lt;On&gt;<br>
-        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#GPIO_DigitalPin">www.smarthomatic.org</a>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#GPIO_DigitalPin">www.smarthomatic.org</a>.
         Supported by PowerSwitch.
     </li><br>
     <li>DigitalPinTimeout &lt;Pos&gt; &lt;On&gt; &lt;Timeout&gt;<br>
-        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#GPIO_DigitalPinTimeout">www.smarthomatic.org</a>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#GPIO_DigitalPinTimeout">www.smarthomatic.org</a>.
         Supported by PowerSwitch.
     </li><br>
     <li>DigitalPort &lt;On&gt;<br>
         &lt;On&gt;<br>
         is a bit array (0 or 1) describing the port state. If less than eight bits were provided zero is assumed.
         Example: set SHC_device DigitalPort 10110000 will set pin0, pin2 and pin3 to 1.<br>
-        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#GPIO_DigitalPort">www.smarthomatic.org</a>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#GPIO_DigitalPort">www.smarthomatic.org</a>.
         Supported by PowerSwitch.
     </li><br>
     <li>DigitalPortTimeout &lt;On&gt; &lt;Timeout0&gt; .. &lt;Timeout7&gt;<br>
@@ -849,7 +977,7 @@ sub SHCdev_Send($)
         Example: set SHC_device DigitalPort 10110000 will set pin0, pin2 and pin3 to 1.<br>
         &lt;Timeout0&gt; .. &lt;Timeout7&gt;<br>
         are the timeouts for each pin. If no timeout is provided zero is assumed.
-        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#GPIO_DigitalPortTimeout">www.smarthomatic.org</a>
+        A detailed description is available at <a href="http://www.smarthomatic.org/basics/message_catalog.html#GPIO_DigitalPortTimeout">www.smarthomatic.org</a>.
         Supported by PowerSwitch.
     </li><br>
     <li><a href="#setExtensions"> set extensions</a><br>

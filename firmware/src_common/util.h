@@ -19,4 +19,5 @@
 #include "util_generic.h"
 #include "util_hw.h"
 #include "util_watchdog.h"
+#include "util_rfm12.h"
 #include "e2p_access.h"

@@ -29,7 +29,7 @@
 // E2P Block "SoilMoistureMeter"
 // =============================
 // Start offset (bit): 512
-// Overall block length: 7664 bits
+// Overall block length: 7680 bits
 
 // WakeupIntervalInit (EnumValue)
 // Description: Decide about the interval between two measurements when the device is in initialization mode (after button press) to remember the dry threshold value.
@@ -194,7 +194,7 @@ static inline uint8_t e2p_soilmoisturemeter_get_smoothingpercentage(void)
   return eeprom_read_UIntValue8(592, 8, 0, 30);
 }
 
-// Reserved area with 7576 bits
+// Reserved area with 7592 bits
 // Offset: 600
 
 

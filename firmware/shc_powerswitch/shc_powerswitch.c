@@ -1,6 +1,6 @@
 /*
 * This file is part of smarthomatic, http://www.smarthomatic.org.
-* Copyright (c) 2013..2019 Uwe Freese
+* Copyright (c) 2013..2023 Uwe Freese
 *
 * smarthomatic is free software: you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -59,24 +59,27 @@
 // If not, only sw reset is used.
 #define RFM_RESET_PIN 3
 #define RFM_RESET_PORT_NR 1
-#define RFM_RESET_PIN_STATE 1
-
-#define SEND_STATUS_EVERY_SEC 1800 // how often should a status be sent?
-#define SEND_VERSION_STATUS_CYCLE 50 // send version status x times less than switch status (~once per day)
+#define RFM_RESET_PIN_STATE 0
 
 #include "../src_common/util_watchdog_init.h"
 
 uint16_t device_id;
 uint32_t station_packetcounter;
 
-bool cmd_state[RELAIS_COUNT];       // state as requested by command
-bool switch_state[RELAIS_COUNT];    // state as set by the manual switch
-bool relais_state[RELAIS_COUNT];    // resulting relais state as combination of cmd_state and switch_state
-uint16_t cmd_timeout[RELAIS_COUNT]; // timeout as requested by command
-uint8_t switch_mode[RELAIS_COUNT];  // defines how cmd_state and switch_state are combined to set relais state
-
+bool cmd_state[RELAIS_COUNT];             // state as requested by command
+bool switch_state_physical[RELAIS_COUNT]; // the physical state of the manual switch according I/O pin voltage level
+bool switch_state_logical[RELAIS_COUNT];  // the logical switch state, considering the on/off delays
+bool relais_state[RELAIS_COUNT];          // resulting relais state as combination of cmd_state and switch_state_logical
+uint16_t cmd_timeout[RELAIS_COUNT];       // timeout as requested by command
+uint8_t switch_mode[RELAIS_COUNT];        // defines how cmd_state and switch_state_logical are combined to set relais state
+uint16_t switch_on_delay[RELAIS_COUNT];   // delay until switch 'on' state is considered
+uint16_t switch_off_delay[RELAIS_COUNT];  // delay until switch 'off' state is considered
+uint16_t switch_on_delay_counter[RELAIS_COUNT];  // count the seconds until switch state change is considered
+uint16_t switch_off_delay_counter[RELAIS_COUNT]; // count the seconds until switch state change is considered
+uint16_t port_status_cycle;
+uint16_t version_status_cycle;            // send version status x times less than switch status (~once per day)
+uint16_t version_status_cycle_counter;    // send early after startup
 uint16_t send_status_timeout = 5;
-uint8_t version_status_cycle = SEND_VERSION_STATUS_CYCLE - 1; // send promptly after startup
 
 void print_states(void)
 {
@@ -100,9 +103,20 @@ void print_states(void)
 			UART_PUTF(" (Timeout: %us)", cmd_timeout[i - 1]);
 		}
 
-		UART_PUTS(", SWITCH=");
+		UART_PUTS(", SWITCH PHY=");
 
-		if (switch_state[i - 1])
+		if (switch_state_physical[i - 1])
+		{
+			UART_PUTS("ON");
+		}
+		else
+		{
+			UART_PUTS("OFF");
+		}
+
+		UART_PUTS(", SWITCH LOG=");
+
+		if (switch_state_logical[i - 1])
 		{
 			UART_PUTS("ON");
 		}
@@ -143,11 +157,18 @@ void send_gpio_digitalporttimeout_status(void)
 
 	for (i = 0; i < RELAIS_COUNT; i++)
 	{
+		// set command state incl. current timeout
 		msg_gpio_digitalporttimeout_set_on(i, cmd_state[i]);
 		msg_gpio_digitalporttimeout_set_timeoutsec(i, cmd_timeout[i]);
 
-		// set "virtual" pin states reflecting the manual switch states
-		msg_gpio_digitalporttimeout_set_on(i + 4, switch_state[i]);
+		// set physical manual switch states incl. current timeout with offset 3
+		msg_gpio_digitalporttimeout_set_on(i + 3, switch_state_physical[i]);
+		msg_gpio_digitalporttimeout_set_timeoutsec(i + 3,
+				switch_state_physical[i] ? switch_on_delay_counter[i] : switch_off_delay_counter[i]);
+
+		// set relais state with offset 6
+		if (i < 2)
+			msg_gpio_digitalporttimeout_set_on(i + 6, relais_state[i]);
 	}
 
 	rfm12_send_bufx();
@@ -173,7 +194,7 @@ void send_deviceinfo_status(void)
 	rfm12_send_bufx();
 }
 
-// Calculate the relais state out of cmd_state, switch_state and switch_mode
+// Calculate the relais state out of cmd_state, switch_state_logical and switch_mode
 // and switch the relais.
 void update_relais_states(void)
 {
@@ -187,21 +208,29 @@ void update_relais_states(void)
 		switch (switch_mode[i])
 		{
 			case SWITCHMODE_SW:
-				relais_state[i] = switch_state[i];
+				relais_state[i] = switch_state_logical[i];
+				break;
 			case SWITCHMODE_NOT_SW:
-				relais_state[i] = !switch_state[i];
+				relais_state[i] = !switch_state_logical[i];
+				break;
 			case SWITCHMODE_CMD_AND_SW:
-				relais_state[i] = cmd_state[i] && switch_state[i];
+				relais_state[i] = cmd_state[i] && switch_state_logical[i];
+				break;
 			case SWITCHMODE_CMD_AND_NOT_SW:
-				relais_state[i] = cmd_state[i] && (!switch_state[i]);
+				relais_state[i] = cmd_state[i] && (!switch_state_logical[i]);
+				break;
 			case SWITCHMODE_CMD_OR_SW:
-				relais_state[i] = cmd_state[i] || switch_state[i];
+				relais_state[i] = cmd_state[i] || switch_state_logical[i];
+				break;
 			case SWITCHMODE_CMD_OR_NOT_SW:
-				relais_state[i] = cmd_state[i] || (!switch_state[i]);
+				relais_state[i] = cmd_state[i] || (!switch_state_logical[i]);
+				break;
 			case SWITCHMODE_CMD_XOR_SW:
-				relais_state[i] = cmd_state[i] ^ switch_state[i];
+				relais_state[i] = cmd_state[i] ^ switch_state_logical[i];
+				break;
 			case SWITCHMODE_CMD_XOR_NOT_SW:
-				relais_state[i] = cmd_state[i] ^ (!switch_state[i]);
+				relais_state[i] = cmd_state[i] ^ (!switch_state_logical[i]);
+				break;
 			default: // SWITCHMODE_CMD (= default) and all other values
 				relais_state[i] = cmd_state[i];
 				break;
@@ -262,18 +291,43 @@ void set_cmd_state(int8_t num, bool on, uint16_t timeout, bool dbgmsg)
 // Read the states of the manual switches (from IO pins).
 // Currently only one switch is supported.
 // Return if there was any change.
-bool update_switch_states(void)
+bool update_switch_states(bool ignore_delay)
 {
 	uint8_t oldState;
 	bool change = false;
 
 	if (switch_mode[0] != SWITCHMODE_CMD)
 	{
-		oldState = switch_state[0];
+		oldState = switch_state_physical[0];
+		switch_state_physical[0] = !(SWITCH_PINPORT & (1 << SWITCH_PIN));
 
-		switch_state[0] = !(SWITCH_PINPORT & (1 << SWITCH_PIN));
+		if (oldState != switch_state_physical[0]) {
+			change = true;
 
-		change = change || (oldState != switch_state[0]);
+			if (switch_state_physical[0]) { // ON
+				if (switch_off_delay_counter[0]) // off delay still running, phy switch still on
+					switch_off_delay_counter[0] = 0;
+				else
+				{
+					if (ignore_delay || (switch_on_delay[0] == 0))
+						switch_state_logical[0] = switch_state_physical[0];
+					else
+						switch_on_delay_counter[0] = switch_on_delay[0];
+				}
+			}
+			else
+			{ // OFF
+				if (switch_on_delay_counter[0]) // on delay still running, phy switch still off
+					switch_on_delay_counter[0] = 0;
+				else
+				{
+					if (ignore_delay || (switch_off_delay[0] == 0))
+						switch_state_logical[0] = switch_state_physical[0];
+					else
+						switch_off_delay_counter[0] = switch_off_delay[0];
+				}
+			}
+		}
 	}
 
 	return change;
@@ -384,6 +438,7 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 	{
 		UART_PUTS("\r\nERR: Unsupported MessageGroupID.\r\n");
 		send_ack(acksenderid, ackpacketcounter, true);
+		rfm12_send_wait_led();
 		return;
 	}
 
@@ -406,6 +461,7 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		default:
 			UART_PUTS("\r\nERR: Unsupported MessageID.");
 			send_ack(acksenderid, ackpacketcounter, true);
+			rfm12_send_wait_led();
 			return;
 	}
 
@@ -431,18 +487,25 @@ void process_request(MessageTypeEnum messagetype, uint32_t messagegroupid, uint3
 		// react on changed state (version for more than one switch...)
 		for (i = 0; i < RELAIS_COUNT; i++)
 		{
-			// set message data
+			// set command state incl. current timeout
 			msg_gpio_digitalporttimeout_set_on(i, cmd_state[i]);
 			msg_gpio_digitalporttimeout_set_timeoutsec(i, cmd_timeout[i]);
 
-			// set "virtual" pin states reflecting the manual switch states
-			msg_gpio_digitalporttimeout_set_on(i + 4, switch_state[i]);
+			// set physical manual switch states incl. current timeout with offset 3
+			msg_gpio_digitalporttimeout_set_on(i + 3, switch_state_physical[i]);
+			msg_gpio_digitalporttimeout_set_timeoutsec(i + 3,
+				switch_state_physical[i] ? switch_on_delay_counter[i] : switch_off_delay_counter[i]);
+
+			// set relais state with offset 6
+			if (i < 2)
+				msg_gpio_digitalporttimeout_set_on(i + 6, relais_state[i]);
 		}
 
 		UART_PUTS("Sending AckStatus\r\n");
 	}
 
 	send_ack(acksenderid, ackpacketcounter, false);
+	rfm12_send_wait_led();
 	send_status_timeout = 5;
 }
 
@@ -537,6 +600,10 @@ int main(void)
 	// read last received station packetcounter
 	station_packetcounter = e2p_powerswitch_get_basestationpacketcounter();
 
+	port_status_cycle = (uint16_t)e2p_powerswitch_get_statuscycle() * 60;
+	version_status_cycle = (uint16_t)(90000UL / port_status_cycle); // once every 25 hours
+	version_status_cycle_counter = version_status_cycle - 1; // send right after startup
+
 	// read device id
 	device_id = e2p_generic_get_deviceid();
 
@@ -544,6 +611,8 @@ int main(void)
 	for (i = 0; i < RELAIS_COUNT; i++)
 	{
 		switch_mode[i] = e2p_powerswitch_get_switchmode(i);
+		switch_on_delay[i] = e2p_powerswitch_get_switchondelay(i);
+		switch_off_delay[i] = e2p_powerswitch_get_switchoffdelay(i);
 	}
 
 	// Init IO pin(s) for switches.
@@ -560,11 +629,13 @@ int main(void)
 
 	UART_PUTS ("\r\n");
 	UART_PUTF4("smarthomatic Power Switch v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
-	UART_PUTS("(c) 2013..2019 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTS("(c) 2013..2022 Uwe Freese, www.smarthomatic.org\r\n");
 	osccal_info();
 	UART_PUTF ("DeviceID: %u\r\n", device_id);
 	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);
 	UART_PUTF ("Last received base station PacketCounter: %u\r\n", station_packetcounter);
+	UART_PUTF ("Port status cycle: %us\r\n", port_status_cycle);
+	UART_PUTF ("Version status cycle: %u * port status cycle\r\n", version_status_cycle);
 
 	// init AES key
 	e2p_generic_get_aeskey(aes_key);
@@ -577,7 +648,7 @@ int main(void)
 		set_cmd_state(i, e2p_powerswitch_get_cmdstate(i), e2p_powerswitch_get_cmdtimeout(i), true);
 	}
 
-	update_switch_states();
+	update_switch_states(true);
 	update_relais_states();
 	print_states();
 
@@ -627,15 +698,48 @@ int main(void)
 			rfm12_rx_clear();
 		}
 
-		// flash LED every second to show the device is alive
+		// tasks that are done every second
 		if (loop == 50)
 		{
+			loop = 0;
+
+			// when timeout active, flash LED
 			if (cmd_timeout[0])
 			{
-				led_blink(10, 10, 1);
+				rfm12_delay10_led();
+			}
+			else
+			{
+				rfm12_delay20();
 			}
 
-			loop = 0;
+			// Count down switch delays
+			for (i = 0; i < RELAIS_COUNT; i++)
+			{
+				if (switch_on_delay_counter[i] > 0) {
+					switch_on_delay_counter[i]--;
+					UART_PUTF("Switch on in %us\r\n", switch_on_delay_counter[0]);
+
+					if (switch_on_delay_counter[i] == 0) {
+						switch_state_logical[i] = switch_state_physical[i];
+						UART_PUTF("Logical switch state changed to %u\r\n", switch_state_logical[0]);
+						update_relais_states();
+						send_status_timeout = 1;
+					}
+				}
+
+				if (switch_off_delay_counter[i] > 0) {
+					switch_off_delay_counter[i]--;
+					UART_PUTF("Switch off in %us\r\n", switch_off_delay_counter[0]);
+
+					if (switch_off_delay_counter[i] == 0) {
+						switch_state_logical[i] = switch_state_physical[i];
+						UART_PUTF("Logical switch state changed to %u\r\n", switch_state_logical[0]);
+						update_relais_states();
+						send_status_timeout = 1;
+					}
+				}
+			}
 
 			// Check timeouts and toggle switches
 			for (i = 0; i < RELAIS_COUNT; i++)
@@ -649,7 +753,7 @@ int main(void)
 						UART_PUTS("Timeout! ");
 						set_cmd_state(i, !cmd_state[i], 0, true);
 						update_relais_states();
-						send_status_timeout = 1; // immediately send the status update
+						send_status_timeout = 1;
 					}
 				}
 			}
@@ -661,30 +765,26 @@ int main(void)
 
 				if (send_status_timeout == 0)
 				{
-					send_status_timeout = SEND_STATUS_EVERY_SEC;
+					send_status_timeout = port_status_cycle;
 					send_gpio_digitalporttimeout_status();
-					led_blink(200, 0, 1);
+					rfm12_send_wait_led();
 
-					version_status_cycle++;
+					version_status_cycle_counter++;
 				}
-				else if (version_status_cycle >= SEND_VERSION_STATUS_CYCLE)
+				else if (version_status_cycle_counter >= version_status_cycle)
 				{
-					version_status_cycle = 0;
+					version_status_cycle_counter = 0;
 					send_deviceinfo_status();
-					led_blink(200, 0, 1);
+					rfm12_send_wait_led();
 				}
 			}
 		}
 		else
 		{
-			_delay_ms(20);
+			rfm12_delay20();
 		}
 
 		switch_led(cmd_state[0]);
-
-		rfm_watchdog_count(20);
-
-		rfm12_tick();
 
 		button = !(BUTTON_PINPORT & (1 << BUTTON_PIN));
 
@@ -702,17 +802,21 @@ int main(void)
 				UART_PUTS("Button! ");
 				set_cmd_state(0, !cmd_state[0], 0, true);
 				update_relais_states();
-				send_status_timeout = 15; // send status after 15s
+				// send status after 15s delay to avoid sending it once per
+				// second in case the button toggles all the time
+				send_status_timeout = 15;
 			}
 		}
 
-		if (loop % 8 == 0) // update every 200ms
+		if (loop % 12 == 0) // update every 240ms
 		{
-			if (update_switch_states())
+			if (update_switch_states(false))
 			{
-				UART_PUTF("Switch state changed to %u\n", switch_state[0]);
+				UART_PUTF("Physical switch state changed to %u\r\n", switch_state_physical[0]);
 				update_relais_states();
-				send_status_timeout = 15; // send status after 15s
+				// send status after 15s delay to avoid sending it once per
+				// second in case the switch toggles all the time
+				send_status_timeout = 15;
 			}
 		}
 

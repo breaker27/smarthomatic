@@ -357,7 +357,7 @@ public class ValueEditorPanel extends JPanel
 	 */
 	private void writeToEepromFile()
 	{
-		byte[] eeprom = new byte[1024]; // assume size of 1024 bytes first and truncate later
+		byte[] eeprom = new byte[4096]; // assume size of 4096 bytes first and truncate later
 		int offset = 0;
 
 		for (Block b : blocks)
@@ -374,6 +374,12 @@ public class ValueEditorPanel extends JPanel
 		{
 			byte[] eeprom2 = new byte[512];
 			System.arraycopy(eeprom, 0, eeprom2, 0, 512);
+			eeprom = eeprom2;
+		}
+		else if (offset <= 1024 * 8)
+		{
+			byte[] eeprom2 = new byte[1024];
+			System.arraycopy(eeprom, 0, eeprom2, 0, 1024);
 			eeprom = eeprom2;
 		}
 
@@ -433,7 +439,7 @@ public class ValueEditorPanel extends JPanel
 	 */
 	public void enableEditorsForDeviceType(int deviceTypeID)
 	{
-		byte[] dummy = new byte[1024];
+		byte[] dummy = new byte[4096];
 		int offset = 0;
 
 		for (Block b : blocks)

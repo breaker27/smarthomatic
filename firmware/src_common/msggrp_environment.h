@@ -29,6 +29,7 @@
 #include "packet_headerext_ackstatus.h"
 #include "packet_headerext_ack.h"
 #include "packet_headerext_status.h"
+#include "packet_headerext_deliver.h"
 #include "packet_headerext_setget.h"
 #include "packet_headerext_set.h"
 #include "packet_headerext_get.h"
@@ -52,7 +53,7 @@ typedef enum {
 // MessageGroupID: 11
 // MessageID: 1
 // Possible MessageTypes: Get, Status, AckStatus
-// Validity: test
+// Validity: released
 // Length w/o Header + HeaderExtension: 7 bits
 // Data fields: Brightness
 
@@ -115,7 +116,7 @@ static inline uint32_t msg_environment_brightness_get_brightness(void)
 // MessageGroupID: 11
 // MessageID: 2
 // Possible MessageTypes: Get, Status, AckStatus
-// Validity: test
+// Validity: released
 // Length w/o Header + HeaderExtension: 14 bits
 // Data fields: Distance
 
