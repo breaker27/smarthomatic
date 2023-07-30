@@ -128,4 +128,23 @@ static inline float array_read_FloatValue(uint16_t bit, uint8_t * array)
 	return float2uint32.floatVal;
 }
 
+static inline void array_write_ByteArray(uint16_t bit, uint16_t lengthBytes, uint8_t * src, uint8_t * array)
+{
+	for (uint8_t i = 0; i < lengthBytes; i++)
+	{
+		array_write_UIntValue(bit, 8, src[i], array);
+		bit += 8;
+	}
+}
+
+static inline void array_read_ByteArray(uint16_t bit, uint16_t lengthBytes, uint8_t * dst, uint8_t * array)
+{
+	for (uint8_t i = 0; i < lengthBytes; i++)
+	{
+		*dst = (uint8_t)_eeprom_read_UIntValue32(bit, 8, 0, 255, 8, array);
+		dst++;
+		bit += 8;
+	}
+}
+
 #endif // E2P_ACCESS

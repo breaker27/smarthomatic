@@ -62,7 +62,8 @@ uint8_t aes_key_count;
 // of all packets must be known at the PC program that's processing the data.
 void decode_data(uint8_t len)
 {
-	uint32_t messagegroupid, messageid;
+	uint32_t messagegroupid = 0;
+	uint32_t messageid = 0;
 	uint16_t u16;
 
 	pkg_header_adjust_offset();
@@ -80,7 +81,7 @@ void decode_data(uint8_t len)
 	UART_PUTF_B("MT=%u;", messagetype);
 
 	// show ReceiverID for all requests
-	if ((messagetype == MESSAGETYPE_GET) || (messagetype == MESSAGETYPE_SET) || (messagetype == MESSAGETYPE_SETGET))
+	if ((messagetype == MESSAGETYPE_GET) || (messagetype == MESSAGETYPE_SET) || (messagetype == MESSAGETYPE_SETGET) || (messagetype == MESSAGETYPE_DELIVER))
 	{
 		uint16_t receiverid = pkg_headerext_common_get_receiverid();
 		UART_PUTF_B("RID=%u;", receiverid);
@@ -112,7 +113,7 @@ void decode_data(uint8_t len)
 	// show raw message data for all MessageTypes with data (= all except "Get" and "Ack")
 	if ((messagetype != MESSAGETYPE_GET) && (messagetype != MESSAGETYPE_ACK))
 	{
-		uint8_t i;
+		uint16_t i;
 		uint16_t count = (((uint16_t)len * 8) - __HEADEROFFSETBITS + 7) / 8;
 
 		//UART_PUTF4("\r\n\r\nLEN=%u, START=%u, SHIFT=%u, COUNT=%u\r\n\r\n", len, start, shift, count);
@@ -261,6 +262,36 @@ void send_packet(uint8_t aes_key_nr, uint8_t packet_len)
 	rfm12_send_bufx();
 }
 
+void send_deliver_ack(int aes_key_nr)
+{
+	pkg_header_adjust_offset();
+
+	if (pkg_header_get_messagetype() == MESSAGETYPE_DELIVER)
+	{
+		if (pkg_headerext_common_get_receiverid() == device_id)
+		{
+			UART_PUTS("Sending Deliver Ack: ");
+			uint16_t senderid = pkg_header_get_senderid();
+			uint32_t packetcounter = pkg_header_get_packetcounter();
+			UART_PUTF("SID=%u;", senderid);
+			UART_PUTF("PC=%lu\r\n", packetcounter);
+
+			// init packet buffer
+			memset(&bufx[0], 0, sizeof(bufx));
+
+			// set message type
+			pkg_header_set_messagetype(MESSAGETYPE_ACK);
+			pkg_header_adjust_offset();
+			pkg_headerext_common_set_acksenderid(senderid);
+			pkg_headerext_common_set_ackpacketcounter(packetcounter);
+			pkg_headerext_common_set_error(0);
+
+			send_packet(aes_key_nr, 16);
+			UART_PUTF("Sending took %ums\r\n", rfm12_send_wait_led());
+		}
+	}
+}
+
 int main(void)
 {
 	uint8_t aes_key_nr;
@@ -291,7 +322,7 @@ int main(void)
 
 	UART_PUTS("\r\n");
 	UART_PUTF4("smarthomatic Base Station v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
-	UART_PUTS("(c) 2012..2015 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTS("(c) 2012..2023 Uwe Freese, www.smarthomatic.org\r\n");
 	UART_PUTF("Device ID: %u\r\n", device_id);
 	UART_PUTF("Packet counter: %lu\r\n", packetcounter);
 	UART_PUTF("AES key count: %u\r\n", aes_key_count);
@@ -408,6 +439,10 @@ int main(void)
 
 					aes256_decrypt_cbc(bufx, len);
 
+					// Set the (len+1)th byte to 0, because the last packet content (from the last byte)
+					// may be smaller than 8 bits and is read per byte in decode_data.
+					bufx[len] = 0;
+
 					//UART_PUTS("Decrypted bytes: ");
 					//print_bytearray(bufx, len);
 
@@ -421,6 +456,9 @@ int main(void)
 						//UART_PUTS("CRC correct, AES key found!\r\n");
 						UART_PUTF("Received (AES key %u): ", aes_key_nr);
 						print_bytearray(bufx, len);
+
+						// Send deliver ack immediately (not using request buffer)
+						send_deliver_ack(aes_key_nr);
 
 						break;
 					}
@@ -463,15 +501,6 @@ int main(void)
 
 			uint8_t string_offset_data = 0;
 
-			/*
-			UART_PUTS("sKK00RRRRGGMM.............Get\r\n");
-			UART_PUTS("sKK01RRRRGGMMDD...........Set\r\n");
-			UART_PUTS("sKK02RRRRGGMMDD...........SetGet\r\n");
-			UART_PUTS("sKK08GGMMDD...............Status\r\n");
-			UART_PUTS("sKK09SSSSPPPPPPEE.........Ack\r\n");
-			UART_PUTS("sKK0ASSSSPPPPPPEEGGMMDD...AckStatus\r\n");
-			*/
-
 			// set header extension fields in bufx to the values given as hex string in the user input
 			uint16_t receiverid = 0;
 			switch (message_type)
@@ -479,6 +508,7 @@ int main(void)
 				case MESSAGETYPE_GET:
 				case MESSAGETYPE_SET:
 				case MESSAGETYPE_SETGET:
+				case MESSAGETYPE_DELIVER:
 					receiverid = hex_to_uint16((uint8_t *)cmdbuf, 5);
 					pkg_headerext_common_set_receiverid(receiverid);
 					pkg_headerext_common_set_messagegroupid(hex_to_uint8((uint8_t *)cmdbuf, 9));
@@ -538,17 +568,17 @@ int main(void)
 			uint8_t packet_len = ((uint16_t)__HEADEROFFSETBITS + (uint16_t)messagedata_len_raw * 8 + 7) / 8;
 			packet_len = ((packet_len - 1) / 16 + 1) * 16;
 
-			// send packet which doesn't require an acknowledge immediately
-			if ((message_type != MESSAGETYPE_GET) && (message_type != MESSAGETYPE_SET) && (message_type != MESSAGETYPE_SETGET))
+			// send packet immediately when it doesn't require an acknowledge
+			if ((message_type != MESSAGETYPE_GET) && (message_type != MESSAGETYPE_SET) && (message_type != MESSAGETYPE_SETGET) && (message_type != MESSAGETYPE_DELIVER))
 			{
 				send_packet(aes_key_nr, packet_len);
-				led_blink(200, 0, 1);
+				UART_PUTF("Sending took %ums\r\n", rfm12_send_wait_led());
 			}
 			else if (receiverid == 4095)
 			{
 				UART_PUTS("Sending broadcast request without using queue.\r\n");
 				send_packet(aes_key_nr, packet_len);
-				led_blink(200, 0, 1);
+				UART_PUTF("Sending took %ums\r\n", rfm12_send_wait_led());
 			}
 			else // enqueue request (don't send immediately)
 			{
@@ -579,25 +609,20 @@ int main(void)
 
 			if (request != 0) // if request to repeat was found in queue
 			{
-				UART_PUTS("Repeating request.\r\n");
 				send_packet((*request).aes_key, (*request).data_bytes + 9); // header size = 9 bytes!
-				led_blink(200, 0, 1);
+				UART_PUTF("Repeating request (took %ums).\r\n", rfm12_send_wait_led());
 
 				print_request_queue();
 			}
 			else
 			{
-				led_blink(10, 10, 1);
+				rfm12_delay10_led();
 			}
 		}
 		else
 		{
-			_delay_ms(20);
+			rfm12_delay20();
 		}
-
-		rfm_watchdog_count(20);
-
-		rfm12_tick();
 
 		loop++;
 

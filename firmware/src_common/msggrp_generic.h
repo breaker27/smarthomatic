@@ -29,6 +29,7 @@
 #include "packet_headerext_ackstatus.h"
 #include "packet_headerext_ack.h"
 #include "packet_headerext_status.h"
+#include "packet_headerext_deliver.h"
 #include "packet_headerext_setget.h"
 #include "packet_headerext_set.h"
 #include "packet_headerext_get.h"
@@ -41,126 +42,10 @@
 
 // ENUM for MessageIDs of this MessageGroup
 typedef enum {
-  MESSAGEID_GENERIC_VERSION = 1,
   MESSAGEID_GENERIC_DEVICEINFO = 2,
   MESSAGEID_GENERIC_HARDWAREERROR = 3,
   MESSAGEID_GENERIC_BATTERYSTATUS = 5
 } GENERIC_MessageIDEnum;
-
-
-// Message "generic_version"
-// -------------------------
-// MessageGroupID: 0
-// MessageID: 1
-// Possible MessageTypes: Get, Status, AckStatus
-// Validity: deprecated
-// Length w/o Header + HeaderExtension: 56 bits
-// Data fields: Major, Minor, Patch, Hash
-// Description: Reports the current firmware version. Version information is only available when set in source code, which is usually only done for official builds by the build robot.
-
-// Function to initialize header for the MessageType "Get".
-static inline void pkg_header_init_generic_version_get(void)
-{
-  memset(&bufx[0], 0, sizeof(bufx));
-  pkg_header_set_messagetype(0);
-  pkg_headerext_get_set_messagegroupid(0);
-  pkg_headerext_get_set_messageid(1);
-  __HEADEROFFSETBITS = 95;
-  __PACKETSIZEBYTES = 16;
-  __MESSAGETYPE = 0;
-}
-
-// Function to initialize header for the MessageType "Status".
-static inline void pkg_header_init_generic_version_status(void)
-{
-  memset(&bufx[0], 0, sizeof(bufx));
-  pkg_header_set_messagetype(8);
-  pkg_headerext_status_set_messagegroupid(0);
-  pkg_headerext_status_set_messageid(1);
-  __HEADEROFFSETBITS = 83;
-  __PACKETSIZEBYTES = 32;
-  __MESSAGETYPE = 8;
-}
-
-// Function to initialize header for the MessageType "AckStatus".
-static inline void pkg_header_init_generic_version_ackstatus(void)
-{
-  memset(&bufx[0], 0, sizeof(bufx));
-  pkg_header_set_messagetype(10);
-  pkg_headerext_ackstatus_set_messagegroupid(0);
-  pkg_headerext_ackstatus_set_messageid(1);
-  __HEADEROFFSETBITS = 120;
-  __PACKETSIZEBYTES = 32;
-  __MESSAGETYPE = 10;
-}
-
-// Major (UIntValue)
-// Description: Different major version means incompatible changes.
-
-// Set Major (UIntValue)
-// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 8, min val 0, max val 255
-static inline void msg_generic_version_set_major(uint32_t val)
-{
-  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 0, 8, val, bufx);
-}
-
-// Get Major (UIntValue)
-// Offset: (uint16_t)__HEADEROFFSETBITS + 0, length bits 8, min val 0, max val 255
-static inline uint32_t msg_generic_version_get_major(void)
-{
-  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 0, 8, 0, 255, bufx);
-}
-
-// Minor (UIntValue)
-// Description: Different minor number means new functionality without breaking compatibility.
-
-// Set Minor (UIntValue)
-// Offset: (uint16_t)__HEADEROFFSETBITS + 8, length bits 8, min val 0, max val 255
-static inline void msg_generic_version_set_minor(uint32_t val)
-{
-  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 8, 8, val, bufx);
-}
-
-// Get Minor (UIntValue)
-// Offset: (uint16_t)__HEADEROFFSETBITS + 8, length bits 8, min val 0, max val 255
-static inline uint32_t msg_generic_version_get_minor(void)
-{
-  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 8, 8, 0, 255, bufx);
-}
-
-// Patch (UIntValue)
-// Description: The patch version is changed when backwards-compatible bug fixes are made.
-
-// Set Patch (UIntValue)
-// Offset: (uint16_t)__HEADEROFFSETBITS + 16, length bits 8, min val 0, max val 255
-static inline void msg_generic_version_set_patch(uint32_t val)
-{
-  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 16, 8, val, bufx);
-}
-
-// Get Patch (UIntValue)
-// Offset: (uint16_t)__HEADEROFFSETBITS + 16, length bits 8, min val 0, max val 255
-static inline uint32_t msg_generic_version_get_patch(void)
-{
-  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 16, 8, 0, 255, bufx);
-}
-
-// Hash (UIntValue)
-// Description: The beginning of the revision ID hash (as reported by Git).
-
-// Set Hash (UIntValue)
-// Offset: (uint16_t)__HEADEROFFSETBITS + 24, length bits 32, min val 0, max val 4294967295
-static inline void msg_generic_version_set_hash(uint32_t val)
-{
-  array_write_UIntValue((uint16_t)__HEADEROFFSETBITS + 24, 32, val, bufx);
-}
-
-// Get Hash (UIntValue)
-// Offset: (uint16_t)__HEADEROFFSETBITS + 24, length bits 32, min val 0, max val 4294967295
-static inline uint32_t msg_generic_version_get_hash(void)
-{
-  return array_read_UIntValue32((uint16_t)__HEADEROFFSETBITS + 24, 32, 0, 4294967295, bufx);
-}
 
 
 // Message "generic_deviceinfo"
@@ -168,7 +53,7 @@ static inline uint32_t msg_generic_version_get_hash(void)
 // MessageGroupID: 0
 // MessageID: 2
 // Possible MessageTypes: Get, Status, AckStatus
-// Validity: test
+// Validity: released
 // Length w/o Header + HeaderExtension: 64 bits
 // Data fields: DeviceType, VersionMajor, VersionMinor, VersionPatch, VersionHash
 // Description: Reports DeviceType and current firmware version. Version information is only available when set in source code, which is usually only done for official builds by the build robot.
@@ -218,6 +103,7 @@ typedef enum {
   DEVICETYPE_BASESTATION = 0,
   DEVICETYPE_ENVSENSOR = 20,
   DEVICETYPE_POWERSWITCH = 40,
+  DEVICETYPE_CONTROLLER = 45,
   DEVICETYPE_RGBDIMMER = 50,
   DEVICETYPE_DIMMER = 60,
   DEVICETYPE_SOILMOISTUREMETER = 70,
@@ -364,7 +250,7 @@ static inline ErrorCodeEnum msg_generic_hardwareerror_get_errorcode(void)
 // MessageGroupID: 0
 // MessageID: 5
 // Possible MessageTypes: Get, Status, AckStatus
-// Validity: test
+// Validity: released
 // Length w/o Header + HeaderExtension: 7 bits
 // Data fields: Percentage
 // Description: Tells the current battery status in percent. Please note that the "Get" may not be answered because a device does not listen to requests.

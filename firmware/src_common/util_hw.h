@@ -48,8 +48,10 @@ uint16_t read_adc(uint8_t adc_input);
 uint16_t read_battery(void);
 
 void util_init(void);
+void util_init_led(volatile uint8_t* ddr, volatile uint8_t* port, uint8_t pin);
 void led_dbg(uint8_t ms);
 void switch_led(bool b_on);
+bool get_led_on(void);
 void led_blink(uint16_t on, uint16_t off, uint8_t times);
 void check_eeprom_compatibility(DeviceTypeEnum deviceType);
 void osccal_info(void);

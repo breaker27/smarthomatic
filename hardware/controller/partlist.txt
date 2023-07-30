@@ -1,0 +1,68 @@
+Partlist
+
+Exported from controller.sch at 24.11.2022 18:18:30
+
+EAGLE Version 7.1.0 Copyright (c) 1988-2014 CadSoft
+
+Assembly variant: 
+
+Part     Value          Device          Package      Library        Sheet
+
+C1       22p            C-EU025-024X044 C025-024X044 rcl            1
+C2       22p            C-EU025-024X044 C025-024X044 rcl            1
+C3       1µ             C-EU025-030X050 C025-030X050 rcl            1
+C4       220n           C-EU025-030X050 C025-030X050 rcl            1
+C5       10µ            CPOL-EUE1.8-4   E1,8-4       rcl            1
+C6       10µ            CPOL-EUE1.8-4   E1,8-4       rcl            1
+C7       100n           C-EU050-024X044 C050-024X044 rcl            1
+C8       100n           C-EU050-024X044 C050-024X044 rcl            1
+D1       1N4148         1N4148DO35-7    DO35-7       diode          1
+D2       3.3V           ZENER-DIODEZD-5 ZDIO-5       diode          1
+D3       3.3V           ZENER-DIODEZD-5 ZDIO-5       diode          1
+D4       3.3V           ZENER-DIODEZD-5 ZDIO-5       diode          1
+IC2      RFM12          RFM12           RFM          hopeRF         1
+IC3      LP2950Z        LP2950Z         TO92         linear         1
+IC4      ATMEGA644-20PU ATMEGA644-20PU  DIL40        atmel          1
+JP1      AVR-ISP-6      AVR-ISP-6       AVR-ISP-6    avr-5-4.16     1
+JP2      ANT            PINHD-1X1       1X01         pinhead        1
+JP3      GND            PINHD-1X3       1X03         pinhead        1
+JP4      +3V3           PINHD-1X3       1X03         pinhead        1
+JP5      +5V            PINHD-1X3       1X03         pinhead        1
+JP6      Port A         PINHD-1X8       1X08         pinhead        1
+JP7      Port B         PINHD-1X4       1X04         pinhead        1
+JP8      Port C         PINHD-1X7       1X07         pinhead        1
+JP9      Port D         PINHD-1X7       1X07         pinhead        1
+JP10     LCD Backlight  PINHD-1X2       1X02         pinhead        1
+JP11     LCD Contrast   PINHD-1X1       1X01         pinhead        1
+JP12     Speaker        PINHD-1X2       1X02         pinhead        1
+JP13     LED            JP3QE           JP3Q         jumper         1
+L1       10µH           L-EU0207/10     0207/10      rcl            1
+LED1     2mA            LED3MM          LED3MM       led            1
+Q1       20MHz          CRYSTALHC49S    HC49/S       crystal        1
+Q2       BC327          BC327           TO92         transistor-pnp 1
+Q4       2N7000         TN0602N3        TO-92        transistor-fet 1
+R1       1K5            R-EU_0207/7     0207/7       rcl            1
+R2       560R           R-EU_0207/7     0207/7       rcl            1
+R3       47k            R-EU_0207/7     0207/7       rcl            1
+R4       1k             R-EU_0207/7     0207/7       rcl            1
+R5       1k             R-EU_0207/7     0207/7       rcl            1
+R6       1k             R-EU_0207/7     0207/7       rcl            1
+R7       4k7            R-EU_0207/7     0207/7       rcl            1
+R8       200R           TRIM_EU-CA9H    CA9H         pot            1
+R9       560R           R-EU_0207/7     0207/7       rcl            1
+R10      1M             R-EU_0207/7     0207/7       rcl            1
+R11      560R           R-EU_0207/7     0207/7       rcl            1
+R12      560R           R-EU_0207/7     0207/7       rcl            1
+R13      7R5            R-EU_0207/7     0207/7       rcl            1
+R14      5R6            R-EU_0207/7     0207/7       rcl            1
+R15      10R            R-EU_0207/7     0207/7       rcl            1
+R16      3R9            R-EU_0207/7     0207/7       rcl            1
+R17      10k            R-EU_0207/7     0207/7       rcl            1
+R18      20k            TRIM_EU-CA9H    CA9H         pot            1
+R19      10k            R-EU_0207/7     0207/7       rcl            1
+S1       RES            10-XX           B3F-10XX     switch-omron   1
+SJ1      VCC            SJ              SJ           jumper         1
+T1       BC337          BC337           TO92         transistor     1
+T2       BC337          BC337           TO92         transistor     1
+T3       BC337          BC337           TO92         transistor     1
+T4       BC337          BC337           TO92         transistor     1

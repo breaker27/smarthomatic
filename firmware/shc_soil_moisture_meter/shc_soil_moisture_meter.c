@@ -49,7 +49,6 @@
 
 #define SEND_VERSION_STATUS_CYCLE 50    // send version status every x wake ups
 #define SEND_BATTERY_STATUS_CYCLE 25    // send battery status every x wake ups
-#define SEND_STATUS_TIMES_AT_STARTUP 2  // send version and battery status after power up (inserting battery) x times
 
 uint16_t device_id;
 uint32_t station_packetcounter;
@@ -90,7 +89,7 @@ uint32_t power(uint32_t x, uint32_t y)
 // return the value (in seconds).
 uint16_t init_wakeup(void)
 {
-	uint16_t interval = init_mode ? 
+	uint16_t interval = init_mode ?
 		e2p_soilmoisturemeter_get_wakeupintervalinit() :
 		e2p_soilmoisturemeter_get_wakeupinterval();
 
@@ -98,13 +97,13 @@ uint16_t init_wakeup(void)
 	{
 		interval = WAKEUPINTERVAL_1H;
 	}
-	
+
 	rfm12_set_wakeup_timer(interval);
-	
+
 	// Calculate wake-up time in seconds according RFM12B datasheet and round the value to seconds.
 	uint16_t sec = (uint16_t)(((interval & 0xff) * power(2, (interval >> 8) & 0b11111) + 500) / 1000);
 	UART_PUTF("Wake-up interval: %us\r\n", sec);
-	
+
 	return sec;
 }
 
@@ -140,7 +139,7 @@ void prepare_battery_status(void)
 {
 	adc_on(true);
 	_delay_ms(10);
-	uint16_t percentage = bat_percentage(read_battery(), 1100); // 1.1V * 2 cells = 2.2V = min. voltage for RFM12B
+	uint16_t percentage = bat_percentage(read_battery() / 2, 1100); // 1.1V * 2 cells = 2.2V = min. voltage for RFM12B
 	adc_on(false);
 
 	UART_PUTF("Sending battery: %u%%\r\n", percentage);
@@ -152,7 +151,7 @@ void prepare_battery_status(void)
 
 // Prepare message for humidity
 void prepare_humidity_status(uint16_t hum)
-{	
+{
 	UART_PUTF2("Sending humidity: %u.%u%%\r\n", hum / 10, hum % 10);
 
 	// Set packet content
@@ -162,7 +161,7 @@ void prepare_humidity_status(uint16_t hum)
 
 // Prepare message for humidity and raw value as temperature (only for debugging!)
 void prepare_humidity_status_RAW_DBG(uint16_t hum, int16_t raw)
-{	
+{
 	UART_PUTF2("Sending humidity: %u.%u%%\r\n", hum / 10, hum % 10);
 	UART_PUTF ("Sending temperature: %d\r\n", raw);
 
@@ -178,7 +177,7 @@ bool measure_humidity(void)
 {
 	bool res = false;
 	uint16_t cnt;
-	
+
 	switch_schmitt_trigger(true);
 	_delay_ms(10);
 
@@ -199,19 +198,19 @@ bool measure_humidity(void)
 	cnt = TCNT1;
 
 	TCCR1B = 0x00; // turn counter off
-	
+
 	switch_schmitt_trigger(false);
-	
+
 	counter_meas += cnt;
 	wupCnt++;
-	
+
 	UART_PUTF4("Init mode %u, Measurement %u/%u, Counter %u\r\n",
 		init_mode, wupCnt, init_mode ? avgIntInit : avgInt , cnt);
 
 	if ((init_mode && (wupCnt == avgIntInit)) || (!init_mode && (wupCnt == avgInt)))
 	{
 		uint32_t avg = init_mode ? counter_meas / avgIntInit : counter_meas / avgInt;
-		
+
 		if (init_mode)
 		{
 			UART_PUTF("Init: Save avg %u as dry threshold.\r\n", avg);
@@ -224,13 +223,13 @@ bool measure_humidity(void)
 		else
 		{
 			int32_t result;
-		
+
 			if (avg < counter_min)
 			{
 				counter_min = avg;
 				UART_PUTF("New min: %lu, ", counter_min);
 			}
-		
+
 			if (avg > dry_thr)
 			{
 				result = 0;
@@ -239,10 +238,10 @@ bool measure_humidity(void)
 			{
 				result = (dry_thr - avg) * 1000 / (dry_thr - counter_min);
 			}
-		
+
 			UART_PUTF("Avg: %u, ", avg);
 			UART_PUTF("Result: %lu permill\r\n", result);
-			
+
 			// Don't change reported value if it changes within a window of
 			// some percent.
 			if (reported_result == 0)
@@ -276,7 +275,7 @@ bool measure_humidity(void)
 					}
 				}
 			}
-			
+
 			prepare_humidity_status((uint16_t)reported_result);
 			//prepare_humidity_status_RAW_DBG((uint16_t)reported_result, (int16_t) MIN((int32_t)avg, 30000)); // for debugging only
 			res = true;
@@ -285,7 +284,7 @@ bool measure_humidity(void)
 		wupCnt = 0;
 		counter_meas = 0;
 	}
-	
+
 	_delay_ms(10);
 	return res;
 }
@@ -293,10 +292,10 @@ bool measure_humidity(void)
 void send_prepared_message(void)
 {
 	inc_packetcounter();
-	
+
 	pkg_header_set_senderid(device_id);
 	pkg_header_set_packetcounter(packetcounter);
-	
+
 	rfm12_send_bufx();
 	rfm12_tick(); // send packet, and then WAIT SOME TIME BEFORE GOING TO SLEEP (otherwise packet would not be sent)
 
@@ -310,7 +309,6 @@ ISR (INT1_vect)
 
 int main(void)
 {
-	uint8_t i;
 	uint16_t wakeup_sec;
 	bool send;
 
@@ -318,9 +316,9 @@ int main(void)
 	_delay_ms(1000);
 
 	util_init();
-	
+
 	check_eeprom_compatibility(DEVICETYPE_SOILMOISTUREMETER);
-	
+
 	// configure power pin for 74HC14D as output
 	sbi(TRIGGERPWR_DDR, TRIGGERPWR_PIN);
 
@@ -353,7 +351,7 @@ int main(void)
 
 	UART_PUTS ("\r\n");
 	UART_PUTF4("smarthomatic Soil Moisture Meter v%u.%u.%u (%08lx)\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_HASH);
-	UART_PUTS("(c) 2014..2015 Uwe Freese, www.smarthomatic.org\r\n");
+	UART_PUTS("(c) 2014..2022 Uwe Freese, www.smarthomatic.org\r\n");
 	osccal_info();
 	UART_PUTF ("DeviceID: %u\r\n", device_id);
 	UART_PUTF ("PacketCounter: %lu\r\n", packetcounter);
@@ -375,7 +373,22 @@ int main(void)
 	// set DIDR for all ADC channels and AINs, switch off digital input buffers to reduce ADC noise and to save power
 	DIDR0 = 63;
 	DIDR1 = 3;
-	
+
+	// test code
+	/*while (1) {
+		adc_on(true);
+		_delay_ms(10);
+		uint16_t b = read_battery(); // 1.1V * 2 cells = 2.2V = min. voltage for RFM12B
+		adc_on(false);
+
+		uint16_t percentage = bat_percentage(b / 2, 1100); // 1.1V * 2 cells = 2.2V = min. voltage for RFM12B
+
+		UART_PUTF2("%u %u ", b, percentage);
+		measure_humidity();
+		_delay_ms(1000);
+		led_blink(50, 50, 20);
+	}*/
+
 	// If button pressed at start up, go to sleep for idle power consumption test.
 	// Don't communicate with RFM12, which may not have been connected yet.
 	if (BUTTON)
@@ -392,18 +405,15 @@ int main(void)
 	// init interrupt for button (falling edge)
 	sbi(EICRA, ISC11);
 	sbi(EIMSK, INT1);
-	
+
 	sei();
 
-	for (i = 0; i < SEND_STATUS_TIMES_AT_STARTUP; i++)
-	{
-		prepare_deviceinfo_status();
-		send_prepared_message();
-		_delay_ms(800);
-		prepare_battery_status();
-		send_prepared_message();
-		_delay_ms(800);
-	}
+	prepare_deviceinfo_status();
+	send_prepared_message();
+	_delay_ms(1000);
+	prepare_battery_status();
+	send_prepared_message();
+	_delay_ms(1000);
 
 	while (42)
 	{
@@ -411,19 +421,19 @@ int main(void)
 		{
 			led_blink(100, 0, 1);
 			UART_PUTS("Button pressed!\r\n");
-			
+
 			uint8_t cnt = 0;
-			
+
 			while (BUTTON && (cnt < 250))
 			{
 				_delay_ms(10);
 				cnt++;
 			}
-			
+
 			if (cnt == 250)
 			{
 				UART_PUTS("Long press -> initiate measure mode!\r\n");
-				
+
 				while (BUTTON)
 				{
 					led_blink(100, 100, 1);
@@ -433,7 +443,7 @@ int main(void)
 				wupCnt = 0;
 				counter_meas = 0;
 				init_wakeup(); // to usually shorter value
-				
+
 				UART_PUTS("Button released!\r\n");
 				_delay_ms(10);
 			}
@@ -443,7 +453,7 @@ int main(void)
 			send = true;
 
 			//UART_PUTF("version_status_cycle = %u\r\n", version_status_cycle);
-		
+
 			if (!measure_humidity())
 			{
 				if (battery_status_cycle > 0)
@@ -473,10 +483,10 @@ int main(void)
 				send_prepared_message();
 			}
 		}
-		
+
 		power_down(true);
 	}
-	
+
 	// never called
 	// aes256_done(&aes_ctx);
 }

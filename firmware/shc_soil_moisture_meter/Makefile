@@ -17,8 +17,8 @@
 #
 
 # CPU config
-MCU		       = atmega328
-F_CPU	       = 1000000
+MCU            = atmega328
+F_CPU          = 1000000
 UART_BAUD_RATE = 4800
 #UART_DEBUG     = 1
 #UART_RX        = 1
@@ -30,7 +30,7 @@ TARGET = shc_soil_moisture_meter
 #   C			*.c
 #   Assembler	*.S
 CSRC = $(TARGET).c rfm12.c ../src_common/util.c ../src_common/uart.c ../src_common/aes256.c fuses.c
-ASRC = ../src_common/aes_keyschedule-asm.S ../src_common/aes_enc-asm.S ../src_common/aes_dec-asm.S ../src_common/aes_sbox-asm.S
+ASRC = ../src_common/aes_keyschedule-asm.S ../src_common/aes_enc-asm.S ../src_common/aes_dec-asm.S ../src_common/aes_sbox-asm.S ../src_common/aes_invsbox-asm.S
 FUSES = -U hfuse:w:hfuse.hex:i -U lfuse:w:lfuse.hex:i -U efuse:w:efuse.hex:i -u
 
 #******************************************************************************

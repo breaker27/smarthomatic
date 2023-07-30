@@ -91,7 +91,7 @@ static inline UartBaudRateEnum e2p_basestation_get_uartbaudrate(void)
 }
 
 // TransceiverWatchdogTimeout (UIntValue)
-// Description: Reset RFM12B module if no data is received until timeout is reached. Use this function if your specific transceiver hangs sometimes. Value is in deca seconds. Suggested setting is 48 (for 8 minutes). Set 0 to disable (default).
+// Description: Reset RFM12B module if no data is received until timeout is reached. Use this function if your specific transceiver hangs sometimes. Value is in deca seconds. Suggested setting is 48 (for 8 minutes). Set 0 to disable.
 
 // Set TransceiverWatchdogTimeout (UIntValue)
 // Offset: 4624, length bits 8, min val 0, max val 255

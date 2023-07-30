@@ -161,7 +161,15 @@ public class FlashDialog extends JDialog
 		{
 			cmdLineS = cmdLineS.replace("#DEVICE#", microcontrollerModel);
 		}
-		else if (e2pLength > 4096)
+		else if (e2pLength > 2048 * 8) // in bits!
+		{
+			cmdLineS = cmdLineS.replace("#DEVICE#", "m1284p");
+		}
+		else if (e2pLength > 1024 * 8) // in bits!
+		{
+			cmdLineS = cmdLineS.replace("#DEVICE#", "m644p");
+		}
+		else if (e2pLength > 512 * 8) // in bits!
 		{
 			cmdLineS = cmdLineS.replace("#DEVICE#", "m328p");
 		}

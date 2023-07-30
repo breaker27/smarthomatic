@@ -29,6 +29,7 @@
 #include "packet_headerext_ackstatus.h"
 #include "packet_headerext_ack.h"
 #include "packet_headerext_status.h"
+#include "packet_headerext_deliver.h"
 #include "packet_headerext_setget.h"
 #include "packet_headerext_set.h"
 #include "packet_headerext_get.h"
@@ -53,7 +54,7 @@ typedef enum {
 // MessageGroupID: 10
 // MessageID: 1
 // Possible MessageTypes: Get, Status, AckStatus
-// Validity: test
+// Validity: released
 // Length w/o Header + HeaderExtension: 16 bits
 // Data fields: Temperature
 // Description: This is a message containing temperature only.
@@ -117,7 +118,7 @@ static inline int32_t msg_weather_temperature_get_temperature(void)
 // MessageGroupID: 10
 // MessageID: 2
 // Possible MessageTypes: Get, Status, AckStatus
-// Validity: test
+// Validity: released
 // Length w/o Header + HeaderExtension: 26 bits
 // Data fields: Humidity, Temperature
 // Description: This is a message containing humidity and temperature.
@@ -198,7 +199,7 @@ static inline int32_t msg_weather_humiditytemperature_get_temperature(void)
 // MessageGroupID: 10
 // MessageID: 3
 // Possible MessageTypes: Get, Status, AckStatus
-// Validity: test
+// Validity: released
 // Length w/o Header + HeaderExtension: 33 bits
 // Data fields: BarometricPressure, Temperature
 // Description: This is a message containing barometric pressure and temperature.
@@ -279,7 +280,7 @@ static inline int32_t msg_weather_barometricpressuretemperature_get_temperature(
 // MessageGroupID: 10
 // MessageID: 4
 // Possible MessageTypes: Get, Status, AckStatus
-// Validity: test
+// Validity: released
 // Length w/o Header + HeaderExtension: 10 bits
 // Data fields: Humidity
 // Description: This is a message containing humidity.

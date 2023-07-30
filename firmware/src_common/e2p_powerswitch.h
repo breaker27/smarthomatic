@@ -31,89 +31,106 @@
 // Start offset (bit): 512
 // Overall block length: 7680 bits
 
-// SupportedSwitches (UIntValue)
-// Description: This is a bit field about the connected switches.
-
-// Set SupportedSwitches (UIntValue)
-// Offset: 512, length bits 8, min val 1, max val 3
-static inline void e2p_powerswitch_set_supportedswitches(uint8_t val)
-{
-  eeprom_write_UIntValue(512, 8, val);
-}
-
-// Get SupportedSwitches (UIntValue)
-// Offset: 512, length bits 8, min val 1, max val 3
-static inline uint8_t e2p_powerswitch_get_supportedswitches(void)
-{
-  return eeprom_read_UIntValue8(512, 8, 1, 3);
-}
-
 // BaseStationPacketCounter (UIntValue)
 // Description: This is the last remembered packet counter of a command from the base station. Packets with the same or lower number are ignored.
 
 // Set BaseStationPacketCounter (UIntValue)
-// Offset: 520, length bits 24, min val 0, max val 16777215
+// Offset: 512, length bits 24, min val 0, max val 16777215
 static inline void e2p_powerswitch_set_basestationpacketcounter(uint32_t val)
 {
-  eeprom_write_UIntValue(520, 24, val);
+  eeprom_write_UIntValue(512, 24, val);
 }
 
 // Get BaseStationPacketCounter (UIntValue)
-// Offset: 520, length bits 24, min val 0, max val 16777215
+// Offset: 512, length bits 24, min val 0, max val 16777215
 static inline uint32_t e2p_powerswitch_get_basestationpacketcounter(void)
 {
-  return eeprom_read_UIntValue32(520, 24, 0, 16777215);
+  return eeprom_read_UIntValue32(512, 24, 0, 16777215);
+}
+
+// TransceiverWatchdogTimeout (UIntValue)
+// Description: Reset RFM12B module if no data is received until timeout is reached. Use this function if your specific transceiver hangs sometimes. Value is in deca seconds. Suggested setting is 48 (for 8 minutes). Set 0 to disable.
+
+// Set TransceiverWatchdogTimeout (UIntValue)
+// Offset: 536, length bits 8, min val 0, max val 255
+static inline void e2p_powerswitch_set_transceiverwatchdogtimeout(uint8_t val)
+{
+  eeprom_write_UIntValue(536, 8, val);
+}
+
+// Get TransceiverWatchdogTimeout (UIntValue)
+// Offset: 536, length bits 8, min val 0, max val 255
+static inline uint8_t e2p_powerswitch_get_transceiverwatchdogtimeout(void)
+{
+  return eeprom_read_UIntValue8(536, 8, 0, 255);
+}
+
+// StatusCycle (UIntValue)
+// Description: This is the number of minutes after which the status should be resent, so in case of a lost message it can be received again. Set 0 to disable.
+
+// Set StatusCycle (UIntValue)
+// Offset: 544, length bits 8, min val 0, max val 255
+static inline void e2p_powerswitch_set_statuscycle(uint8_t val)
+{
+  eeprom_write_UIntValue(544, 8, val);
+}
+
+// Get StatusCycle (UIntValue)
+// Offset: 544, length bits 8, min val 0, max val 255
+static inline uint8_t e2p_powerswitch_get_statuscycle(void)
+{
+  return eeprom_read_UIntValue8(544, 8, 0, 255);
+}
+
+// SupportedSwitches (UIntValue)
+// Description: This is the number of connected switches.
+
+// Set SupportedSwitches (UIntValue)
+// Offset: 552, length bits 8, min val 1, max val 3
+static inline void e2p_powerswitch_set_supportedswitches(uint8_t val)
+{
+  eeprom_write_UIntValue(552, 8, val);
+}
+
+// Get SupportedSwitches (UIntValue)
+// Offset: 552, length bits 8, min val 1, max val 3
+static inline uint8_t e2p_powerswitch_get_supportedswitches(void)
+{
+  return eeprom_read_UIntValue8(552, 8, 1, 3);
 }
 
 // CMDState (BoolValue[8])
 // Description: This field stores the switch state(s) which were requested by one of the supported 'set'/'setget' commands for eight switches to allow restoring the same state after power loss. Fill this with zeros when creating a e2p file!
 
 // Set CMDState (BoolValue)
-// Offset: 544, length bits 8
+// Offset: 560, length bits 8
 static inline void e2p_powerswitch_set_cmdstate(uint8_t index, bool val)
 {
-  eeprom_write_UIntValue(544 + (uint16_t)index * 8, 8, val ? 1 : 0);
+  eeprom_write_UIntValue(560 + (uint16_t)index * 8, 8, val ? 1 : 0);
 }
 
 // Get CMDState (BoolValue)
-// Offset: 544, length bits 8
+// Offset: 560, length bits 8
 static inline bool e2p_powerswitch_get_cmdstate(uint8_t index)
 {
-  return eeprom_read_UIntValue8(544 + (uint16_t)index * 8, 8, 0, 1) == 1;
+  return eeprom_read_UIntValue8(560 + (uint16_t)index * 8, 8, 0, 1) == 1;
 }
 
 // CMDTimeout (UIntValue[8])
 // Description: This field stores the timeout value(s) which were requested by one of the supported 'set'/'setget' commands for eight switches to allow restoring the same state after power loss. Fill this with zeros when creating a e2p file!
 
 // Set CMDTimeout (UIntValue)
-// Offset: 608, length bits 16, min val 0, max val 65767
+// Offset: 624, length bits 16, min val 0, max val 65767
 static inline void e2p_powerswitch_set_cmdtimeout(uint8_t index, uint16_t val)
 {
-  eeprom_write_UIntValue(608 + (uint16_t)index * 16, 16, val);
+  eeprom_write_UIntValue(624 + (uint16_t)index * 16, 16, val);
 }
 
 // Get CMDTimeout (UIntValue)
-// Offset: 608, length bits 16, min val 0, max val 65767
+// Offset: 624, length bits 16, min val 0, max val 65767
 static inline uint16_t e2p_powerswitch_get_cmdtimeout(uint8_t index)
 {
-  return eeprom_read_UIntValue16(608 + (uint16_t)index * 16, 16, 0, 65767);
-}
-
-// TransceiverWatchdogTimeout (UIntValue)
-// Description: Reset RFM12B module if no data is received until timeout is reached. Use this function if your specific transceiver hangs sometimes. Value is in deca seconds. Suggested setting is 48 (for 8 minutes). Set 0 to disable (default).
-
-// Set TransceiverWatchdogTimeout (UIntValue)
-// Offset: 736, length bits 8, min val 0, max val 255
-static inline void e2p_powerswitch_set_transceiverwatchdogtimeout(uint8_t val)
-{
-  eeprom_write_UIntValue(736, 8, val);
-}
-
-// Get TransceiverWatchdogTimeout (UIntValue)
-// Offset: 736, length bits 8, min val 0, max val 255
-static inline uint8_t e2p_powerswitch_get_transceiverwatchdogtimeout(void)
-{
-  return eeprom_read_UIntValue8(736, 8, 0, 255);
+  return eeprom_read_UIntValue16(624 + (uint16_t)index * 16, 16, 0, 65767);
 }
 
 // SwitchMode (EnumValue[8])
@@ -135,21 +152,55 @@ typedef enum {
 #endif /* _ENUM_SwitchMode */
 
 // Set SwitchMode (EnumValue)
-// Offset: 744, length bits 8
+// Offset: 752, length bits 8
 static inline void e2p_powerswitch_set_switchmode(uint8_t index, SwitchModeEnum val)
 {
-  eeprom_write_UIntValue(744 + (uint16_t)index * 8, 8, val);
+  eeprom_write_UIntValue(752 + (uint16_t)index * 8, 8, val);
 }
 
 // Get SwitchMode (EnumValue)
-// Offset: 744, length bits 8
+// Offset: 752, length bits 8
 static inline SwitchModeEnum e2p_powerswitch_get_switchmode(uint8_t index)
 {
-  return eeprom_read_UIntValue8(744 + (uint16_t)index * 8, 8, 0, 255);
+  return eeprom_read_UIntValue8(752 + (uint16_t)index * 8, 8, 0, 255);
 }
 
-// Reserved area with 7384 bits
-// Offset: 808
+// SwitchOnDelay (UIntValue[8])
+// Description: This field contains for the 8 switches the times in seconds after which the change of a switch to state "ON" is considered to affect the relais state. If the switch changes to "OFF" again within the delay time, it is cleared and no change of the relais state will happen. If the relais state is changed via command within the delay time, the relais state will consider the old switch state until the delay time is over. After restart (power loss), the delay will not be considered, so the switch state is considered immediately.
+
+// Set SwitchOnDelay (UIntValue)
+// Offset: 816, length bits 16, min val 0, max val 65535
+static inline void e2p_powerswitch_set_switchondelay(uint8_t index, uint16_t val)
+{
+  eeprom_write_UIntValue(816 + (uint16_t)index * 16, 16, val);
+}
+
+// Get SwitchOnDelay (UIntValue)
+// Offset: 816, length bits 16, min val 0, max val 65535
+static inline uint16_t e2p_powerswitch_get_switchondelay(uint8_t index)
+{
+  return eeprom_read_UIntValue16(816 + (uint16_t)index * 16, 16, 0, 65535);
+}
+
+// SwitchOffDelay (UIntValue[8])
+// Description: This field contains for the 8 switches the times in seconds after which the change of a switch to state "OFF" is considered to affect the relais state. The behaviour is equivalent to SwitchOnDelay.
+
+// Set SwitchOffDelay (UIntValue)
+// Offset: 944, length bits 16, min val 0, max val 65535
+static inline void e2p_powerswitch_set_switchoffdelay(uint8_t index, uint16_t val)
+{
+  eeprom_write_UIntValue(944 + (uint16_t)index * 16, 16, val);
+}
+
+// Get SwitchOffDelay (UIntValue)
+// Offset: 944, length bits 16, min val 0, max val 65535
+static inline uint16_t e2p_powerswitch_get_switchoffdelay(uint8_t index)
+{
+  return eeprom_read_UIntValue16(944 + (uint16_t)index * 16, 16, 0, 65535);
+}
+
+// Reserved area with 7120 bits
+// Offset: 1072
 
 
 #endif /* _E2P_POWERSWITCH_H */
